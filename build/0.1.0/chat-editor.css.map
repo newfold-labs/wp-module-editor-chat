@@ -1,0 +1,1 @@
+{"version":3,"file":"chat-editor.css","mappings":";;;AAAA;EACC;AACD,C","sources":["webpack://newfold.wordpress.editor.chat/./src/styles/app.scss"],"sourcesContent":[".edit-site-sidebar-navigation-screen__title-icon {\n\tbackground-color: red;\n}\n"],"names":[],"sourceRoot":""}

@@ -1,0 +1,49 @@
+{
+	"name": "wp-module-editor-chat",
+	"version": "0.1.0",
+	"description": "BLU Wordpress Editor Chat Module",
+	"homepage": "https://github.com/newfold-labs/wp-module-editor-chat#readme",
+	"bugs": {
+		"url": "https://github.com/newfold-labs/wp-module-editor-chat/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/newfold-labs/wp-module-editor-chat.git"
+	},
+	"license": "GPL-2.0-or-later",
+	"author": {
+		"name": "Hristina",
+		"email": "hristina.conjic@newfold.com"
+	},
+	"scripts": {
+		"build": "concurrently \"wp-scripts build ./src/chat-editor.js\" \"npm run utils:prod\"",
+		"clean": "rimraf ./assets/build ./assets/styles ./build",
+		"clean:node_modules": "rimraf ./node_modules",
+		"post-set-version": "rm -rf ./build",
+		"format": "wp-scripts format ./src",
+		"start": "concurrently \"wp-scripts start ./src/chat-editor.js\"",
+		"lint:js": "wp-scripts lint-js ./src",
+		"lint:js:fix": "wp-scripts lint-js ./src --fix"
+	},
+	"devDependencies": {
+		"@wordpress/eslint-plugin": "^22.18.0",
+		"@wordpress/prettier-config": "^4.32.0",
+		"@wordpress/scripts": "^30.25.0",
+		"autoprefixer": "^10.4.21",
+		"concurrently": "^9.2.1",
+		"cssnano": "^7.1.1",
+		"esbuild": "^0.25.10",
+		"eslint": "^8.57.1",
+		"eslint-plugin-prettier": "^5.5.4",
+		"eslit": "^6.0.0",
+		"postcss": "^8.5.6",
+		"postcss-cli": "^11.0.1",
+		"postcss-import": "^16.1.1",
+		"postcss-safe-important": "^2.0.1",
+		"prettier": "^3.6.2",
+		"webpack-merge": "^6.0.1"
+	},
+	"dependencies": {
+		"classnames": "^2.5.1"
+	}
+}
