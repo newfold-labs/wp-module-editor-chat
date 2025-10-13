@@ -24,3 +24,5 @@ class Application {
 		// Module functionality goes here
 	}
 }
+
+die('testtttttttt');
