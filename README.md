@@ -109,6 +109,127 @@ Add GitHub Auth Token to `.npmrc` for private repo access.
 
 4. Save the file.
 
+### Run the module in dev mode
+
+```bash
+npm run start
+```
+
+### Development Commands
+
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm run start
+
+# Build for production
+npm run build
+
+# Run linting
+npm run lint:js
+npm run lint:js:fix
+
+# Run tests
+npm run test
+
+# Format code
+npm run format
+```
+
+## Releases
+
+To ensure a smooth and error-free release, follow these detailed instructions closely.
+
+Run the `Newfold Prep Release` github action to automatically bump the version (either patch, minor or major version), and update build and language files all at once. It will create a PR with changed files for manual review. Using this workflow, we can skip all the manual steps below.
+
+### Manual Initial Setup
+
+1. Checkout a new branch for the release using the format `release/<new_version>`.
+
+2. Run `npm install` to install necessary npm packages.
+
+3. Execute `composer install` to install PHP dependencies.
+
+### Manual Version Updates
+
+It is essential to verify that the version has been appropriately incremented in both the PHP and JavaScript components. Specifically, ensure that:
+
+1. PHP constant `NFD_AI_EDITOR_CHAT_VERSION` has been updated to the intended release version on line 18 of the file `/bootstrap.php`. This PHP constant dictates the expected location of build files for the module. For example:
+
+```php
+define( 'NFD_AI_EDITOR_CHAT_VERSION', '1.0.0' );
+```
+
+2. JavaScript release version aligns with the desired release by checking line 3 in the `package.json` file. For example:
+
+```json
+"version": "1.0.0",
+```
+
+### Manual Build
+
+Manually prepare the release:
+
+1. Run `npm run lint:js` to ensure JavaScript code quality.
+
+2. Delete the old build files from the `/build` directory.
+
+3. Execute `npm run build` to build the most recent set of build files.
+
+4. Run `composer run i18n` to update language files.
+
+5. Run `composer run clean` to ensure that PHP code standards are met.
+
+Ensure that these files are committed to the repository, as they are essential components to be incorporated into the upcoming release.
+
+### Final Manual Steps
+
+1. Commit all changes and push them to the repository.
+
+2. Create a Pull Request (PR) to the main branch for peer approval. Teammates can check out this branch to verify everything is in order.
+
+3. After approval, merge the PR into the main branch.
+
+### Create a Release on GitHub
+
+1. Go to [New Release](https://github.com/newfold-labs/wp-module-editor-chat/releases/new).
+
+2. Ensure the tag number matches the updated version.
+
+3. Set the title as `Version <new_version>`.
+
+4. Generate release notes and publish the release.
+
+5. Confirm that `<new_version>` exists on both [GitHub Tags](https://github.com/newfold-labs/wp-module-editor-chat/tags) and [Satis](https://newfold-labs.github.io/satis/#editor-chat).
+
+## Contributing
+
+### Development Guidelines
+
+1. Follow WordPress coding standards
+2. Write comprehensive tests for new features
+3. Document all API changes
+4. Ensure accessibility compliance
+5. Test across multiple browsers and devices
+
+### Code Style
+
+- Use ESLint for JavaScript linting
+- Follow PSR-12 for PHP code
+- Use Prettier for code formatting
+- Write meaningful commit messages
+
+## Support
+
+For support and questions:
+
+- **Documentation**: [Module Documentation](https://github.com/newfold-labs/wp-module-editor-chat/docs)
+- **Issues**: [GitHub Issues](https://github.com/newfold-labs/wp-module-editor-chat/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/newfold-labs/wp-module-editor-chat/discussions)
+- **Email**: support@newfold.com
+
 ## More on Newfold WordPress Modules
 
 - <a href="https://github.com/newfold-labs/wp-module-loader#endurance-wordpress-modules">What are modules?</a>

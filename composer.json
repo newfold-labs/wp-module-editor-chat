@@ -1,0 +1,38 @@
+{
+  "name": "newfold-labs/wp-module-editor-chat",
+  "description": "Site Editor AI Chat",
+  "type": "library",
+  "license": [
+    "GPL-2.0-or-later"
+  ],
+  "autoload": {
+    "psr-4": {
+      "NewfoldLabs\\WP\\Module\\EditorChat\\": "src/"
+    },
+    "files": [
+      "bootstrap.php"
+    ]
+  },
+  "authors": [
+    {
+      "name": "Hristina Conjic",
+      "email": "hristina.conjic@newfold.com"
+    }
+  ],
+  "config": {
+    "optimize-autoloader": true,
+    "sort-packages": true,
+    "platform": {
+      "php": "7.3.0"
+    },
+    "platform-check": false,
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true
+    },
+    "preferred-install": {
+      "newfold-labs/*": "source",
+      "*": "dist"
+    }
+  },
+  "require": {}
+}
