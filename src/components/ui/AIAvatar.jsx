@@ -1,7 +1,7 @@
 /**
  * Internal dependencies
  */
-import { ReactComponent as SparksIcon } from "../svg/sparks.svg";
+import { ReactComponent as SparksIcon } from "../../svg/sparks.svg";
 
 /**
  * AIAvatar Component
@@ -16,7 +16,7 @@ import { ReactComponent as SparksIcon } from "../svg/sparks.svg";
  */
 const AIAvatar = ({ width = 24, height = 24 }) => (
 	<div
-		className="nfd-ai-avatar"
+		className="nfd-editor-chat-ai-avatar"
 		style={{
 			width,
 			height,

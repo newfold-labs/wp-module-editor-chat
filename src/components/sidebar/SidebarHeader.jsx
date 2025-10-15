@@ -17,7 +17,7 @@ import { Maximize2, MessageSquarePlus } from "lucide-react";
  * @param {Object}   props           - The component props.
  * @param {Function} props.onNewChat - The function to call when new chat is clicked.
  * @param {Function} props.onExpand  - The function to call when expand is clicked.
- * @returns {JSX.Element} The SidebarHeader component.
+ * @return {JSX.Element} The SidebarHeader component.
  */
 const SidebarHeader = ({ onNewChat, onExpand }) => {
 	return (

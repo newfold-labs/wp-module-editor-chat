@@ -11,7 +11,7 @@ import { Edit3, Palette, FilePlus, Layers } from "lucide-react";
 /**
  * Internal dependencies
  */
-import AIAvatar from "./AIAvatar";
+import AIAvatar from "../ui/AIAvatar";
 
 /**
  * WelcomeScreen Component
@@ -20,7 +20,7 @@ import AIAvatar from "./AIAvatar";
  *
  * @param {Object}   props               - The component props.
  * @param {Function} props.onSendMessage - The function to call when a suggestion is clicked.
- * @returns {JSX.Element} The WelcomeScreen component.
+ * @return {JSX.Element} The WelcomeScreen component.
  */
 const WelcomeScreen = ({ onSendMessage }) => {
 	const suggestions = [
@@ -47,32 +47,32 @@ const WelcomeScreen = ({ onSendMessage }) => {
 	];
 
 	return (
-		<div className="nfd-chat-welcome">
-			<div className="nfd-chat-welcome__content">
-				<div className="nfd-chat-welcome__avatar">
+		<div className="nfd-editor-chat-welcome">
+			<div className="nfd-editor-chat-welcome__content">
+				<div className="nfd-editor-chat-welcome__avatar">
 					<AIAvatar width={48} height={48} />
 				</div>
-				<div className="nfd-chat-welcome__message">
-					<div className="nfd-chat-welcome__title">
+				<div className="nfd-editor-chat-welcome__message">
+					<div className="nfd-editor-chat-welcome__title">
 						{__("Hi, I'm BLU, your AI assistant.", "wp-module-editor-chat")}
 					</div>
-					<div className="nfd-chat-welcome__subtitle">
+					<div className="nfd-editor-chat-welcome__subtitle">
 						{__("I can help you update page sections and styles,", "wp-module-editor-chat")}
 					</div>
-					<div className="nfd-chat-welcome__subtitle">
+					<div className="nfd-editor-chat-welcome__subtitle">
 						{__("add, remove, or edit existing content.", "wp-module-editor-chat")}
 					</div>
 				</div>
 			</div>
-			<div className="nfd-chat-welcome__suggestions">
+			<div className="nfd-editor-chat-welcome__suggestions">
 				{suggestions.map((suggestion, index) => (
 					<button
 						key={index}
-						className="nfd-chat-welcome__suggestion"
+						className="nfd-editor-chat-welcome__suggestion"
 						onClick={suggestion.action}
 					>
-						<div className="nfd-chat-welcome__suggestion-icon">{suggestion.icon}</div>
-						<div className="nfd-chat-welcome__suggestion-text">{suggestion.text}</div>
+						<div className="nfd-editor-chat-welcome__suggestion-icon">{suggestion.icon}</div>
+						<div className="nfd-editor-chat-welcome__suggestion-text">{suggestion.text}</div>
 					</button>
 				))}
 			</div>

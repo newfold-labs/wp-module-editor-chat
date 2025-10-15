@@ -11,11 +11,11 @@ import { store as interfaceStore } from "@wordpress/interface";
  * Internal dependencies
  */
 import useChat from "../hooks/useChat";
-import AIAvatar from "./AIAvatar";
-import ChatInput from "./ChatInput";
-import ChatMessages from "./ChatMessages";
-import SidebarHeader from "./SidebarHeader";
-import WelcomeScreen from "./WelcomeScreen";
+import AIAvatar from "./ui/AIAvatar";
+import ChatInput from "./chat/ChatInput";
+import ChatMessages from "./chat/ChatMessages";
+import SidebarHeader from "./sidebar/SidebarHeader";
+import WelcomeScreen from "./sidebar/WelcomeScreen";
 
 const SIDEBAR_NAME = "nfd-editor-chat";
 const SIDEBAR_SCOPE = "core";

@@ -65,37 +65,37 @@ const ChatInput = ({ onSendMessage, disabled = false }) => {
 	};
 
 	return (
-		<div className="nfd-chat-input">
-			<div className="nfd-chat-input__container">
+		<div className="nfd-editor-chat-input">
+			<div className="nfd-editor-chat-input__container">
 				<textarea
-					name="nfd-chat-input"
+					name="nfd-editor-chat-input"
 					ref={textareaRef}
 					value={message}
 					onChange={(e) => setMessage(e.target.value)}
 					onKeyDown={handleKeyDown}
 					placeholder={__("How can I help you today?", "wp-module-editor-chat")}
-					className="nfd-chat-input__textarea"
+					className="nfd-editor-chat-input__textarea"
 					rows={1}
 					disabled={disabled}
 				/>
-				<div className="nfd-chat-input__actions">
+				<div className="nfd-editor-chat-input__actions">
 					<Button
 						icon={<Paperclip width={16} height={16} />}
 						label={__("Attach file", "wp-module-editor-chat")}
 						onClick={handleFileUpload}
-						className="nfd-chat-input__attach"
+						className="nfd-editor-chat-input__attach"
 						disabled={disabled}
 					/>
 					<Button
 						icon={<ArrowUp width={16} height={16} />}
 						label={__("Send message", "wp-module-editor-chat")}
 						onClick={handleSubmit}
-						className="nfd-chat-input__submit"
+						className="nfd-editor-chat-input__submit"
 						disabled={disabled || !message.trim()}
 					/>
 				</div>
 			</div>
-			<div className="nfd-chat-input__disclaimer">
+			<div className="nfd-editor-chat-input__disclaimer">
 				{__("AI-generated content is not guaranteed for accuracy.", "wp-module-editor-chat")}
 			</div>
 		</div>

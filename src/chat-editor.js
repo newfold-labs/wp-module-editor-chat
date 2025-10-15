@@ -9,7 +9,7 @@ import ChatEditor from "./components/ChatEditor";
 
 // Register the plugin when DOM is ready
 domReady(() => {
-	registerPlugin("nfd-chat-editor", {
+	registerPlugin("nfd-editor-chat", {
 		render: ChatEditor,
 	});
 });
