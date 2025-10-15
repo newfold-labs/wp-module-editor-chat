@@ -12,7 +12,9 @@ final class RestApi {
 	 *
 	 * @var array
 	 */
-	protected $controllers = array();
+	protected $controllers = array(
+		'NewfoldLabs\\WP\\Module\\EditorChat\\RestApi\\ChatController',
+	);
 
 	/**
 	 * Setup the custom REST API

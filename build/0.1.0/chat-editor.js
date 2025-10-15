@@ -2899,8 +2899,17 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _wordpress_element__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @wordpress/element */ "@wordpress/element");
 /* harmony import */ var _wordpress_element__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_wordpress_element__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @wordpress/i18n */ "@wordpress/i18n");
+/* harmony import */ var _wordpress_i18n__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _services_chatApi__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../services/chatApi */ "./src/services/chatApi.js");
 /**
  * WordPress dependencies
+ */
+
+
+
+/**
+ * Internal dependencies
  */
 
 
@@ -2912,6 +2921,7 @@ __webpack_require__.r(__webpack_exports__);
 const useChat = () => {
   const [messages, setMessages] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useState)([]);
   const [isLoading, setIsLoading] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useState)(false);
+  const [conversationId, setConversationId] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useState)(null);
   const handleSendMessage = async messageContent => {
     // Add user message
     const userMessage = {
@@ -2920,30 +2930,163 @@ const useChat = () => {
     };
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
+    try {
+      // Send message to API with context (will create conversation if needed)
+      const response = await (0,_services_chatApi__WEBPACK_IMPORTED_MODULE_2__.sendMessage)(conversationId, messageContent);
 
-    // TODO: Replace with actual API call
-    // Simulate AI response
-    setTimeout(() => {
+      // Update conversation ID if this was the first message
+      if (response.conversationId && !conversationId) {
+        setConversationId(response.conversationId);
+      }
+
+      // Add AI response
       const aiMessage = {
         type: "assistant",
-        content: "This is a placeholder response. The AI functionality will be implemented soon."
+        content: response.message || response.response || "I received your message."
       };
       setMessages(prev => [...prev, aiMessage]);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Error sending message:", error);
+
+      // Add error message
+      const errorMessage = {
+        type: "assistant",
+        content: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("Sorry, I encountered an error processing your request. Please try again.", "wp-module-editor-chat")
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
   const handleNewChat = () => {
-    // Reset messages to empty array to show welcome screen
+    // Reset messages and conversation ID to show welcome screen
     setMessages([]);
+    setConversationId(null);
   };
   return {
     messages,
     isLoading,
+    conversationId,
     handleSendMessage,
     handleNewChat
   };
 };
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (useChat);
+
+/***/ }),
+
+/***/ "./src/services/chatApi.js":
+/*!*********************************!*\
+  !*** ./src/services/chatApi.js ***!
+  \*********************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   sendMessage: () => (/* binding */ sendMessage)
+/* harmony export */ });
+/* harmony import */ var _wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @wordpress/api-fetch */ "@wordpress/api-fetch");
+/* harmony import */ var _wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _wordpress_data__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @wordpress/data */ "@wordpress/data");
+/* harmony import */ var _wordpress_data__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_wordpress_data__WEBPACK_IMPORTED_MODULE_1__);
+/**
+ * WordPress dependencies
+ */
+
+
+
+/**
+ * Chat API Service
+ *
+ * Handles all API calls for the editor chat functionality.
+ * Uses WordPress REST API as a proxy to the remote AI service.
+ */
+
+/**
+ * Get the current page content (all blocks)
+ *
+ * @return {Object} The page content with both raw grammar and structured blocks
+ */
+const getCurrentPageContent = () => {
+  const editor = (0,_wordpress_data__WEBPACK_IMPORTED_MODULE_1__.select)("core/editor");
+  const blockEditor = (0,_wordpress_data__WEBPACK_IMPORTED_MODULE_1__.select)("core/block-editor");
+  return {
+    rawContent: editor.getEditedPostContent(),
+    blocks: blockEditor.getBlocks()
+  };
+};
+
+/**
+ * Get the current page ID
+ *
+ * @return {number} The page ID
+ */
+const getCurrentPageId = () => {
+  const editor = (0,_wordpress_data__WEBPACK_IMPORTED_MODULE_1__.select)("core/editor");
+  return editor.getCurrentPostId();
+};
+
+/**
+ * Get the currently selected block
+ *
+ * @return {Object|null} The selected block or null
+ */
+const getSelectedBlock = () => {
+  const blockEditor = (0,_wordpress_data__WEBPACK_IMPORTED_MODULE_1__.select)("core/block-editor");
+  const selectedBlockClientId = blockEditor.getSelectedBlockClientId();
+  if (selectedBlockClientId) {
+    return blockEditor.getBlock(selectedBlockClientId);
+  }
+  return null;
+};
+
+/**
+ * Build the context object with editor data
+ *
+ * @return {Object} The context object
+ */
+const buildContext = () => {
+  return {
+    pageContent: getCurrentPageContent(),
+    pageId: getCurrentPageId(),
+    selectedBlock: getSelectedBlock()
+  };
+};
+
+/**
+ * Send a message to the chat API
+ *
+ * This function handles both creating a new conversation (if conversationId is not provided)
+ * and sending messages to an existing conversation.
+ *
+ * @param {string|null} [conversationId] - The conversation ID (optional for new conversations)
+ * @param {string}      message          - The user message
+ * @return {Promise<Object>} The API response with conversationId and message
+ */
+const sendMessage = async (conversationId, message) => {
+  try {
+    const requestData = {
+      message,
+      context: buildContext()
+    };
+
+    // Only include conversationId if it exists
+    if (conversationId) {
+      requestData.conversationId = conversationId;
+    }
+    const response = await _wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_0___default()({
+      path: "/nfd-editor-chat/v1/chat",
+      method: "POST",
+      data: requestData
+    });
+    return response;
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error("Error sending message:", error);
+    throw error;
+  }
+};
 
 /***/ }),
 
@@ -2988,6 +3131,16 @@ var SvgSparks = function SvgSparks(props) {
 };
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciICB2aWV3Qm94PSIwIDAgMzAgMzAiIHdpZHRoPSIyNHB4IiBoZWlnaHQ9IjI0cHgiIGJhc2VQcm9maWxlPSJiYXNpYyI+PHBhdGggZD0iTTE0LjIxNywxOS43MDdsLTEuMTEyLDIuNTQ3Yy0wLjQyNywwLjk3OS0xLjc4MiwwLjk3OS0yLjIxLDBsLTEuMTEyLTIuNTQ3Yy0wLjk5LTIuMjY3LTIuNzcxLTQuMDcxLTQuOTkzLTUuMDU3CUwxLjczLDEzLjI5MmMtMC45NzMtMC40MzItMC45NzMtMS44NDgsMC0yLjI4bDIuOTY1LTEuMzE2QzYuOTc0LDguNjg0LDguNzg3LDYuODEzLDkuNzYsNC40N2wxLjEyNi0yLjcxNAljMC40MTgtMS4wMDcsMS44MS0xLjAwNywyLjIyOCwwTDE0LjI0LDQuNDdjMC45NzMsMi4zNDQsMi43ODYsNC4yMTUsNS4wNjUsNS4yMjZsMi45NjUsMS4zMTZjMC45NzMsMC40MzIsMC45NzMsMS44NDgsMCwyLjI4CWwtMy4wNjEsMS4zNTlDMTYuOTg4LDE1LjYzNywxNS4yMDYsMTcuNDQxLDE0LjIxNywxOS43MDd6Ii8+PHBhdGggZD0iTTI0LjQ4MSwyNy43OTZsLTAuMzM5LDAuNzc3Yy0wLjI0OCwwLjU2OS0xLjAzNiwwLjU2OS0xLjI4NCwwbC0wLjMzOS0wLjc3N2MtMC42MDQtMS4zODUtMS42OTMtMi40ODgtMy4wNTEtMy4wOTIJbC0xLjA0NC0wLjQ2NGMtMC41NjUtMC4yNTEtMC41NjUtMS4wNzIsMC0xLjMyM2wwLjk4Ni0wLjQzOGMxLjM5My0wLjYxOSwyLjUwMS0xLjc2MywzLjA5NS0zLjE5NWwwLjM0OC0wLjg0CWMwLjI0My0wLjU4NSwxLjA1Mi0wLjU4NSwxLjI5NCwwbDAuMzQ4LDAuODRjMC41OTQsMS40MzIsMS43MDIsMi41NzYsMy4wOTUsMy4xOTVsMC45ODYsMC40MzhjMC41NjUsMC4yNTEsMC41NjUsMS4wNzIsMCwxLjMyMwlsLTEuMDQ0LDAuNDY0QzI2LjE3NCwyNS4zMDgsMjUuMDg1LDI2LjQxMSwyNC40ODEsMjcuNzk2eiIvPjwvc3ZnPg==");
+
+/***/ }),
+
+/***/ "@wordpress/api-fetch":
+/*!**********************************!*\
+  !*** external ["wp","apiFetch"] ***!
+  \**********************************/
+/***/ ((module) => {
+
+module.exports = window["wp"]["apiFetch"];
 
 /***/ }),
 
