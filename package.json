@@ -16,7 +16,7 @@
 		"email": "hristina.conjic@newfold.com"
 	},
 	"scripts": {
-		"build": "concurrently \"wp-scripts build ./src/chat-editor.js\" \"npm run utils:prod\"",
+		"build": "wp-scripts build ./src/chat-editor.js",
 		"clean": "rimraf ./assets/build ./assets/styles ./build",
 		"clean:node_modules": "rimraf ./node_modules",
 		"post-set-version": "rm -rf ./build",
@@ -44,6 +44,8 @@
 		"webpack-merge": "^6.0.1"
 	},
 	"dependencies": {
-		"classnames": "^2.5.1"
+		"@wordpress/interface": "^6.0.0",
+		"classnames": "^2.5.1",
+		"lucide-react": "^0.468.0"
 	}
 }
