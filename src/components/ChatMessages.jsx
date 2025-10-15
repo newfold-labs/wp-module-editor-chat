@@ -13,6 +13,9 @@ import ChatMessage from "./ChatMessage";
  *
  * Scrollable container for all chat messages
  * Auto-scrolls to bottom when new messages arrive
+ *
+ * @param props          - The component props.
+ * @param props.messages - The messages to display.
  */
 const ChatMessages = ({ messages = [] }) => {
 	const messagesEndRef = useRef(null);
@@ -24,15 +27,10 @@ const ChatMessages = ({ messages = [] }) => {
 
 	return (
 		<div className="nfd-chat-messages">
-			{messages.length === 0 ? (
-				<div className="nfd-chat-messages__empty">
-					<p>Start a conversation with the AI assistant...</p>
-				</div>
-			) : (
+			{messages.length &&
 				messages.map((msg, index) => (
 					<ChatMessage key={index} message={msg.content} type={msg.type} />
-				))
-			)}
+				))}
 			<div ref={messagesEndRef} />
 		</div>
 	);

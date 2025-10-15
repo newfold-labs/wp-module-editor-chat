@@ -2212,6 +2212,54 @@ const mergeClasses = (...classes) => classes.filter((className, index, array) =>
 
 /***/ }),
 
+/***/ "./src/components/AIAvatar.jsx":
+/*!*************************************!*\
+  !*** ./src/components/AIAvatar.jsx ***!
+  \*************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _svg_sparks_svg__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../svg/sparks.svg */ "./src/svg/sparks.svg");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react/jsx-runtime */ "react/jsx-runtime");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__);
+/**
+ * Internal dependencies
+ */
+
+
+/**
+ * AIAvatar Component
+ *
+ * A reusable avatar component for the AI assistant with purple gradient background
+ * and white sparks icon.
+ *
+ * @param {Object} props        - The component props.
+ * @param {number} props.width  - The width of the avatar (default: 24).
+ * @param {number} props.height - The height of the avatar (default: 24).
+ * @return {JSX.Element} The AIAvatar component.
+ */
+
+const AIAvatar = ({
+  width = 24,
+  height = 24
+}) => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("div", {
+  className: "nfd-ai-avatar",
+  style: {
+    width,
+    height
+  },
+  children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(_svg_sparks_svg__WEBPACK_IMPORTED_MODULE_0__.ReactComponent, {
+    width: width * 0.625,
+    height: height * 0.625
+  })
+});
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (AIAvatar);
+
+/***/ }),
+
 /***/ "./src/components/ChatEditor.jsx":
 /*!***************************************!*\
   !*** ./src/components/ChatEditor.jsx ***!
@@ -2222,28 +2270,23 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _wordpress_components__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @wordpress/components */ "@wordpress/components");
-/* harmony import */ var _wordpress_components__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_wordpress_components__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _wordpress_data__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @wordpress/data */ "@wordpress/data");
-/* harmony import */ var _wordpress_data__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_wordpress_data__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _wordpress_editor__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @wordpress/editor */ "@wordpress/editor");
-/* harmony import */ var _wordpress_editor__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_wordpress_editor__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var _wordpress_element__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @wordpress/element */ "@wordpress/element");
-/* harmony import */ var _wordpress_element__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_wordpress_element__WEBPACK_IMPORTED_MODULE_3__);
-/* harmony import */ var _wordpress_i18n__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @wordpress/i18n */ "@wordpress/i18n");
-/* harmony import */ var _wordpress_i18n__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(_wordpress_i18n__WEBPACK_IMPORTED_MODULE_4__);
-/* harmony import */ var _wordpress_interface__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @wordpress/interface */ "./node_modules/@wordpress/interface/build-module/index.js");
-/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/layers.js");
-/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/pen-line.js");
-/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/file-plus.js");
-/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/maximize-2.js");
-/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/message-square-plus.js");
-/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/palette.js");
-/* harmony import */ var _svg_sparks_svg__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ../svg/sparks.svg */ "./src/svg/sparks.svg");
-/* harmony import */ var _ChatInput__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./ChatInput */ "./src/components/ChatInput.jsx");
-/* harmony import */ var _ChatMessages__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ./ChatMessages */ "./src/components/ChatMessages.jsx");
-/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! react/jsx-runtime */ "react/jsx-runtime");
-/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15___default = /*#__PURE__*/__webpack_require__.n(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__);
+/* harmony import */ var _wordpress_data__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @wordpress/data */ "@wordpress/data");
+/* harmony import */ var _wordpress_data__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_wordpress_data__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _wordpress_editor__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @wordpress/editor */ "@wordpress/editor");
+/* harmony import */ var _wordpress_editor__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_wordpress_editor__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _wordpress_element__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @wordpress/element */ "@wordpress/element");
+/* harmony import */ var _wordpress_element__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_wordpress_element__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @wordpress/i18n */ "@wordpress/i18n");
+/* harmony import */ var _wordpress_i18n__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var _wordpress_interface__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @wordpress/interface */ "./node_modules/@wordpress/interface/build-module/index.js");
+/* harmony import */ var _hooks_useChat__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../hooks/useChat */ "./src/hooks/useChat.js");
+/* harmony import */ var _AIAvatar__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./AIAvatar */ "./src/components/AIAvatar.jsx");
+/* harmony import */ var _ChatInput__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./ChatInput */ "./src/components/ChatInput.jsx");
+/* harmony import */ var _ChatMessages__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./ChatMessages */ "./src/components/ChatMessages.jsx");
+/* harmony import */ var _SidebarHeader__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./SidebarHeader */ "./src/components/SidebarHeader.jsx");
+/* harmony import */ var _WelcomeScreen__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./WelcomeScreen */ "./src/components/WelcomeScreen.jsx");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! react/jsx-runtime */ "react/jsx-runtime");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11___default = /*#__PURE__*/__webpack_require__.n(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__);
 /**
  * WordPress dependencies
  */
@@ -2253,12 +2296,6 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-
-/**
- * External dependencies
- */
-
-
 /**
  * Internal dependencies
  */
@@ -2266,199 +2303,59 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-// AI Avatar component that matches the chat avatar design
 
-const AIAvatar = ({
-  width = 24,
-  height = 24
-}) => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)("div", {
-  style: {
-    width: width,
-    height: height,
-    borderRadius: "50%",
-    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: "#fff"
-  },
-  children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)(_svg_sparks_svg__WEBPACK_IMPORTED_MODULE_12__.ReactComponent, {
-    width: width * 0.75,
-    height: height * 0.75,
-    fill: "currentColor"
-  })
-});
+
+
 const SIDEBAR_NAME = "nfd-editor-chat";
 const SIDEBAR_SCOPE = "core";
 const ChatEditor = () => {
   const {
     enableComplementaryArea
-  } = (0,_wordpress_data__WEBPACK_IMPORTED_MODULE_1__.useDispatch)(_wordpress_interface__WEBPACK_IMPORTED_MODULE_5__.store);
-  const [messages, setMessages] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_3__.useState)([]);
-  const [isLoading, setIsLoading] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_3__.useState)(false);
-
-  // Get current user data
-  const currentUser = (0,_wordpress_data__WEBPACK_IMPORTED_MODULE_1__.useSelect)(select => {
-    const {
-      getCurrentUser
-    } = select("core");
-    return getCurrentUser();
-  }, []);
-  (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_3__.useEffect)(() => {
+  } = (0,_wordpress_data__WEBPACK_IMPORTED_MODULE_0__.useDispatch)(_wordpress_interface__WEBPACK_IMPORTED_MODULE_4__.store);
+  const {
+    messages,
+    isLoading,
+    handleSendMessage,
+    handleNewChat
+  } = (0,_hooks_useChat__WEBPACK_IMPORTED_MODULE_5__["default"])();
+  (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_2__.useEffect)(() => {
     enableComplementaryArea(SIDEBAR_SCOPE, SIDEBAR_NAME);
   }, [enableComplementaryArea]);
-  const handleSendMessage = async messageContent => {
-    // Add user message
-    const userMessage = {
-      type: "user",
-      content: messageContent
-    };
-    setMessages(prev => [...prev, userMessage]);
-    setIsLoading(true);
-
-    // TODO: Replace with actual API call
-    // Simulate AI response
-    setTimeout(() => {
-      const aiMessage = {
-        type: "assistant",
-        content: "This is a placeholder response. The AI functionality will be implemented soon."
-      };
-      setMessages(prev => [...prev, aiMessage]);
-      setIsLoading(false);
-    }, 1000);
-  };
-  const handleNewChat = () => {
-    // Reset messages to empty array to show welcome screen
-    setMessages([]);
-  };
   const handleExpandWindow = () => {
     // TODO: Implement expand to new window functionality
-    console.log("Expand to new window clicked");
+    // console.log("Expand to new window clicked");
   };
-
-  // Welcome screen component
-  const WelcomeScreen = () => {
-    const suggestions = [{
-      icon: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)(lucide_react__WEBPACK_IMPORTED_MODULE_7__["default"], {
-        width: 16,
-        height: 16
-      }),
-      text: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_4__.__)("Add a section", "wp-module-editor-chat"),
-      action: () => handleSendMessage("Add a section")
-    }, {
-      icon: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)(lucide_react__WEBPACK_IMPORTED_MODULE_6__["default"], {
-        width: 16,
-        height: 16
-      }),
-      text: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_4__.__)("Update content", "wp-module-editor-chat"),
-      action: () => handleSendMessage("Update content")
-    }, {
-      icon: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)(lucide_react__WEBPACK_IMPORTED_MODULE_11__["default"], {
-        width: 16,
-        height: 16
-      }),
-      text: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_4__.__)("Update color scheme", "wp-module-editor-chat"),
-      action: () => handleSendMessage("Update color scheme")
-    }, {
-      icon: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)(lucide_react__WEBPACK_IMPORTED_MODULE_8__["default"], {
-        width: 16,
-        height: 16
-      }),
-      text: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_4__.__)("Add a new page", "wp-module-editor-chat"),
-      action: () => handleSendMessage("Add a new page")
-    }];
-    return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxs)("div", {
-      className: "nfd-chat-welcome",
-      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxs)("div", {
-        className: "nfd-chat-welcome__content",
-        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)("div", {
-          className: "nfd-chat-welcome__avatar",
-          children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)(AIAvatar, {
-            width: 48,
-            height: 48
-          })
-        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxs)("div", {
-          className: "nfd-chat-welcome__message",
-          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)("div", {
-            className: "nfd-chat-welcome__title",
-            children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_4__.__)("Hi, I'm BLU, your AI assistant.", "wp-module-editor-chat")
-          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)("div", {
-            className: "nfd-chat-welcome__subtitle",
-            children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_4__.__)("I can help you update page sections and styles,", "wp-module-editor-chat")
-          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)("div", {
-            className: "nfd-chat-welcome__subtitle",
-            children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_4__.__)("add, remove, or edit existing content.", "wp-module-editor-chat")
-          })]
-        })]
-      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)("div", {
-        className: "nfd-chat-welcome__suggestions",
-        children: suggestions.map((suggestion, index) => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxs)("button", {
-          className: "nfd-chat-welcome__suggestion",
-          onClick: suggestion.action,
-          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)("div", {
-            className: "nfd-chat-welcome__suggestion-icon",
-            children: suggestion.icon
-          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)("div", {
-            className: "nfd-chat-welcome__suggestion-text",
-            children: suggestion.text
-          })]
-        }, index))
-      })]
-    });
-  };
-  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.Fragment, {
-    children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)(_wordpress_editor__WEBPACK_IMPORTED_MODULE_2__.PluginSidebarMoreMenuItem, {
+  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.Fragment, {
+    children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(_wordpress_editor__WEBPACK_IMPORTED_MODULE_1__.PluginSidebarMoreMenuItem, {
       scope: SIDEBAR_SCOPE,
       target: SIDEBAR_NAME,
-      icon: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)(AIAvatar, {
+      icon: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(_AIAvatar__WEBPACK_IMPORTED_MODULE_6__["default"], {
         width: 24,
         height: 24
       }),
-      children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_4__.__)("AI Chat Editor", "wp-module-editor-chat")
-    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)(_wordpress_editor__WEBPACK_IMPORTED_MODULE_2__.PluginSidebar, {
+      children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)("AI Chat Editor", "wp-module-editor-chat")
+    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(_wordpress_editor__WEBPACK_IMPORTED_MODULE_1__.PluginSidebar, {
       scope: SIDEBAR_SCOPE,
       identifier: SIDEBAR_NAME,
       className: "nfd-editor-chat-sidebar",
-      closeLabel: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_4__.__)("Close AI Chat Editor", "wp-module-editor-chat"),
-      icon: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)(AIAvatar, {
+      closeLabel: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)("Close AI Chat Editor", "wp-module-editor-chat"),
+      icon: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(_AIAvatar__WEBPACK_IMPORTED_MODULE_6__["default"], {
         width: 24,
         height: 24
       }),
       headerClassName: "nfd-editor-chat-sidebar__header",
       panelClassName: "nfd-editor-chat-sidebar__panel",
-      header: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxs)("div", {
-        className: "nfd-editor-chat-sidebar__header-content",
-        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)("h2", {
-          className: "interface-complementary-area-header__title",
-          children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_4__.__)("AI Chat Editor", "wp-module-editor-chat")
-        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxs)("div", {
-          className: "nfd-editor-chat-sidebar__header-actions",
-          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_0__.Button, {
-            icon: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)(lucide_react__WEBPACK_IMPORTED_MODULE_10__["default"], {
-              width: 16,
-              height: 16
-            }),
-            label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_4__.__)("Start new chat", "wp-module-editor-chat"),
-            onClick: handleNewChat,
-            className: "nfd-editor-chat-sidebar__new-chat",
-            size: "small"
-          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_0__.Button, {
-            icon: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)(lucide_react__WEBPACK_IMPORTED_MODULE_9__["default"], {
-              width: 16,
-              height: 16
-            }),
-            label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_4__.__)("Open in new window", "wp-module-editor-chat"),
-            onClick: handleExpandWindow,
-            className: "nfd-editor-chat-sidebar__expand",
-            size: "small"
-          })]
-        })]
+      header: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(_SidebarHeader__WEBPACK_IMPORTED_MODULE_9__["default"], {
+        onNewChat: handleNewChat,
+        onExpand: handleExpandWindow
       }),
-      children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxs)("div", {
+      children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsxs)("div", {
         className: "nfd-editor-chat-sidebar__content",
-        children: [messages.length === 0 ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)(WelcomeScreen, {}) : /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)(_ChatMessages__WEBPACK_IMPORTED_MODULE_14__["default"], {
+        children: [messages.length === 0 ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(_WelcomeScreen__WEBPACK_IMPORTED_MODULE_10__["default"], {
+          onSendMessage: handleSendMessage
+        }) : /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(_ChatMessages__WEBPACK_IMPORTED_MODULE_8__["default"], {
           messages: messages
-        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)(_ChatInput__WEBPACK_IMPORTED_MODULE_13__["default"], {
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(_ChatInput__WEBPACK_IMPORTED_MODULE_7__["default"], {
           onSendMessage: handleSendMessage,
           disabled: isLoading
         })]
@@ -2508,7 +2405,7 @@ __webpack_require__.r(__webpack_exports__);
  * @param {Object}   props               - The component props.
  * @param {Function} props.onSendMessage - The function to call when the message is sent.
  * @param {boolean}  props.disabled      - Whether the input is disabled.
- * @returns {JSX.Element} The ChatInput component.
+ * @return {JSX.Element} The ChatInput component.
  */
 
 const ChatInput = ({
@@ -2526,6 +2423,15 @@ const ChatInput = ({
       textareaRef.current.style.height = `${newHeight}px`;
     }
   }, [message]);
+
+  // Focus textarea when it becomes enabled again (after AI response)
+  (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_1__.useEffect)(() => {
+    if (!disabled && textareaRef.current) {
+      setTimeout(() => {
+        textareaRef.current.focus();
+      }, 100);
+    }
+  }, [disabled]);
   const handleSubmit = () => {
     if (message.trim() && !disabled) {
       onSendMessage(message);
@@ -2545,7 +2451,7 @@ const ChatInput = ({
   };
   const handleFileUpload = () => {
     // TODO: Implement file upload functionality
-    console.log("File upload clicked");
+    // console.log("File upload clicked");
   };
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("div", {
     className: "nfd-chat-input",
@@ -2603,9 +2509,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @wordpress/i18n */ "@wordpress/i18n");
-/* harmony import */ var _wordpress_i18n__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _svg_sparks_svg__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../svg/sparks.svg */ "./src/svg/sparks.svg");
+/* harmony import */ var _wordpress_data__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @wordpress/data */ "@wordpress/data");
+/* harmony import */ var _wordpress_data__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_wordpress_data__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _AIAvatar__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./AIAvatar */ "./src/components/AIAvatar.jsx");
 /* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! react/jsx-runtime */ "react/jsx-runtime");
 /* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__);
 /**
@@ -2621,9 +2527,12 @@ __webpack_require__.r(__webpack_exports__);
 /**
  * ChatMessage Component
  *
- * Displays a single message in the chat
- * - User messages: grey bubble, aligned right
- * - AI messages: plain text on white background, aligned left
+ * Displays a single message in the chat with appropriate styling and avatar.
+ *
+ * @param {Object} props                    - The component props.
+ * @param {string} props.message            - The message content to display.
+ * @param {string} [props.type="assistant"] - The message type ("user" or "assistant").
+ * @return {JSX.Element} The ChatMessage component.
  */
 
 const ChatMessage = ({
@@ -2631,21 +2540,48 @@ const ChatMessage = ({
   type = "assistant"
 }) => {
   const isUser = type === "user";
+
+  // Get current user data
+  const currentUser = (0,_wordpress_data__WEBPACK_IMPORTED_MODULE_0__.useSelect)(select => {
+    const {
+      getCurrentUser
+    } = select("core");
+    return getCurrentUser();
+  }, []);
+
+  // Get the first letter of the user's name, fallback to "U" if no name
+  const getUserInitial = () => {
+    if (!currentUser) {
+      return "U";
+    }
+    const name = currentUser.name || currentUser.display_name || currentUser.user_login || "";
+    return name.charAt(0).toUpperCase() || "U";
+  };
+
+  // Get WordPress user avatar URL
+  const getUserAvatar = () => {
+    if (!currentUser) {
+      return null;
+    }
+    // WordPress provides avatar URLs in different formats
+    return currentUser.avatar_urls?.[96] || currentUser.avatar_urls?.[48] || null;
+  };
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxs)("div", {
     className: `nfd-chat-message nfd-chat-message--${type}`,
-    children: [!isUser && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)("div", {
-      className: "nfd-chat-message__avatar",
-      children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)(_svg_sparks_svg__WEBPACK_IMPORTED_MODULE_1__.ReactComponent, {
-        width: 20,
-        height: 20
-      })
+    children: [!isUser && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)(_AIAvatar__WEBPACK_IMPORTED_MODULE_1__["default"], {
+      width: 32,
+      height: 32
     }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)("div", {
       className: "nfd-chat-message__content",
       children: message
     }), isUser && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)("div", {
       className: "nfd-chat-message__avatar nfd-chat-message__avatar--user",
-      children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)("span", {
-        children: "A"
+      children: getUserAvatar() ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)("img", {
+        src: getUserAvatar(),
+        alt: "User avatar",
+        className: "nfd-chat-message__avatar-image"
+      }) : /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)("span", {
+        children: getUserInitial()
       })
     })]
   });
@@ -2684,6 +2620,9 @@ __webpack_require__.r(__webpack_exports__);
  *
  * Scrollable container for all chat messages
  * Auto-scrolls to bottom when new messages arrive
+ *
+ * @param props          - The component props.
+ * @param props.messages - The messages to display.
  */
 
 const ChatMessages = ({
@@ -2699,12 +2638,7 @@ const ChatMessages = ({
   }, [messages]);
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxs)("div", {
     className: "nfd-chat-messages",
-    children: [messages.length === 0 ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)("div", {
-      className: "nfd-chat-messages__empty",
-      children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)("p", {
-        children: "Start a conversation with the AI assistant..."
-      })
-    }) : messages.map((msg, index) => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)(_ChatMessage__WEBPACK_IMPORTED_MODULE_1__["default"], {
+    children: [messages.length && messages.map((msg, index) => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)(_ChatMessage__WEBPACK_IMPORTED_MODULE_1__["default"], {
       message: msg.content,
       type: msg.type
     }, index)), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)("div", {
@@ -2713,6 +2647,260 @@ const ChatMessages = ({
   });
 };
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (ChatMessages);
+
+/***/ }),
+
+/***/ "./src/components/SidebarHeader.jsx":
+/*!******************************************!*\
+  !*** ./src/components/SidebarHeader.jsx ***!
+  \******************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _wordpress_components__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @wordpress/components */ "@wordpress/components");
+/* harmony import */ var _wordpress_components__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_wordpress_components__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @wordpress/i18n */ "@wordpress/i18n");
+/* harmony import */ var _wordpress_i18n__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/maximize-2.js");
+/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/message-square-plus.js");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! react/jsx-runtime */ "react/jsx-runtime");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__);
+/**
+ * WordPress dependencies
+ */
+
+
+
+/**
+ * External dependencies
+ */
+
+
+/**
+ * SidebarHeader Component
+ *
+ * Displays the sidebar header with title and action buttons.
+ *
+ * @param {Object}   props           - The component props.
+ * @param {Function} props.onNewChat - The function to call when new chat is clicked.
+ * @param {Function} props.onExpand  - The function to call when expand is clicked.
+ * @returns {JSX.Element} The SidebarHeader component.
+ */
+
+const SidebarHeader = ({
+  onNewChat,
+  onExpand
+}) => {
+  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("div", {
+    className: "nfd-editor-chat-sidebar__header-content",
+    children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("h2", {
+      className: "interface-complementary-area-header__title",
+      children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("AI Chat Editor", "wp-module-editor-chat")
+    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("div", {
+      className: "nfd-editor-chat-sidebar__header-actions",
+      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_0__.Button, {
+        icon: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(lucide_react__WEBPACK_IMPORTED_MODULE_3__["default"], {
+          width: 16,
+          height: 16
+        }),
+        label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("Start new chat", "wp-module-editor-chat"),
+        onClick: onNewChat,
+        className: "nfd-editor-chat-sidebar__new-chat"
+      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_0__.Button, {
+        icon: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(lucide_react__WEBPACK_IMPORTED_MODULE_2__["default"], {
+          width: 16,
+          height: 16
+        }),
+        label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("Open in new window", "wp-module-editor-chat"),
+        onClick: onExpand,
+        className: "nfd-editor-chat-sidebar__expand"
+      })]
+    })]
+  });
+};
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (SidebarHeader);
+
+/***/ }),
+
+/***/ "./src/components/WelcomeScreen.jsx":
+/*!******************************************!*\
+  !*** ./src/components/WelcomeScreen.jsx ***!
+  \******************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @wordpress/i18n */ "@wordpress/i18n");
+/* harmony import */ var _wordpress_i18n__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/layers.js");
+/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/pen-line.js");
+/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/file-plus.js");
+/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/palette.js");
+/* harmony import */ var _AIAvatar__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./AIAvatar */ "./src/components/AIAvatar.jsx");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! react/jsx-runtime */ "react/jsx-runtime");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6___default = /*#__PURE__*/__webpack_require__.n(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__);
+/**
+ * WordPress dependencies
+ */
+
+
+/**
+ * External dependencies
+ */
+
+
+/**
+ * Internal dependencies
+ */
+
+
+/**
+ * WelcomeScreen Component
+ *
+ * Displays the welcome screen with AI avatar, introduction message, and suggestion tags.
+ *
+ * @param {Object}   props               - The component props.
+ * @param {Function} props.onSendMessage - The function to call when a suggestion is clicked.
+ * @returns {JSX.Element} The WelcomeScreen component.
+ */
+
+const WelcomeScreen = ({
+  onSendMessage
+}) => {
+  const suggestions = [{
+    icon: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(lucide_react__WEBPACK_IMPORTED_MODULE_2__["default"], {
+      width: 16,
+      height: 16
+    }),
+    text: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Add a new section", "wp-module-editor-chat"),
+    action: () => onSendMessage("Add a new section")
+  }, {
+    icon: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(lucide_react__WEBPACK_IMPORTED_MODULE_4__["default"], {
+      width: 16,
+      height: 16
+    }),
+    text: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Update color scheme", "wp-module-editor-chat"),
+    action: () => onSendMessage("Update color scheme")
+  }, {
+    icon: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(lucide_react__WEBPACK_IMPORTED_MODULE_3__["default"], {
+      width: 16,
+      height: 16
+    }),
+    text: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Create new page", "wp-module-editor-chat"),
+    action: () => onSendMessage("Create new page")
+  }, {
+    icon: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(lucide_react__WEBPACK_IMPORTED_MODULE_1__["default"], {
+      width: 16,
+      height: 16
+    }),
+    text: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Edit content", "wp-module-editor-chat"),
+    action: () => onSendMessage("Edit content")
+  }];
+  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("div", {
+    className: "nfd-chat-welcome",
+    children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("div", {
+      className: "nfd-chat-welcome__content",
+      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("div", {
+        className: "nfd-chat-welcome__avatar",
+        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(_AIAvatar__WEBPACK_IMPORTED_MODULE_5__["default"], {
+          width: 48,
+          height: 48
+        })
+      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("div", {
+        className: "nfd-chat-welcome__message",
+        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("div", {
+          className: "nfd-chat-welcome__title",
+          children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Hi, I'm BLU, your AI assistant.", "wp-module-editor-chat")
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("div", {
+          className: "nfd-chat-welcome__subtitle",
+          children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("I can help you update page sections and styles,", "wp-module-editor-chat")
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("div", {
+          className: "nfd-chat-welcome__subtitle",
+          children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("add, remove, or edit existing content.", "wp-module-editor-chat")
+        })]
+      })]
+    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("div", {
+      className: "nfd-chat-welcome__suggestions",
+      children: suggestions.map((suggestion, index) => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("button", {
+        className: "nfd-chat-welcome__suggestion",
+        onClick: suggestion.action,
+        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("div", {
+          className: "nfd-chat-welcome__suggestion-icon",
+          children: suggestion.icon
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("div", {
+          className: "nfd-chat-welcome__suggestion-text",
+          children: suggestion.text
+        })]
+      }, index))
+    })]
+  });
+};
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (WelcomeScreen);
+
+/***/ }),
+
+/***/ "./src/hooks/useChat.js":
+/*!******************************!*\
+  !*** ./src/hooks/useChat.js ***!
+  \******************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _wordpress_element__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @wordpress/element */ "@wordpress/element");
+/* harmony import */ var _wordpress_element__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_wordpress_element__WEBPACK_IMPORTED_MODULE_0__);
+/**
+ * WordPress dependencies
+ */
+
+
+/**
+ * Custom hook for managing chat functionality
+ *
+ * @return {Object} Chat state and handlers
+ */
+const useChat = () => {
+  const [messages, setMessages] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useState)([]);
+  const [isLoading, setIsLoading] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useState)(false);
+  const handleSendMessage = async messageContent => {
+    // Add user message
+    const userMessage = {
+      type: "user",
+      content: messageContent
+    };
+    setMessages(prev => [...prev, userMessage]);
+    setIsLoading(true);
+
+    // TODO: Replace with actual API call
+    // Simulate AI response
+    setTimeout(() => {
+      const aiMessage = {
+        type: "assistant",
+        content: "This is a placeholder response. The AI functionality will be implemented soon."
+      };
+      setMessages(prev => [...prev, aiMessage]);
+      setIsLoading(false);
+    }, 1000);
+  };
+  const handleNewChat = () => {
+    // Reset messages to empty array to show welcome screen
+    setMessages([]);
+  };
+  return {
+    messages,
+    isLoading,
+    handleSendMessage,
+    handleNewChat
+  };
+};
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (useChat);
 
 /***/ }),
 

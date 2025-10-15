@@ -2,7 +2,7 @@
  * WordPress dependencies
  */
 import { Button } from "@wordpress/components";
-import { useState, useRef, useEffect } from "@wordpress/element";
+import { useEffect, useRef, useState } from "@wordpress/element";
 import { __ } from "@wordpress/i18n";
 
 /**
@@ -16,7 +16,7 @@ import { ArrowUp, Paperclip } from "lucide-react";
  * @param {Object}   props               - The component props.
  * @param {Function} props.onSendMessage - The function to call when the message is sent.
  * @param {boolean}  props.disabled      - Whether the input is disabled.
- * @returns {JSX.Element} The ChatInput component.
+ * @return {JSX.Element} The ChatInput component.
  */
 const ChatInput = ({ onSendMessage, disabled = false }) => {
 	const [message, setMessage] = useState("");
@@ -30,6 +30,15 @@ const ChatInput = ({ onSendMessage, disabled = false }) => {
 			textareaRef.current.style.height = `${newHeight}px`;
 		}
 	}, [message]);
+
+	// Focus textarea when it becomes enabled again (after AI response)
+	useEffect(() => {
+		if (!disabled && textareaRef.current) {
+			setTimeout(() => {
+				textareaRef.current.focus();
+			}, 100);
+		}
+	}, [disabled]);
 
 	const handleSubmit = () => {
 		if (message.trim() && !disabled) {
@@ -52,7 +61,7 @@ const ChatInput = ({ onSendMessage, disabled = false }) => {
 
 	const handleFileUpload = () => {
 		// TODO: Implement file upload functionality
-		console.log("File upload clicked");
+		// console.log("File upload clicked");
 	};
 
 	return (

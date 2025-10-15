@@ -1,0 +1,65 @@
+.nfd-editor-chat-sidebar__header {
+	padding: 16px;
+	border-bottom: 1px solid #e0e0e0;
+	position: relative;
+	h2 {
+		margin: 0;
+		font-size: 14px;
+		font-weight: 600;
+	}
+}
+
+.nfd-editor-chat-sidebar__header-content {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+}
+
+.nfd-editor-chat-sidebar__header-actions {
+	display: flex;
+	gap: 4px;
+	align-items: center;
+}
+
+.nfd-editor-chat-sidebar__new-chat,
+.nfd-editor-chat-sidebar__expand {
+	&.components-button {
+		min-width: auto;
+		width: 32px;
+		height: 32px;
+		padding: 0;
+		stroke: var(--nfd-chat-color-grey-dark);
+		background: transparent;
+		border: none;
+		border-radius: 4px;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: all 0.15s ease;
+
+		&:hover:not(:disabled) {
+			stroke: var(--nfd-chat-color-primary);
+			background: var(--nfd-chat-color-primary-light-12);
+		}
+
+		&:focus:not(:disabled) {
+			outline: none;
+			stroke: var(--nfd-chat-color-primary);
+			background: var(--nfd-chat-color-primary-light-16);
+		}
+
+		&:active:not(:disabled) {
+			stroke: var(--nfd-chat-color-primary-hover);
+			background: var(--nfd-chat-color-primary-light-20);
+		}
+
+		svg {
+			display: block;
+			fill: none;
+			width: 16px;
+			height: 16px;
+		}
+	}
+}

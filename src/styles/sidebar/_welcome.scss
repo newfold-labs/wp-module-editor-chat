@@ -1,0 +1,108 @@
+// Welcome screen
+.nfd-chat-welcome {
+	flex: 1 1 auto;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: space-between;
+	padding: 40px 16px 0 16px; // Removed bottom padding to extend all the way down
+	text-align: center;
+	min-height: 0;
+	overflow-y: auto;
+	gap: 32px;
+}
+
+.nfd-chat-welcome__content {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	flex: 1;
+}
+
+.nfd-chat-welcome__avatar {
+	margin-bottom: 24px;
+}
+
+.nfd-chat-welcome__message {
+	max-width: 320px;
+	margin-bottom: 0;
+}
+
+.nfd-chat-welcome__title {
+	font-size: 18px;
+	line-height: 1.4;
+	color: var(--nfd-chat-color-text);
+	font-weight: 600;
+	margin-bottom: 8px;
+}
+
+.nfd-chat-welcome__subtitle {
+	font-size: 14px;
+	line-height: 1.5;
+	color: var(--nfd-chat-color-grey-dark);
+	font-weight: 400;
+}
+
+.nfd-chat-welcome__suggestions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	width: 100%;
+	padding: 0 0 16px 0;
+	justify-content: center;
+}
+
+.nfd-chat-welcome__suggestion {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 12px;
+	background: var(--nfd-chat-color-white);
+	border: 1px solid var(--nfd-chat-color-border);
+	border-radius: 20px;
+	cursor: pointer;
+	transition: all 0.15s ease;
+	text-align: left;
+	white-space: nowrap;
+	flex-shrink: 0;
+	color: var(--nfd-chat-color-text);
+
+	&:hover,
+	&:active {
+		background: var(--nfd-chat-color-primary-light-12);
+		border-color: var(--nfd-chat-color-primary-light-12);
+		color: var(--nfd-chat-color-primary);
+	}
+
+	&:focus {
+		outline: none;
+		background: var(--nfd-chat-color-primary-light-16);
+		border-color: var(--nfd-chat-color-primary);
+		color: var(--nfd-chat-color-primary);
+	}
+}
+
+.nfd-chat-welcome__suggestion-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 16px;
+	height: 16px;
+	flex-shrink: 0;
+	stroke: var(--nfd-chat-color-grey-dark);
+
+	svg {
+		width: 14px;
+		height: 14px;
+		fill: none;
+	}
+}
+
+.nfd-chat-welcome__suggestion-text {
+	font-size: 12px;
+	line-height: 1.3;
+	font-weight: 400;
+	text-align: left;
+}
