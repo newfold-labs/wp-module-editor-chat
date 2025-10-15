@@ -1921,6 +1921,194 @@ const ArrowUp = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])
 
 /***/ }),
 
+/***/ "./node_modules/lucide-react/dist/esm/icons/file-plus.js":
+/*!***************************************************************!*\
+  !*** ./node_modules/lucide-react/dist/esm/icons/file-plus.js ***!
+  \***************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* binding */ FilePlus)
+/* harmony export */ });
+/* harmony import */ var _createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../createLucideIcon.js */ "./node_modules/lucide-react/dist/esm/createLucideIcon.js");
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+
+const FilePlus = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])("FilePlus", [
+  ["path", { d: "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z", key: "1rqfz7" }],
+  ["path", { d: "M14 2v4a2 2 0 0 0 2 2h4", key: "tnqrlb" }],
+  ["path", { d: "M9 15h6", key: "cctwl0" }],
+  ["path", { d: "M12 18v-6", key: "17g6i2" }]
+]);
+
+
+//# sourceMappingURL=file-plus.js.map
+
+
+/***/ }),
+
+/***/ "./node_modules/lucide-react/dist/esm/icons/layers.js":
+/*!************************************************************!*\
+  !*** ./node_modules/lucide-react/dist/esm/icons/layers.js ***!
+  \************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* binding */ Layers)
+/* harmony export */ });
+/* harmony import */ var _createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../createLucideIcon.js */ "./node_modules/lucide-react/dist/esm/createLucideIcon.js");
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+
+const Layers = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])("Layers", [
+  [
+    "path",
+    {
+      d: "M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z",
+      key: "zw3jo"
+    }
+  ],
+  [
+    "path",
+    {
+      d: "M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12",
+      key: "1wduqc"
+    }
+  ],
+  [
+    "path",
+    {
+      d: "M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17",
+      key: "kqbvx6"
+    }
+  ]
+]);
+
+
+//# sourceMappingURL=layers.js.map
+
+
+/***/ }),
+
+/***/ "./node_modules/lucide-react/dist/esm/icons/maximize-2.js":
+/*!****************************************************************!*\
+  !*** ./node_modules/lucide-react/dist/esm/icons/maximize-2.js ***!
+  \****************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* binding */ Maximize2)
+/* harmony export */ });
+/* harmony import */ var _createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../createLucideIcon.js */ "./node_modules/lucide-react/dist/esm/createLucideIcon.js");
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+
+const Maximize2 = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])("Maximize2", [
+  ["polyline", { points: "15 3 21 3 21 9", key: "mznyad" }],
+  ["polyline", { points: "9 21 3 21 3 15", key: "1avn1i" }],
+  ["line", { x1: "21", x2: "14", y1: "3", y2: "10", key: "ota7mn" }],
+  ["line", { x1: "3", x2: "10", y1: "21", y2: "14", key: "1atl0r" }]
+]);
+
+
+//# sourceMappingURL=maximize-2.js.map
+
+
+/***/ }),
+
+/***/ "./node_modules/lucide-react/dist/esm/icons/message-square-plus.js":
+/*!*************************************************************************!*\
+  !*** ./node_modules/lucide-react/dist/esm/icons/message-square-plus.js ***!
+  \*************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* binding */ MessageSquarePlus)
+/* harmony export */ });
+/* harmony import */ var _createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../createLucideIcon.js */ "./node_modules/lucide-react/dist/esm/createLucideIcon.js");
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+
+const MessageSquarePlus = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])("MessageSquarePlus", [
+  ["path", { d: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z", key: "1lielz" }],
+  ["path", { d: "M12 7v6", key: "lw1j43" }],
+  ["path", { d: "M9 10h6", key: "9gxzsh" }]
+]);
+
+
+//# sourceMappingURL=message-square-plus.js.map
+
+
+/***/ }),
+
+/***/ "./node_modules/lucide-react/dist/esm/icons/palette.js":
+/*!*************************************************************!*\
+  !*** ./node_modules/lucide-react/dist/esm/icons/palette.js ***!
+  \*************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* binding */ Palette)
+/* harmony export */ });
+/* harmony import */ var _createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../createLucideIcon.js */ "./node_modules/lucide-react/dist/esm/createLucideIcon.js");
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+
+const Palette = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])("Palette", [
+  ["circle", { cx: "13.5", cy: "6.5", r: ".5", fill: "currentColor", key: "1okk4w" }],
+  ["circle", { cx: "17.5", cy: "10.5", r: ".5", fill: "currentColor", key: "f64h9f" }],
+  ["circle", { cx: "8.5", cy: "7.5", r: ".5", fill: "currentColor", key: "fotxhn" }],
+  ["circle", { cx: "6.5", cy: "12.5", r: ".5", fill: "currentColor", key: "qy21gx" }],
+  [
+    "path",
+    {
+      d: "M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z",
+      key: "12rzf8"
+    }
+  ]
+]);
+
+
+//# sourceMappingURL=palette.js.map
+
+
+/***/ }),
+
 /***/ "./node_modules/lucide-react/dist/esm/icons/paperclip.js":
 /*!***************************************************************!*\
   !*** ./node_modules/lucide-react/dist/esm/icons/paperclip.js ***!
@@ -1954,6 +2142,43 @@ const Paperclip = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"
 
 
 //# sourceMappingURL=paperclip.js.map
+
+
+/***/ }),
+
+/***/ "./node_modules/lucide-react/dist/esm/icons/pen-line.js":
+/*!**************************************************************!*\
+  !*** ./node_modules/lucide-react/dist/esm/icons/pen-line.js ***!
+  \**************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* binding */ PenLine)
+/* harmony export */ });
+/* harmony import */ var _createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../createLucideIcon.js */ "./node_modules/lucide-react/dist/esm/createLucideIcon.js");
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+
+const PenLine = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])("PenLine", [
+  ["path", { d: "M12 20h9", key: "t2du7b" }],
+  [
+    "path",
+    {
+      d: "M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z",
+      key: "1ykcvy"
+    }
+  ]
+]);
+
+
+//# sourceMappingURL=pen-line.js.map
 
 
 /***/ }),
@@ -1997,20 +2222,28 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _wordpress_data__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @wordpress/data */ "@wordpress/data");
-/* harmony import */ var _wordpress_data__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_wordpress_data__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _wordpress_editor__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @wordpress/editor */ "@wordpress/editor");
-/* harmony import */ var _wordpress_editor__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_wordpress_editor__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _wordpress_element__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @wordpress/element */ "@wordpress/element");
-/* harmony import */ var _wordpress_element__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_wordpress_element__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var _wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @wordpress/i18n */ "@wordpress/i18n");
-/* harmony import */ var _wordpress_i18n__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__);
-/* harmony import */ var _wordpress_interface__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @wordpress/interface */ "./node_modules/@wordpress/interface/build-module/index.js");
-/* harmony import */ var _svg_sparks_svg__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../svg/sparks.svg */ "./src/svg/sparks.svg");
-/* harmony import */ var _ChatInput__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./ChatInput */ "./src/components/ChatInput.jsx");
-/* harmony import */ var _ChatMessages__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./ChatMessages */ "./src/components/ChatMessages.jsx");
-/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! react/jsx-runtime */ "react/jsx-runtime");
-/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8___default = /*#__PURE__*/__webpack_require__.n(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__);
+/* harmony import */ var _wordpress_components__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @wordpress/components */ "@wordpress/components");
+/* harmony import */ var _wordpress_components__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_wordpress_components__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _wordpress_data__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @wordpress/data */ "@wordpress/data");
+/* harmony import */ var _wordpress_data__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_wordpress_data__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _wordpress_editor__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @wordpress/editor */ "@wordpress/editor");
+/* harmony import */ var _wordpress_editor__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_wordpress_editor__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _wordpress_element__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @wordpress/element */ "@wordpress/element");
+/* harmony import */ var _wordpress_element__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_wordpress_element__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var _wordpress_i18n__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @wordpress/i18n */ "@wordpress/i18n");
+/* harmony import */ var _wordpress_i18n__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(_wordpress_i18n__WEBPACK_IMPORTED_MODULE_4__);
+/* harmony import */ var _wordpress_interface__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @wordpress/interface */ "./node_modules/@wordpress/interface/build-module/index.js");
+/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/layers.js");
+/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/pen-line.js");
+/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/file-plus.js");
+/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/maximize-2.js");
+/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/message-square-plus.js");
+/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/palette.js");
+/* harmony import */ var _svg_sparks_svg__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ../svg/sparks.svg */ "./src/svg/sparks.svg");
+/* harmony import */ var _ChatInput__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./ChatInput */ "./src/components/ChatInput.jsx");
+/* harmony import */ var _ChatMessages__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ./ChatMessages */ "./src/components/ChatMessages.jsx");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! react/jsx-runtime */ "react/jsx-runtime");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15___default = /*#__PURE__*/__webpack_require__.n(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__);
 /**
  * WordPress dependencies
  */
@@ -2018,6 +2251,12 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
+
+
+
+/**
+ * External dependencies
+ */
 
 
 /**
@@ -2032,7 +2271,7 @@ __webpack_require__.r(__webpack_exports__);
 const AIAvatar = ({
   width = 24,
   height = 24
-}) => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)("div", {
+}) => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)("div", {
   style: {
     width: width,
     height: height,
@@ -2043,7 +2282,7 @@ const AIAvatar = ({
     justifyContent: "center",
     color: "#fff"
   },
-  children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_svg_sparks_svg__WEBPACK_IMPORTED_MODULE_5__.ReactComponent, {
+  children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)(_svg_sparks_svg__WEBPACK_IMPORTED_MODULE_12__.ReactComponent, {
     width: width * 0.75,
     height: height * 0.75,
     fill: "currentColor"
@@ -2054,13 +2293,18 @@ const SIDEBAR_SCOPE = "core";
 const ChatEditor = () => {
   const {
     enableComplementaryArea
-  } = (0,_wordpress_data__WEBPACK_IMPORTED_MODULE_0__.useDispatch)(_wordpress_interface__WEBPACK_IMPORTED_MODULE_4__.store);
-  const [messages, setMessages] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_2__.useState)([{
-    type: "assistant",
-    content: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)("Hello! How can I help you with your content today?", "wp-module-editor-chat")
-  }]);
-  const [isLoading, setIsLoading] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_2__.useState)(false);
-  (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_2__.useEffect)(() => {
+  } = (0,_wordpress_data__WEBPACK_IMPORTED_MODULE_1__.useDispatch)(_wordpress_interface__WEBPACK_IMPORTED_MODULE_5__.store);
+  const [messages, setMessages] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_3__.useState)([]);
+  const [isLoading, setIsLoading] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_3__.useState)(false);
+
+  // Get current user data
+  const currentUser = (0,_wordpress_data__WEBPACK_IMPORTED_MODULE_1__.useSelect)(select => {
+    const {
+      getCurrentUser
+    } = select("core");
+    return getCurrentUser();
+  }, []);
+  (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_3__.useEffect)(() => {
     enableComplementaryArea(SIDEBAR_SCOPE, SIDEBAR_NAME);
   }, [enableComplementaryArea]);
   const handleSendMessage = async messageContent => {
@@ -2083,35 +2327,138 @@ const ChatEditor = () => {
       setIsLoading(false);
     }, 1000);
   };
-  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.Fragment, {
-    children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_editor__WEBPACK_IMPORTED_MODULE_1__.PluginSidebarMoreMenuItem, {
+  const handleNewChat = () => {
+    // Reset messages to empty array to show welcome screen
+    setMessages([]);
+  };
+  const handleExpandWindow = () => {
+    // TODO: Implement expand to new window functionality
+    console.log("Expand to new window clicked");
+  };
+
+  // Welcome screen component
+  const WelcomeScreen = () => {
+    const suggestions = [{
+      icon: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)(lucide_react__WEBPACK_IMPORTED_MODULE_7__["default"], {
+        width: 16,
+        height: 16
+      }),
+      text: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_4__.__)("Add a section", "wp-module-editor-chat"),
+      action: () => handleSendMessage("Add a section")
+    }, {
+      icon: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)(lucide_react__WEBPACK_IMPORTED_MODULE_6__["default"], {
+        width: 16,
+        height: 16
+      }),
+      text: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_4__.__)("Update content", "wp-module-editor-chat"),
+      action: () => handleSendMessage("Update content")
+    }, {
+      icon: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)(lucide_react__WEBPACK_IMPORTED_MODULE_11__["default"], {
+        width: 16,
+        height: 16
+      }),
+      text: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_4__.__)("Update color scheme", "wp-module-editor-chat"),
+      action: () => handleSendMessage("Update color scheme")
+    }, {
+      icon: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)(lucide_react__WEBPACK_IMPORTED_MODULE_8__["default"], {
+        width: 16,
+        height: 16
+      }),
+      text: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_4__.__)("Add a new page", "wp-module-editor-chat"),
+      action: () => handleSendMessage("Add a new page")
+    }];
+    return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxs)("div", {
+      className: "nfd-chat-welcome",
+      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxs)("div", {
+        className: "nfd-chat-welcome__content",
+        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)("div", {
+          className: "nfd-chat-welcome__avatar",
+          children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)(AIAvatar, {
+            width: 48,
+            height: 48
+          })
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxs)("div", {
+          className: "nfd-chat-welcome__message",
+          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)("div", {
+            className: "nfd-chat-welcome__title",
+            children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_4__.__)("Hi, I'm BLU, your AI assistant.", "wp-module-editor-chat")
+          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)("div", {
+            className: "nfd-chat-welcome__subtitle",
+            children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_4__.__)("I can help you update page sections and styles,", "wp-module-editor-chat")
+          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)("div", {
+            className: "nfd-chat-welcome__subtitle",
+            children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_4__.__)("add, remove, or edit existing content.", "wp-module-editor-chat")
+          })]
+        })]
+      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)("div", {
+        className: "nfd-chat-welcome__suggestions",
+        children: suggestions.map((suggestion, index) => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxs)("button", {
+          className: "nfd-chat-welcome__suggestion",
+          onClick: suggestion.action,
+          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)("div", {
+            className: "nfd-chat-welcome__suggestion-icon",
+            children: suggestion.icon
+          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)("div", {
+            className: "nfd-chat-welcome__suggestion-text",
+            children: suggestion.text
+          })]
+        }, index))
+      })]
+    });
+  };
+  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.Fragment, {
+    children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)(_wordpress_editor__WEBPACK_IMPORTED_MODULE_2__.PluginSidebarMoreMenuItem, {
       scope: SIDEBAR_SCOPE,
       target: SIDEBAR_NAME,
-      icon: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(AIAvatar, {
+      icon: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)(AIAvatar, {
         width: 24,
         height: 24
       }),
-      children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)("AI Chat Editor", "wp-module-editor-chat")
-    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_editor__WEBPACK_IMPORTED_MODULE_1__.PluginSidebar, {
+      children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_4__.__)("AI Chat Editor", "wp-module-editor-chat")
+    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)(_wordpress_editor__WEBPACK_IMPORTED_MODULE_2__.PluginSidebar, {
       scope: SIDEBAR_SCOPE,
       identifier: SIDEBAR_NAME,
       className: "nfd-editor-chat-sidebar",
-      closeLabel: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)("Close AI Chat Editor", "wp-module-editor-chat"),
-      icon: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(AIAvatar, {
+      closeLabel: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_4__.__)("Close AI Chat Editor", "wp-module-editor-chat"),
+      icon: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)(AIAvatar, {
         width: 24,
         height: 24
       }),
       headerClassName: "nfd-editor-chat-sidebar__header",
       panelClassName: "nfd-editor-chat-sidebar__panel",
-      header: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)("h2", {
-        className: "interface-complementary-area-header__title",
-        children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)("AI Chat Editor", "wp-module-editor-chat")
+      header: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxs)("div", {
+        className: "nfd-editor-chat-sidebar__header-content",
+        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)("h2", {
+          className: "interface-complementary-area-header__title",
+          children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_4__.__)("AI Chat Editor", "wp-module-editor-chat")
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxs)("div", {
+          className: "nfd-editor-chat-sidebar__header-actions",
+          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_0__.Button, {
+            icon: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)(lucide_react__WEBPACK_IMPORTED_MODULE_10__["default"], {
+              width: 16,
+              height: 16
+            }),
+            label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_4__.__)("Start new chat", "wp-module-editor-chat"),
+            onClick: handleNewChat,
+            className: "nfd-editor-chat-sidebar__new-chat",
+            size: "small"
+          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_0__.Button, {
+            icon: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)(lucide_react__WEBPACK_IMPORTED_MODULE_9__["default"], {
+              width: 16,
+              height: 16
+            }),
+            label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_4__.__)("Open in new window", "wp-module-editor-chat"),
+            onClick: handleExpandWindow,
+            className: "nfd-editor-chat-sidebar__expand",
+            size: "small"
+          })]
+        })]
       }),
-      children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsxs)("div", {
+      children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxs)("div", {
         className: "nfd-editor-chat-sidebar__content",
-        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_ChatMessages__WEBPACK_IMPORTED_MODULE_7__["default"], {
+        children: [messages.length === 0 ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)(WelcomeScreen, {}) : /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)(_ChatMessages__WEBPACK_IMPORTED_MODULE_14__["default"], {
           messages: messages
-        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_ChatInput__WEBPACK_IMPORTED_MODULE_6__["default"], {
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_15__.jsx)(_ChatInput__WEBPACK_IMPORTED_MODULE_13__["default"], {
           onSendMessage: handleSendMessage,
           disabled: isLoading
         })]
