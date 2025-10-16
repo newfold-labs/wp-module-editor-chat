@@ -5,7 +5,7 @@
 	flex-direction: column;
 	align-items: center;
 	justify-content: space-between;
-	padding: 40px 16px 0 16px; // Removed bottom padding to extend all the way down
+	padding: 40px 16px 0 16px;
 	text-align: center;
 	min-height: 0;
 	overflow-y: auto;
@@ -42,72 +42,4 @@
 	line-height: 1.5;
 	color: var(--nfd-editor-chat-color-grey-dark);
 	font-weight: 400;
-}
-
-.nfd-editor-chat-welcome__suggestions {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 6px;
-	width: 100%;
-	padding: 0 0 16px 0;
-	justify-content: center;
-}
-
-.nfd-editor-chat-welcome__suggestion {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	gap: 8px;
-	padding: 8px 12px;
-	background: var(--nfd-editor-chat-color-white);
-	border: 1px solid var(--nfd-editor-chat-color-border);
-	border-radius: 12px;
-	cursor: pointer;
-	transition: all 0.15s ease;
-	text-align: left;
-	white-space: nowrap;
-	flex-shrink: 0;
-	color: var(--nfd-editor-chat-color-grey-dark);
-
-	&.components-button {
-		&:hover {
-			background: var(--nfd-editor-chat-color-background);
-			color: var(--nfd-editor-chat-color-text);
-		}
-
-		&:active {
-			background: var(--nfd-editor-chat-color-grey-light);
-			color: var(--nfd-editor-chat-color-text);
-		}
-
-		&:focus {
-			outline: none;
-			background: var(--nfd-editor-chat-color-background);
-			border-color: var(--nfd-editor-chat-color-primary);
-			color: var(--nfd-editor-chat-color-text);
-		}
-	}
-}
-
-.nfd-editor-chat-welcome__suggestion-icon {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 16px;
-	height: 16px;
-	flex-shrink: 0;
-	stroke: var(--nfd-editor-chat-color-grey-dark);
-
-	svg {
-		width: 14px;
-		height: 14px;
-		fill: none;
-	}
-}
-
-.nfd-editor-chat-welcome__suggestion-text {
-	font-size: var(--nfd-editor-chat-font-size-base);
-	line-height: 1.3;
-	font-weight: 400;
-	text-align: left;
 }

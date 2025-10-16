@@ -1,3 +1,5 @@
+@use "../mixins";
+
 .nfd-editor-chat-messages {
 	display: flex;
 	flex: 1 1 auto;
@@ -71,20 +73,5 @@
 
 // Custom scrollbar styling
 .nfd-editor-chat-messages {
-	&::-webkit-scrollbar {
-		width: 8px;
-	}
-
-	&::-webkit-scrollbar-track {
-		background: transparent;
-	}
-
-	&::-webkit-scrollbar-thumb {
-		background: #d0d0d0;
-		border-radius: 4px;
-
-		&:hover {
-			background: #b0b0b0;
-		}
-	}
+	@include mixins.custom-scrollbar;
 }

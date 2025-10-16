@@ -3315,6 +3315,89 @@ const ArrowUp = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])
 
 /***/ }),
 
+/***/ "./node_modules/lucide-react/dist/esm/icons/file-plus.js":
+/*!***************************************************************!*\
+  !*** ./node_modules/lucide-react/dist/esm/icons/file-plus.js ***!
+  \***************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* binding */ FilePlus)
+/* harmony export */ });
+/* harmony import */ var _createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../createLucideIcon.js */ "./node_modules/lucide-react/dist/esm/createLucideIcon.js");
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+
+const FilePlus = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])("FilePlus", [
+  ["path", { d: "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z", key: "1rqfz7" }],
+  ["path", { d: "M14 2v4a2 2 0 0 0 2 2h4", key: "tnqrlb" }],
+  ["path", { d: "M9 15h6", key: "cctwl0" }],
+  ["path", { d: "M12 18v-6", key: "17g6i2" }]
+]);
+
+
+//# sourceMappingURL=file-plus.js.map
+
+
+/***/ }),
+
+/***/ "./node_modules/lucide-react/dist/esm/icons/layers.js":
+/*!************************************************************!*\
+  !*** ./node_modules/lucide-react/dist/esm/icons/layers.js ***!
+  \************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* binding */ Layers)
+/* harmony export */ });
+/* harmony import */ var _createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../createLucideIcon.js */ "./node_modules/lucide-react/dist/esm/createLucideIcon.js");
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+
+const Layers = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])("Layers", [
+  [
+    "path",
+    {
+      d: "M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z",
+      key: "zw3jo"
+    }
+  ],
+  [
+    "path",
+    {
+      d: "M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12",
+      key: "1wduqc"
+    }
+  ],
+  [
+    "path",
+    {
+      d: "M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17",
+      key: "kqbvx6"
+    }
+  ]
+]);
+
+
+//# sourceMappingURL=layers.js.map
+
+
+/***/ }),
+
 /***/ "./node_modules/lucide-react/dist/esm/icons/maximize-2.js":
 /*!****************************************************************!*\
   !*** ./node_modules/lucide-react/dist/esm/icons/maximize-2.js ***!
@@ -3380,6 +3463,46 @@ const MessageSquarePlus = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["
 
 /***/ }),
 
+/***/ "./node_modules/lucide-react/dist/esm/icons/palette.js":
+/*!*************************************************************!*\
+  !*** ./node_modules/lucide-react/dist/esm/icons/palette.js ***!
+  \*************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* binding */ Palette)
+/* harmony export */ });
+/* harmony import */ var _createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../createLucideIcon.js */ "./node_modules/lucide-react/dist/esm/createLucideIcon.js");
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+
+const Palette = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])("Palette", [
+  ["circle", { cx: "13.5", cy: "6.5", r: ".5", fill: "currentColor", key: "1okk4w" }],
+  ["circle", { cx: "17.5", cy: "10.5", r: ".5", fill: "currentColor", key: "f64h9f" }],
+  ["circle", { cx: "8.5", cy: "7.5", r: ".5", fill: "currentColor", key: "fotxhn" }],
+  ["circle", { cx: "6.5", cy: "12.5", r: ".5", fill: "currentColor", key: "qy21gx" }],
+  [
+    "path",
+    {
+      d: "M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z",
+      key: "12rzf8"
+    }
+  ]
+]);
+
+
+//# sourceMappingURL=palette.js.map
+
+
+/***/ }),
+
 /***/ "./node_modules/lucide-react/dist/esm/icons/paperclip.js":
 /*!***************************************************************!*\
   !*** ./node_modules/lucide-react/dist/esm/icons/paperclip.js ***!
@@ -3413,6 +3536,43 @@ const Paperclip = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"
 
 
 //# sourceMappingURL=paperclip.js.map
+
+
+/***/ }),
+
+/***/ "./node_modules/lucide-react/dist/esm/icons/pen-line.js":
+/*!**************************************************************!*\
+  !*** ./node_modules/lucide-react/dist/esm/icons/pen-line.js ***!
+  \**************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* binding */ PenLine)
+/* harmony export */ });
+/* harmony import */ var _createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../createLucideIcon.js */ "./node_modules/lucide-react/dist/esm/createLucideIcon.js");
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+
+const PenLine = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])("PenLine", [
+  ["path", { d: "M12 20h9", key: "t2du7b" }],
+  [
+    "path",
+    {
+      d: "M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z",
+      key: "1ykcvy"
+    }
+  ]
+]);
+
+
+//# sourceMappingURL=pen-line.js.map
 
 
 /***/ }),
@@ -3466,11 +3626,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _wordpress_i18n__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__);
 /* harmony import */ var _wordpress_interface__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @wordpress/interface */ "./node_modules/@wordpress/interface/build-module/index.js");
 /* harmony import */ var _hooks_useChat__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../hooks/useChat */ "./src/hooks/useChat.js");
-/* harmony import */ var _ui_AILogo__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./ui/AILogo */ "./src/components/ui/AILogo.jsx");
-/* harmony import */ var _chat_ChatInput__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./chat/ChatInput */ "./src/components/chat/ChatInput.jsx");
-/* harmony import */ var _chat_ChatMessages__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./chat/ChatMessages */ "./src/components/chat/ChatMessages.jsx");
+/* harmony import */ var _chat_ChatInput__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./chat/ChatInput */ "./src/components/chat/ChatInput.jsx");
+/* harmony import */ var _chat_ChatMessages__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./chat/ChatMessages */ "./src/components/chat/ChatMessages.jsx");
+/* harmony import */ var _chat_WelcomeScreen__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./chat/WelcomeScreen */ "./src/components/chat/WelcomeScreen.jsx");
 /* harmony import */ var _sidebar_SidebarHeader__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./sidebar/SidebarHeader */ "./src/components/sidebar/SidebarHeader.jsx");
-Object(function webpackMissingModule() { var e = new Error("Cannot find module './sidebar/WelcomeScreen'"); e.code = 'MODULE_NOT_FOUND'; throw e; }());
+/* harmony import */ var _ui_AILogo__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./ui/AILogo */ "./src/components/ui/AILogo.jsx");
 /* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! react/jsx-runtime */ "react/jsx-runtime");
 /* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11___default = /*#__PURE__*/__webpack_require__.n(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__);
 /**
@@ -3515,7 +3675,7 @@ const ChatEditor = () => {
     children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(_wordpress_editor__WEBPACK_IMPORTED_MODULE_1__.PluginSidebarMoreMenuItem, {
       scope: SIDEBAR_SCOPE,
       target: SIDEBAR_NAME,
-      icon: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(_ui_AILogo__WEBPACK_IMPORTED_MODULE_6__["default"], {
+      icon: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(_ui_AILogo__WEBPACK_IMPORTED_MODULE_10__["default"], {
         width: 24,
         height: 24
       }),
@@ -3525,7 +3685,7 @@ const ChatEditor = () => {
       identifier: SIDEBAR_NAME,
       className: "nfd-editor-chat-sidebar",
       closeLabel: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)("Close AI Chat Editor", "wp-module-editor-chat"),
-      icon: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(_ui_AILogo__WEBPACK_IMPORTED_MODULE_6__["default"], {
+      icon: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(_ui_AILogo__WEBPACK_IMPORTED_MODULE_10__["default"], {
         width: 24,
         height: 24
       }),
@@ -3537,12 +3697,12 @@ const ChatEditor = () => {
       }),
       children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsxs)("div", {
         className: "nfd-editor-chat-sidebar__content",
-        children: [messages.length === 0 ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(Object(function webpackMissingModule() { var e = new Error("Cannot find module './sidebar/WelcomeScreen'"); e.code = 'MODULE_NOT_FOUND'; throw e; }()), {
+        children: [messages.length === 0 ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(_chat_WelcomeScreen__WEBPACK_IMPORTED_MODULE_8__["default"], {
           onSendMessage: handleSendMessage
-        }) : /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(_chat_ChatMessages__WEBPACK_IMPORTED_MODULE_8__["default"], {
+        }) : /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(_chat_ChatMessages__WEBPACK_IMPORTED_MODULE_7__["default"], {
           messages: messages,
           isLoading: isLoading
-        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(_chat_ChatInput__WEBPACK_IMPORTED_MODULE_7__["default"], {
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(_chat_ChatInput__WEBPACK_IMPORTED_MODULE_6__["default"], {
           onSendMessage: handleSendMessage,
           disabled: isLoading
         })]
@@ -3839,6 +3999,121 @@ const ChatMessages = ({
 
 /***/ }),
 
+/***/ "./src/components/chat/WelcomeScreen.jsx":
+/*!***********************************************!*\
+  !*** ./src/components/chat/WelcomeScreen.jsx ***!
+  \***********************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @wordpress/i18n */ "@wordpress/i18n");
+/* harmony import */ var _wordpress_i18n__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/layers.js");
+/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/pen-line.js");
+/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/file-plus.js");
+/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/palette.js");
+/* harmony import */ var _ui_AILogo__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../ui/AILogo */ "./src/components/ui/AILogo.jsx");
+/* harmony import */ var _ui_SuggestionButton__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../ui/SuggestionButton */ "./src/components/ui/SuggestionButton.jsx");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! react/jsx-runtime */ "react/jsx-runtime");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7___default = /*#__PURE__*/__webpack_require__.n(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__);
+/**
+ * WordPress dependencies
+ */
+
+
+/**
+ * External dependencies
+ */
+
+
+/**
+ * Internal dependencies
+ */
+
+
+
+/**
+ * WelcomeScreen Component
+ *
+ * Displays the welcome screen with AI avatar, introduction message, and suggestion tags.
+ *
+ * @param {Object}   props               - The component props.
+ * @param {Function} props.onSendMessage - The function to call when a suggestion is clicked.
+ * @return {JSX.Element} The WelcomeScreen component.
+ */
+
+const WelcomeScreen = ({
+  onSendMessage
+}) => {
+  const suggestions = [{
+    icon: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)(lucide_react__WEBPACK_IMPORTED_MODULE_2__["default"], {
+      width: 16,
+      height: 16
+    }),
+    text: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Add a new section", "wp-module-editor-chat"),
+    action: () => onSendMessage("Add a new section")
+  }, {
+    icon: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)(lucide_react__WEBPACK_IMPORTED_MODULE_4__["default"], {
+      width: 16,
+      height: 16
+    }),
+    text: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Update color scheme", "wp-module-editor-chat"),
+    action: () => onSendMessage("Update color scheme")
+  }, {
+    icon: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)(lucide_react__WEBPACK_IMPORTED_MODULE_3__["default"], {
+      width: 16,
+      height: 16
+    }),
+    text: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Create new page", "wp-module-editor-chat"),
+    action: () => onSendMessage("Create new page")
+  }, {
+    icon: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)(lucide_react__WEBPACK_IMPORTED_MODULE_1__["default"], {
+      width: 16,
+      height: 16
+    }),
+    text: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Edit content", "wp-module-editor-chat"),
+    action: () => onSendMessage("Edit content")
+  }];
+  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("div", {
+    className: "nfd-editor-chat-welcome",
+    children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("div", {
+      className: "nfd-editor-chat-welcome__content",
+      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("div", {
+        className: "nfd-editor-chat-welcome__avatar",
+        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)(_ui_AILogo__WEBPACK_IMPORTED_MODULE_5__["default"], {
+          width: 48,
+          height: 48
+        })
+      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("div", {
+        className: "nfd-editor-chat-welcome__message",
+        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("div", {
+          className: "nfd-editor-chat-welcome__title",
+          children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Hi, I'm BLU, your AI assistant.", "wp-module-editor-chat")
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("div", {
+          className: "nfd-editor-chat-welcome__subtitle",
+          children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("I can help you update page sections and styles,", "wp-module-editor-chat")
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("div", {
+          className: "nfd-editor-chat-welcome__subtitle",
+          children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("add, remove, or edit existing content.", "wp-module-editor-chat")
+        })]
+      })]
+    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("div", {
+      className: "nfd-editor-chat-suggestions",
+      children: suggestions.map((suggestion, index) => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)(_ui_SuggestionButton__WEBPACK_IMPORTED_MODULE_6__["default"], {
+        icon: suggestion.icon,
+        text: suggestion.text,
+        onClick: suggestion.action
+      }, index))
+    })]
+  });
+};
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (WelcomeScreen);
+
+/***/ }),
+
 /***/ "./src/components/sidebar/SidebarHeader.jsx":
 /*!**************************************************!*\
   !*** ./src/components/sidebar/SidebarHeader.jsx ***!
@@ -3959,6 +4234,61 @@ const AILogo = ({
   })
 });
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (AILogo);
+
+/***/ }),
+
+/***/ "./src/components/ui/SuggestionButton.jsx":
+/*!************************************************!*\
+  !*** ./src/components/ui/SuggestionButton.jsx ***!
+  \************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _wordpress_components__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @wordpress/components */ "@wordpress/components");
+/* harmony import */ var _wordpress_components__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_wordpress_components__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react/jsx-runtime */ "react/jsx-runtime");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__);
+/**
+ * WordPress dependencies
+ */
+
+
+/**
+ * SuggestionButton Component
+ *
+ * A reusable suggestion button component that can be used in various contexts.
+ * Takes an icon, text, and onClick action as parameters.
+ *
+ * @param {Object}      props           - The component props.
+ * @param {JSX.Element} props.icon      - The icon element to display.
+ * @param {string}      props.text      - The text to display.
+ * @param {Function}    props.onClick   - The function to call when clicked.
+ * @param {string}      props.className - Additional CSS classes (optional).
+ * @return {JSX.Element} The SuggestionButton component.
+ */
+
+const SuggestionButton = ({
+  icon,
+  text,
+  onClick,
+  className = ""
+}) => {
+  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxs)(_wordpress_components__WEBPACK_IMPORTED_MODULE_0__.Button, {
+    className: `nfd-editor-chat-suggestion ${className}`,
+    onClick: onClick,
+    children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("div", {
+      className: "nfd-editor-chat-suggestion__icon",
+      children: icon
+    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("div", {
+      className: "nfd-editor-chat-suggestion__text",
+      children: text
+    })]
+  });
+};
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (SuggestionButton);
 
 /***/ }),
 

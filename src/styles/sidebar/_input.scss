@@ -1,3 +1,5 @@
+@use "../mixins";
+
 .nfd-editor-chat-input {
 	padding: 16px;
 	background: var(--nfd-editor-chat-color-white);
@@ -68,7 +70,11 @@
 	&:disabled {
 		opacity: 0.6;
 		cursor: not-allowed;
+		box-shadow: none;
 	}
+
+	// Custom scrollbar styling to match messages
+	@include mixins.custom-scrollbar;
 }
 
 .nfd-editor-chat-input__actions {

@@ -1,6 +1,8 @@
 @use "vars";
+@use "mixins";
 @use "overrides";
 @use "ui/avatars";
+@use "ui/suggestions";
 @use "sidebar/main";
 @use "sidebar/header";
 @use "sidebar/input";
