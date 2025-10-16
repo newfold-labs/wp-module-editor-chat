@@ -1,0 +1,53 @@
+// Typing indicator styles
+.nfd-editor-chat-typing-indicator {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding-top: 4px;
+}
+
+.nfd-editor-chat-typing-indicator__message {
+	font-size: var(--nfd-editor-chat-font-size-base);
+	color: var(--nfd-editor-chat-color-grey-medium);
+	font-style: italic;
+}
+
+.nfd-editor-chat-typing-indicator__loader {
+	width: 20px;
+	aspect-ratio: 2;
+	--_g: no-repeat
+		radial-gradient(circle closest-side, var(--nfd-editor-chat-color-grey-medium) 90%, transparent);
+	background:
+		var(--_g) 0% 50%,
+		var(--_g) 50% 50%,
+		var(--_g) 100% 50%;
+	background-size: calc(100% / 3) 40%;
+	animation: nfd-editor-chat-loader 1s infinite linear;
+}
+
+@keyframes nfd-editor-chat-loader {
+	20% {
+		background-position:
+			0% 100%,
+			50% 50%,
+			100% 50%;
+	}
+	40% {
+		background-position:
+			0% 0%,
+			50% 100%,
+			100% 50%;
+	}
+	60% {
+		background-position:
+			0% 50%,
+			50% 0%,
+			100% 100%;
+	}
+	80% {
+		background-position:
+			0% 50%,
+			50% 50%,
+			100% 0%;
+	}
+}

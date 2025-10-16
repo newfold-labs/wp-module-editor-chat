@@ -11,7 +11,8 @@ import { Edit3, Palette, FilePlus, Layers } from "lucide-react";
 /**
  * Internal dependencies
  */
-import AIAvatar from "../ui/AIAvatar";
+import AILogo from "../ui/AILogo";
+import SuggestionButton from "../ui/SuggestionButton";
 
 /**
  * WelcomeScreen Component
@@ -50,7 +51,7 @@ const WelcomeScreen = ({ onSendMessage }) => {
 		<div className="nfd-editor-chat-welcome">
 			<div className="nfd-editor-chat-welcome__content">
 				<div className="nfd-editor-chat-welcome__avatar">
-					<AIAvatar width={48} height={48} />
+					<AILogo width={48} height={48} />
 				</div>
 				<div className="nfd-editor-chat-welcome__message">
 					<div className="nfd-editor-chat-welcome__title">
@@ -66,14 +67,13 @@ const WelcomeScreen = ({ onSendMessage }) => {
 			</div>
 			<div className="nfd-editor-chat-welcome__suggestions">
 				{suggestions.map((suggestion, index) => (
-					<button
+					<SuggestionButton
 						key={index}
-						className="nfd-editor-chat-welcome__suggestion"
+						icon={suggestion.icon}
+						text={suggestion.text}
 						onClick={suggestion.action}
-					>
-						<div className="nfd-editor-chat-welcome__suggestion-icon">{suggestion.icon}</div>
-						<div className="nfd-editor-chat-welcome__suggestion-text">{suggestion.text}</div>
-					</button>
+						className="nfd-editor-chat-welcome__suggestion"
+					/>
 				))}
 			</div>
 		</div>

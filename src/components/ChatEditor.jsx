@@ -11,7 +11,7 @@ import { store as interfaceStore } from "@wordpress/interface";
  * Internal dependencies
  */
 import useChat from "../hooks/useChat";
-import AIAvatar from "./ui/AIAvatar";
+import AILogo from "./ui/AILogo";
 import ChatInput from "./chat/ChatInput";
 import ChatMessages from "./chat/ChatMessages";
 import SidebarHeader from "./sidebar/SidebarHeader";
@@ -38,7 +38,7 @@ const ChatEditor = () => {
 			<PluginSidebarMoreMenuItem
 				scope={SIDEBAR_SCOPE}
 				target={SIDEBAR_NAME}
-				icon={<AIAvatar width={24} height={24} />}
+				icon={<AILogo width={24} height={24} />}
 			>
 				{__("AI Chat Editor", "wp-module-editor-chat")}
 			</PluginSidebarMoreMenuItem>
@@ -47,7 +47,7 @@ const ChatEditor = () => {
 				identifier={SIDEBAR_NAME}
 				className="nfd-editor-chat-sidebar"
 				closeLabel={__("Close AI Chat Editor", "wp-module-editor-chat")}
-				icon={<AIAvatar width={24} height={24} />}
+				icon={<AILogo width={24} height={24} />}
 				headerClassName="nfd-editor-chat-sidebar__header"
 				panelClassName="nfd-editor-chat-sidebar__panel"
 				header={<SidebarHeader onNewChat={handleNewChat} onExpand={handleExpandWindow} />}
@@ -56,7 +56,7 @@ const ChatEditor = () => {
 					{messages.length === 0 ? (
 						<WelcomeScreen onSendMessage={handleSendMessage} />
 					) : (
-						<ChatMessages messages={messages} />
+						<ChatMessages messages={messages} isLoading={isLoading} />
 					)}
 					<ChatInput onSendMessage={handleSendMessage} disabled={isLoading} />
 				</div>

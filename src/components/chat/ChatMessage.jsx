@@ -1,8 +1,14 @@
 /**
+ * WordPress dependencies
+ */
+import { useMemo } from "@wordpress/element";
+
+/**
  * Internal dependencies
  */
-import AIAvatar from "../ui/AIAvatar";
+import AILogo from "../ui/AILogo";
 import UserAvatar from "../ui/UserAvatar";
+import { sanitizeHtml, containsHtml } from "../../utils/sanitizeHtml";
 
 /**
  * ChatMessage Component
@@ -17,10 +23,40 @@ import UserAvatar from "../ui/UserAvatar";
 const ChatMessage = ({ message, type = "assistant" }) => {
 	const isUser = type === "user";
 
+	// Sanitize and prepare content for rendering
+	const sanitizedContent = useMemo(() => {
+		if (!message) {
+			return "";
+		}
+
+		// For user messages, always render as plain text
+		if (isUser) {
+			return message;
+		}
+
+		// For AI messages, check if it contains HTML
+		if (containsHtml(message)) {
+			return sanitizeHtml(message);
+		}
+
+		// Plain text messages
+		return message;
+	}, [message, isUser]);
+
+	// Determine if we should render as HTML
+	const shouldRenderAsHtml = !isUser && containsHtml(message);
+
 	return (
 		<div className={`nfd-editor-chat-message nfd-editor-chat-message--${type}`}>
-			{!isUser && <AIAvatar width={32} height={32} />}
-			<div className="nfd-editor-chat-message__content">{message}</div>
+			{/* {!isUser && <AILogo width={32} height={32} />} */}
+			{shouldRenderAsHtml ? (
+				<div
+					className="nfd-editor-chat-message__content"
+					dangerouslySetInnerHTML={{ __html: sanitizedContent }}
+				/>
+			) : (
+				<div className="nfd-editor-chat-message__content">{sanitizedContent}</div>
+			)}
 			{isUser && <UserAvatar width={32} height={32} />}
 		</div>
 	);

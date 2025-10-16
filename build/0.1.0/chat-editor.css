@@ -21,6 +21,8 @@
   --nfd-editor-chat-color-background: #f5f5f5;
   --nfd-editor-chat-color-text: #1e1e1e;
   --nfd-editor-chat-color-white: #fff;
+  /* -------------------------------- Typography -------------------------------- */
+  --nfd-editor-chat-font-size-base: 14px;
 }
 
 .components-button[aria-controls*=nfd-editor-chat].is-active, .components-button[aria-controls*=nfd-editor-chat]:hover, .components-button[aria-controls*=nfd-editor-chat]:focus, .components-button[aria-controls*=nfd-editor-chat].is-pressed {
@@ -89,7 +91,7 @@
 }
 .nfd-editor-chat-sidebar__header h2 {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--nfd-editor-chat-font-size-base);
   font-weight: 600;
 }
 
@@ -181,8 +183,7 @@
   transition: all 0.2s ease;
 }
 .nfd-editor-chat-input__container:focus-within {
-  border-color: var(--nfd-editor-chat-color-primary);
-  box-shadow: 0 2px 12px rgba(34, 113, 177, 0.15);
+  box-shadow: 0 2px 12px rgba(34, 113, 177, 0.25);
 }
 
 .nfd-editor-chat-input__textarea {
@@ -191,7 +192,7 @@
   background: transparent;
   resize: none;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
-  font-size: 14px;
+  font-size: var(--nfd-editor-chat-font-size-base);
   line-height: 1.5;
   padding: 4px;
   color: var(--nfd-editor-chat-color-text);
@@ -311,7 +312,7 @@
   flex: 1 1 auto;
   flex-direction: column;
   overflow-y: auto;
-  padding: 20px 16px;
+  padding: 20px 24px;
   gap: 20px;
   min-height: 0;
 }
@@ -320,7 +321,7 @@
   display: flex;
   gap: 12px;
   align-items: flex-start;
-  font-size: 14px;
+  font-size: var(--nfd-editor-chat-font-size-base);
 }
 .nfd-editor-chat-message--assistant {
   flex-direction: row;
@@ -421,7 +422,7 @@
 }
 
 .nfd-editor-chat-welcome__subtitle {
-  font-size: 14px;
+  font-size: var(--nfd-editor-chat-font-size-base);
   line-height: 1.5;
   color: var(--nfd-editor-chat-color-grey-dark);
   font-weight: 400;
@@ -444,24 +445,27 @@
   padding: 8px 12px;
   background: var(--nfd-editor-chat-color-white);
   border: 1px solid var(--nfd-editor-chat-color-border);
-  border-radius: 20px;
+  border-radius: 12px;
   cursor: pointer;
   transition: all 0.15s ease;
   text-align: left;
   white-space: nowrap;
   flex-shrink: 0;
+  color: var(--nfd-editor-chat-color-grey-dark);
+}
+.nfd-editor-chat-welcome__suggestion.components-button:hover {
+  background: var(--nfd-editor-chat-color-background);
   color: var(--nfd-editor-chat-color-text);
 }
-.nfd-editor-chat-welcome__suggestion:hover, .nfd-editor-chat-welcome__suggestion:active {
-  background: var(--nfd-editor-chat-color-primary-light-12);
-  border-color: var(--nfd-editor-chat-color-primary-light-12);
-  color: var(--nfd-editor-chat-color-primary);
+.nfd-editor-chat-welcome__suggestion.components-button:active {
+  background: var(--nfd-editor-chat-color-grey-light);
+  color: var(--nfd-editor-chat-color-text);
 }
-.nfd-editor-chat-welcome__suggestion:focus {
+.nfd-editor-chat-welcome__suggestion.components-button:focus {
   outline: none;
-  background: var(--nfd-editor-chat-color-primary-light-16);
+  background: var(--nfd-editor-chat-color-background);
   border-color: var(--nfd-editor-chat-color-primary);
-  color: var(--nfd-editor-chat-color-primary);
+  color: var(--nfd-editor-chat-color-text);
 }
 
 .nfd-editor-chat-welcome__suggestion-icon {
@@ -480,10 +484,48 @@
 }
 
 .nfd-editor-chat-welcome__suggestion-text {
-  font-size: 12px;
+  font-size: var(--nfd-editor-chat-font-size-base);
   line-height: 1.3;
   font-weight: 400;
   text-align: left;
+}
+
+.nfd-editor-chat-typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.nfd-editor-chat-typing-indicator__message {
+  font-size: var(--nfd-editor-chat-font-size-base);
+  color: var(--nfd-editor-chat-color-grey-medium);
+  font-style: italic;
+}
+
+.nfd-editor-chat-typing-indicator__loader {
+  width: 20px;
+  aspect-ratio: 2;
+  --_g: no-repeat
+  	radial-gradient(circle closest-side, var(--nfd-editor-chat-color-grey-medium) 90%, transparent);
+  background: var(--_g) 0% 50%, var(--_g) 50% 50%, var(--_g) 100% 50%;
+  background-size: 33.3333333333% 40%;
+  animation: nfd-editor-chat-loader 1s infinite linear;
+}
+
+@keyframes nfd-editor-chat-loader {
+  20% {
+    background-position: 0% 100%, 50% 50%, 100% 50%;
+  }
+  40% {
+    background-position: 0% 0%, 50% 100%, 100% 50%;
+  }
+  60% {
+    background-position: 0% 50%, 50% 0%, 100% 100%;
+  }
+  80% {
+    background-position: 0% 50%, 50% 50%, 100% 0%;
+  }
 }
 
 /*# sourceMappingURL=chat-editor.css.map*/

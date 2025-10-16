@@ -38,7 +38,7 @@
 }
 
 .nfd-editor-chat-welcome__subtitle {
-	font-size: 14px;
+	font-size: var(--nfd-editor-chat-font-size-base);
 	line-height: 1.5;
 	color: var(--nfd-editor-chat-color-grey-dark);
 	font-weight: 400;
@@ -61,26 +61,31 @@
 	padding: 8px 12px;
 	background: var(--nfd-editor-chat-color-white);
 	border: 1px solid var(--nfd-editor-chat-color-border);
-	border-radius: 20px;
+	border-radius: 12px;
 	cursor: pointer;
 	transition: all 0.15s ease;
 	text-align: left;
 	white-space: nowrap;
 	flex-shrink: 0;
-	color: var(--nfd-editor-chat-color-text);
+	color: var(--nfd-editor-chat-color-grey-dark);
 
-	&:hover,
-	&:active {
-		background: var(--nfd-editor-chat-color-primary-light-12);
-		border-color: var(--nfd-editor-chat-color-primary-light-12);
-		color: var(--nfd-editor-chat-color-primary);
-	}
+	&.components-button {
+		&:hover {
+			background: var(--nfd-editor-chat-color-background);
+			color: var(--nfd-editor-chat-color-text);
+		}
 
-	&:focus {
-		outline: none;
-		background: var(--nfd-editor-chat-color-primary-light-16);
-		border-color: var(--nfd-editor-chat-color-primary);
-		color: var(--nfd-editor-chat-color-primary);
+		&:active {
+			background: var(--nfd-editor-chat-color-grey-light);
+			color: var(--nfd-editor-chat-color-text);
+		}
+
+		&:focus {
+			outline: none;
+			background: var(--nfd-editor-chat-color-background);
+			border-color: var(--nfd-editor-chat-color-primary);
+			color: var(--nfd-editor-chat-color-text);
+		}
 	}
 }
 
@@ -101,7 +106,7 @@
 }
 
 .nfd-editor-chat-welcome__suggestion-text {
-	font-size: 12px;
+	font-size: var(--nfd-editor-chat-font-size-base);
 	line-height: 1.3;
 	font-weight: 400;
 	text-align: left;

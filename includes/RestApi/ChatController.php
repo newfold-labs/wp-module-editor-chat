@@ -155,10 +155,48 @@ class ChatController extends WP_REST_Controller {
 			return $response;
 		}
 
-		// Add conversation ID to response
-		$response['conversationId'] = $conversation_id;
+		// Extract the assistant's message from the nested response structure
+		$assistant_message = $this->extract_assistant_message( $response );
 
-		return new WP_REST_Response( $response, 200 );
+		// Format the response for the frontend
+		$formatted_response = array(
+			'conversationId' => $conversation_id,
+			'message'        => $assistant_message,
+			'response'       => $response, // Include full response for debugging/future use
+		);
+
+		return new WP_REST_Response( $formatted_response, 200 );
+	}
+
+	/**
+	 * Extract the assistant's message from the API response
+	 *
+	 * @param array $response The API response data.
+	 * @return string The assistant's message or a fallback message.
+	 */
+	private function extract_assistant_message( $response ) {
+		// Check for the nested structure: chat.current_message.assistant
+		if ( isset( $response['chat']['current_message']['assistant'] ) ) {
+			$message = $response['chat']['current_message']['assistant'];
+			
+			// Return the message if it's not null/empty
+			if ( ! empty( $message ) ) {
+				return $message;
+			}
+		}
+
+		// Fallback: check for direct message field
+		if ( isset( $response['message'] ) && ! empty( $response['message'] ) ) {
+			return $response['message'];
+		}
+
+		// Fallback: check for response field
+		if ( isset( $response['response'] ) && ! empty( $response['response'] ) ) {
+			return $response['response'];
+		}
+
+		// Final fallback
+		return __( 'I received your message, but I\'m having trouble processing it right now. Please try again.', 'wp-module-editor-chat' );
 	}
 
 	/**
