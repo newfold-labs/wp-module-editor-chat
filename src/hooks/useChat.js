@@ -18,8 +18,12 @@ const useChat = () => {
 	const [messages, setMessages] = useState([]);
 	const [isLoading, setIsLoading] = useState(false);
 	const [conversationId, setConversationId] = useState(null);
+	const [error, setError] = useState(null);
 
 	const handleSendMessage = async (messageContent) => {
+		// Clear any previous errors
+		setError(null);
+
 		// Add user message
 		const userMessage = {
 			type: "user",
@@ -43,19 +47,17 @@ const useChat = () => {
 				content: response.message || response.response || "I received your message.",
 			};
 			setMessages((prev) => [...prev, aiMessage]);
-		} catch (error) {
+		} catch (err) {
 			// eslint-disable-next-line no-console
-			console.error("Error sending message:", error);
+			console.error("Error sending message:", err);
 
-			// Add error message
-			const errorMessage = {
-				type: "assistant",
-				content: __(
+			// Set error state instead of adding error message to chat
+			setError(
+				__(
 					"Sorry, I encountered an error processing your request. Please try again.",
 					"wp-module-editor-chat"
-				),
-			};
-			setMessages((prev) => [...prev, errorMessage]);
+				)
+			);
 		} finally {
 			setIsLoading(false);
 		}
@@ -65,12 +67,14 @@ const useChat = () => {
 		// Reset messages and conversation ID to show welcome screen
 		setMessages([]);
 		setConversationId(null);
+		setError(null);
 	};
 
 	return {
 		messages,
 		isLoading,
 		conversationId,
+		error,
 		handleSendMessage,
 		handleNewChat,
 	};

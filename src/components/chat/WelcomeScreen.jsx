@@ -6,7 +6,7 @@ import { __ } from "@wordpress/i18n";
 /**
  * External dependencies
  */
-import { Edit3, Palette, FilePlus, Layers } from "lucide-react";
+import { Edit3, FilePlus, Layers, Palette } from "lucide-react";
 
 /**
  * Internal dependencies

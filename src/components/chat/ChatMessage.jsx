@@ -6,9 +6,8 @@ import { useMemo } from "@wordpress/element";
 /**
  * Internal dependencies
  */
-import AILogo from "../ui/AILogo";
+import { containsHtml, sanitizeHtml } from "../../utils/sanitizeHtml";
 import UserAvatar from "../ui/UserAvatar";
-import { sanitizeHtml, containsHtml } from "../../utils/sanitizeHtml";
 
 /**
  * ChatMessage Component

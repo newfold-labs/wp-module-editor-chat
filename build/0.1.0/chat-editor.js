@@ -3315,6 +3315,38 @@ const ArrowUp = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])
 
 /***/ }),
 
+/***/ "./node_modules/lucide-react/dist/esm/icons/circle-x.js":
+/*!**************************************************************!*\
+  !*** ./node_modules/lucide-react/dist/esm/icons/circle-x.js ***!
+  \**************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* binding */ CircleX)
+/* harmony export */ });
+/* harmony import */ var _createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../createLucideIcon.js */ "./node_modules/lucide-react/dist/esm/createLucideIcon.js");
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+
+const CircleX = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])("CircleX", [
+  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+  ["path", { d: "m15 9-6 6", key: "1uzhvr" }],
+  ["path", { d: "m9 9 6 6", key: "z0biqf" }]
+]);
+
+
+//# sourceMappingURL=circle-x.js.map
+
+
+/***/ }),
+
 /***/ "./node_modules/lucide-react/dist/esm/icons/file-plus.js":
 /*!***************************************************************!*\
   !*** ./node_modules/lucide-react/dist/esm/icons/file-plus.js ***!
@@ -3661,6 +3693,7 @@ const ChatEditor = () => {
   const {
     messages,
     isLoading,
+    error,
     handleSendMessage,
     handleNewChat
   } = (0,_hooks_useChat__WEBPACK_IMPORTED_MODULE_5__["default"])();
@@ -3701,7 +3734,8 @@ const ChatEditor = () => {
           onSendMessage: handleSendMessage
         }) : /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(_chat_ChatMessages__WEBPACK_IMPORTED_MODULE_7__["default"], {
           messages: messages,
-          isLoading: isLoading
+          isLoading: isLoading,
+          error: error
         }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(_chat_ChatInput__WEBPACK_IMPORTED_MODULE_6__["default"], {
           onSendMessage: handleSendMessage,
           disabled: isLoading
@@ -3858,11 +3892,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _wordpress_element__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @wordpress/element */ "@wordpress/element");
 /* harmony import */ var _wordpress_element__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_wordpress_element__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _ui_AILogo__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../ui/AILogo */ "./src/components/ui/AILogo.jsx");
+/* harmony import */ var _utils_sanitizeHtml__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../utils/sanitizeHtml */ "./src/utils/sanitizeHtml.js");
 /* harmony import */ var _ui_UserAvatar__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../ui/UserAvatar */ "./src/components/ui/UserAvatar.jsx");
-/* harmony import */ var _utils_sanitizeHtml__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../utils/sanitizeHtml */ "./src/utils/sanitizeHtml.js");
-/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! react/jsx-runtime */ "react/jsx-runtime");
-/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__);
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! react/jsx-runtime */ "react/jsx-runtime");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__);
 /**
  * WordPress dependencies
  */
@@ -3871,7 +3904,6 @@ __webpack_require__.r(__webpack_exports__);
 /**
  * Internal dependencies
  */
-
 
 
 
@@ -3904,8 +3936,8 @@ const ChatMessage = ({
     }
 
     // For AI messages, check if it contains HTML
-    if ((0,_utils_sanitizeHtml__WEBPACK_IMPORTED_MODULE_3__.containsHtml)(message)) {
-      return (0,_utils_sanitizeHtml__WEBPACK_IMPORTED_MODULE_3__.sanitizeHtml)(message);
+    if ((0,_utils_sanitizeHtml__WEBPACK_IMPORTED_MODULE_1__.containsHtml)(message)) {
+      return (0,_utils_sanitizeHtml__WEBPACK_IMPORTED_MODULE_1__.sanitizeHtml)(message);
     }
 
     // Plain text messages
@@ -3913,18 +3945,18 @@ const ChatMessage = ({
   }, [message, isUser]);
 
   // Determine if we should render as HTML
-  const shouldRenderAsHtml = !isUser && (0,_utils_sanitizeHtml__WEBPACK_IMPORTED_MODULE_3__.containsHtml)(message);
-  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("div", {
+  const shouldRenderAsHtml = !isUser && (0,_utils_sanitizeHtml__WEBPACK_IMPORTED_MODULE_1__.containsHtml)(message);
+  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxs)("div", {
     className: `nfd-editor-chat-message nfd-editor-chat-message--${type}`,
-    children: [shouldRenderAsHtml ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("div", {
+    children: [shouldRenderAsHtml ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("div", {
       className: "nfd-editor-chat-message__content",
       dangerouslySetInnerHTML: {
         __html: sanitizedContent
       }
-    }) : /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("div", {
+    }) : /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("div", {
       className: "nfd-editor-chat-message__content",
       children: sanitizedContent
-    }), isUser && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(_ui_UserAvatar__WEBPACK_IMPORTED_MODULE_2__["default"], {
+    }), isUser && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)(_ui_UserAvatar__WEBPACK_IMPORTED_MODULE_2__["default"], {
       width: 32,
       height: 32
     })]
@@ -3946,10 +3978,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _wordpress_element__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @wordpress/element */ "@wordpress/element");
 /* harmony import */ var _wordpress_element__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_wordpress_element__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _ChatMessage__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./ChatMessage */ "./src/components/chat/ChatMessage.jsx");
+/* harmony import */ var _ui_ErrorAlert__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../ui/ErrorAlert */ "./src/components/ui/ErrorAlert.jsx");
 /* harmony import */ var _ui_TypingIndicator__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../ui/TypingIndicator */ "./src/components/ui/TypingIndicator.jsx");
-/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! react/jsx-runtime */ "react/jsx-runtime");
-/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var _ChatMessage__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./ChatMessage */ "./src/components/chat/ChatMessage.jsx");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! react/jsx-runtime */ "react/jsx-runtime");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__);
 /**
  * WordPress dependencies
  */
@@ -3958,6 +3991,7 @@ __webpack_require__.r(__webpack_exports__);
 /**
  * Internal dependencies
  */
+
 
 
 
@@ -3970,12 +4004,14 @@ __webpack_require__.r(__webpack_exports__);
  * @param {Object}  props           - The component props.
  * @param {Array}   props.messages  - The messages to display.
  * @param {boolean} props.isLoading - Whether the AI is currently generating a response.
+ * @param {string}  props.error     - Error message to display (optional).
  * @return {JSX.Element} The ChatMessages component.
  */
 
 const ChatMessages = ({
   messages = [],
-  isLoading = false
+  isLoading = false,
+  error = null
 }) => {
   const messagesEndRef = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useRef)(null);
 
@@ -3985,12 +4021,14 @@ const ChatMessages = ({
       behavior: "smooth"
     });
   }, [messages, isLoading]);
-  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxs)("div", {
+  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("div", {
     className: "nfd-editor-chat-messages",
-    children: [messages.length && messages.map((msg, index) => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)(_ChatMessage__WEBPACK_IMPORTED_MODULE_1__["default"], {
+    children: [messages.length && messages.map((msg, index) => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(_ChatMessage__WEBPACK_IMPORTED_MODULE_3__["default"], {
       message: msg.content,
       type: msg.type
-    }, index)), isLoading && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)(_ui_TypingIndicator__WEBPACK_IMPORTED_MODULE_2__["default"], {}), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("div", {
+    }, index)), error && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(_ui_ErrorAlert__WEBPACK_IMPORTED_MODULE_1__["default"], {
+      message: error
+    }), isLoading && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(_ui_TypingIndicator__WEBPACK_IMPORTED_MODULE_2__["default"], {}), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("div", {
       ref: messagesEndRef
     })]
   });
@@ -4237,6 +4275,61 @@ const AILogo = ({
 
 /***/ }),
 
+/***/ "./src/components/ui/ErrorAlert.jsx":
+/*!******************************************!*\
+  !*** ./src/components/ui/ErrorAlert.jsx ***!
+  \******************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/circle-x.js");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react/jsx-runtime */ "react/jsx-runtime");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__);
+/**
+ * External dependencies
+ */
+
+
+/**
+ * ErrorAlert Component
+ *
+ * A reusable error alert component that displays error messages
+ * in a red box with an exclamation mark icon.
+ *
+ * @param {Object} props           - The component props.
+ * @param {string} props.message   - The error message to display.
+ * @param {string} props.className - Additional CSS classes (optional).
+ * @return {JSX.Element} The ErrorAlert component.
+ */
+
+const ErrorAlert = ({
+  message,
+  className = ""
+}) => {
+  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxs)("div", {
+    className: `nfd-editor-chat-error-alert ${className}`,
+    children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("div", {
+      className: "nfd-editor-chat-error-alert__icon",
+      children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(lucide_react__WEBPACK_IMPORTED_MODULE_0__["default"], {
+        width: 16,
+        height: 16
+      })
+    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("div", {
+      className: "nfd-editor-chat-error-alert__content",
+      children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("div", {
+        className: "nfd-editor-chat-error-alert__message",
+        children: message
+      })
+    })]
+  });
+};
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (ErrorAlert);
+
+/***/ }),
+
 /***/ "./src/components/ui/SuggestionButton.jsx":
 /*!************************************************!*\
   !*** ./src/components/ui/SuggestionButton.jsx ***!
@@ -4444,7 +4537,11 @@ const useChat = () => {
   const [messages, setMessages] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useState)([]);
   const [isLoading, setIsLoading] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useState)(false);
   const [conversationId, setConversationId] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useState)(null);
+  const [error, setError] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useState)(null);
   const handleSendMessage = async messageContent => {
+    // Clear any previous errors
+    setError(null);
+
     // Add user message
     const userMessage = {
       type: "user",
@@ -4467,16 +4564,12 @@ const useChat = () => {
         content: response.message || response.response || "I received your message."
       };
       setMessages(prev => [...prev, aiMessage]);
-    } catch (error) {
+    } catch (err) {
       // eslint-disable-next-line no-console
-      console.error("Error sending message:", error);
+      console.error("Error sending message:", err);
 
-      // Add error message
-      const errorMessage = {
-        type: "assistant",
-        content: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("Sorry, I encountered an error processing your request. Please try again.", "wp-module-editor-chat")
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      // Set error state instead of adding error message to chat
+      setError((0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("Sorry, I encountered an error processing your request. Please try again.", "wp-module-editor-chat"));
     } finally {
       setIsLoading(false);
     }
@@ -4485,11 +4578,13 @@ const useChat = () => {
     // Reset messages and conversation ID to show welcome screen
     setMessages([]);
     setConversationId(null);
+    setError(null);
   };
   return {
     messages,
     isLoading,
     conversationId,
+    error,
     handleSendMessage,
     handleNewChat
   };

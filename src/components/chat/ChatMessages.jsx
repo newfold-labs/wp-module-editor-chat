@@ -1,13 +1,14 @@
 /**
  * WordPress dependencies
  */
-import { useRef, useEffect } from "@wordpress/element";
+import { useEffect, useRef } from "@wordpress/element";
 
 /**
  * Internal dependencies
  */
-import ChatMessage from "./ChatMessage";
+import ErrorAlert from "../ui/ErrorAlert";
 import TypingIndicator from "../ui/TypingIndicator";
+import ChatMessage from "./ChatMessage";
 
 /**
  * ChatMessages Component
@@ -18,9 +19,10 @@ import TypingIndicator from "../ui/TypingIndicator";
  * @param {Object}  props           - The component props.
  * @param {Array}   props.messages  - The messages to display.
  * @param {boolean} props.isLoading - Whether the AI is currently generating a response.
+ * @param {string}  props.error     - Error message to display (optional).
  * @return {JSX.Element} The ChatMessages component.
  */
-const ChatMessages = ({ messages = [], isLoading = false }) => {
+const ChatMessages = ({ messages = [], isLoading = false, error = null }) => {
 	const messagesEndRef = useRef(null);
 
 	// Scroll to bottom when new messages arrive or loading state changes
@@ -34,6 +36,7 @@ const ChatMessages = ({ messages = [], isLoading = false }) => {
 				messages.map((msg, index) => (
 					<ChatMessage key={index} message={msg.content} type={msg.type} />
 				))}
+			{error && <ErrorAlert message={error} />}
 			{isLoading && <TypingIndicator />}
 			<div ref={messagesEndRef} />
 		</div>
