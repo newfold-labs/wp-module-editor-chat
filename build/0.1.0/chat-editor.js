@@ -4776,10 +4776,10 @@ __webpack_require__.r(__webpack_exports__);
  */
 const sanitizeHtml = html => {
   return dompurify__WEBPACK_IMPORTED_MODULE_0__["default"].sanitize(html, {
-    ALLOWED_TAGS: ["section", "div", "h1", "h2", "h3", "h4", "h5", "h6", "p", "span", "strong", "em", "b", "i", "u", "br", "ul", "ol", "li", "blockquote", "code", "pre"],
-    ALLOWED_ATTR: ["style", "class", "id"],
+    ALLOWED_TAGS: ["section", "div", "h1", "h2", "h3", "h4", "h5", "h6", "p", "span", "strong", "em", "b", "i", "u", "s", "mark", "small", "sub", "sup", "a", "br", "ul", "ol", "li", "dl", "dt", "dd", "blockquote", "code", "pre", "table", "thead", "tbody", "tr", "th", "td", "hr", "address", "time"],
+    ALLOWED_ATTR: ["style", "class", "id", "href", "datetime"],
     ALLOW_DATA_ATTR: false,
-    FORBID_TAGS: ["script", "object", "embed", "iframe", "form", "input", "button"],
+    FORBID_TAGS: ["script", "object", "embed", "iframe", "form", "fieldset", "legend", "label", "input", "textarea", "select", "option", "button", "details", "summary", "progress", "meter"],
     FORBID_ATTR: ["onerror", "onload", "onclick", "onmouseover", "onfocus", "onblur"]
   });
 };
