@@ -440,11 +440,8 @@
   align-items: flex-start;
   font-size: var(--nfd-editor-chat-font-size-base);
 }
-.nfd-editor-chat-message .nfd-editor-chat-message__content {
-  width: 100%;
-}
 .nfd-editor-chat-message .nfd-editor-chat-message__content > * {
-  margin-bottom: 12px;
+  margin-bottom: 1rem;
 }
 .nfd-editor-chat-message .nfd-editor-chat-message__content h1,
 .nfd-editor-chat-message .nfd-editor-chat-message__content h2,
@@ -640,6 +637,7 @@
 }
 .nfd-editor-chat-message--assistant .nfd-editor-chat-message__content {
   flex: 1;
+  width: 100%;
   line-height: 1.6;
   color: var(--nfd-editor-chat-color-text);
   padding-top: 4px;
