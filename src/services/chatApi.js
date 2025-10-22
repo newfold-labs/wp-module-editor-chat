@@ -117,8 +117,6 @@ export const sendMessage = async (conversationId, message) => {
 			data: requestData,
 		});
 
-		console.log(response);
-
 		return response;
 	} catch (error) {
 		// eslint-disable-next-line no-console

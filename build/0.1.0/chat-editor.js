@@ -4717,7 +4717,6 @@ const sendMessage = async (conversationId, message) => {
       method: "POST",
       data: requestData
     });
-    console.log(response);
     return response;
   } catch (error) {
     // eslint-disable-next-line no-console
