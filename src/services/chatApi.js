@@ -17,36 +17,18 @@ import { select } from "@wordpress/data";
  * @return {Object} The page content with both raw grammar and structured blocks
  */
 const getCurrentPageContent = () => {
-	const editor = select("core/editor");
 	const blockEditor = select("core/block-editor");
 
 	const blocks = blockEditor.getBlocks();
 
 	// Process blocks to get inner content for post-content and template-part blocks
 	const processedBlocks = blocks.map((block) => {
-		if (block.name === "core/post-content") {
-			// Get the actual post content
-			const postContent = editor.getEditedPostContent();
-
+		if (block.name === "core/post-content" || block.name === "core/template-part") {
 			return {
 				...block,
-				content: postContent,
-				innerBlocks: [], // Will be populated by backend
-				isPostContent: true,
+				innerBlocks: blockEditor.getBlocks(block.clientId),
 			};
 		}
-
-		if (block.name === "core/template-part") {
-			// For template parts, we need to get the template part content
-			// This would require a separate API call to get the template part blocks
-			return {
-				...block,
-				content: block.originalContent || "",
-				innerBlocks: [], // Will be populated by backend
-				isTemplatePart: true,
-			};
-		}
-
 		return block;
 	});
 
@@ -134,6 +116,8 @@ export const sendMessage = async (conversationId, message) => {
 			method: "POST",
 			data: requestData,
 		});
+
+		console.log(response);
 
 		return response;
 	} catch (error) {
