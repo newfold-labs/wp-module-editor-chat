@@ -105,6 +105,36 @@ class ChatController extends WP_REST_Controller {
 				),
 			)
 		);
+
+		// Template part content endpoint
+		register_rest_route(
+			$this->namespace,
+			'/template-part',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_template_part_content' ),
+					'permission_callback' => array( $this, 'check_permission' ),
+					'args'                => array(
+						'slug'  => array(
+							'required'    => true,
+							'type'        => 'string',
+							'description' => 'Template part slug',
+						),
+						'theme' => array(
+							'required'    => false,
+							'type'        => 'string',
+							'description' => 'Theme name',
+						),
+						'area'  => array(
+							'required'    => false,
+							'type'        => 'string',
+							'description' => 'Template part area',
+						),
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -131,7 +161,7 @@ class ChatController extends WP_REST_Controller {
 		if ( empty( $conversation_id ) ) {
 			$conversation_result = $this->create_new_conversation();
 
-			if ( is_wp_error( $conversation_result ) ) {
+			if ( \is_wp_error( $conversation_result ) ) {
 				return $conversation_result;
 			}
 
@@ -151,7 +181,7 @@ class ChatController extends WP_REST_Controller {
 			)
 		);
 
-		if ( is_wp_error( $response ) ) {
+		if ( \is_wp_error( $response ) ) {
 			return $response;
 		}
 
@@ -163,9 +193,10 @@ class ChatController extends WP_REST_Controller {
 			'conversationId' => $conversation_id,
 			'message'        => $assistant_message,
 			'response'       => $response, // Include full response for debugging/future use
+			'debug_context'  => $context, // Temporary: Include context for debugging
 		);
 
-		return new WP_REST_Response( $formatted_response, 200 );
+		return new \WP_REST_Response( $formatted_response, 200 );
 	}
 
 	/**
@@ -206,7 +237,7 @@ class ChatController extends WP_REST_Controller {
 	 */
 	private function create_new_conversation() {
 
-		$response = wp_remote_post(
+		$response = \wp_remote_post(
 			$this->get_remote_api_url() . '/new',
 			array(
 				'headers'   => array(
@@ -218,19 +249,19 @@ class ChatController extends WP_REST_Controller {
 			)
 		);
 
-		if ( is_wp_error( $response ) ) {
-			return new WP_Error(
+		if ( \is_wp_error( $response ) ) {
+			return new \WP_Error(
 				'api_error',
 				'Failed to create new conversation',
 				array( 'status' => 500 )
 			);
 		}
 
-		$body = wp_remote_retrieve_body( $response );
+		$body = \wp_remote_retrieve_body( $response );
 		$data = json_decode( $body, true );
 
 		if ( empty( $data['id'] ) ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'api_error',
 				'Invalid response from API',
 				array( 'status' => 500 )
@@ -248,33 +279,33 @@ class ChatController extends WP_REST_Controller {
 	 * @return array|WP_Error
 	 */
 	private function call_remote_api( $endpoint, $body ) {
-		$response = wp_remote_post(
+		$response = \wp_remote_post(
 			$this->get_remote_api_url() . $endpoint,
 			array(
 				'headers'   => array(
 					'Content-Type'  => 'application/json',
 					'Authorization' => 'Bearer ' . HiiveConnection::get_auth_token(),
 				),
-				'body'      => wp_json_encode( $body ),
+				'body'      => \wp_json_encode( $body ),
 				'timeout'   => 30,
 				'sslverify' => $this->should_verify_ssl(),
 			)
 		);
 
-		if ( is_wp_error( $response ) ) {
-			return new WP_Error(
+		if ( \is_wp_error( $response ) ) {
+			return new \WP_Error(
 				'api_error',
 				'Failed to communicate with AI service',
 				array( 'status' => 500 )
 			);
 		}
 
-		$response_code = wp_remote_retrieve_response_code( $response );
-		$response_body = wp_remote_retrieve_body( $response );
+		$response_code = \wp_remote_retrieve_response_code( $response );
+		$response_body = \wp_remote_retrieve_body( $response );
 		$data          = json_decode( $response_body, true );
 
 		if ( 200 !== $response_code ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'api_error',
 				'API returned error: ' . ( $data['message'] ?? 'Unknown error' ),
 				array( 'status' => $response_code )
@@ -293,18 +324,58 @@ class ChatController extends WP_REST_Controller {
 	private function build_context( $context ) {
 		global $post;
 
-		$onboarding_prompt = get_option( 'nfd_module_onboarding_state_input', '' );
+		$onboarding_prompt = \get_option( 'nfd_module_onboarding_state_input', '' );
 
-		$context = wp_parse_args(
+		// Process template parts if they exist in the context
+		$template_parts_content = array();
+		if ( isset( $context['pageContent']['templateParts'] ) && is_array( $context['pageContent']['templateParts'] ) ) {
+			foreach ( $context['pageContent']['templateParts'] as $template_part ) {
+				$template_part_content = $this->get_template_part_content_data(
+					$template_part['slug'],
+					$template_part['theme'] ?? \get_stylesheet(),
+					$template_part['area'] ?? ''
+				);
+				
+				if ( $template_part_content ) {
+					$template_parts_content[] = $template_part_content;
+				}
+			}
+		}
+
+		// Update the pageContent blocks with innerBlocks for both post-content and template-part
+		if ( isset( $context['pageContent']['blocks'] ) && is_array( $context['pageContent']['blocks'] ) ) {
+			foreach ( $context['pageContent']['blocks'] as $index => $block ) {
+				if ( isset( $block['isPostContent'] ) && $block['isPostContent'] ) {
+					// Parse the post content into blocks
+					$post_blocks = \parse_blocks( $block['content'] );
+					// Filter out empty blocks and whitespace-only blocks
+					$post_blocks = $this->filter_empty_blocks( $post_blocks );
+					$context['pageContent']['blocks'][ $index ]['innerBlocks'] = $post_blocks;
+				}
+				
+				if ( isset( $block['isTemplatePart'] ) && $block['isTemplatePart'] ) {
+					// Find the corresponding template part content
+					foreach ( $template_parts_content as $template_part_content ) {
+						if ( $template_part_content['slug'] === $block['attributes']['slug'] ) {
+							$context['pageContent']['blocks'][ $index ]['innerBlocks'] = $template_part_content['blocks'];
+							$context['pageContent']['blocks'][ $index ]['content'] = $template_part_content['content'];
+							break;
+						}
+					}
+				}
+			}
+		}
+
+		$context = \wp_parse_args(
 			$context,
 			array(
 				'pageId'           => $context['pageId'] ?? '',
 				'pageContent'      => $context['pageContent'] ?? '',
 				'selectedBlock'    => $context['selectedBlock'] ?? '',
-				'siteTitle'        => get_bloginfo( 'name' ),
-				'locale'           => get_locale(),
-				'classification'   => get_option( 'nfd-ai-site-gen-siteclassification', '' ),
-				'onboardingPrompt' => $onboarding_prompt['prompt'] ?? get_bloginfo( 'description' ),
+				'siteTitle'        => \get_bloginfo( 'name' ),
+				'locale'           => \get_locale(),
+				'classification'   => \get_option( 'nfd-ai-site-gen-siteclassification', '' ),
+				'onboardingPrompt' => $onboarding_prompt['prompt'] ?? \get_bloginfo( 'description' ),
 				'siteType'         => $onboarding_prompt['siteType'] ?? '',
 				'themeJson'        => $this->get_theme_json(),
 				'globalStyles'     => $this->get_global_styles(),
@@ -312,6 +383,68 @@ class ChatController extends WP_REST_Controller {
 		);
 
 		return $context;
+	}
+
+	/**
+	 * Get template part content data
+	 *
+	 * @param string $slug  Template part slug.
+	 * @param string $theme Theme name.
+	 * @param string $area  Template part area.
+	 * @return array|null Template part content or null.
+	 */
+	private function get_template_part_content_data( $slug, $theme, $area ) {
+		// Get the template part post
+		$template_part = get_block_template( $theme . '//' . $slug, 'wp_template_part' );
+
+		if ( ! $template_part ) {
+			return null;
+		}
+
+		// Parse the template part content
+		$blocks = parse_blocks( $template_part->content );
+		// Filter out empty blocks
+		$blocks = $this->filter_empty_blocks( $blocks );
+
+		return array(
+			'slug'    => $slug,
+			'theme'   => $theme,
+			'area'    => $area,
+			'content' => $template_part->content,
+			'blocks'  => $blocks,
+		);
+	}
+
+	/**
+	 * Filter out empty blocks and whitespace-only blocks
+	 *
+	 * @param array $blocks Array of blocks to filter.
+	 * @return array Filtered blocks.
+	 */
+	private function filter_empty_blocks( $blocks ) {
+		$filtered_blocks = array();
+
+		foreach ( $blocks as $block ) {
+			// Skip blocks with null blockName (empty blocks)
+			if ( null === $block['blockName'] ) {
+				continue;
+			}
+
+			// Skip blocks that are only whitespace
+			$inner_html = trim( $block['innerHTML'] ?? '' );
+			if ( empty( $inner_html ) && empty( $block['innerBlocks'] ) ) {
+				continue;
+			}
+
+			// Recursively filter inner blocks
+			if ( ! empty( $block['innerBlocks'] ) ) {
+				$block['innerBlocks'] = $this->filter_empty_blocks( $block['innerBlocks'] );
+			}
+
+			$filtered_blocks[] = $block;
+		}
+
+		return $filtered_blocks;
 	}
 
 	/**
@@ -348,6 +481,43 @@ class ChatController extends WP_REST_Controller {
 		$styles = json_decode( $global_styles->post_content, true );
 
 		return $styles ?? array();
+	}
+
+	/**
+	 * Get template part content
+	 *
+	 * @param WP_REST_Request $request The request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_template_part_content( WP_REST_Request $request ) {
+		$slug  = $request->get_param( 'slug' );
+		$theme = $request->get_param( 'theme' ) ?: get_stylesheet();
+		$area  = $request->get_param( 'area' );
+
+		// Get the template part post
+		$template_part = get_block_template( $theme . '//' . $slug, 'wp_template_part' );
+
+		if ( ! $template_part ) {
+			return new WP_Error(
+				'template_part_not_found',
+				'Template part not found',
+				array( 'status' => 404 )
+			);
+		}
+
+		// Parse the template part content
+		$blocks = parse_blocks( $template_part->content );
+
+		return new WP_REST_Response(
+			array(
+				'slug'    => $slug,
+				'theme'   => $theme,
+				'area'    => $area,
+				'content' => $template_part->content,
+				'blocks'  => $blocks,
+			),
+			200
+		);
 	}
 
 	/**

@@ -4625,9 +4625,36 @@ __webpack_require__.r(__webpack_exports__);
 const getCurrentPageContent = () => {
   const editor = (0,_wordpress_data__WEBPACK_IMPORTED_MODULE_1__.select)("core/editor");
   const blockEditor = (0,_wordpress_data__WEBPACK_IMPORTED_MODULE_1__.select)("core/block-editor");
+  const blocks = blockEditor.getBlocks();
+
+  // Process blocks to get inner content for post-content and template-part blocks
+  const processedBlocks = blocks.map(block => {
+    if (block.name === "core/post-content") {
+      // Get the actual post content
+      const postContent = editor.getEditedPostContent();
+      return {
+        ...block,
+        content: postContent,
+        innerBlocks: [],
+        // Will be populated by backend
+        isPostContent: true
+      };
+    }
+    if (block.name === "core/template-part") {
+      // For template parts, we need to get the template part content
+      // This would require a separate API call to get the template part blocks
+      return {
+        ...block,
+        content: block.originalContent || "",
+        innerBlocks: [],
+        // Will be populated by backend
+        isTemplatePart: true
+      };
+    }
+    return block;
+  });
   return {
-    rawContent: editor.getEditedPostContent(),
-    blocks: blockEditor.getBlocks()
+    blocks: processedBlocks
   };
 };
 
@@ -4661,8 +4688,20 @@ const getSelectedBlock = () => {
  * @return {Object} The context object
  */
 const buildContext = () => {
+  const pageContent = getCurrentPageContent();
+
+  // Extract template parts for processing
+  const templateParts = pageContent.blocks.filter(block => block.isTemplatePart);
   return {
-    pageContent: getCurrentPageContent(),
+    pageContent: {
+      ...pageContent,
+      templateParts: templateParts.map(block => ({
+        slug: block.attributes.slug,
+        theme: block.attributes.theme,
+        area: block.attributes.area,
+        clientId: block.clientId
+      }))
+    },
     pageId: getCurrentPageId(),
     selectedBlock: getSelectedBlock()
   };
