@@ -28,9 +28,8 @@ const ChatEditor = () => {
 		enableComplementaryArea(SIDEBAR_SCOPE, SIDEBAR_NAME);
 	}, [enableComplementaryArea]);
 
-	const handleExpandWindow = () => {
-		// TODO: Implement expand to new window functionality
-		// console.log("Expand to new window clicked");
+	const handleShowHistory = () => {
+		console.log("Show history clicked");
 	};
 
 	return (
@@ -50,7 +49,7 @@ const ChatEditor = () => {
 				icon={<AILogo width={24} height={24} />}
 				headerClassName="nfd-editor-chat-sidebar__header"
 				panelClassName="nfd-editor-chat-sidebar__panel"
-				header={<SidebarHeader onNewChat={handleNewChat} onExpand={handleExpandWindow} />}
+				header={<SidebarHeader onNewChat={handleNewChat} onShowHistory={handleShowHistory} />}
 			>
 				<div className="nfd-editor-chat-sidebar__content">
 					{messages.length === 0 ? (

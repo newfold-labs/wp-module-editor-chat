@@ -211,7 +211,7 @@
 }
 
 .nfd-editor-chat-sidebar__new-chat.components-button,
-.nfd-editor-chat-sidebar__expand.components-button {
+.nfd-editor-chat-sidebar__history.components-button {
   min-width: auto;
   width: 32px;
   height: 32px;
@@ -227,23 +227,23 @@
   transition: all 0.15s ease;
 }
 .nfd-editor-chat-sidebar__new-chat.components-button:hover:not(:disabled),
-.nfd-editor-chat-sidebar__expand.components-button:hover:not(:disabled) {
+.nfd-editor-chat-sidebar__history.components-button:hover:not(:disabled) {
   stroke: var(--nfd-editor-chat-color-primary);
   background: var(--nfd-editor-chat-color-primary-light-12);
 }
 .nfd-editor-chat-sidebar__new-chat.components-button:focus:not(:disabled),
-.nfd-editor-chat-sidebar__expand.components-button:focus:not(:disabled) {
+.nfd-editor-chat-sidebar__history.components-button:focus:not(:disabled) {
   outline: none;
   stroke: var(--nfd-editor-chat-color-primary);
   background: var(--nfd-editor-chat-color-primary-light-16);
 }
 .nfd-editor-chat-sidebar__new-chat.components-button:active:not(:disabled),
-.nfd-editor-chat-sidebar__expand.components-button:active:not(:disabled) {
+.nfd-editor-chat-sidebar__history.components-button:active:not(:disabled) {
   stroke: var(--nfd-editor-chat-color-primary-hover);
   background: var(--nfd-editor-chat-color-primary-light-20);
 }
 .nfd-editor-chat-sidebar__new-chat.components-button svg,
-.nfd-editor-chat-sidebar__expand.components-button svg {
+.nfd-editor-chat-sidebar__history.components-button svg {
   display: block;
   fill: none;
   width: 16px;

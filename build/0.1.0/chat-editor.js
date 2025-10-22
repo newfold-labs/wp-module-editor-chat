@@ -3380,6 +3380,38 @@ const FilePlus = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"]
 
 /***/ }),
 
+/***/ "./node_modules/lucide-react/dist/esm/icons/history.js":
+/*!*************************************************************!*\
+  !*** ./node_modules/lucide-react/dist/esm/icons/history.js ***!
+  \*************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* binding */ History)
+/* harmony export */ });
+/* harmony import */ var _createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../createLucideIcon.js */ "./node_modules/lucide-react/dist/esm/createLucideIcon.js");
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+
+const History = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])("History", [
+  ["path", { d: "M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8", key: "1357e3" }],
+  ["path", { d: "M3 3v5h5", key: "1xhq8a" }],
+  ["path", { d: "M12 7v5l4 2", key: "1fdv2h" }]
+]);
+
+
+//# sourceMappingURL=history.js.map
+
+
+/***/ }),
+
 /***/ "./node_modules/lucide-react/dist/esm/icons/layers.js":
 /*!************************************************************!*\
   !*** ./node_modules/lucide-react/dist/esm/icons/layers.js ***!
@@ -3426,71 +3458,6 @@ const Layers = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])(
 
 
 //# sourceMappingURL=layers.js.map
-
-
-/***/ }),
-
-/***/ "./node_modules/lucide-react/dist/esm/icons/maximize-2.js":
-/*!****************************************************************!*\
-  !*** ./node_modules/lucide-react/dist/esm/icons/maximize-2.js ***!
-  \****************************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (/* binding */ Maximize2)
-/* harmony export */ });
-/* harmony import */ var _createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../createLucideIcon.js */ "./node_modules/lucide-react/dist/esm/createLucideIcon.js");
-/**
- * @license lucide-react v0.468.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-
-
-
-const Maximize2 = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])("Maximize2", [
-  ["polyline", { points: "15 3 21 3 21 9", key: "mznyad" }],
-  ["polyline", { points: "9 21 3 21 3 15", key: "1avn1i" }],
-  ["line", { x1: "21", x2: "14", y1: "3", y2: "10", key: "ota7mn" }],
-  ["line", { x1: "3", x2: "10", y1: "21", y2: "14", key: "1atl0r" }]
-]);
-
-
-//# sourceMappingURL=maximize-2.js.map
-
-
-/***/ }),
-
-/***/ "./node_modules/lucide-react/dist/esm/icons/message-square-plus.js":
-/*!*************************************************************************!*\
-  !*** ./node_modules/lucide-react/dist/esm/icons/message-square-plus.js ***!
-  \*************************************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (/* binding */ MessageSquarePlus)
-/* harmony export */ });
-/* harmony import */ var _createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../createLucideIcon.js */ "./node_modules/lucide-react/dist/esm/createLucideIcon.js");
-/**
- * @license lucide-react v0.468.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-
-
-
-const MessageSquarePlus = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])("MessageSquarePlus", [
-  ["path", { d: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z", key: "1lielz" }],
-  ["path", { d: "M12 7v6", key: "lw1j43" }],
-  ["path", { d: "M9 10h6", key: "9gxzsh" }]
-]);
-
-
-//# sourceMappingURL=message-square-plus.js.map
 
 
 /***/ }),
@@ -3609,6 +3576,37 @@ const PenLine = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])
 
 /***/ }),
 
+/***/ "./node_modules/lucide-react/dist/esm/icons/plus.js":
+/*!**********************************************************!*\
+  !*** ./node_modules/lucide-react/dist/esm/icons/plus.js ***!
+  \**********************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* binding */ Plus)
+/* harmony export */ });
+/* harmony import */ var _createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../createLucideIcon.js */ "./node_modules/lucide-react/dist/esm/createLucideIcon.js");
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+
+const Plus = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])("Plus", [
+  ["path", { d: "M5 12h14", key: "1ays0h" }],
+  ["path", { d: "M12 5v14", key: "s699le" }]
+]);
+
+
+//# sourceMappingURL=plus.js.map
+
+
+/***/ }),
+
 /***/ "./node_modules/lucide-react/dist/esm/shared/src/utils.js":
 /*!****************************************************************!*\
   !*** ./node_modules/lucide-react/dist/esm/shared/src/utils.js ***!
@@ -3700,9 +3698,8 @@ const ChatEditor = () => {
   (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_2__.useEffect)(() => {
     enableComplementaryArea(SIDEBAR_SCOPE, SIDEBAR_NAME);
   }, [enableComplementaryArea]);
-  const handleExpandWindow = () => {
-    // TODO: Implement expand to new window functionality
-    // console.log("Expand to new window clicked");
+  const handleShowHistory = () => {
+    console.log("Show history clicked");
   };
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.Fragment, {
     children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(_wordpress_editor__WEBPACK_IMPORTED_MODULE_1__.PluginSidebarMoreMenuItem, {
@@ -3726,7 +3723,7 @@ const ChatEditor = () => {
       panelClassName: "nfd-editor-chat-sidebar__panel",
       header: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(_sidebar_SidebarHeader__WEBPACK_IMPORTED_MODULE_9__["default"], {
         onNewChat: handleNewChat,
-        onExpand: handleExpandWindow
+        onShowHistory: handleShowHistory
       }),
       children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsxs)("div", {
         className: "nfd-editor-chat-sidebar__content",
@@ -4166,8 +4163,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _wordpress_components__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_wordpress_components__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @wordpress/i18n */ "@wordpress/i18n");
 /* harmony import */ var _wordpress_i18n__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/maximize-2.js");
-/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/message-square-plus.js");
+/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/history.js");
+/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/plus.js");
 /* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! react/jsx-runtime */ "react/jsx-runtime");
 /* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__);
 /**
@@ -4186,15 +4183,15 @@ __webpack_require__.r(__webpack_exports__);
  *
  * Displays the sidebar header with title and action buttons.
  *
- * @param {Object}   props           - The component props.
- * @param {Function} props.onNewChat - The function to call when new chat is clicked.
- * @param {Function} props.onExpand  - The function to call when expand is clicked.
+ * @param {Object}   props               - The component props.
+ * @param {Function} props.onNewChat     - The function to call when new chat is clicked.
+ * @param {Function} props.onShowHistory - The function to call when show history is clicked.
  * @return {JSX.Element} The SidebarHeader component.
  */
 
 const SidebarHeader = ({
   onNewChat,
-  onExpand
+  onShowHistory
 }) => {
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("div", {
     className: "nfd-editor-chat-sidebar__header-content",
@@ -4208,7 +4205,7 @@ const SidebarHeader = ({
           width: 16,
           height: 16
         }),
-        label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("Start new chat", "wp-module-editor-chat"),
+        label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("New chat", "wp-module-editor-chat"),
         onClick: onNewChat,
         className: "nfd-editor-chat-sidebar__new-chat"
       }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_0__.Button, {
@@ -4216,9 +4213,9 @@ const SidebarHeader = ({
           width: 16,
           height: 16
         }),
-        label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("Open in new window", "wp-module-editor-chat"),
-        onClick: onExpand,
-        className: "nfd-editor-chat-sidebar__expand"
+        label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("View history", "wp-module-editor-chat"),
+        onClick: onShowHistory,
+        className: "nfd-editor-chat-sidebar__history"
       })]
     })]
   });
