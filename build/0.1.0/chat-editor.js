@@ -3699,6 +3699,7 @@ const ChatEditor = () => {
     enableComplementaryArea(SIDEBAR_SCOPE, SIDEBAR_NAME);
   }, [enableComplementaryArea]);
   const handleShowHistory = () => {
+    // eslint-disable-next-line no-console
     console.log("Show history clicked");
   };
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.Fragment, {

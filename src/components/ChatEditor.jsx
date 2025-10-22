@@ -29,6 +29,7 @@ const ChatEditor = () => {
 	}, [enableComplementaryArea]);
 
 	const handleShowHistory = () => {
+		// eslint-disable-next-line no-console
 		console.log("Show history clicked");
 	};
 
