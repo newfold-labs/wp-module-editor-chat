@@ -32,9 +32,7 @@ const getCurrentPageContent = () => {
 		return block;
 	});
 
-	return {
-		blocks: processedBlocks,
-	};
+	return processedBlocks;
 };
 
 /**
