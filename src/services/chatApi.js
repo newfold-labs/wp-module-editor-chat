@@ -48,6 +48,16 @@ const getCurrentPageId = () => {
 };
 
 /**
+ * Get the current page title
+ *
+ * @return {string} The page title
+ */
+const getCurrentPageTitle = () => {
+	const editor = select("core/editor");
+	return editor.getEditedPostAttribute("title") || "";
+};
+
+/**
  * Get the currently selected block
  *
  * @return {Object|null} The selected block or null
@@ -69,23 +79,13 @@ const getSelectedBlock = () => {
  * @return {Object} The context object
  */
 const buildContext = () => {
-	const pageContent = getCurrentPageContent();
-
-	// Extract template parts for processing
-	const templateParts = pageContent.blocks.filter((block) => block.isTemplatePart);
-
 	return {
-		pageContent: {
-			...pageContent,
-			templateParts: templateParts.map((block) => ({
-				slug: block.attributes.slug,
-				theme: block.attributes.theme,
-				area: block.attributes.area,
-				clientId: block.clientId,
-			})),
+		page: {
+			page_id: getCurrentPageId(),
+			page_title: getCurrentPageTitle(),
+			selected_block: getSelectedBlock(),
+			blocks: getCurrentPageContent(),
 		},
-		pageId: getCurrentPageId(),
-		selectedBlock: getSelectedBlock(),
 	};
 };
 
