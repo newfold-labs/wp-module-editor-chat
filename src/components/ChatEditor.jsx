@@ -22,16 +22,11 @@ const SIDEBAR_SCOPE = "core";
 
 const ChatEditor = () => {
 	const { enableComplementaryArea } = useDispatch(interfaceStore);
-	const { messages, isLoading, error, handleSendMessage, handleNewChat } = useChat();
+	const { messages, isLoading, error, handleSendMessage } = useChat();
 
 	useEffect(() => {
 		enableComplementaryArea(SIDEBAR_SCOPE, SIDEBAR_NAME);
 	}, [enableComplementaryArea]);
-
-	const handleShowHistory = () => {
-		// eslint-disable-next-line no-console
-		console.log("Show history clicked");
-	};
 
 	return (
 		<>
@@ -50,7 +45,7 @@ const ChatEditor = () => {
 				icon={<AILogo width={24} height={24} />}
 				headerClassName="nfd-editor-chat-sidebar__header"
 				panelClassName="nfd-editor-chat-sidebar__panel"
-				header={<SidebarHeader onNewChat={handleNewChat} onShowHistory={handleShowHistory} />}
+				header={<SidebarHeader />}
 			>
 				<div className="nfd-editor-chat-sidebar__content">
 					{messages.length === 0 ? (
