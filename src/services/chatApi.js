@@ -2,7 +2,16 @@
  * WordPress dependencies
  */
 import apiFetch from "@wordpress/api-fetch";
-import { select } from "@wordpress/data";
+
+/**
+ * Internal dependencies
+ */
+import {
+	getCurrentPageContent,
+	getCurrentPageId,
+	getCurrentPageTitle,
+	getSelectedBlocks,
+} from "../utils/editorHelpers";
 
 /**
  * Chat API Service
@@ -10,66 +19,6 @@ import { select } from "@wordpress/data";
  * Handles all API calls for the editor chat functionality.
  * Uses WordPress REST API as a proxy to the remote AI service.
  */
-
-/**
- * Get the current page content (all blocks)
- *
- * @return {Object} The page content with both raw grammar and structured blocks
- */
-const getCurrentPageContent = () => {
-	const blockEditor = select("core/block-editor");
-
-	const blocks = blockEditor.getBlocks();
-
-	// Process blocks to get inner content for post-content and template-part blocks
-	const processedBlocks = blocks.map((block) => {
-		if (block.name === "core/post-content" || block.name === "core/template-part") {
-			return {
-				...block,
-				innerBlocks: blockEditor.getBlocks(block.clientId),
-			};
-		}
-		return block;
-	});
-
-	return processedBlocks;
-};
-
-/**
- * Get the current page ID
- *
- * @return {number} The page ID
- */
-const getCurrentPageId = () => {
-	const editor = select("core/editor");
-	return editor.getCurrentPostId();
-};
-
-/**
- * Get the current page title
- *
- * @return {string} The page title
- */
-const getCurrentPageTitle = () => {
-	const editor = select("core/editor");
-	return editor.getEditedPostAttribute("title") || "";
-};
-
-/**
- * Get the currently selected block
- *
- * @return {Object|null} The selected block or null
- */
-const getSelectedBlock = () => {
-	const blockEditor = select("core/block-editor");
-	const selectedBlockClientId = blockEditor.getSelectedBlockClientId();
-
-	if (selectedBlockClientId) {
-		return blockEditor.getBlock(selectedBlockClientId);
-	}
-
-	return null;
-};
 
 /**
  * Build the context object with editor data
@@ -81,7 +30,7 @@ const buildContext = () => {
 		page: {
 			page_id: getCurrentPageId(),
 			page_title: getCurrentPageTitle(),
-			selected_block: getSelectedBlock(),
+			selected_blocks: getSelectedBlocks(),
 			blocks: getCurrentPageContent(),
 		},
 	};

@@ -2,13 +2,20 @@
  * WordPress dependencies
  */
 import { Button } from "@wordpress/components";
+import { useDispatch } from "@wordpress/data";
 import { useEffect, useRef, useState } from "@wordpress/element";
 import { __ } from "@wordpress/i18n";
 
 /**
  * External dependencies
  */
-import { ArrowUp, Paperclip } from "lucide-react";
+import { ArrowUp } from "lucide-react";
+
+/**
+ * Internal dependencies
+ */
+import useSelectedBlocks from "../../hooks/useSelectedBlocks";
+import ContextTag from "../ui/ContextTag";
 
 /**
  * ChatInput Component
@@ -21,6 +28,8 @@ import { ArrowUp, Paperclip } from "lucide-react";
 const ChatInput = ({ onSendMessage, disabled = false }) => {
 	const [message, setMessage] = useState("");
 	const textareaRef = useRef(null);
+	const selectedBlocks = useSelectedBlocks();
+	const { clearSelectedBlock } = useDispatch("core/block-editor");
 
 	// Auto-resize textarea as user types
 	useEffect(() => {
@@ -59,11 +68,6 @@ const ChatInput = ({ onSendMessage, disabled = false }) => {
 		}
 	};
 
-	const handleFileUpload = () => {
-		// TODO: Implement file upload functionality
-		// console.log("File upload clicked");
-	};
-
 	return (
 		<div className="nfd-editor-chat-input">
 			<div className="nfd-editor-chat-input__container">
@@ -79,13 +83,14 @@ const ChatInput = ({ onSendMessage, disabled = false }) => {
 					disabled={disabled}
 				/>
 				<div className="nfd-editor-chat-input__actions">
-					<Button
-						icon={<Paperclip width={16} height={16} />}
-						label={__("Attach file", "wp-module-editor-chat")}
-						onClick={handleFileUpload}
-						className="nfd-editor-chat-input__attach"
-						disabled={disabled}
-					/>
+					{selectedBlocks && selectedBlocks.length > 0 && (
+						<ContextTag
+							blocks={selectedBlocks}
+							onRemove={(clientIds) => {
+								clientIds.forEach((clientId) => clearSelectedBlock(clientId));
+							}}
+						/>
+					)}
 					<Button
 						icon={<ArrowUp width={16} height={16} />}
 						label={__("Send message", "wp-module-editor-chat")}

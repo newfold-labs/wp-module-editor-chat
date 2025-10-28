@@ -22,7 +22,7 @@ const SIDEBAR_SCOPE = "core";
 
 const ChatEditor = () => {
 	const { enableComplementaryArea } = useDispatch(interfaceStore);
-	const { messages, isLoading, error, handleSendMessage } = useChat();
+	const { messages, isLoading, error, handleSendMessage, handleNewChat } = useChat();
 
 	useEffect(() => {
 		enableComplementaryArea(SIDEBAR_SCOPE, SIDEBAR_NAME);
@@ -45,7 +45,7 @@ const ChatEditor = () => {
 				icon={<AILogo width={24} height={24} />}
 				headerClassName="nfd-editor-chat-sidebar__header"
 				panelClassName="nfd-editor-chat-sidebar__panel"
-				header={<SidebarHeader />}
+				header={<SidebarHeader onNewChat={handleNewChat} />}
 			>
 				<div className="nfd-editor-chat-sidebar__content">
 					{messages.length === 0 ? (
