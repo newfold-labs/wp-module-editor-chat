@@ -32,11 +32,10 @@ const getBlockLabel = (blockName) => {
 /**
  * Extract and truncate text content from block content
  *
- * @param {string} content   - The raw content (HTML or plain text)
- * @param {number} maxLength - Maximum length (default: 10)
+ * @param {string} content - The raw content (HTML or plain text)
  * @return {string|null} The truncated text or null if no content
  */
-const extractBlockText = (content, maxLength = 10) => {
+const extractBlockText = (content) => {
 	if (!content) {
 		return null;
 	}
@@ -49,7 +48,7 @@ const extractBlockText = (content, maxLength = 10) => {
 	}
 
 	// Truncate and add ellipsis if needed
-	return plainText.length > maxLength ? `${plainText.substring(0, maxLength)}...` : plainText;
+	return plainText;
 };
 
 /**
@@ -119,9 +118,9 @@ const ContextTag = ({ blocks, onRemove }) => {
 		// Store full label for tooltip before truncating
 		fullDisplayLabel = displayLabel;
 
-		// Truncate display label to 15 characters max
-		if (displayLabel.length > 25) {
-			displayLabel = `${displayLabel.substring(0, 25)}...`;
+		// Truncate display label to 30 characters max
+		if (displayLabel.length > 30) {
+			displayLabel = `${displayLabel.substring(0, 30)}...`;
 		}
 	}
 
