@@ -25,8 +25,8 @@ class ContextBuilder {
 		$_context['page'] = wp_parse_args(
 			$context['page'],
 			array(
-				'page_id'        => $post->ID,
-				'page_title'     => $post->post_title,
+				'page_id'        => $post ? $post->ID : '',
+				'page_title'     => $post ? $post->post_title : '',
 				'selected_block' => '',
 				'blocks'         => '',
 			)
