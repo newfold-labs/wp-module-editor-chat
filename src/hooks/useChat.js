@@ -8,7 +8,7 @@ import { __ } from "@wordpress/i18n";
 /**
  * Internal dependencies
  */
-import { sendMessage } from "../services/chatApi";
+import { sendMessage, createNewConversation } from "../services/chatApi";
 
 /**
  * LocalStorage keys for chat persistence
@@ -118,6 +118,26 @@ const useChat = () => {
 		}
 	}, []);
 
+	// Create a new conversation when welcome screen is displayed (no messages)
+	useEffect(() => {
+		const initializeConversation = async () => {
+			// Only create a new conversation if we don't have one and no messages
+			if (!conversationId && messages.length === 0) {
+				try {
+					const response = await createNewConversation();
+					if (response.conversationId) {
+						setConversationId(response.conversationId);
+					}
+				} catch (error) {
+					// eslint-disable-next-line no-console
+					console.error("Failed to initialize conversation:", error);
+				}
+			}
+		};
+
+		initializeConversation();
+	}, [conversationId, messages.length]);
+
 	// Save conversation ID when it changes
 	useEffect(() => {
 		saveConversationId(conversationId);
@@ -134,6 +154,17 @@ const useChat = () => {
 		// Clear any previous errors
 		setError(null);
 
+		// Check if we have a conversation ID
+		if (!conversationId) {
+			setError(
+				__(
+					"No active conversation. Please refresh the page and try again.",
+					"wp-module-editor-chat"
+				)
+			);
+			return;
+		}
+
 		// Add user message
 		const userMessage = {
 			type: "user",
@@ -143,13 +174,8 @@ const useChat = () => {
 		setIsLoading(true);
 
 		try {
-			// Send message to API with context (will create conversation if needed)
+			// Send message to API with existing conversation
 			const response = await sendMessage(conversationId, messageContent);
-
-			// Update conversation ID if this was the first message
-			if (response.conversationId && !conversationId) {
-				setConversationId(response.conversationId);
-			}
 
 			// Add AI response
 			const aiMessage = {
@@ -173,13 +199,24 @@ const useChat = () => {
 		}
 	};
 
-	const handleNewChat = () => {
+	const handleNewChat = async () => {
 		// Reset messages and conversation ID to show welcome screen
 		setMessages([]);
 		setConversationId(null);
 		setError(null);
 		// Clear localStorage data
 		clearChatData();
+
+		// Create a new conversation immediately
+		try {
+			const response = await createNewConversation();
+			if (response.conversationId) {
+				setConversationId(response.conversationId);
+			}
+		} catch (error) {
+			// eslint-disable-next-line no-console
+			console.error("Failed to create new conversation:", error);
+		}
 	};
 
 	return {

@@ -71,6 +71,45 @@ class ChatController extends WP_REST_Controller {
 				),
 			)
 		);
+
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/new',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'create_conversation' ),
+					'permission_callback' => array( $this, 'send_message_permissions_check' ),
+					'args'                => array(),
+				),
+			)
+		);
+	}
+
+	/**
+	 * Create a new conversation
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function create_conversation( $request ) {
+		$conversation_id = $this->remote_api_client->call_remote_api(
+			'/new',
+			array()
+		);
+
+		if ( is_wp_error( $conversation_id ) ) {
+			return $conversation_id;
+		}
+
+		$conversation_id = $conversation_id['id'];
+
+		return new WP_REST_Response(
+			array(
+				'conversationId' => $conversation_id,
+			),
+			200
+		);
 	}
 
 	/**
@@ -85,16 +124,11 @@ class ChatController extends WP_REST_Controller {
 		$conversation_id = $request->get_param( 'conversationId' );
 
 		if ( empty( $conversation_id ) ) {
-			$conversation_id = $this->remote_api_client->call_remote_api(
-				'/new',
-				array()
+			return new WP_Error(
+				'missing_conversation_id',
+				'Conversation ID is required. Please create a conversation first.',
+				array( 'status' => 400 )
 			);
-
-			if ( is_wp_error( $conversation_id ) ) {
-				return $conversation_id;
-			}
-
-			$conversation_id = $conversation_id['id'];
 		}
 
 		if ( empty( $message ) ) {
@@ -173,7 +207,7 @@ class ChatController extends WP_REST_Controller {
 			'conversationId' => array(
 				'description' => 'The conversation ID',
 				'type'        => 'string',
-				'required'    => false,
+				'required'    => true,
 			),
 		);
 	}

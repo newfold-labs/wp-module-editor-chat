@@ -38,13 +38,32 @@ const buildContext = () => {
 };
 
 /**
+ * Create a new conversation
+ *
+ * @return {Promise<Object>} The API response with conversationId
+ */
+export const createNewConversation = async () => {
+	try {
+		const response = await apiFetch({
+			path: "/nfd-editor-chat/v1/chat/new",
+			method: "POST",
+		});
+
+		return response;
+	} catch (error) {
+		// eslint-disable-next-line no-console
+		console.error("Error creating new conversation:", error);
+		throw error;
+	}
+};
+
+/**
  * Send a message to the chat API
  *
- * This function handles both creating a new conversation (if conversationId is not provided)
- * and sending messages to an existing conversation.
+ * This function sends messages to an existing conversation.
  *
- * @param {string|null} [conversationId] - The conversation ID (optional for new conversations)
- * @param {string}      message          - The user message
+ * @param {string} conversationId - The conversation ID (required)
+ * @param {string} message        - The user message
  * @return {Promise<Object>} The API response with conversationId and message
  */
 export const sendMessage = async (conversationId, message) => {
@@ -52,12 +71,8 @@ export const sendMessage = async (conversationId, message) => {
 		const requestData = {
 			message,
 			context: buildContext(),
+			conversationId,
 		};
-
-		// Only include conversationId if it exists
-		if (conversationId) {
-			requestData.conversationId = conversationId;
-		}
 
 		const response = await apiFetch({
 			path: "/nfd-editor-chat/v1/chat",
