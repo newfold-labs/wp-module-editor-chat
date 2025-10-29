@@ -72,7 +72,7 @@ class RemoteApiClient {
 					'Authorization' => 'Bearer ' . HiiveConnection::get_auth_token(),
 				),
 				'body'      => \wp_json_encode( $body ),
-				'timeout'   => 30,
+				'timeout'   => 60,
 				'sslverify' => $this->should_verify_ssl(),
 			)
 		);
