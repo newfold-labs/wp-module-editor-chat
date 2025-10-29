@@ -131,6 +131,11 @@ class ChatController extends WP_REST_Controller {
 			'message'        => $assistant_message,
 		);
 
+		// Pass actions directly to frontend
+		if ( isset( $response['actions'] ) && is_array( $response['actions'] ) ) {
+			$formatted_response['actions'] = $response['actions'];
+		}
+
 		if ( defined( 'NFD_DATA_WB_DEV_MODE' ) && constant( 'NFD_DATA_WB_DEV_MODE' ) ) {
 			$formatted_response['debug_context'] = $context;
 		}

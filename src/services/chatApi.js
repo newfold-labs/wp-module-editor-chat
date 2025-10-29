@@ -12,6 +12,7 @@ import {
 	getCurrentPageTitle,
 	getSelectedBlocks,
 } from "../utils/editorHelpers";
+import actionExecutor from "./actionExecutor";
 
 /**
  * Chat API Service
@@ -63,6 +64,21 @@ export const sendMessage = async (conversationId, message) => {
 			method: "POST",
 			data: requestData,
 		});
+
+		// Execute actions if present
+		if (response.actions && Array.isArray(response.actions)) {
+			try {
+				const actionResult = await actionExecutor.executeActions(response.actions);
+				response.actionExecutionResult = actionResult;
+			} catch (error) {
+				// eslint-disable-next-line no-console
+				console.error("Error executing actions:", error);
+				response.actionExecutionResult = {
+					success: false,
+					error: error.message,
+				};
+			}
+		}
 
 		return response;
 	} catch (error) {
