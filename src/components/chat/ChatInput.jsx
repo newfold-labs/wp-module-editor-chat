@@ -14,7 +14,7 @@ import { ArrowUp } from "lucide-react";
 /**
  * Internal dependencies
  */
-import useSelectedBlocks from "../../hooks/useSelectedBlocks";
+import useSelectedBlock from "../../hooks/useSelectedBlock";
 import ContextTag from "../ui/ContextTag";
 
 /**
@@ -28,7 +28,7 @@ import ContextTag from "../ui/ContextTag";
 const ChatInput = ({ onSendMessage, disabled = false }) => {
 	const [message, setMessage] = useState("");
 	const textareaRef = useRef(null);
-	const selectedBlocks = useSelectedBlocks();
+	const selectedBlock = useSelectedBlock();
 	const { clearSelectedBlock } = useDispatch("core/block-editor");
 
 	// Auto-resize textarea as user types
@@ -83,11 +83,11 @@ const ChatInput = ({ onSendMessage, disabled = false }) => {
 					disabled={disabled}
 				/>
 				<div className="nfd-editor-chat-input__actions">
-					{selectedBlocks && selectedBlocks.length > 0 && (
+					{selectedBlock && (
 						<ContextTag
-							blocks={selectedBlocks}
-							onRemove={(clientIds) => {
-								clientIds.forEach((clientId) => clearSelectedBlock(clientId));
+							block={selectedBlock}
+							onRemove={(clientId) => {
+								clearSelectedBlock(clientId);
 							}}
 						/>
 					)}

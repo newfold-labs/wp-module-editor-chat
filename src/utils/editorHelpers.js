@@ -48,18 +48,13 @@ export const getCurrentPageTitle = () => {
 };
 
 /**
- * Get the currently selected blocks
+ * Get the currently selected block
  * This is a shared utility that can be used in both React hooks and service functions
  *
- * @return {Array} Array of selected block objects or empty array
+ * @return {Object|null} The selected block object or null if none selected
  */
-export const getSelectedBlocks = () => {
+export const getSelectedBlock = () => {
 	const blockEditor = select("core/block-editor");
-	const selectedBlockClientIds = blockEditor.getSelectedBlockClientIds();
 
-	if (selectedBlockClientIds && selectedBlockClientIds.length > 0) {
-		return selectedBlockClientIds.map((clientId) => blockEditor.getBlock(clientId));
-	}
-
-	return [];
+	return blockEditor.getSelectedBlock();
 };

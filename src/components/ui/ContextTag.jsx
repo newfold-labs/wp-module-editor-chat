@@ -54,74 +54,41 @@ const extractBlockText = (content) => {
 /**
  * ContextTag Component
  *
- * Displays a tag showing the current context (e.g., selected blocks)
+ * Displays a tag showing the current context (e.g., selected block)
  *
  * @param {Object}   props          Component props
- * @param {Array}    props.blocks   Array of block objects to display
+ * @param {Object}   props.block    Single block object to display
  * @param {Function} props.onRemove Optional callback when tag is removed
  * @return {JSX.Element|null} The ContextTag component
  */
-const ContextTag = ({ blocks, onRemove }) => {
-	if (!blocks || !Array.isArray(blocks) || blocks.length === 0) {
+const ContextTag = ({ block, onRemove }) => {
+	if (!block) {
 		return null;
 	}
 
-	const totalSelected = blocks.length;
-	let displayLabel;
-	let fullDisplayLabel;
+	const blockLabel = getBlockLabel(block.name);
+	const metadataName = block.attributes?.metadata?.name;
 
-	// Check if multiple blocks are selected
-	if (totalSelected > 1) {
-		displayLabel = `${totalSelected} Selected Blocks`;
-		// Build tooltip with all selected blocks
-		fullDisplayLabel = blocks
-			.map((block) => {
-				const blockLabel = getBlockLabel(block.name);
-				const metadataName = block.attributes?.metadata?.name;
+	// Extract text content for specific block types
+	const blockType = block.name.split("/").pop();
+	const isTextBlock = ["paragraph", "heading"].includes(blockType);
+	const blockContent = block.attributes?.content;
+	const extractedText = isTextBlock ? extractBlockText(blockContent) : null;
 
-				// Extract text content for specific block types
-				const blockType = block.name.split("/").pop();
-				const isTextBlock = ["paragraph", "heading"].includes(blockType);
-				const blockContent = block.attributes?.content;
-				const extractedText = isTextBlock ? extractBlockText(blockContent) : null;
+	// Build display label: use extracted text if available, otherwise use metadata name or default label
+	let displayLabel = blockLabel;
+	if (metadataName) {
+		displayLabel = `${blockLabel}: ${metadataName}`;
+	} else if (extractedText) {
+		displayLabel = `${blockLabel}: ${extractedText}`;
+	}
 
-				// Build display label: use extracted text if available, otherwise use metadata name or default label
-				let blockDisplayLabel = blockLabel;
-				if (metadataName) {
-					blockDisplayLabel = `${blockLabel}: ${metadataName}`;
-				} else if (extractedText) {
-					blockDisplayLabel = `${blockLabel}: ${extractedText}`;
-				}
+	// Store full label for tooltip before truncating
+	const fullDisplayLabel = displayLabel;
 
-				return blockDisplayLabel;
-			})
-			.join("\n");
-	} else {
-		const block = blocks[0];
-		const blockLabel = getBlockLabel(block.name);
-		const metadataName = block.attributes?.metadata?.name;
-
-		// Extract text content for specific block types
-		const blockType = block.name.split("/").pop();
-		const isTextBlock = ["paragraph", "heading"].includes(blockType);
-		const blockContent = block.attributes?.content;
-		const extractedText = isTextBlock ? extractBlockText(blockContent) : null;
-
-		// Build display label: use extracted text if available, otherwise use metadata name or default label
-		displayLabel = blockLabel;
-		if (metadataName) {
-			displayLabel = `${blockLabel}: ${metadataName}`;
-		} else if (extractedText) {
-			displayLabel = `${blockLabel}: ${extractedText}`;
-		}
-
-		// Store full label for tooltip before truncating
-		fullDisplayLabel = displayLabel;
-
-		// Truncate display label to 30 characters max
-		if (displayLabel.length > 30) {
-			displayLabel = `${displayLabel.substring(0, 30)}...`;
-		}
+	// Truncate display label to 30 characters max
+	if (displayLabel.length > 30) {
+		displayLabel = `${displayLabel.substring(0, 30)}...`;
 	}
 
 	return (
@@ -132,7 +99,7 @@ const ContextTag = ({ blocks, onRemove }) => {
 			{onRemove && (
 				<button
 					className="nfd-editor-chat-context-tag__remove"
-					onClick={() => onRemove(blocks.map((block) => block.clientId))}
+					onClick={() => onRemove(block.clientId)}
 					aria-label={__("Remove context", "wp-module-editor-chat")}
 				>
 					<X size={12} />

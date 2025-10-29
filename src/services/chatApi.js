@@ -10,7 +10,7 @@ import {
 	getCurrentPageContent,
 	getCurrentPageId,
 	getCurrentPageTitle,
-	getSelectedBlocks,
+	getSelectedBlock,
 } from "../utils/editorHelpers";
 import actionExecutor from "./actionExecutor";
 
@@ -31,7 +31,7 @@ const buildContext = () => {
 		page: {
 			page_id: getCurrentPageId(),
 			page_title: getCurrentPageTitle(),
-			selected_blocks: getSelectedBlocks(),
+			selected_block: getSelectedBlock(),
 			blocks: getCurrentPageContent(),
 		},
 	};

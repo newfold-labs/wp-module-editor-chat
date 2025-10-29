@@ -6,20 +6,20 @@ import { useSelect } from "@wordpress/data";
 /**
  * Internal dependencies
  */
-import { getSelectedBlocks } from "../utils/editorHelpers";
+import { getSelectedBlock } from "../utils/editorHelpers";
 
 /**
  * Custom hook to get the currently selected block(s)
  *
  * @return {Array} Array of selected block objects or empty array
  */
-const useSelectedBlocks = () => {
-	const selectedBlocks = useSelect(() => {
+const useSelectedBlock = () => {
+	const selectedBlock = useSelect(() => {
 		// Use the shared utility function
-		return getSelectedBlocks();
+		return getSelectedBlock();
 	}, []);
 
-	return selectedBlocks;
+	return selectedBlock;
 };
 
-export default useSelectedBlocks;
+export default useSelectedBlock;
