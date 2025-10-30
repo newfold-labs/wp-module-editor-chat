@@ -7,6 +7,9 @@ import { dispatch, select } from "@wordpress/data";
  * Simple Action Executor
  *
  * Executes actions received from the AI chat API.
+ * Supports the following operation types:
+ * - update: Modify existing block attributes
+ * - delete: Remove blocks from the editor
  */
 class ActionExecutor {
 	/**
@@ -64,6 +67,10 @@ class ActionExecutor {
 			return this.handleUpdateOperation(operation);
 		}
 
+		if (operation.type === "delete") {
+			return this.handleDeleteOperation(operation);
+		}
+
 		throw new Error(`Unsupported operation type: ${operation.type}`);
 	}
 
@@ -104,6 +111,42 @@ class ActionExecutor {
 			clientId,
 			blockName: block.name,
 			message: `Block ${block.name} updated successfully`,
+		};
+	}
+
+	/**
+	 * Handle delete operation
+	 *
+	 * @param {Object} operation The operation data
+	 * @return {Promise<Object>} Result of the operation
+	 */
+	async handleDeleteOperation(operation) {
+		const { clientId } = operation;
+
+		if (!clientId) {
+			throw new Error("Delete operation requires clientId");
+		}
+
+		// Check if block exists
+		const { getBlock } = select("core/block-editor");
+		const blockToDelete = getBlock(clientId);
+
+		if (!blockToDelete) {
+			throw new Error(`Block with clientId ${clientId} not found`);
+		}
+
+		// Delete the block
+		const { removeBlock } = dispatch("core/block-editor");
+		removeBlock(clientId);
+
+		// eslint-disable-next-line no-console
+		console.log(`Deleted block ${clientId} (${blockToDelete.name})`);
+
+		return {
+			type: "delete",
+			clientId,
+			blockName: blockToDelete.name,
+			message: `Block ${blockToDelete.name} deleted successfully`,
 		};
 	}
 }
