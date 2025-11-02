@@ -2,7 +2,7 @@
 /**
  * WordPress dependencies
  */
-import { useEffect, useState } from "@wordpress/element";
+import { useEffect, useState, useRef } from "@wordpress/element";
 import { __ } from "@wordpress/i18n";
 
 /**
@@ -100,29 +100,30 @@ const clearChatData = () => {
  * @return {Object} Chat state and handlers
  */
 const useChat = () => {
-	const [messages, setMessages] = useState([]);
+	// Initialize state from localStorage immediately
+	const savedConversationId = loadConversationId();
+	const savedMessages = loadMessages();
+
+	const [messages, setMessages] = useState(savedMessages || []);
 	const [isLoading, setIsLoading] = useState(false);
-	const [conversationId, setConversationId] = useState(null);
+	const [conversationId, setConversationId] = useState(savedConversationId);
 	const [error, setError] = useState(null);
+	const hasInitializedRef = useRef(false);
 
-	// Load persisted data on component mount
+	// Create a new conversation only once on mount if there's nothing in localStorage
 	useEffect(() => {
-		const savedConversationId = loadConversationId();
-		const savedMessages = loadMessages();
-
-		if (savedConversationId) {
-			setConversationId(savedConversationId);
+		// Only initialize once per component mount
+		if (hasInitializedRef.current) {
+			return;
 		}
-		if (savedMessages.length > 0) {
-			setMessages(savedMessages);
-		}
-	}, []);
 
-	// Create a new conversation when welcome screen is displayed (no messages)
-	useEffect(() => {
-		const initializeConversation = async () => {
-			// Only create a new conversation if we don't have one and no messages
-			if (!conversationId && messages.length === 0) {
+		hasInitializedRef.current = true;
+
+		// Check localStorage directly to avoid dependency issues
+		// Only create a new conversation if we don't have one in localStorage
+		const storedConversationId = loadConversationId();
+		if (!storedConversationId) {
+			const initializeConversation = async () => {
 				try {
 					const response = await createNewConversation();
 					if (response.conversationId) {
@@ -132,11 +133,11 @@ const useChat = () => {
 					// eslint-disable-next-line no-console
 					console.error("Failed to initialize conversation:", error);
 				}
-			}
-		};
+			};
 
-		initializeConversation();
-	}, [conversationId, messages.length]);
+			initializeConversation();
+		}
+	}, []); // Empty dependency array - only run once on mount
 
 	// Save conversation ID when it changes
 	useEffect(() => {
