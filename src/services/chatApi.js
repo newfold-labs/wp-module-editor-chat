@@ -28,7 +28,6 @@ import actionExecutor from "./actionExecutor";
  */
 
 const buildContext = async () => {
-	console.log("current page content", await getCurrentPageContent());
 	return {
 		page: {
 			page_id: getCurrentPageId(),
