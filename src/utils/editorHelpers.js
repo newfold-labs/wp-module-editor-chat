@@ -1,14 +1,98 @@
 /**
  * WordPress dependencies
  */
-import { select } from "@wordpress/data";
+import { select, resolveSelect } from "@wordpress/data";
 
 /**
- * Get the current page content (all blocks)
+ * Get the current page content
  *
- * @return {Object} The page content with both raw grammar and structured blocks
+ * @return {Promise<Object>} The page content with template parts
  */
-export const getCurrentPageContent = () => {
+export const getCurrentPageContent = async () => {
+	const content = getEditedPostContent();
+	const templatePartBlocks = getAllTemplatePartBlocks();
+	const templatePartsMap = await buildTemplatePartsMap(templatePartBlocks);
+
+	return { content, ...templatePartsMap };
+};
+
+// Helpers
+const getEditedPostContent = () => {
+	const coreEditor = select("core/editor");
+	return coreEditor.getEditedPostContent() || "";
+};
+
+const getAllTemplatePartBlocks = () => {
+	const blockEditor = select("core/block-editor");
+	const blocks = blockEditor.getBlocks();
+	return blocks.filter((b) => b.name === "core/template-part");
+};
+
+const fetchTemplatePartContent = async (tplBlock, coreResolve) => {
+	if (!tplBlock || !tplBlock.attributes) {
+		return "";
+	}
+	const { ref, slug, theme } = tplBlock.attributes;
+
+	if (ref) {
+		const rec = await coreResolve.getEntityRecord("postType", "wp_template_part", ref);
+		return (rec && rec.content && (rec.content.raw || rec.content.rendered)) || "";
+	}
+
+	if (slug && theme) {
+		const compositeId = `${theme}//${slug}`;
+		const recByComposite = await coreResolve.getEntityRecord(
+			"postType",
+			"wp_template_part",
+			compositeId
+		);
+		if (recByComposite && recByComposite.content) {
+			return recByComposite.content.raw || recByComposite.content.rendered || "";
+		}
+	}
+
+	if (slug) {
+		const query = theme ? { slug: [slug], theme } : { slug: [slug] };
+		const recs = await coreResolve.getEntityRecords("postType", "wp_template_part", query);
+		if (Array.isArray(recs) && recs.length > 0) {
+			const exact = recs.find((r) => r && r.slug === slug && (!theme || r.theme === theme));
+			const rec = exact || recs[0];
+			return (rec && rec.content && (rec.content.raw || rec.content.rendered)) || "";
+		}
+	}
+
+	return "";
+};
+
+const pickTemplatePartKey = (attrs, index) => {
+	return (
+		attrs.slug || (attrs.ref ? String(attrs.ref) : null) || attrs.area || `template_part_${index}`
+	);
+};
+
+const buildTemplatePartsMap = async (templatePartBlocks) => {
+	const coreResolve = resolveSelect("core");
+
+	const result = {};
+	for (let i = 0; i < templatePartBlocks.length; i++) {
+		const block = templatePartBlocks[i];
+		const attrs = block.attributes || {};
+		const html = await fetchTemplatePartContent(block, coreResolve);
+		const key = pickTemplatePartKey(attrs, i);
+		if (key && !result[key]) {
+			result[key] = html;
+		}
+	}
+
+	return result;
+};
+
+/**
+ * Get the current page blocks
+ *
+ * @return {Object} The page blocks
+ */
+export const getCurrentPageBlocks = () => {
 	const blockEditor = select("core/block-editor");
 
 	const blocks = blockEditor.getBlocks();

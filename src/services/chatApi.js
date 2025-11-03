@@ -26,13 +26,15 @@ import actionExecutor from "./actionExecutor";
  *
  * @return {Object} The context object
  */
-const buildContext = () => {
+
+const buildContext = async () => {
+	console.log("current page content", await getCurrentPageContent());
 	return {
 		page: {
 			page_id: getCurrentPageId(),
 			page_title: getCurrentPageTitle(),
 			selected_block: getSelectedBlock(),
-			blocks: getCurrentPageContent(),
+			raw_content: await getCurrentPageContent(),
 		},
 	};
 };
@@ -70,7 +72,7 @@ export const sendMessage = async (conversationId, message) => {
 	try {
 		const requestData = {
 			message,
-			context: buildContext(),
+			context: await buildContext(),
 			conversationId,
 		};
 

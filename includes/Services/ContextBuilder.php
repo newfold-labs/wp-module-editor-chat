@@ -28,7 +28,7 @@ class ContextBuilder {
 				'page_id'        => $post ? $post->ID : '',
 				'page_title'     => $post ? $post->post_title : '',
 				'selected_block' => '',
-				'blocks'         => '',
+				'raw_content'    => '',
 			)
 		);
 
