@@ -2,6 +2,7 @@
  * WordPress dependencies
  */
 import { select, resolveSelect } from "@wordpress/data";
+import { serialize } from "@wordpress/blocks";
 
 /**
  * Get the current page content
@@ -9,17 +10,33 @@ import { select, resolveSelect } from "@wordpress/data";
  * @return {Promise<Object>} The page content with template parts
  */
 export const getCurrentPageContent = async () => {
-	const content = getEditedPostContent();
+	const postContent = getPostContent();
 	const templatePartBlocks = getAllTemplatePartBlocks();
 	const templatePartsMap = await buildTemplatePartsMap(templatePartBlocks);
 
-	return { content, ...templatePartsMap };
+	return { content: postContent, ...templatePartsMap };
 };
 
 // Helpers
-const getEditedPostContent = () => {
-	const coreEditor = select("core/editor");
-	return coreEditor.getEditedPostContent() || "";
+const getPostContent = () => {
+	const blockEditor = select("core/block-editor");
+	const blocks = blockEditor.getBlocks();
+
+	// Find the post-content block
+	const postContentBlock = blocks.find((block) => block.name === "core/post-content");
+
+	if (!postContentBlock) {
+		return [];
+	}
+
+	// Get inner blocks of the post-content block
+	const innerBlocks = blockEditor.getBlocks(postContentBlock.clientId);
+
+	// Map each inner block to the required structure
+	return innerBlocks.map((block) => ({
+		clientId: block.clientId,
+		content: serialize(block),
+	}));
 };
 
 const getAllTemplatePartBlocks = () => {
@@ -80,7 +97,10 @@ const buildTemplatePartsMap = async (templatePartBlocks) => {
 		const html = await fetchTemplatePartContent(block, coreResolve);
 		const key = pickTemplatePartKey(attrs, i);
 		if (key && !result[key]) {
-			result[key] = html;
+			result[key] = {
+				clientId: block.clientId,
+				content: html,
+			};
 		}
 	}
 
