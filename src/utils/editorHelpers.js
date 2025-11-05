@@ -14,7 +14,7 @@ export const getCurrentPageContent = async () => {
 	const templatePartBlocks = getAllTemplatePartBlocks();
 	const templatePartsMap = await buildTemplatePartsMap(templatePartBlocks);
 
-	return { content: postContent, ...templatePartsMap };
+	return { page_content: postContent, ...templatePartsMap };
 };
 
 // Helpers

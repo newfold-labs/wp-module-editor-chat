@@ -33,7 +33,7 @@ const buildContext = async () => {
 			page_id: getCurrentPageId(),
 			page_title: getCurrentPageTitle(),
 			selected_block: getSelectedBlock(),
-			raw_content: await getCurrentPageContent(),
+			content: await getCurrentPageContent(),
 		},
 	};
 };
