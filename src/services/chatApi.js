@@ -62,44 +62,65 @@ export const createNewConversation = async () => {
  * Send a message to the chat API
  *
  * This function sends messages to an existing conversation.
+ * Returns a message_id that can be used to check status.
  *
  * @param {string} conversationId - The conversation ID (required)
  * @param {string} message        - The user message
- * @return {Promise<Object>} The API response with conversationId and message
+ * @return {Promise<Object>} The API response with message_id
  */
 export const sendMessage = async (conversationId, message) => {
 	try {
+		// eslint-disable-next-line no-console
+		console.log("sendMessage: Starting API call");
 		const requestData = {
 			message,
 			context: await buildContext(),
 			conversationId,
 		};
 
+		// eslint-disable-next-line no-console
+		console.log("sendMessage: Request data prepared, calling API");
 		const response = await apiFetch({
 			path: "/nfd-editor-chat/v1/chat",
 			method: "POST",
 			data: requestData,
 		});
 
-		// Execute actions if present
-		if (response.actions && Array.isArray(response.actions)) {
-			try {
-				const actionResult = await actionExecutor.executeActions(response.actions);
-				response.actionExecutionResult = actionResult;
-			} catch (error) {
-				// eslint-disable-next-line no-console
-				console.error("Error executing actions:", error);
-				response.actionExecutionResult = {
-					success: false,
-					error: error.message,
-				};
-			}
-		}
-
+		// eslint-disable-next-line no-console
+		console.log("sendMessage: API response received:", response);
+		// The API now returns message_id immediately (202 status)
 		return response;
 	} catch (error) {
 		// eslint-disable-next-line no-console
 		console.error("Error sending message:", error);
+		throw error;
+	}
+};
+
+/**
+ * Check the status of a chat message
+ *
+ * @param {string} messageId - The message ID to check status for
+ * @return {Promise<Object>} The API response with status and optionally data
+ */
+export const checkStatus = async (messageId) => {
+	try {
+		// eslint-disable-next-line no-console
+		console.log("checkStatus: Calling API with message_id:", messageId);
+		const response = await apiFetch({
+			path: "/nfd-editor-chat/v1/chat/status",
+			method: "POST",
+			data: {
+				message_id: messageId,
+			},
+		});
+
+		// eslint-disable-next-line no-console
+		console.log("checkStatus: API response:", response);
+		return response;
+	} catch (error) {
+		// eslint-disable-next-line no-console
+		console.error("Error checking status:", error);
 		throw error;
 	}
 };

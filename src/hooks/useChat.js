@@ -8,7 +8,8 @@ import { __ } from "@wordpress/i18n";
 /**
  * Internal dependencies
  */
-import { sendMessage, createNewConversation } from "../services/chatApi";
+import { sendMessage, createNewConversation, checkStatus } from "../services/chatApi";
+import actionExecutor from "../services/actionExecutor";
 
 /**
  * LocalStorage keys for chat persistence
@@ -108,7 +109,11 @@ const useChat = () => {
 	const [isLoading, setIsLoading] = useState(false);
 	const [conversationId, setConversationId] = useState(savedConversationId);
 	const [error, setError] = useState(null);
+	const [status, setStatus] = useState(null); // 'received', 'generating', 'completed', 'failed'
 	const hasInitializedRef = useRef(false);
+	const pollingIntervalRef = useRef(null);
+	const pollingTimeoutRef = useRef(null);
+	const pollingStartTimeRef = useRef(null);
 
 	// Create a new conversation only once on mount if there's nothing in localStorage
 	useEffect(() => {
@@ -129,9 +134,9 @@ const useChat = () => {
 					if (response.conversationId) {
 						setConversationId(response.conversationId);
 					}
-				} catch (error) {
+				} catch (err) {
 					// eslint-disable-next-line no-console
-					console.error("Failed to initialize conversation:", error);
+					console.error("Failed to initialize conversation:", err);
 				}
 			};
 
@@ -151,9 +156,30 @@ const useChat = () => {
 		}
 	}, [messages]);
 
+	// Debug: Log status changes
+	useEffect(() => {
+		// eslint-disable-next-line no-console
+		console.log("Status changed to:", status);
+	}, [status]);
+
+	// Cleanup polling interval and timeout on unmount
+	useEffect(() => {
+		return () => {
+			if (pollingIntervalRef.current) {
+				clearInterval(pollingIntervalRef.current);
+				pollingIntervalRef.current = null;
+			}
+			if (pollingTimeoutRef.current) {
+				clearTimeout(pollingTimeoutRef.current);
+				pollingTimeoutRef.current = null;
+			}
+		};
+	}, []);
+
 	const handleSendMessage = async (messageContent) => {
-		// Clear any previous errors
+		// Clear any previous errors and status
 		setError(null);
+		setStatus(null);
 
 		// Check if we have a conversation ID
 		if (!conversationId) {
@@ -173,17 +199,33 @@ const useChat = () => {
 		};
 		setMessages((prev) => [...prev, userMessage]);
 		setIsLoading(true);
+		setStatus("received");
+
+		// eslint-disable-next-line no-console
+		console.log("Sending message to API");
 
 		try {
 			// Send message to API with existing conversation
+			// This now returns message_id immediately
 			const response = await sendMessage(conversationId, messageContent);
 
-			// Add AI response
-			const aiMessage = {
-				type: "assistant",
-				content: response.message || response.response || "I received your message.",
-			};
-			setMessages((prev) => [...prev, aiMessage]);
+			// eslint-disable-next-line no-console
+			console.log("sendMessage response:", response);
+
+			if (!response.message_id) {
+				// eslint-disable-next-line no-console
+				console.error("No message_id in response:", response);
+				throw new Error("No message_id received from API");
+			}
+
+			// eslint-disable-next-line no-console
+			console.log("Got message_id:", response.message_id, "- starting polling");
+			// Start polling for status
+			const messageId = response.message_id;
+			// Call polling in next tick to ensure state updates are processed
+			setTimeout(() => {
+				pollMessageStatus(messageId);
+			}, 0);
 		} catch (err) {
 			// eslint-disable-next-line no-console
 			console.error("Error sending message:", err);
@@ -195,9 +237,175 @@ const useChat = () => {
 					"wp-module-editor-chat"
 				)
 			);
-		} finally {
 			setIsLoading(false);
+			setStatus(null);
 		}
+	};
+
+	/**
+	 * Stop polling and cleanup
+	 */
+	const stopPolling = () => {
+		if (pollingIntervalRef.current) {
+			clearInterval(pollingIntervalRef.current);
+			pollingIntervalRef.current = null;
+		}
+		if (pollingTimeoutRef.current) {
+			clearTimeout(pollingTimeoutRef.current);
+			pollingTimeoutRef.current = null;
+		}
+		pollingStartTimeRef.current = null;
+	};
+
+	/**
+	 * Poll the status endpoint every 4 seconds, with a maximum of 2 minutes
+	 *
+	 * @param {string} messageId - The message ID to check status for
+	 */
+	const pollMessageStatus = (messageId) => {
+		// Clear any existing polling interval and timeout
+		stopPolling();
+
+		// Record start time
+		pollingStartTimeRef.current = Date.now();
+		const MAX_POLLING_TIME = 120000; // 2 minutes in milliseconds
+		const POLLING_INTERVAL = 4000; // 4 seconds in milliseconds
+
+		// eslint-disable-next-line no-console
+		console.log("Starting to poll for message_id:", messageId);
+
+		// Poll immediately, then every 4 seconds
+		const checkStatusNow = async () => {
+			try {
+				// Check if we've exceeded the maximum polling time
+				const elapsedTime = Date.now() - pollingStartTimeRef.current;
+				if (elapsedTime >= MAX_POLLING_TIME) {
+					// eslint-disable-next-line no-console
+					console.log("Polling timeout reached (2 minutes), stopping");
+					stopPolling();
+					setError(
+						__(
+							"The request is taking longer than expected. Please try again or refresh the page.",
+							"wp-module-editor-chat"
+						)
+					);
+					setIsLoading(false);
+					setStatus(null);
+					return;
+				}
+
+				// eslint-disable-next-line no-console
+				console.log("Checking status for message_id:", messageId);
+				const statusResponse = await checkStatus(messageId);
+				// eslint-disable-next-line no-console
+				console.log("Status response:", statusResponse);
+				const currentStatus = statusResponse.status;
+
+				// eslint-disable-next-line no-console
+				console.log("Current status:", currentStatus);
+				setStatus(currentStatus);
+
+				if (currentStatus === "completed") {
+					// eslint-disable-next-line no-console
+					console.log("Status is completed, stopping polling");
+					stopPolling();
+
+					// Process the completed response
+					if (statusResponse.data) {
+						const data = statusResponse.data;
+
+						// Extract assistant message
+						let assistantMessage = "I received your message.";
+						if (data.chat?.current_message?.assistant) {
+							assistantMessage = data.chat.current_message.assistant;
+						}
+
+						// Add AI response
+						const aiMessage = {
+							type: "assistant",
+							content: assistantMessage,
+						};
+						setMessages((prev) => [...prev, aiMessage]);
+
+						// Execute actions if present
+						if (data.actions && Array.isArray(data.actions)) {
+							try {
+								const actionResult = await actionExecutor.executeActions(data.actions);
+								// eslint-disable-next-line no-console
+								console.log("Actions executed:", actionResult);
+							} catch (actionError) {
+								// eslint-disable-next-line no-console
+								console.error("Error executing actions:", actionError);
+							}
+						}
+					}
+
+					setIsLoading(false);
+					setStatus(null);
+				} else if (currentStatus === "failed") {
+					// eslint-disable-next-line no-console
+					console.log("Status is failed, stopping polling");
+					stopPolling();
+
+					setError(
+						__(
+							"Sorry, I encountered an error processing your request. Please try again.",
+							"wp-module-editor-chat"
+						)
+					);
+					setIsLoading(false);
+					setStatus(null);
+				} else {
+					// eslint-disable-next-line no-console
+					console.log("Status is", currentStatus, "- continuing to poll");
+				}
+				// For 'received' and 'generating', continue polling
+			} catch (err) {
+				// eslint-disable-next-line no-console
+				console.error("Error checking status:", err);
+
+				// Check if we've exceeded the maximum polling time even on error
+				const elapsedTime = Date.now() - pollingStartTimeRef.current;
+				if (elapsedTime >= MAX_POLLING_TIME) {
+					// eslint-disable-next-line no-console
+					console.log("Polling timeout reached (2 minutes) during error, stopping");
+					stopPolling();
+					setError(
+						__(
+							"The request is taking longer than expected. Please try again or refresh the page.",
+							"wp-module-editor-chat"
+						)
+					);
+					setIsLoading(false);
+					setStatus(null);
+				}
+				// Continue polling even on error (might be temporary)
+			}
+		};
+
+		// Check immediately
+		checkStatusNow();
+
+		// Then poll every 4 seconds
+		pollingIntervalRef.current = setInterval(checkStatusNow, POLLING_INTERVAL);
+
+		// Set timeout to stop polling after 2 minutes
+		pollingTimeoutRef.current = setTimeout(() => {
+			// eslint-disable-next-line no-console
+			console.log("Polling timeout reached (2 minutes), stopping");
+			stopPolling();
+			setError(
+				__(
+					"The request is taking longer than expected. Please try again or refresh the page.",
+					"wp-module-editor-chat"
+				)
+			);
+			setIsLoading(false);
+			setStatus(null);
+		}, MAX_POLLING_TIME);
+
+		// eslint-disable-next-line no-console
+		console.log("Polling interval set up:", pollingIntervalRef.current);
 	};
 
 	const handleNewChat = async () => {
@@ -214,9 +422,9 @@ const useChat = () => {
 			if (response.conversationId) {
 				setConversationId(response.conversationId);
 			}
-		} catch (error) {
+		} catch (err) {
 			// eslint-disable-next-line no-console
-			console.error("Failed to create new conversation:", error);
+			console.error("Failed to create new conversation:", err);
 		}
 	};
 
@@ -225,6 +433,7 @@ const useChat = () => {
 		isLoading,
 		conversationId,
 		error,
+		status,
 		handleSendMessage,
 		handleNewChat,
 	};

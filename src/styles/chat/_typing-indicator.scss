@@ -12,6 +12,13 @@
 	font-style: italic;
 }
 
+.nfd-editor-chat-typing-indicator__status {
+	font-size: var(--nfd-editor-chat-font-size-base);
+	color: var(--nfd-editor-chat-color-grey-medium);
+	font-style: italic;
+	margin-left: 4px;
+}
+
 .nfd-editor-chat-typing-indicator__loader {
 	width: 20px;
 	aspect-ratio: 2;

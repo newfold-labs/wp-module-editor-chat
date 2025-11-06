@@ -89,7 +89,7 @@ class RemoteApiClient {
 		$response_body = \wp_remote_retrieve_body( $response );
 		$data          = json_decode( $response_body, true );
 
-		if ( 200 !== $response_code ) {
+		if ( 200 !== $response_code && 202 !== $response_code ) {
 			return new \WP_Error(
 				'api_error',
 				'API returned error: ' . ( $data['message'] ?? 'Unknown error' ),

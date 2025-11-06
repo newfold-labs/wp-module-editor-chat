@@ -84,6 +84,25 @@ class ChatController extends WP_REST_Controller {
 				),
 			)
 		);
+
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/status',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'get_status' ),
+					'permission_callback' => array( $this, 'send_message_permissions_check' ),
+					'args'                => array(
+						'message_id' => array(
+							'description' => 'The message ID to check status for',
+							'type'        => 'string',
+							'required'    => true,
+						),
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -142,39 +161,39 @@ class ChatController extends WP_REST_Controller {
 		// Build context
 		$context = $this->context_builder->build_context( $context );
 
-		// Send message to remote API
+		// Prepare request body for remote API
+		$request_body = array(
+			'message' => $message,
+			'id'      => $conversation_id,
+			'context' => $context,
+		);
+
+		// Send message to remote API - this will queue the job and return message_id immediately
 		$response = $this->remote_api_client->call_remote_api(
 			'/chat',
-			array(
-				'message' => $message,
-				'id'      => $conversation_id,
-				'context' => $context,
-			)
+			$request_body
 		);
 
 		if ( is_wp_error( $response ) ) {
 			return $response;
 		}
 
-		// Extract the assistant's message from the nested response structure
-		$assistant_message = $this->extract_assistant_message( $response );
+		// The remote API now returns message_id immediately
+		if ( ! isset( $response['message_id'] ) ) {
+			return new WP_Error(
+				'invalid_response',
+				'Invalid response from chat API: message_id not found',
+				array( 'status' => 500 )
+			);
+		}
 
-		// Format the response for the frontend
-		$formatted_response = array(
-			'conversationId' => $conversation_id,
-			'message'        => $assistant_message,
+		// Return message_id immediately with 202 status (Accepted)
+		return new WP_REST_Response(
+			array(
+				'message_id' => $response['message_id'],
+			),
+			202
 		);
-
-		// Pass actions directly to frontend
-		if ( isset( $response['actions'] ) && is_array( $response['actions'] ) ) {
-			$formatted_response['actions'] = $response['actions'];
-		}
-
-		if ( defined( 'NFD_DATA_WB_DEV_MODE' ) && constant( 'NFD_DATA_WB_DEV_MODE' ) ) {
-			$formatted_response['debug_context'] = $context;
-		}
-
-		return new WP_REST_Response( $formatted_response, 200 );
 	}
 
 	/**
@@ -210,6 +229,40 @@ class ChatController extends WP_REST_Controller {
 				'required'    => true,
 			),
 		);
+	}
+
+	/**
+	 * Get the status of a chat message
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_status( $request ) {
+		$message_id = $request->get_param( 'message_id' );
+
+		if ( empty( $message_id ) ) {
+			return new WP_Error(
+				'missing_message_id',
+				'Message ID is required',
+				array( 'status' => 400 )
+			);
+		}
+
+		// Call remote API status endpoint
+		$response = $this->remote_api_client->call_remote_api(
+			'/status',
+			array(
+				'message_id' => $message_id,
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
+
+		// The remote API returns status and optionally data when completed
+		// Format: { "status": "received|generating|completed|failed", "data": {...} }
+		return new WP_REST_Response( $response, 200 );
 	}
 
 	/**
