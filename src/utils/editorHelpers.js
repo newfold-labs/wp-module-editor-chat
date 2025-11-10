@@ -152,13 +152,23 @@ export const getCurrentPageTitle = () => {
 };
 
 /**
- * Get the currently selected block
+ * Get the currently selected block with its serialized content
  * This is a shared utility that can be used in both React hooks and service functions
  *
- * @return {Object|null} The selected block object or null if none selected
+ * @return {Object|null} The selected block object with serialized content or null if none selected
  */
 export const getSelectedBlock = () => {
 	const blockEditor = select("core/block-editor");
+	const selectedBlock = blockEditor.getSelectedBlock();
 
-	return blockEditor.getSelectedBlock();
+	if (!selectedBlock) {
+		return null;
+	}
+
+	// Return the block with serialized content
+	// The AI needs the EXACT serialized HTML to match block comments properly
+	return {
+		...selectedBlock,
+		originalContent: serialize(selectedBlock),
+	};
 };
