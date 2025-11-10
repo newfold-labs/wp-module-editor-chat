@@ -156,12 +156,6 @@ const useChat = () => {
 		}
 	}, [messages]);
 
-	// Debug: Log status changes
-	useEffect(() => {
-		// eslint-disable-next-line no-console
-		console.log("Status changed to:", status);
-	}, [status]);
-
 	// Cleanup polling interval and timeout on unmount
 	useEffect(() => {
 		return () => {
@@ -201,16 +195,10 @@ const useChat = () => {
 		setIsLoading(true);
 		setStatus("received");
 
-		// eslint-disable-next-line no-console
-		console.log("Sending message to API");
-
 		try {
 			// Send message to API with existing conversation
 			// This now returns message_id immediately
 			const response = await sendMessage(conversationId, messageContent);
-
-			// eslint-disable-next-line no-console
-			console.log("sendMessage response:", response);
 
 			if (!response.message_id) {
 				// eslint-disable-next-line no-console
@@ -218,8 +206,6 @@ const useChat = () => {
 				throw new Error("No message_id received from API");
 			}
 
-			// eslint-disable-next-line no-console
-			console.log("Got message_id:", response.message_id, "- starting polling");
 			// Start polling for status
 			const messageId = response.message_id;
 			// Call polling in next tick to ensure state updates are processed
@@ -271,17 +257,12 @@ const useChat = () => {
 		const MAX_POLLING_TIME = 120000; // 2 minutes in milliseconds
 		const POLLING_INTERVAL = 4000; // 4 seconds in milliseconds
 
-		// eslint-disable-next-line no-console
-		console.log("Starting to poll for message_id:", messageId);
-
 		// Poll immediately, then every 4 seconds
 		const checkStatusNow = async () => {
 			try {
 				// Check if we've exceeded the maximum polling time
 				const elapsedTime = Date.now() - pollingStartTimeRef.current;
 				if (elapsedTime >= MAX_POLLING_TIME) {
-					// eslint-disable-next-line no-console
-					console.log("Polling timeout reached (2 minutes), stopping");
 					stopPolling();
 					setError(
 						__(
@@ -294,20 +275,12 @@ const useChat = () => {
 					return;
 				}
 
-				// eslint-disable-next-line no-console
-				console.log("Checking status for message_id:", messageId);
 				const statusResponse = await checkStatus(messageId);
-				// eslint-disable-next-line no-console
-				console.log("Status response:", statusResponse);
 				const currentStatus = statusResponse.status;
 
-				// eslint-disable-next-line no-console
-				console.log("Current status:", currentStatus);
 				setStatus(currentStatus);
 
 				if (currentStatus === "completed") {
-					// eslint-disable-next-line no-console
-					console.log("Status is completed, stopping polling");
 					stopPolling();
 
 					// Process the completed response
@@ -343,8 +316,6 @@ const useChat = () => {
 					setIsLoading(false);
 					setStatus(null);
 				} else if (currentStatus === "failed") {
-					// eslint-disable-next-line no-console
-					console.log("Status is failed, stopping polling");
 					stopPolling();
 
 					setError(
@@ -367,8 +338,6 @@ const useChat = () => {
 				// Check if we've exceeded the maximum polling time even on error
 				const elapsedTime = Date.now() - pollingStartTimeRef.current;
 				if (elapsedTime >= MAX_POLLING_TIME) {
-					// eslint-disable-next-line no-console
-					console.log("Polling timeout reached (2 minutes) during error, stopping");
 					stopPolling();
 					setError(
 						__(
@@ -391,8 +360,6 @@ const useChat = () => {
 
 		// Set timeout to stop polling after 2 minutes
 		pollingTimeoutRef.current = setTimeout(() => {
-			// eslint-disable-next-line no-console
-			console.log("Polling timeout reached (2 minutes), stopping");
 			stopPolling();
 			setError(
 				__(
@@ -403,9 +370,6 @@ const useChat = () => {
 			setIsLoading(false);
 			setStatus(null);
 		}, MAX_POLLING_TIME);
-
-		// eslint-disable-next-line no-console
-		console.log("Polling interval set up:", pollingIntervalRef.current);
 	};
 
 	const handleNewChat = async () => {
