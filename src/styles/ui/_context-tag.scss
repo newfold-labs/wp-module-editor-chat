@@ -18,6 +18,8 @@
 	}
 
 	&__label {
+		display: inline-flex;
+		align-items: center;
 		color: var(--nfd-editor-chat-color-grey-dark);
 		transition: all 0.15s ease;
 	}
