@@ -231,6 +231,7 @@ class ActionExecutor {
 		let normalized = html
 			.replace(/\s+/g, " ") // Replace all whitespace sequences with single space
 			.replace(/>\s+</g, "><") // Remove spaces between tags
+			.replace(/\\\//g, "/") // Remove backslashes from slashes
 			.trim(); // Remove leading/trailing whitespace
 
 		// Normalize block comment attributes
