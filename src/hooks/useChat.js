@@ -485,9 +485,6 @@ const useChat = () => {
 		}
 
 		try {
-			// Restore the blocks to the initial state (before the first action)
-			const restoreResult = await actionExecutor.restoreBlocks(firstActionMessage.undoData);
-
 			// Remove hasActions and undoData from ALL messages
 			setMessages((prev) =>
 				prev.map((msg) => {
@@ -498,6 +495,7 @@ const useChat = () => {
 					return msg;
 				})
 			);
+			// eslint-disable-next-line no-shadow
 		} catch (error) {
 			// eslint-disable-next-line no-console
 			console.error("Error restoring blocks:", error);

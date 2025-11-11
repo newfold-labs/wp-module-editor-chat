@@ -165,8 +165,6 @@ class ActionExecutor {
 
 			// Perform the replacement on normalized strings
 			if (normalizedBlockHtml.includes(normalizedFind)) {
-				// eslint-disable-next-line no-console
-				console.log("replace");
 				// Replace in the normalized version
 				blockHtml = normalizedBlockHtml.replace(normalizedFind, normalizedReplace);
 			} else {
