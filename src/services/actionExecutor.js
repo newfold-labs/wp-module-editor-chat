@@ -132,6 +132,14 @@ class ActionExecutor {
 			throw new Error(`Block with clientId ${clientId} not found`);
 		}
 
+		// Save the original block state for undo
+		const originalBlock = {
+			clientId,
+			name: block.name,
+			attributes: { ...block.attributes },
+			innerBlocks: block.innerBlocks ? [...block.innerBlocks] : [],
+		};
+
 		// Serialize the block to HTML
 		let blockHtml = serialize(block);
 
@@ -210,6 +218,60 @@ class ActionExecutor {
 			blockName: block.name,
 			changesApplied: changes.length,
 			message: `Block ${block.name} content updated successfully`,
+			originalBlock, // Include original block state for undo
+		};
+	}
+
+	/**
+	 * Restore blocks to their previous state
+	 *
+	 * @param {Array} undoData Array of original block states
+	 * @return {Promise<Object>} Result of the restore operation
+	 */
+	async restoreBlocks(undoData) {
+		if (!undoData || !Array.isArray(undoData)) {
+			return { success: false, message: "No undo data available" };
+		}
+
+		const { updateBlockAttributes, replaceInnerBlocks } = dispatch("core/block-editor");
+		const results = [];
+		const errors = [];
+
+		for (const blockData of undoData) {
+			try {
+				const { clientId, attributes, innerBlocks } = blockData;
+
+				if (!clientId) {
+					errors.push("Missing clientId in undo data");
+					continue;
+				}
+
+				// Restore attributes
+				updateBlockAttributes(clientId, attributes);
+
+				// Restore inner blocks
+				if (innerBlocks && Array.isArray(innerBlocks)) {
+					const restoredInnerBlocks = innerBlocks.map((inner) => this.createBlockFromParsed(inner));
+					replaceInnerBlocks(clientId, restoredInnerBlocks);
+				}
+
+				results.push({
+					clientId,
+					message: "Block restored successfully",
+				});
+			} catch (error) {
+				errors.push(`Failed to restore block: ${error.message}`);
+				// eslint-disable-next-line no-console
+				console.error("Failed to restore block:", error);
+			}
+		}
+
+		return {
+			success: errors.length === 0,
+			message:
+				errors.length === 0 ? "All blocks restored successfully" : "Some blocks failed to restore",
+			results,
+			errors,
 		};
 	}
 

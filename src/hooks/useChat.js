@@ -4,6 +4,7 @@
  */
 import { useEffect, useState, useRef } from "@wordpress/element";
 import { __ } from "@wordpress/i18n";
+import { useDispatch, useSelect } from "@wordpress/data";
 
 /**
  * Internal dependencies
@@ -62,9 +63,9 @@ const loadMessages = () => {
 		const stored = localStorage.getItem(STORAGE_KEYS.MESSAGES);
 		if (stored) {
 			const messages = JSON.parse(stored);
-			// Remove hasActions flag from loaded messages (actions should only show once)
+			// Remove hasActions and undoData from loaded messages (actions should only show once)
 			return messages.map((msg) => {
-				const { hasActions, ...rest } = msg;
+				const { hasActions, undoData, ...rest } = msg;
 				return rest;
 			});
 		}
@@ -118,10 +119,36 @@ const useChat = () => {
 	const [conversationId, setConversationId] = useState(savedConversationId);
 	const [error, setError] = useState(null);
 	const [status, setStatus] = useState(null); // 'received', 'generating', 'completed', 'failed'
+	const [isSaving, setIsSaving] = useState(false);
 	const hasInitializedRef = useRef(false);
 	const pollingIntervalRef = useRef(null);
 	const pollingTimeoutRef = useRef(null);
 	const pollingStartTimeRef = useRef(null);
+
+	// Get WordPress editor dispatch functions
+	const { savePost } = useDispatch("core/editor");
+
+	// Get WordPress save status
+	const isSavingPost = useSelect((select) => select("core/editor").isSavingPost(), []);
+
+	// Watch for save completion
+	useEffect(() => {
+		if (isSaving && !isSavingPost) {
+			// Save just completed
+			// Remove hasActions and undoData from ALL messages
+			setMessages((prev) =>
+				prev.map((msg) => {
+					if (msg.hasActions) {
+						const { hasActions, undoData, ...rest } = msg;
+						return rest;
+					}
+					return msg;
+				})
+			);
+
+			setIsSaving(false);
+		}
+	}, [isSaving, isSavingPost]);
 
 	// Create a new conversation only once on mount if there's nothing in localStorage
 	useEffect(() => {
@@ -303,12 +330,42 @@ const useChat = () => {
 
 						// Execute actions if present
 						let hasExecutedActions = false;
+						let undoData = null;
 						if (data.actions && Array.isArray(data.actions) && data.actions.length > 0) {
 							try {
-								const actionResult = await actionExecutor.executeActions(data.actions);
-								hasExecutedActions = true;
-								// eslint-disable-next-line no-console
-								console.log("Actions executed:", actionResult);
+								// Check if there's already a pending action (existing message with hasActions)
+								const hasPendingAction = messages.some((msg) => msg.hasActions);
+
+								if (hasPendingAction) {
+									// There's already a pending action - reuse the initial undo data
+									const firstActionMessage = messages.find((msg) => msg.hasActions && msg.undoData);
+									undoData = firstActionMessage ? firstActionMessage.undoData : null;
+
+									// Execute the new action (this will modify the already-modified content)
+									await actionExecutor.executeActions(data.actions);
+									hasExecutedActions = true;
+								} else {
+									// This is the FIRST action in a sequence
+									// We need to capture the initial state before any modifications
+
+									// Execute actions and capture the initial state
+									const actionResult = await actionExecutor.executeActions(data.actions);
+									hasExecutedActions = true;
+
+									// Extract the INITIAL undo data (state before this first action)
+									if (actionResult.results && actionResult.results.length > 0) {
+										undoData = [];
+										actionResult.results.forEach((result) => {
+											if (result.results && Array.isArray(result.results)) {
+												result.results.forEach((blockResult) => {
+													if (blockResult.originalBlock) {
+														undoData.push(blockResult.originalBlock);
+													}
+												});
+											}
+										});
+									}
+								}
 							} catch (actionError) {
 								// eslint-disable-next-line no-console
 								console.error("Error executing actions:", actionError);
@@ -320,6 +377,7 @@ const useChat = () => {
 							type: "assistant",
 							content: assistantMessage,
 							hasActions: hasExecutedActions,
+							undoData, // Store undo data (either new or reused from first message)
 						};
 						setMessages((prev) => [...prev, aiMessage]);
 					}
@@ -337,9 +395,6 @@ const useChat = () => {
 					);
 					setIsLoading(false);
 					setStatus(null);
-				} else {
-					// eslint-disable-next-line no-console
-					console.log("Status is", currentStatus, "- continuing to poll");
 				}
 				// For 'received' and 'generating', continue polling
 			} catch (err) {
@@ -404,20 +459,49 @@ const useChat = () => {
 	};
 
 	/**
-	 * Hide action buttons for a specific message
-	 *
-	 * @param {number} messageIndex - The index of the message to update
+	 * Accept changes - trigger WordPress save and keep buttons visible until save completes
 	 */
-	const hideMessageActions = (messageIndex) => {
-		setMessages((prev) =>
-			prev.map((msg, index) => {
-				if (index === messageIndex) {
-					const { hasActions, ...rest } = msg;
-					return rest;
-				}
-				return msg;
-			})
-		);
+	const handleAcceptChanges = () => {
+		// Set saving state to true - this will disable the buttons
+		setIsSaving(true);
+
+		// Trigger WordPress save/publish
+		if (savePost) {
+			savePost();
+		}
+	};
+
+	/**
+	 * Decline changes - restore to initial state before first action and hide buttons
+	 */
+	const handleDeclineChanges = async () => {
+		// Find the first message with undo data (the initial state)
+		const firstActionMessage = messages.find((msg) => msg.hasActions && msg.undoData);
+
+		if (!firstActionMessage || !firstActionMessage.undoData) {
+			// eslint-disable-next-line no-console
+			console.error("No undo data available");
+			return;
+		}
+
+		try {
+			// Restore the blocks to the initial state (before the first action)
+			const restoreResult = await actionExecutor.restoreBlocks(firstActionMessage.undoData);
+
+			// Remove hasActions and undoData from ALL messages
+			setMessages((prev) =>
+				prev.map((msg) => {
+					if (msg.hasActions) {
+						const { hasActions, undoData, ...rest } = msg;
+						return rest;
+					}
+					return msg;
+				})
+			);
+		} catch (error) {
+			// eslint-disable-next-line no-console
+			console.error("Error restoring blocks:", error);
+		}
 	};
 
 	return {
@@ -426,9 +510,11 @@ const useChat = () => {
 		conversationId,
 		error,
 		status,
+		isSaving,
 		handleSendMessage,
 		handleNewChat,
-		hideMessageActions,
+		handleAcceptChanges,
+		handleDeclineChanges,
 	};
 };
 

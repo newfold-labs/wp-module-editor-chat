@@ -16,15 +16,14 @@ import ChatMessage from "./ChatMessage";
  * Scrollable container for all chat messages
  * Auto-scrolls to bottom when new messages arrive
  *
- * @param {Object}   props              - The component props.
- * @param {Array}    props.messages     - The messages to display.
- * @param {boolean}  props.isLoading    - Whether the AI is currently generating a response.
- * @param {string}   props.error        - Error message to display (optional).
- * @param {string}   props.status       - The current status ('received', 'generating', etc.).
- * @param {Function} props.onHideActions - Callback to hide action buttons for a message.
+ * @param {Object}  props           - The component props.
+ * @param {Array}   props.messages  - The messages to display.
+ * @param {boolean} props.isLoading - Whether the AI is currently generating a response.
+ * @param {string}  props.error     - Error message to display (optional).
+ * @param {string}  props.status    - The current status ('received', 'generating', etc.).
  * @return {JSX.Element} The ChatMessages component.
  */
-const ChatMessages = ({ messages = [], isLoading = false, error = null, status = null, onHideActions }) => {
+const ChatMessages = ({ messages = [], isLoading = false, error = null, status = null }) => {
 	const messagesEndRef = useRef(null);
 
 	// Scroll to bottom when new messages arrive or loading state changes
@@ -36,14 +35,7 @@ const ChatMessages = ({ messages = [], isLoading = false, error = null, status =
 		<div className="nfd-editor-chat-messages">
 			{messages.length &&
 				messages.map((msg, index) => (
-					<ChatMessage
-						key={index}
-						message={msg.content}
-						type={msg.type}
-						hasActions={msg.hasActions}
-						messageIndex={index}
-						onHideActions={onHideActions}
-					/>
+					<ChatMessage key={index} message={msg.content} type={msg.type} />
 				))}
 			{error && <ErrorAlert message={error} />}
 			{isLoading && <TypingIndicator status={status} />}

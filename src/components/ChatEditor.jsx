@@ -11,6 +11,7 @@ import { store as interfaceStore } from "@wordpress/interface";
  * Internal dependencies
  */
 import useChat from "../hooks/useChat";
+import ActionButtons from "./chat/ActionButtons";
 import ChatInput from "./chat/ChatInput";
 import ChatMessages from "./chat/ChatMessages";
 import WelcomeScreen from "./chat/WelcomeScreen";
@@ -27,14 +28,20 @@ const ChatEditor = () => {
 		isLoading,
 		error,
 		status,
+		isSaving,
 		handleSendMessage,
 		handleNewChat,
-		hideMessageActions,
+		handleAcceptChanges,
+		handleDeclineChanges,
 	} = useChat();
 
 	useEffect(() => {
 		enableComplementaryArea(SIDEBAR_SCOPE, SIDEBAR_NAME);
 	}, [enableComplementaryArea]);
+
+	// Check if there are any messages with pending actions and count them
+	const pendingActionsCount = messages.filter((msg) => msg.hasActions).length;
+	const hasPendingActions = pendingActionsCount > 0;
 
 	return (
 		<>
@@ -59,12 +66,14 @@ const ChatEditor = () => {
 					{messages.length === 0 ? (
 						<WelcomeScreen onSendMessage={handleSendMessage} />
 					) : (
-						<ChatMessages
-							messages={messages}
-							isLoading={isLoading}
-							error={error}
-							status={status}
-							onHideActions={hideMessageActions}
+						<ChatMessages messages={messages} isLoading={isLoading} error={error} status={status} />
+					)}
+					{hasPendingActions && (
+						<ActionButtons
+							pendingCount={pendingActionsCount}
+							onAccept={handleAcceptChanges}
+							onDecline={handleDeclineChanges}
+							isSaving={isSaving}
 						/>
 					)}
 					<ChatInput onSendMessage={handleSendMessage} disabled={isLoading} />
