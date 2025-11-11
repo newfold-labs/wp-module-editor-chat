@@ -22,7 +22,15 @@ const SIDEBAR_SCOPE = "core";
 
 const ChatEditor = () => {
 	const { enableComplementaryArea } = useDispatch(interfaceStore);
-	const { messages, isLoading, error, status, handleSendMessage, handleNewChat } = useChat();
+	const {
+		messages,
+		isLoading,
+		error,
+		status,
+		handleSendMessage,
+		handleNewChat,
+		hideMessageActions,
+	} = useChat();
 
 	useEffect(() => {
 		enableComplementaryArea(SIDEBAR_SCOPE, SIDEBAR_NAME);
@@ -51,7 +59,13 @@ const ChatEditor = () => {
 					{messages.length === 0 ? (
 						<WelcomeScreen onSendMessage={handleSendMessage} />
 					) : (
-						<ChatMessages messages={messages} isLoading={isLoading} error={error} status={status} />
+						<ChatMessages
+							messages={messages}
+							isLoading={isLoading}
+							error={error}
+							status={status}
+							onHideActions={hideMessageActions}
+						/>
 					)}
 					<ChatInput onSendMessage={handleSendMessage} disabled={isLoading} />
 				</div>

@@ -60,7 +60,15 @@ const saveConversationId = (conversationId) => {
 const loadMessages = () => {
 	try {
 		const stored = localStorage.getItem(STORAGE_KEYS.MESSAGES);
-		return stored ? JSON.parse(stored) : [];
+		if (stored) {
+			const messages = JSON.parse(stored);
+			// Remove hasActions flag from loaded messages (actions should only show once)
+			return messages.map((msg) => {
+				const { hasActions, ...rest } = msg;
+				return rest;
+			});
+		}
+		return [];
 	} catch (error) {
 		// eslint-disable-next-line no-console
 		console.warn("Failed to load messages from localStorage:", error);
@@ -293,17 +301,12 @@ const useChat = () => {
 							assistantMessage = data.chat.current_message.assistant;
 						}
 
-						// Add AI response
-						const aiMessage = {
-							type: "assistant",
-							content: assistantMessage,
-						};
-						setMessages((prev) => [...prev, aiMessage]);
-
 						// Execute actions if present
-						if (data.actions && Array.isArray(data.actions)) {
+						let hasExecutedActions = false;
+						if (data.actions && Array.isArray(data.actions) && data.actions.length > 0) {
 							try {
 								const actionResult = await actionExecutor.executeActions(data.actions);
+								hasExecutedActions = true;
 								// eslint-disable-next-line no-console
 								console.log("Actions executed:", actionResult);
 							} catch (actionError) {
@@ -311,6 +314,14 @@ const useChat = () => {
 								console.error("Error executing actions:", actionError);
 							}
 						}
+
+						// Add AI response with action information
+						const aiMessage = {
+							type: "assistant",
+							content: assistantMessage,
+							hasActions: hasExecutedActions,
+						};
+						setMessages((prev) => [...prev, aiMessage]);
 					}
 
 					setIsLoading(false);
@@ -392,6 +403,23 @@ const useChat = () => {
 		}
 	};
 
+	/**
+	 * Hide action buttons for a specific message
+	 *
+	 * @param {number} messageIndex - The index of the message to update
+	 */
+	const hideMessageActions = (messageIndex) => {
+		setMessages((prev) =>
+			prev.map((msg, index) => {
+				if (index === messageIndex) {
+					const { hasActions, ...rest } = msg;
+					return rest;
+				}
+				return msg;
+			})
+		);
+	};
+
 	return {
 		messages,
 		isLoading,
@@ -400,6 +428,7 @@ const useChat = () => {
 		status,
 		handleSendMessage,
 		handleNewChat,
+		hideMessageActions,
 	};
 };
 
