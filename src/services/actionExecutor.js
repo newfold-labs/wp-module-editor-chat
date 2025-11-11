@@ -5,6 +5,15 @@ import { dispatch, select } from "@wordpress/data";
 import { serialize, parse, createBlock } from "@wordpress/blocks";
 
 /**
+ * Internal dependencies
+ */
+import {
+	updateTemplatePartContent,
+	getTemplatePartEntity,
+	isTemplatePart,
+} from "../utils/editorHelpers";
+
+/**
  * Simple Action Executor
  *
  * Executes actions received from the AI chat API.
@@ -132,6 +141,11 @@ class ActionExecutor {
 			throw new Error(`Block with clientId ${clientId} not found`);
 		}
 
+		// Check if this is a template part - handle differently
+		if (isTemplatePart(block)) {
+			return this.applyTemplatePartChanges(clientId, block, changes);
+		}
+
 		// Save the original block state for undo
 		const originalBlock = {
 			clientId,
@@ -221,6 +235,141 @@ class ActionExecutor {
 	}
 
 	/**
+	 * Apply find/replace changes to a template part's content
+	 *
+	 * @param {string} clientId The template part's client ID
+	 * @param {Object} block    The template part block
+	 * @param {Array}  changes  Array of {find, replace} objects
+	 * @return {Promise<Object>} Result of the changes
+	 */
+	async applyTemplatePartChanges(clientId, block, changes) {
+		// Get the template part entity to store original content
+		const originalEntity = await getTemplatePartEntity(block);
+
+		// eslint-disable-next-line no-console
+		console.log("Template part - storing original entity:", {
+			hasEntity: !!originalEntity,
+			hasContent: !!originalEntity?.content,
+			contentType: typeof originalEntity?.content,
+			contentKeys: originalEntity?.content ? Object.keys(originalEntity.content) : [],
+		});
+
+		// Save original state for undo (includes entity data)
+		const originalBlock = {
+			clientId,
+			name: block.name,
+			attributes: { ...block.attributes },
+			innerBlocks: block.innerBlocks ? [...block.innerBlocks] : [],
+			isTemplatePart: true,
+			entityContent: originalEntity ? originalEntity.content : null,
+		};
+
+		// Get the template part's inner blocks
+		const { getBlocks } = select("core/block-editor");
+		const innerBlocks = getBlocks(clientId);
+
+		if (innerBlocks.length === 0) {
+			throw new Error("Template part has no inner blocks to modify");
+		}
+
+		// Apply changes to inner blocks recursively
+		const { updateBlockAttributes, replaceInnerBlocks } = dispatch("core/block-editor");
+		let changesApplied = 0;
+		const updatedInnerBlocks = [];
+
+		// Process each inner block
+		for (const innerBlock of innerBlocks) {
+			// Serialize the inner block
+			let blockHtml = serialize(innerBlock);
+			let modified = false;
+
+			// Apply all find/replace operations
+			for (const change of changes) {
+				const { find, replace } = change;
+
+				if (typeof find !== "string" || typeof replace !== "string") {
+					throw new Error("Change must have find and replace as strings");
+				}
+
+				// Normalize strings
+				const normalizedBlockHtml = this.normalizeHtml(blockHtml);
+				const normalizedFind = this.normalizeHtml(find);
+				const normalizedReplace = this.normalizeHtml(replace);
+
+				// eslint-disable-next-line no-console
+				console.log("TEMPLATE PART CHANGE");
+				// eslint-disable-next-line no-console
+				console.log({
+					normalizedBlockHtml,
+					normalizedFind,
+					normalizedReplace,
+				});
+
+				// Perform the replacement
+				if (normalizedBlockHtml.includes(normalizedFind)) {
+					blockHtml = normalizedBlockHtml.replace(normalizedFind, normalizedReplace);
+					modified = true;
+					changesApplied++;
+					// eslint-disable-next-line no-console
+					console.log(`Applied change to template part inner block`);
+				}
+			}
+
+			// If this inner block was modified, update it in the editor
+			if (modified) {
+				const updatedBlocks = parse(blockHtml);
+				if (updatedBlocks && updatedBlocks.length > 0) {
+					const updatedBlock = updatedBlocks[0];
+
+					// Update the inner block's attributes
+					if (updatedBlock.attributes) {
+						updateBlockAttributes(innerBlock.clientId, updatedBlock.attributes);
+					}
+
+					// Update nested inner blocks if they exist
+					if (updatedBlock.innerBlocks && updatedBlock.innerBlocks.length > 0) {
+						const nestedInnerBlocks = updatedBlock.innerBlocks.map((nested) =>
+							this.createBlockFromParsed(nested)
+						);
+						replaceInnerBlocks(innerBlock.clientId, nestedInnerBlocks);
+					}
+
+					// Store the updated block for entity save
+					updatedInnerBlocks.push(updatedBlock);
+				}
+			} else {
+				// Keep the original block if not modified
+				updatedInnerBlocks.push(innerBlock);
+			}
+		}
+
+		// Save changes to the template part entity
+		// This ensures the changes persist across page reloads
+		let entityUpdateResult = null;
+		if (changesApplied > 0) {
+			entityUpdateResult = await updateTemplatePartContent(block, updatedInnerBlocks);
+
+			if (!entityUpdateResult.success) {
+				// eslint-disable-next-line no-console
+				console.warn("Template part entity update failed:", entityUpdateResult.message);
+			}
+		}
+
+		// eslint-disable-next-line no-console
+		console.log(`Applied ${changesApplied} change(s) to template part ${clientId}`);
+
+		return {
+			clientId,
+			blockName: block.name,
+			changesApplied,
+			message: `Template part content updated successfully`,
+			originalBlock,
+			isTemplatePart: true,
+			entityUpdateResult,
+		};
+	}
+
+	/**
 	 * Restore blocks to their previous state
 	 *
 	 * @param {Array} undoData Array of original block states
@@ -232,30 +381,96 @@ class ActionExecutor {
 		}
 
 		const { updateBlockAttributes, replaceInnerBlocks } = dispatch("core/block-editor");
+		const { getBlock } = select("core/block-editor");
 		const results = [];
 		const errors = [];
 
 		for (const blockData of undoData) {
 			try {
-				const { clientId, attributes, innerBlocks } = blockData;
+				const {
+					clientId,
+					attributes,
+					innerBlocks,
+					isTemplatePart: isTemplatePartBlock,
+					entityContent,
+				} = blockData;
 
 				if (!clientId) {
 					errors.push("Missing clientId in undo data");
 					continue;
 				}
 
-				// Restore attributes
-				updateBlockAttributes(clientId, attributes);
+				// If this is a template part, restore the entity content first
+				if (isTemplatePartBlock && entityContent) {
+					const block = getBlock(clientId);
+					if (block) {
+						// Parse the original content back into blocks
+						const contentString =
+							typeof entityContent === "string"
+								? entityContent
+								: entityContent.raw || entityContent.rendered;
 
-				// Restore inner blocks
-				if (innerBlocks && Array.isArray(innerBlocks)) {
-					const restoredInnerBlocks = innerBlocks.map((inner) => this.createBlockFromParsed(inner));
-					replaceInnerBlocks(clientId, restoredInnerBlocks);
+						// eslint-disable-next-line no-console
+						console.log("Restoring template part:", {
+							clientId,
+							hasEntityContent: !!entityContent,
+							contentType: typeof entityContent,
+							contentStringLength: contentString?.length,
+						});
+
+						if (contentString) {
+							const originalBlocks = parse(contentString);
+
+							// eslint-disable-next-line no-console
+							console.log("Parsed original blocks:", originalBlocks.length);
+
+							// Update the entity (database)
+							const updateResult = await updateTemplatePartContent(block, originalBlocks);
+
+							// eslint-disable-next-line no-console
+							console.log("Entity update result:", updateResult);
+
+							if (!updateResult.success) {
+								// eslint-disable-next-line no-console
+								console.warn("Failed to restore template part entity:", updateResult.message);
+								errors.push(`Template part entity restore failed: ${updateResult.message}`);
+							}
+
+							// Also update the editor's inner blocks to immediately reflect the changes
+							// This ensures the visual editor shows the restored content
+							const restoredInnerBlocks = originalBlocks.map((inner) =>
+								this.createBlockFromParsed(inner)
+							);
+							replaceInnerBlocks(clientId, restoredInnerBlocks);
+
+							// eslint-disable-next-line no-console
+							console.log("Replaced inner blocks in editor:", restoredInnerBlocks.length);
+						} else {
+							// eslint-disable-next-line no-console
+							console.error("No content string to restore for template part");
+						}
+					} else {
+						// eslint-disable-next-line no-console
+						console.error("Could not find block with clientId:", clientId);
+					}
+				} else {
+					// For non-template-part blocks, restore attributes and inner blocks
+					// Restore attributes
+					updateBlockAttributes(clientId, attributes);
+
+					// Restore inner blocks
+					if (innerBlocks && Array.isArray(innerBlocks)) {
+						const restoredInnerBlocks = innerBlocks.map((inner) =>
+							this.createBlockFromParsed(inner)
+						);
+						replaceInnerBlocks(clientId, restoredInnerBlocks);
+					}
 				}
 
+				const messageType = isTemplatePartBlock ? "Template part" : "Block";
 				results.push({
 					clientId,
-					message: "Block restored successfully",
+					message: `${messageType} restored successfully`,
 				});
 			} catch (error) {
 				errors.push(`Failed to restore block: ${error.message}`);
