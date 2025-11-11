@@ -3,6 +3,9 @@
 	border-bottom: 1px solid #e0e0e0;
 	position: relative;
 	h2 {
+		display: flex;
+		align-items: center;
+		gap: 8px;
 		margin: 0;
 		font-size: var(--nfd-editor-chat-font-size-base);
 		font-weight: 600;
@@ -62,4 +65,16 @@
 			height: 16px;
 		}
 	}
+}
+
+.nfd-editor-chat-sidebar__beta-badge {
+	font-size: 10px;
+	font-weight: 600;
+	padding: 4px 8px;
+	border-radius: 4px;
+	background-color: var(--nfd-editor-chat-color-primary);
+	color: var(--nfd-editor-chat-color-white);
+	text-transform: uppercase;
+	letter-spacing: 0.25px;
+	line-height: 1;
 }

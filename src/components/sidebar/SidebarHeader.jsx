@@ -23,6 +23,7 @@ const SidebarHeader = ({ onNewChat }) => {
 		<div className="nfd-editor-chat-sidebar__header-content">
 			<h2 className="interface-complementary-area-header__title">
 				{__("AI Chat Editor", "wp-module-editor-chat")}
+				<span className="nfd-editor-chat-sidebar__beta-badge">Beta</span>
 			</h2>
 			{onNewChat && (
 				<div className="nfd-editor-chat-sidebar__header-actions">
