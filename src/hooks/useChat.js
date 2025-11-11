@@ -485,6 +485,9 @@ const useChat = () => {
 		}
 
 		try {
+			// Restore the blocks to their original state
+			await actionExecutor.restoreBlocks(firstActionMessage.undoData);
+
 			// Remove hasActions and undoData from ALL messages
 			setMessages((prev) =>
 				prev.map((msg) => {
