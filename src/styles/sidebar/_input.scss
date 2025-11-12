@@ -100,7 +100,9 @@
 	flex-wrap: wrap;
 }
 
-.components-button.nfd-editor-chat-input__submit {
+// Common styles for submit and stop buttons
+.components-button.nfd-editor-chat-input__submit,
+.components-button.nfd-editor-chat-input__stop {
 	flex-shrink: 0;
 	min-width: auto;
 	width: 28px;
@@ -117,6 +119,16 @@
 	transition: all 0.15s ease;
 	margin-left: auto;
 
+	svg {
+		display: block;
+		fill: none;
+		width: 16px;
+		height: 16px;
+	}
+}
+
+// Submit button specific styles
+.components-button.nfd-editor-chat-input__submit {
 	&:hover:not(:disabled) {
 		stroke: var(--nfd-editor-chat-color-primary);
 		background: var(--nfd-editor-chat-color-primary-light-12);
@@ -139,11 +151,11 @@
 		background: var(--nfd-editor-chat-color-background);
 		cursor: not-allowed;
 	}
+}
 
-	svg {
-		display: block;
-		fill: none;
-		width: 16px;
-		height: 16px;
+// Stop button specific styles
+.components-button.nfd-editor-chat-input__stop {
+	&:hover:not(:disabled) {
+		color: var(--nfd-editor-chat-color-error);
 	}
 }

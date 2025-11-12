@@ -9,7 +9,7 @@ import { __ } from "@wordpress/i18n";
 /**
  * External dependencies
  */
-import { ArrowUp } from "lucide-react";
+import { ArrowUp, CircleStop } from "lucide-react";
 
 /**
  * Internal dependencies
@@ -22,10 +22,11 @@ import ContextTag from "../ui/ContextTag";
  *
  * @param {Object}   props               - The component props.
  * @param {Function} props.onSendMessage - The function to call when the message is sent.
+ * @param {Function} props.onStopRequest - The function to call when the stop button is clicked.
  * @param {boolean}  props.disabled      - Whether the input is disabled.
  * @return {JSX.Element} The ChatInput component.
  */
-const ChatInput = ({ onSendMessage, disabled = false }) => {
+const ChatInput = ({ onSendMessage, onStopRequest, disabled = false }) => {
 	const [message, setMessage] = useState("");
 	const textareaRef = useRef(null);
 	const selectedBlock = useSelectedBlock();
@@ -91,13 +92,22 @@ const ChatInput = ({ onSendMessage, disabled = false }) => {
 							}}
 						/>
 					)}
-					<Button
-						icon={<ArrowUp width={16} height={16} />}
-						label={__("Send message", "wp-module-editor-chat")}
-						onClick={handleSubmit}
-						className="nfd-editor-chat-input__submit"
-						disabled={disabled || !message.trim()}
-					/>
+					{disabled ? (
+						<Button
+							icon={<CircleStop width={16} height={16} />}
+							label={__("Stop generating", "wp-module-editor-chat")}
+							onClick={onStopRequest}
+							className="nfd-editor-chat-input__stop"
+						/>
+					) : (
+						<Button
+							icon={<ArrowUp width={16} height={16} />}
+							label={__("Send message", "wp-module-editor-chat")}
+							onClick={handleSubmit}
+							className="nfd-editor-chat-input__submit"
+							disabled={!message.trim()}
+						/>
+					)}
 				</div>
 			</div>
 			<div className="nfd-editor-chat-input__disclaimer">
