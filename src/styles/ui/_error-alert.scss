@@ -1,0 +1,32 @@
+// Error alert component
+.nfd-editor-chat-error-alert {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	padding: 12px;
+	background: #fef2f2;
+	border: 1px solid #fecaca;
+	border-radius: 12px;
+	color: #dc2626;
+	font-size: var(--nfd-editor-chat-font-size-base);
+	line-height: 1.5;
+}
+
+.nfd-editor-chat-error-alert__icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 20px;
+	height: 20px;
+	color: #dc2626;
+	stroke: currentColor;
+	fill: none;
+}
+
+.nfd-editor-chat-error-alert__content {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}

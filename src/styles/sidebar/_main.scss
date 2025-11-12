@@ -1,0 +1,48 @@
+// Main sidebar layout and structure
+.interface-complementary-area__fill:has(#nfd-editor-chat),
+#nfd-editor-chat {
+	width: 400px !important;
+}
+
+#nfd-editor-chat {
+	display: flex;
+	flex-direction: column;
+	max-height: 100%;
+	overflow: hidden;
+}
+
+// Main sidebar content
+.nfd-editor-chat-sidebar__content {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	background: var(--nfd-editor-chat-color-white);
+	padding: 0;
+	position: relative;
+	flex-grow: 1;
+}
+
+.nfd-editor-chat-sidebar__panel {
+	overflow-y: auto;
+}
+
+// Ensure the sidebar has proper height
+.interface-complementary-area {
+	&.nfd-editor-chat-sidebar {
+		display: flex;
+		flex-direction: column;
+		overflow: hidden;
+	}
+
+	.nfd-editor-chat-sidebar__header {
+		position: relative;
+	}
+}
+
+// Plugin sidebar specific styles
+.components-panel.nfd-editor-chat-sidebar__panel {
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}

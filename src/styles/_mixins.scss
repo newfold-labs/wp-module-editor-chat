@@ -1,0 +1,20 @@
+// Custom scrollbar mixin
+@mixin custom-scrollbar {
+	&::-webkit-scrollbar {
+		width: 8px;
+	}
+
+	&::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background: var(--nfd-editor-chat-color-border);
+		opacity: 0.8;
+		border-radius: 4px;
+
+		&:hover {
+			opacity: 1;
+		}
+	}
+}

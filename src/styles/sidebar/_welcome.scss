@@ -1,0 +1,45 @@
+// Welcome screen
+.nfd-editor-chat-welcome {
+	flex: 1 1 auto;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: space-between;
+	padding: 40px 16px 0 16px;
+	text-align: center;
+	min-height: 0;
+	overflow-y: auto;
+	gap: 32px;
+}
+
+.nfd-editor-chat-welcome__content {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	flex: 1;
+}
+
+.nfd-editor-chat-welcome__avatar {
+	margin-bottom: 24px;
+}
+
+.nfd-editor-chat-welcome__message {
+	max-width: 320px;
+	margin-bottom: 0;
+}
+
+.nfd-editor-chat-welcome__title {
+	font-size: 18px;
+	line-height: 1.4;
+	color: var(--nfd-editor-chat-color-text);
+	font-weight: 600;
+	margin-bottom: 8px;
+}
+
+.nfd-editor-chat-welcome__subtitle {
+	font-size: var(--nfd-editor-chat-font-size-base);
+	line-height: 1.5;
+	color: var(--nfd-editor-chat-color-grey-dark);
+	font-weight: 400;
+}
