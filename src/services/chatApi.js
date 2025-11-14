@@ -70,24 +70,18 @@ export const createNewConversation = async () => {
  */
 export const sendMessage = async (conversationId, message) => {
 	try {
-		// eslint-disable-next-line no-console
-		console.log("sendMessage: Starting API call");
 		const requestData = {
 			message,
 			context: await buildContext(),
 			conversationId,
 		};
 
-		// eslint-disable-next-line no-console
-		console.log("sendMessage: Request data prepared, calling API");
 		const response = await apiFetch({
 			path: "/nfd-editor-chat/v1/chat",
 			method: "POST",
 			data: requestData,
 		});
 
-		// eslint-disable-next-line no-console
-		console.log("sendMessage: API response received:", response);
 		// The API now returns message_id immediately (202 status)
 		return response;
 	} catch (error) {
@@ -105,8 +99,6 @@ export const sendMessage = async (conversationId, message) => {
  */
 export const checkStatus = async (messageId) => {
 	try {
-		// eslint-disable-next-line no-console
-		console.log("checkStatus: Calling API with message_id:", messageId);
 		const response = await apiFetch({
 			path: "/nfd-editor-chat/v1/chat/status",
 			method: "POST",
@@ -115,8 +107,6 @@ export const checkStatus = async (messageId) => {
 			},
 		});
 
-		// eslint-disable-next-line no-console
-		console.log("checkStatus: API response:", response);
 		return response;
 	} catch (error) {
 		// eslint-disable-next-line no-console
