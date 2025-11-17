@@ -207,13 +207,6 @@ class ActionExecutor {
 			const normalizedFind = this.normalizeHtml(find);
 			const normalizedReplace = this.normalizeHtml(replace);
 
-			// eslint-disable-next-line no-console
-			console.log({
-				blockHtml: normalizedBlockHtml,
-				find: normalizedFind,
-				replace: normalizedReplace,
-			});
-
 			// Perform the replacement on normalized strings
 			if (normalizedBlockHtml.includes(normalizedFind)) {
 				// Replace in the normalized version
@@ -321,13 +314,6 @@ class ActionExecutor {
 				const normalizedBlockHtml = this.normalizeHtml(blockHtml);
 				const normalizedFind = this.normalizeHtml(find);
 				const normalizedReplace = this.normalizeHtml(replace);
-
-				// eslint-disable-next-line no-console
-				console.log({
-					normalizedBlockHtml,
-					normalizedFind,
-					normalizedReplace,
-				});
 
 				// Perform the replacement
 				if (normalizedBlockHtml.includes(normalizedFind)) {
