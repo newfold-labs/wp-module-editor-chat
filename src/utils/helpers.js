@@ -6,6 +6,11 @@
  * @return {string} A hexadecimal hash string
  */
 export const simpleHash = (str) => {
+	// Handle null, undefined, or empty strings
+	if (!str || typeof str !== "string") {
+		return "0";
+	}
+
 	let hash = 5381;
 	for (let i = 0; i < str.length; i++) {
 		// eslint-disable-next-line no-bitwise
@@ -17,4 +22,3 @@ export const simpleHash = (str) => {
 	// eslint-disable-next-line no-bitwise
 	return (hash >>> 0).toString(16);
 };
-
