@@ -26,7 +26,11 @@ const getPostContent = () => {
 	const postContentBlock = blocks.find((block) => block.name === "core/post-content");
 
 	if (!postContentBlock) {
-		return [];
+		// If there's no post-content block, map all blocks
+		return blocks.map((block) => ({
+			clientId: block.clientId,
+			content: serialize(block),
+		}));
 	}
 
 	// Get inner blocks of the post-content block

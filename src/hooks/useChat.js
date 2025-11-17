@@ -11,13 +11,22 @@ import { useDispatch, useSelect } from "@wordpress/data";
  */
 import { sendMessage, createNewConversation, checkStatus } from "../services/chatApi";
 import actionExecutor from "../services/actionExecutor";
+import { simpleHash } from "../utils/helpers";
 
 /**
- * LocalStorage keys for chat persistence
+ * Get site-specific localStorage keys for chat persistence
+ * Uses the site URL to ensure each site has its own isolated chat history
+ *
+ * @return {Object} Storage keys object with site-specific keys
  */
-const STORAGE_KEYS = {
-	CONVERSATION_ID: "nfd-editor-chat-conversation-id",
-	MESSAGES: "nfd-editor-chat-messages",
+const getStorageKeys = () => {
+	// Hash the site origin to create a unique, compact identifier
+	const siteId = simpleHash(window.location.origin);
+
+	return {
+		CONVERSATION_ID: `nfd-editor-chat-conversation-id-${siteId}`,
+		MESSAGES: `nfd-editor-chat-messages-${siteId}`,
+	};
 };
 
 /**
@@ -27,6 +36,7 @@ const STORAGE_KEYS = {
  */
 const loadConversationId = () => {
 	try {
+		const STORAGE_KEYS = getStorageKeys();
 		return localStorage.getItem(STORAGE_KEYS.CONVERSATION_ID);
 	} catch (error) {
 		// eslint-disable-next-line no-console
@@ -42,6 +52,7 @@ const loadConversationId = () => {
  */
 const saveConversationId = (conversationId) => {
 	try {
+		const STORAGE_KEYS = getStorageKeys();
 		if (conversationId) {
 			localStorage.setItem(STORAGE_KEYS.CONVERSATION_ID, conversationId);
 		} else {
@@ -60,6 +71,7 @@ const saveConversationId = (conversationId) => {
  */
 const loadMessages = () => {
 	try {
+		const STORAGE_KEYS = getStorageKeys();
 		const stored = localStorage.getItem(STORAGE_KEYS.MESSAGES);
 		if (stored) {
 			const messages = JSON.parse(stored);
@@ -84,6 +96,7 @@ const loadMessages = () => {
  */
 const saveMessages = (messages) => {
 	try {
+		const STORAGE_KEYS = getStorageKeys();
 		localStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify(messages));
 	} catch (error) {
 		// eslint-disable-next-line no-console
@@ -96,6 +109,7 @@ const saveMessages = (messages) => {
  */
 const clearChatData = () => {
 	try {
+		const STORAGE_KEYS = getStorageKeys();
 		localStorage.removeItem(STORAGE_KEYS.CONVERSATION_ID);
 		localStorage.removeItem(STORAGE_KEYS.MESSAGES);
 	} catch (error) {
