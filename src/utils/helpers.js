@@ -11,7 +11,7 @@ export const simpleHash = (str) => {
 		// eslint-disable-next-line no-bitwise
 		hash = (hash << 5) + hash + str.charCodeAt(i); // hash * 33 + c
 		// eslint-disable-next-line no-bitwise
-		hash = hash & hash; // Convert to 32-bit integer
+		hash = hash | 0; // Convert to 32-bit integer
 	}
 	// Convert to unsigned and then to hex
 	// eslint-disable-next-line no-bitwise
