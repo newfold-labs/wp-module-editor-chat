@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { select, resolveSelect } from "@wordpress/data";
+import { select, resolveSelect, dispatch } from "@wordpress/data";
 import { serialize } from "@wordpress/blocks";
 
 /**
@@ -175,4 +175,123 @@ export const getSelectedBlock = () => {
 		...selectedBlock,
 		originalContent: serialize(selectedBlock),
 	};
+};
+
+/**
+ * Check if a block is a template part
+ *
+ * @param {Object} block The block to check
+ * @return {boolean} True if the block is a template part
+ */
+export const isTemplatePart = (block) => {
+	return block && block.name === "core/template-part";
+};
+
+/**
+ * Get template part entity record
+ * This is the base function that other template part helpers use
+ *
+ * @param {Object} tplBlock The template part block
+ * @return {Promise<Object|null>} The entity record
+ */
+export const getTemplatePartEntity = async (tplBlock) => {
+	if (!tplBlock || !tplBlock.attributes) {
+		return null;
+	}
+
+	const { ref, slug, theme } = tplBlock.attributes;
+	const coreResolve = resolveSelect("core");
+
+	// If we have a ref, use it directly
+	if (ref) {
+		return await coreResolve.getEntityRecord("postType", "wp_template_part", ref);
+	}
+
+	// Try composite ID (theme//slug)
+	if (slug && theme) {
+		const compositeId = `${theme}//${slug}`;
+		const rec = await coreResolve.getEntityRecord("postType", "wp_template_part", compositeId);
+		if (rec) {
+			return rec;
+		}
+	}
+
+	// Try by slug
+	if (slug) {
+		const query = theme ? { slug: [slug], theme } : { slug: [slug] };
+		const recs = await coreResolve.getEntityRecords("postType", "wp_template_part", query);
+		if (Array.isArray(recs) && recs.length > 0) {
+			const exact = recs.find((r) => r && r.slug === slug && (!theme || r.theme === theme));
+			return exact || recs[0];
+		}
+	}
+
+	return null;
+};
+
+/**
+ * Get template part entity record ID
+ *
+ * @param {Object} tplBlock The template part block
+ * @return {Promise<string|number|null>} The entity record ID
+ */
+export const getTemplatePartEntityId = async (tplBlock) => {
+	// Use ref directly if available
+	if (tplBlock?.attributes?.ref) {
+		return tplBlock.attributes.ref;
+	}
+
+	// Otherwise get the full entity and extract the ID
+	const entity = await getTemplatePartEntity(tplBlock);
+	return entity?.id || null;
+};
+
+/**
+ * Update template part content
+ *
+ * @param {Object} tplBlock           The template part block
+ * @param {Array}  updatedInnerBlocks The updated inner blocks
+ * @return {Promise<Object>}          Result of the update
+ */
+export const updateTemplatePartContent = async (tplBlock, updatedInnerBlocks) => {
+	try {
+		const entityId = await getTemplatePartEntityId(tplBlock);
+
+		if (!entityId) {
+			throw new Error("Could not resolve template part entity ID");
+		}
+
+		// Serialize the updated blocks to HTML
+		const updatedContent = updatedInnerBlocks.map((block) => serialize(block)).join("");
+
+		// Get the core dispatcher
+		const coreDispatch = dispatch("core");
+
+		// Edit the entity record
+		await coreDispatch.editEntityRecord("postType", "wp_template_part", entityId, {
+			content: updatedContent,
+		});
+
+		// Save the entity
+		const savedRecord = await coreDispatch.saveEditedEntityRecord(
+			"postType",
+			"wp_template_part",
+			entityId
+		);
+
+		return {
+			success: true,
+			message: "Template part updated successfully",
+			entityId,
+			savedRecord,
+		};
+	} catch (error) {
+		// eslint-disable-next-line no-console
+		console.error("Error updating template part:", error);
+		return {
+			success: false,
+			message: `Failed to update template part: ${error.message}`,
+			error,
+		};
+	}
 };
