@@ -505,6 +505,19 @@ const useChat = () => {
 		}
 	};
 
+	/**
+	 * Stop the current request
+	 */
+	const handleStopRequest = () => {
+		// Stop polling
+		stopPolling();
+
+		// Clear loading state and status
+		setIsLoading(false);
+		setStatus(null);
+		setError(null);
+	};
+
 	return {
 		messages,
 		isLoading,
@@ -516,6 +529,7 @@ const useChat = () => {
 		handleNewChat,
 		handleAcceptChanges,
 		handleDeclineChanges,
+		handleStopRequest,
 	};
 };
 

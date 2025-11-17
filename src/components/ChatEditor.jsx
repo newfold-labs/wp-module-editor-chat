@@ -33,6 +33,7 @@ const ChatEditor = () => {
 		handleNewChat,
 		handleAcceptChanges,
 		handleDeclineChanges,
+		handleStopRequest,
 	} = useChat();
 
 	useEffect(() => {
@@ -76,7 +77,7 @@ const ChatEditor = () => {
 							isSaving={isSaving}
 						/>
 					)}
-					<ChatInput onSendMessage={handleSendMessage} disabled={isLoading} />
+					<ChatInput onSendMessage={handleSendMessage} onStopRequest={handleStopRequest} disabled={isLoading} />
 				</div>
 			</PluginSidebar>
 		</>

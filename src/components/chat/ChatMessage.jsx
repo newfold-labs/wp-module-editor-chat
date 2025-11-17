@@ -7,7 +7,6 @@ import { useMemo } from "@wordpress/element";
  * Internal dependencies
  */
 import { containsHtml, sanitizeHtml } from "../../utils/sanitizeHtml";
-import UserAvatar from "../ui/UserAvatar";
 
 /**
  * ChatMessage Component
@@ -56,7 +55,6 @@ const ChatMessage = ({ message, type = "assistant" }) => {
 			) : (
 				<div className="nfd-editor-chat-message__content">{sanitizedContent}</div>
 			)}
-			{isUser && <UserAvatar width={32} height={32} />}
 		</div>
 	);
 };

@@ -18,7 +18,7 @@ import {
  *
  * Executes actions received from the AI chat API.
  * Supports the following action types:
- * - edit_content: Apply find/replace changes to block content
+ * - edit_content: Apply find/replace changes to block content (with edit, delete, add sub-actions)
  */
 class ActionExecutor {
 	/**
@@ -92,25 +92,51 @@ class ActionExecutor {
 		for (const contentItem of data.content) {
 			// API uses snake_case, convert to camelCase
 			const clientId = contentItem.client_id;
+			const contentAction = contentItem.action; // "edit", "delete", or "add"
 			const { changes } = contentItem;
 
-			if (!clientId) {
-				errors.push("Content item missing client_id");
-				continue;
-			}
-
-			if (!changes || !Array.isArray(changes)) {
-				errors.push(`Content item ${clientId} missing changes array`);
+			if (!contentAction) {
+				errors.push("Content item missing 'action' property");
 				continue;
 			}
 
 			try {
-				const result = await this.applyContentChanges(clientId, changes);
+				let result;
+				if (contentAction === "edit") {
+					if (!clientId) {
+						errors.push("Edit action requires client_id");
+						continue;
+					}
+					if (!changes || !Array.isArray(changes)) {
+						errors.push(`Edit action for ${clientId} missing changes array`);
+						continue;
+					}
+					result = await this.handleEditAction(clientId, changes);
+				} else if (contentAction === "delete") {
+					if (!clientId) {
+						errors.push("Delete action requires client_id");
+						continue;
+					}
+					if (changes !== "remove_block") {
+						errors.push(`Delete action for ${clientId} must have changes: "remove_block"`);
+						continue;
+					}
+					result = await this.handleDeleteAction(clientId);
+				} else if (contentAction === "add") {
+					if (!changes || !Array.isArray(changes)) {
+						errors.push("Add action missing changes array");
+						continue;
+					}
+					result = await this.handleAddAction(clientId, changes);
+				} else {
+					errors.push(`Unsupported content action: ${contentAction}`);
+					continue;
+				}
 				results.push(result);
 			} catch (error) {
-				errors.push(`Failed to apply changes to ${clientId}: ${error.message}`);
+				errors.push(`Failed to execute ${contentAction} action: ${error.message}`);
 				// eslint-disable-next-line no-console
-				console.error(`Failed to apply changes to block ${clientId}:`, error);
+				console.error(`Failed to execute ${contentAction} action:`, error);
 			}
 		}
 
@@ -124,6 +150,17 @@ class ActionExecutor {
 			results,
 			errors,
 		};
+	}
+
+	/**
+	 * Handle "edit" action - apply find/replace changes to a block's content
+	 *
+	 * @param {string} clientId The block's client ID
+	 * @param {Array}  changes  Array of {find, replace} objects
+	 * @return {Promise<Object>} Result of the changes
+	 */
+	async handleEditAction(clientId, changes) {
+		return this.applyContentChanges(clientId, changes);
 	}
 
 	/**
@@ -170,13 +207,6 @@ class ActionExecutor {
 			const normalizedFind = this.normalizeHtml(find);
 			const normalizedReplace = this.normalizeHtml(replace);
 
-			// eslint-disable-next-line no-console
-			console.log({
-				blockHtml: normalizedBlockHtml,
-				find: normalizedFind,
-				replace: normalizedReplace,
-			});
-
 			// Perform the replacement on normalized strings
 			if (normalizedBlockHtml.includes(normalizedFind)) {
 				// Replace in the normalized version
@@ -222,9 +252,6 @@ class ActionExecutor {
 			replaceInnerBlocks(clientId, []);
 		}
 
-		// eslint-disable-next-line no-console
-		console.log(`Applied ${changes.length} change(s) to block ${clientId} (${block.name})`);
-
 		return {
 			clientId,
 			blockName: block.name,
@@ -245,14 +272,6 @@ class ActionExecutor {
 	async applyTemplatePartChanges(clientId, block, changes) {
 		// Get the template part entity to store original content
 		const originalEntity = await getTemplatePartEntity(block);
-
-		// eslint-disable-next-line no-console
-		console.log("Template part - storing original entity:", {
-			hasEntity: !!originalEntity,
-			hasContent: !!originalEntity?.content,
-			contentType: typeof originalEntity?.content,
-			contentKeys: originalEntity?.content ? Object.keys(originalEntity.content) : [],
-		});
 
 		// Save original state for undo (includes entity data)
 		const originalBlock = {
@@ -296,22 +315,11 @@ class ActionExecutor {
 				const normalizedFind = this.normalizeHtml(find);
 				const normalizedReplace = this.normalizeHtml(replace);
 
-				// eslint-disable-next-line no-console
-				console.log("TEMPLATE PART CHANGE");
-				// eslint-disable-next-line no-console
-				console.log({
-					normalizedBlockHtml,
-					normalizedFind,
-					normalizedReplace,
-				});
-
 				// Perform the replacement
 				if (normalizedBlockHtml.includes(normalizedFind)) {
 					blockHtml = normalizedBlockHtml.replace(normalizedFind, normalizedReplace);
 					modified = true;
 					changesApplied++;
-					// eslint-disable-next-line no-console
-					console.log(`Applied change to template part inner block`);
 				}
 			}
 
@@ -354,9 +362,6 @@ class ActionExecutor {
 				console.warn("Template part entity update failed:", entityUpdateResult.message);
 			}
 		}
-
-		// eslint-disable-next-line no-console
-		console.log(`Applied ${changesApplied} change(s) to template part ${clientId}`);
 
 		return {
 			clientId,
@@ -410,25 +415,11 @@ class ActionExecutor {
 								? entityContent
 								: entityContent.raw || entityContent.rendered;
 
-						// eslint-disable-next-line no-console
-						console.log("Restoring template part:", {
-							clientId,
-							hasEntityContent: !!entityContent,
-							contentType: typeof entityContent,
-							contentStringLength: contentString?.length,
-						});
-
 						if (contentString) {
 							const originalBlocks = parse(contentString);
 
-							// eslint-disable-next-line no-console
-							console.log("Parsed original blocks:", originalBlocks.length);
-
 							// Update the entity (database)
 							const updateResult = await updateTemplatePartContent(block, originalBlocks);
-
-							// eslint-disable-next-line no-console
-							console.log("Entity update result:", updateResult);
 
 							if (!updateResult.success) {
 								// eslint-disable-next-line no-console
@@ -442,9 +433,6 @@ class ActionExecutor {
 								this.createBlockFromParsed(inner)
 							);
 							replaceInnerBlocks(clientId, restoredInnerBlocks);
-
-							// eslint-disable-next-line no-console
-							console.log("Replaced inner blocks in editor:", restoredInnerBlocks.length);
 						} else {
 							// eslint-disable-next-line no-console
 							console.error("No content string to restore for template part");
@@ -568,6 +556,261 @@ class ActionExecutor {
 		);
 
 		return normalized;
+	}
+
+	/**
+	 * Handle "delete" action - remove a block from the editor
+	 *
+	 * @param {string} clientId The block's client ID to delete
+	 * @return {Promise<Object>} Result of the deletion
+	 */
+	async handleDeleteAction(clientId) {
+		const { getBlock } = select("core/block-editor");
+		const block = getBlock(clientId);
+
+		if (!block) {
+			throw new Error(`Block with clientId ${clientId} not found`);
+		}
+
+		// Check if this is a template part - handle differently
+		if (isTemplatePart(block)) {
+			return this.handleDeleteTemplatePart(clientId, block);
+		}
+
+		// Save the original block state for undo
+		const originalBlock = {
+			clientId,
+			name: block.name,
+			attributes: { ...block.attributes },
+			innerBlocks: block.innerBlocks ? [...block.innerBlocks] : [],
+		};
+
+		// Remove the block
+		const { removeBlock } = dispatch("core/block-editor");
+		removeBlock(clientId);
+
+		return {
+			clientId,
+			blockName: block.name,
+			message: `Block ${block.name} deleted successfully`,
+			originalBlock, // Include original block state for undo
+		};
+	}
+
+	/**
+	 * Handle deletion of a template part
+	 *
+	 * @param {string} clientId The template part's client ID
+	 * @param {Object} block    The template part block
+	 * @return {Promise<Object>} Result of the deletion
+	 */
+	async handleDeleteTemplatePart(clientId, block) {
+		// Get the template part entity to store original content
+		const originalEntity = await getTemplatePartEntity(block);
+
+		// Save original state for undo (includes entity data)
+		const originalBlock = {
+			clientId,
+			name: block.name,
+			attributes: { ...block.attributes },
+			innerBlocks: block.innerBlocks ? [...block.innerBlocks] : [],
+			isTemplatePart: true,
+			entityContent: originalEntity ? originalEntity.content : null,
+		};
+
+		// Remove the template part block
+		const { removeBlock } = dispatch("core/block-editor");
+		removeBlock(clientId);
+
+		return {
+			clientId,
+			blockName: block.name,
+			message: `Template part deleted successfully`,
+			originalBlock,
+			isTemplatePart: true,
+		};
+	}
+
+	/**
+	 * Get effective root blocks (root blocks + first level of post-content blocks)
+	 *
+	 * @return {Object} Object with blocks array and parentClientId (null for root, post-content clientId for post-content)
+	 */
+	getEffectiveRootBlocks() {
+		const { getBlocks } = select("core/block-editor");
+		const rootBlocks = getBlocks();
+
+		// Find the post-content block
+		const postContentBlock = rootBlocks.find((block) => block.name === "core/post-content");
+
+		if (postContentBlock) {
+			// Get inner blocks of post-content
+			const postContentInnerBlocks = getBlocks(postContentBlock.clientId);
+			if (postContentInnerBlocks.length > 0) {
+				// Return post-content inner blocks as effective root
+				return {
+					blocks: postContentInnerBlocks,
+					parentClientId: postContentBlock.clientId,
+				};
+			}
+		}
+
+		// No post-content or it's empty, use actual root blocks
+		return {
+			blocks: rootBlocks,
+			parentClientId: null,
+		};
+	}
+
+	/**
+	 * Find which context a block belongs to (root or post-content)
+	 *
+	 * @param {string} clientId The block's client ID
+	 * @return {Object|null} Object with blocks array and parentClientId, or null if not found
+	 */
+	findBlockContext(clientId) {
+		const { getBlocks } = select("core/block-editor");
+		const rootBlocks = getBlocks();
+
+		// Check if it's a root block
+		const rootIndex = rootBlocks.findIndex((block) => block.clientId === clientId);
+		if (rootIndex !== -1) {
+			return {
+				blocks: rootBlocks,
+				parentClientId: null,
+				index: rootIndex,
+			};
+		}
+
+		// Check if it's inside post-content
+		const postContentBlock = rootBlocks.find((block) => block.name === "core/post-content");
+		if (postContentBlock) {
+			const postContentInnerBlocks = getBlocks(postContentBlock.clientId);
+			const innerIndex = postContentInnerBlocks.findIndex((block) => block.clientId === clientId);
+			if (innerIndex !== -1) {
+				return {
+					blocks: postContentInnerBlocks,
+					parentClientId: postContentBlock.clientId,
+					index: innerIndex,
+				};
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Handle "add" action - add new block(s) to the editor
+	 *
+	 * @param {string|null} clientId The client ID to add after (null for top of page)
+	 * @param {Array}       changes  Array of {block_content} objects
+	 * @return {Promise<Object>} Result of the addition
+	 */
+	async handleAddAction(clientId, changes) {
+		const { getBlocks, getBlock } = select("core/block-editor");
+		const { insertBlocks } = dispatch("core/block-editor");
+		const errors = [];
+
+		// Parse all block contents
+		const blocksToInsert = [];
+		for (const change of changes) {
+			if (!change.block_content || typeof change.block_content !== "string") {
+				errors.push("Add action change missing block_content string");
+				continue;
+			}
+
+			try {
+				// Parse the block content into blocks
+				const parsedBlocks = parse(change.block_content);
+				if (!parsedBlocks || parsedBlocks.length === 0) {
+					errors.push("Failed to parse block_content into blocks");
+					continue;
+				}
+
+				// Convert parsed blocks to WordPress block format
+				const wpBlocks = parsedBlocks.map((parsedBlock) => this.createBlockFromParsed(parsedBlock));
+				blocksToInsert.push(...wpBlocks);
+			} catch (error) {
+				errors.push(`Failed to parse block_content: ${error.message}`);
+				// eslint-disable-next-line no-console
+				console.error("Failed to parse block_content:", error);
+			}
+		}
+
+		if (blocksToInsert.length === 0) {
+			throw new Error("No valid blocks to insert");
+		}
+
+		// Determine insertion position
+		if (clientId === null) {
+			// Insert at the top of the page
+			const effectiveRoot = this.getEffectiveRootBlocks();
+			if (effectiveRoot.blocks.length > 0) {
+				// Insert at the beginning of the effective root blocks
+				if (effectiveRoot.parentClientId) {
+					// Insert into post-content
+					insertBlocks(blocksToInsert, 0, effectiveRoot.parentClientId);
+				} else {
+					// Insert at root
+					insertBlocks(blocksToInsert, 0, effectiveRoot.blocks[0].clientId);
+				}
+			} else {
+				// Page is empty, check if we have post-content block
+				const rootBlocks = getBlocks();
+				const postContentBlock = rootBlocks.find((block) => block.name === "core/post-content");
+				if (postContentBlock) {
+					// Insert into post-content
+					insertBlocks(blocksToInsert, 0, postContentBlock.clientId);
+				} else {
+					// Insert at root
+					insertBlocks(blocksToInsert, 0);
+				}
+			}
+		} else {
+			// Insert after the specified block
+			const targetBlock = getBlock(clientId);
+			if (!targetBlock) {
+				throw new Error(`Target block with clientId ${clientId} not found`);
+			}
+
+			// Find which context the target block belongs to
+			const context = this.findBlockContext(clientId);
+			if (!context) {
+				throw new Error(`Target block ${clientId} not found in root blocks or post-content`);
+			}
+
+			// Insert after the target block in its context
+			const insertIndex = context.index + 1;
+			if (context.parentClientId) {
+				// Insert into post-content (always use parentClientId for post-content)
+				insertBlocks(blocksToInsert, insertIndex, context.parentClientId);
+			} else if (insertIndex < context.blocks.length) {
+				// Insert at root level before the next block
+				insertBlocks(blocksToInsert, insertIndex, context.blocks[insertIndex].clientId);
+			} else {
+				// Insert at the end of root
+				insertBlocks(blocksToInsert, insertIndex);
+			}
+		}
+
+		// Return result with original state (empty since these are new blocks)
+		// For undo, we'll need to track the clientIds of the inserted blocks
+		// Note: createBlock generates new clientIds, so we need to get them after insertion
+		const insertedClientIds = blocksToInsert
+			.map((block) => {
+				// After insertion, blocks will have clientIds assigned by WordPress
+				// We'll need to track these for undo functionality
+				return block.clientId || null;
+			})
+			.filter(Boolean);
+
+		return {
+			clientId: clientId || "root",
+			blocksAdded: blocksToInsert.length,
+			insertedClientIds,
+			message: `Added ${blocksToInsert.length} block(s) successfully`,
+			errors: errors.length > 0 ? errors : undefined,
+		};
 	}
 
 	/**
