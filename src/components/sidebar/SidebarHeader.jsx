@@ -7,7 +7,7 @@ import { __ } from "@wordpress/i18n";
 /**
  * External dependencies
  */
-import { Plus } from "lucide-react";
+import { Plus, Sparkles } from "lucide-react";
 
 /**
  * SidebarHeader Component
@@ -21,10 +21,13 @@ import { Plus } from "lucide-react";
 const SidebarHeader = ({ onNewChat }) => {
 	return (
 		<div className="nfd-editor-chat-sidebar__header-content">
-			<h2 className="interface-complementary-area-header__title">
-				{__("AI Chat Editor", "wp-module-editor-chat")}
-				<span className="nfd-editor-chat-sidebar__beta-badge">Beta</span>
-			</h2>
+			<div className="interface-complementary-area-header__title">
+				<Sparkles width={15} height={15} />
+				<h2>
+					{__("Blu Chat", "wp-module-editor-chat")}
+					<span className="nfd-editor-chat-sidebar__beta-badge">Beta</span>
+				</h2>
+			</div>
 			{onNewChat && (
 				<div className="nfd-editor-chat-sidebar__header-actions">
 					<Button
