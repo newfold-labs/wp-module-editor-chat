@@ -2,6 +2,12 @@
 	padding: 16px;
 	border-bottom: 1px solid #e0e0e0;
 	position: relative;
+}
+
+.interface-complementary-area-header__title {
+	display: flex;
+	align-items: center;
+	gap: 4px;
 	h2 {
 		display: flex;
 		align-items: center;
