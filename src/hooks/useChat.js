@@ -453,6 +453,13 @@ const useChat = () => {
 	};
 
 	const handleNewChat = async () => {
+		// Stop any active polling/requests
+		stopPolling();
+
+		// Clear loading and status states
+		setIsLoading(false);
+		setStatus(null);
+
 		// Reset messages and conversation ID to show welcome screen
 		setMessages([]);
 		setConversationId(null);
