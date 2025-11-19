@@ -8,6 +8,8 @@
 	padding: 20px 24px;
 	gap: 16px;
 	min-height: 0;
+
+	@include mixins.custom-scrollbar;
 }
 
 // Individual message
@@ -280,9 +282,8 @@
 			width: 100%;
 			line-height: 1.6;
 			color: var(--nfd-editor-chat-color-text);
-			padding-top: 4px;
 			background: none;
-			padding: 0;
+			padding: 4px 0 0 0;
 			border-radius: 0;
 			white-space: pre-wrap;
 		}
@@ -322,11 +323,7 @@
 			max-width: 70%;
 			white-space: pre-wrap;
 			position: relative;
+			overflow-wrap: break-word;
 		}
 	}
-}
-
-// Custom scrollbar styling
-.nfd-editor-chat-messages {
-	@include mixins.custom-scrollbar;
 }
