@@ -138,6 +138,7 @@ const useChat = () => {
 	const pollingIntervalRef = useRef(null);
 	const pollingTimeoutRef = useRef(null);
 	const pollingStartTimeRef = useRef(null);
+	const isPollingActiveRef = useRef(false);
 
 	// Get WordPress editor dispatch functions
 	const { savePost } = useDispatch("core/editor");
@@ -281,6 +282,9 @@ const useChat = () => {
 	 * Stop polling and cleanup
 	 */
 	const stopPolling = () => {
+		// Set flag to prevent in-flight requests from updating state
+		isPollingActiveRef.current = false;
+
 		if (pollingIntervalRef.current) {
 			clearInterval(pollingIntervalRef.current);
 			pollingIntervalRef.current = null;
@@ -301,6 +305,9 @@ const useChat = () => {
 		// Clear any existing polling interval and timeout
 		stopPolling();
 
+		// Set flag to indicate polling is active
+		isPollingActiveRef.current = true;
+
 		// Record start time
 		pollingStartTimeRef.current = Date.now();
 		const MAX_POLLING_TIME = 120000; // 2 minutes in milliseconds
@@ -309,6 +316,11 @@ const useChat = () => {
 		// Poll immediately, then every 4 seconds
 		const checkStatusNow = async () => {
 			try {
+				// Check if polling was stopped (early exit to prevent race conditions)
+				if (!isPollingActiveRef.current) {
+					return;
+				}
+
 				// Check if we've exceeded the maximum polling time
 				const elapsedTime = Date.now() - pollingStartTimeRef.current;
 				if (elapsedTime >= MAX_POLLING_TIME) {
@@ -325,6 +337,12 @@ const useChat = () => {
 				}
 
 				const statusResponse = await checkStatus(messageId);
+
+				// Check again after async operation - polling might have been stopped
+				if (!isPollingActiveRef.current) {
+					return;
+				}
+
 				const currentStatus = statusResponse.status;
 
 				setStatus(currentStatus);
@@ -380,10 +398,20 @@ const useChat = () => {
 										});
 									}
 								}
+
+								// Check if polling was stopped during action execution
+								if (!isPollingActiveRef.current) {
+									return;
+								}
 							} catch (actionError) {
 								// eslint-disable-next-line no-console
 								console.error("Error executing actions:", actionError);
 							}
+						}
+
+						// Final check before updating messages state
+						if (!isPollingActiveRef.current) {
+							return;
 						}
 
 						// Add AI response with action information
