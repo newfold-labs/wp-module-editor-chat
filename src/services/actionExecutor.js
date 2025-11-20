@@ -313,18 +313,10 @@ class ActionExecutor {
 				throw new Error("Change must have find and replace as strings");
 			}
 
-			console.log("content before normalization", updatedContent);
-
 			// Normalize strings
 			const normalizedContent = this.normalizeHtml(updatedContent);
 			const normalizedFind = this.normalizeHtml(find);
 			const normalizedReplace = this.normalizeHtml(replace);
-
-			console.log({
-				content: normalizedContent,
-				find: normalizedFind,
-				replace: normalizedReplace,
-			});
 
 			// Perform the replacement
 			if (normalizedContent.includes(normalizedFind)) {

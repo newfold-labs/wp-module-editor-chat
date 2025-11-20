@@ -62,8 +62,15 @@
 	background: transparent;
 	resize: none;
 	font-family:
-		-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell,
-		"Helvetica Neue", sans-serif;
+		-apple-system,
+		BlinkMacSystemFont,
+		"Segoe UI",
+		Roboto,
+		Oxygen-Sans,
+		Ubuntu,
+		Cantarell,
+		"Helvetica Neue",
+		sans-serif;
 	font-size: var(--nfd-editor-chat-font-size-base);
 	line-height: 1.5;
 	padding: 4px;
@@ -129,6 +136,14 @@
 
 // Submit button specific styles
 .components-button.nfd-editor-chat-input__submit {
+
+	&:disabled {
+		opacity: 0.4;
+		stroke: var(--nfd-editor-chat-color-grey-medium);
+		background: var(--nfd-editor-chat-color-background);
+		cursor: not-allowed;
+	}
+
 	&:hover:not(:disabled) {
 		stroke: var(--nfd-editor-chat-color-primary);
 		background: var(--nfd-editor-chat-color-primary-light-12);
@@ -144,17 +159,11 @@
 		stroke: var(--nfd-editor-chat-color-primary-hover);
 		background: var(--nfd-editor-chat-color-primary-light-20);
 	}
-
-	&:disabled {
-		opacity: 0.4;
-		stroke: var(--nfd-editor-chat-color-grey-medium);
-		background: var(--nfd-editor-chat-color-background);
-		cursor: not-allowed;
-	}
 }
 
 // Stop button specific styles
 .components-button.nfd-editor-chat-input__stop {
+
 	&:hover:not(:disabled) {
 		color: var(--nfd-editor-chat-color-error);
 	}

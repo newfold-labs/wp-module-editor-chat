@@ -1,5 +1,6 @@
 // Custom scrollbar mixin
 @mixin custom-scrollbar {
+
 	&::-webkit-scrollbar {
 		width: 8px;
 	}

@@ -111,10 +111,6 @@ const buildTemplatePartsMap = async (templatePartBlocks) => {
 		const attrs = block.attributes || {};
 		const html = await fetchTemplatePartContent(block, coreResolve);
 
-		console.log({
-			context: html,
-		});
-
 		const key = pickTemplatePartKey(attrs, i);
 		if (key && !result[key]) {
 			result[key] = {

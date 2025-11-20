@@ -12,7 +12,6 @@ import {
 	getCurrentPageTitle,
 	getSelectedBlock,
 } from "../utils/editorHelpers";
-import actionExecutor from "./actionExecutor";
 
 /**
  * Chat API Service

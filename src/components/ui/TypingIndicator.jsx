@@ -9,8 +9,8 @@ import { __ } from "@wordpress/i18n";
  * Displays an animated typing indicator with dots and a loading message.
  * Shows the current status if provided.
  *
- * @param {Object}  props        - The component props.
- * @param {string}  props.status - The current status ('received', 'generating', etc.).
+ * @param {Object} props        - The component props.
+ * @param {string} props.status - The current status ('received', 'generating', etc.).
  * @return {JSX.Element} The TypingIndicator component.
  */
 const TypingIndicator = ({ status = null }) => {
@@ -18,15 +18,15 @@ const TypingIndicator = ({ status = null }) => {
 	const getStatusText = () => {
 		switch (status) {
 			case "received":
-				return __("Message received...", "wp-module-editor-chat");
+				return __("Message received…", "wp-module-editor-chat");
 			case "generating":
-				return __("Generating response...", "wp-module-editor-chat");
+				return __("Generating response…", "wp-module-editor-chat");
 			case "completed":
-				return __("Processing...", "wp-module-editor-chat");
+				return __("Processing…", "wp-module-editor-chat");
 			case "failed":
 				return __("Error occurred", "wp-module-editor-chat");
 			default:
-				return __("Thinking...", "wp-module-editor-chat");
+				return __("Thinking…", "wp-module-editor-chat");
 		}
 	};
 

@@ -77,7 +77,11 @@ const ChatEditor = () => {
 							isSaving={isSaving}
 						/>
 					)}
-					<ChatInput onSendMessage={handleSendMessage} onStopRequest={handleStopRequest} disabled={isLoading} />
+					<ChatInput
+						onSendMessage={handleSendMessage}
+						onStopRequest={handleStopRequest}
+						disabled={isLoading}
+					/>
 				</div>
 			</PluginSidebar>
 		</>
