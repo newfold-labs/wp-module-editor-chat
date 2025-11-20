@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { dispatch, select } from "@wordpress/data";
+import { dispatch, select, resolveSelect } from "@wordpress/data";
 import { store as coreStore } from "@wordpress/core-data";
 import { serialize, parse, createBlock } from "@wordpress/blocks";
 
@@ -12,6 +12,7 @@ import {
 	updateTemplatePartContent,
 	getTemplatePartEntity,
 	isTemplatePart,
+	fetchTemplatePartContent,
 } from "../utils/editorHelpers";
 
 /**
@@ -270,12 +271,17 @@ class ActionExecutor {
 	/**
 	 * Apply find/replace changes to a template part's content
 	 *
+	 * Uses fetchTemplatePartContent to ensure we work with the same content format
+	 * that was sent as context to the AI, guaranteeing consistency.
+	 *
 	 * @param {string} clientId The template part's client ID
 	 * @param {Object} block    The template part block
 	 * @param {Array}  changes  Array of {find, replace} objects
 	 * @return {Promise<Object>} Result of the changes
 	 */
 	async applyTemplatePartChanges(clientId, block, changes) {
+		const coreResolve = resolveSelect("core");
+
 		// Get the template part entity to store original content
 		const originalEntity = await getTemplatePartEntity(block);
 
@@ -289,84 +295,77 @@ class ActionExecutor {
 			entityContent: originalEntity ? originalEntity.content : null,
 		};
 
-		// Get the template part's inner blocks
-		const { getBlocks } = select("core/block-editor");
-		const innerBlocks = getBlocks(clientId);
-
-		if (innerBlocks.length === 0) {
-			throw new Error("Template part has no inner blocks to modify");
+		// Get the template part content using the same function that builds context
+		// This ensures we're working with the exact same content format
+		const templatePartContent = await fetchTemplatePartContent(block, coreResolve);
+		if (!templatePartContent) {
+			throw new Error("Template part has no content to modify");
 		}
 
-		// Apply changes to inner blocks recursively
-		const { updateBlockAttributes, replaceInnerBlocks } = dispatch("core/block-editor");
+		// Apply all find/replace operations to the full template part content
+		let updatedContent = templatePartContent;
 		let changesApplied = 0;
-		const updatedInnerBlocks = [];
 
-		// Process each inner block
-		for (const innerBlock of innerBlocks) {
-			// Serialize the inner block
-			let blockHtml = serialize(innerBlock);
-			let modified = false;
+		for (const change of changes) {
+			const { find, replace } = change;
 
-			// Apply all find/replace operations
-			for (const change of changes) {
-				const { find, replace } = change;
-
-				if (typeof find !== "string" || typeof replace !== "string") {
-					throw new Error("Change must have find and replace as strings");
-				}
-
-				// Normalize strings
-				const normalizedBlockHtml = this.normalizeHtml(blockHtml);
-				const normalizedFind = this.normalizeHtml(find);
-				const normalizedReplace = this.normalizeHtml(replace);
-
-				// Perform the replacement
-				if (normalizedBlockHtml.includes(normalizedFind)) {
-					blockHtml = normalizedBlockHtml.replace(normalizedFind, normalizedReplace);
-					modified = true;
-					changesApplied++;
-				}
+			if (typeof find !== "string" || typeof replace !== "string") {
+				throw new Error("Change must have find and replace as strings");
 			}
 
-			// If this inner block was modified, update it in the editor
-			if (modified) {
-				const updatedBlocks = parse(blockHtml);
-				if (updatedBlocks && updatedBlocks.length > 0) {
-					const updatedBlock = updatedBlocks[0];
+			console.log("content before normalization", updatedContent);
 
-					// Update the inner block's attributes
-					if (updatedBlock.attributes) {
-						updateBlockAttributes(innerBlock.clientId, updatedBlock.attributes);
-					}
+			// Normalize strings
+			const normalizedContent = this.normalizeHtml(updatedContent);
+			const normalizedFind = this.normalizeHtml(find);
+			const normalizedReplace = this.normalizeHtml(replace);
 
-					// Update nested inner blocks if they exist
-					if (updatedBlock.innerBlocks && updatedBlock.innerBlocks.length > 0) {
-						const nestedInnerBlocks = updatedBlock.innerBlocks.map((nested) =>
-							this.createBlockFromParsed(nested)
-						);
-						replaceInnerBlocks(innerBlock.clientId, nestedInnerBlocks);
-					}
+			console.log({
+				content: normalizedContent,
+				find: normalizedFind,
+				replace: normalizedReplace,
+			});
 
-					// Store the updated block for entity save
-					updatedInnerBlocks.push(updatedBlock);
-				}
-			} else {
-				// Keep the original block if not modified
-				updatedInnerBlocks.push(innerBlock);
+			// Perform the replacement
+			if (normalizedContent.includes(normalizedFind)) {
+				updatedContent = normalizedContent.replace(normalizedFind, normalizedReplace);
+				changesApplied++;
 			}
 		}
+
+		// If no changes were applied, return early
+		if (changesApplied === 0) {
+			return {
+				clientId,
+				blockName: block.name,
+				changesApplied: 0,
+				message: `No matching content found in template part`,
+				originalBlock,
+				isTemplatePart: true,
+			};
+		}
+
+		// Parse the updated content back into blocks
+		const updatedBlocks = parse(updatedContent);
+
+		if (!updatedBlocks || updatedBlocks.length === 0) {
+			throw new Error("Failed to parse updated template part content into blocks");
+		}
+
+		// Update the editor's inner blocks to reflect the changes
+		const { replaceInnerBlocks } = dispatch("core/block-editor");
+		const updatedInnerBlocks = updatedBlocks.map((parsedBlock) =>
+			this.createBlockFromParsed(parsedBlock)
+		);
+		replaceInnerBlocks(clientId, updatedInnerBlocks);
 
 		// Save changes to the template part entity
 		// This ensures the changes persist across page reloads
-		let entityUpdateResult = null;
-		if (changesApplied > 0) {
-			entityUpdateResult = await updateTemplatePartContent(block, updatedInnerBlocks);
+		const entityUpdateResult = await updateTemplatePartContent(block, updatedInnerBlocks);
 
-			if (!entityUpdateResult.success) {
-				// eslint-disable-next-line no-console
-				console.warn("Template part entity update failed:", entityUpdateResult.message);
-			}
+		if (!entityUpdateResult.success) {
+			// eslint-disable-next-line no-console
+			console.warn("Template part entity update failed:", entityUpdateResult.message);
 		}
 
 		return {
@@ -484,84 +483,20 @@ class ActionExecutor {
 
 	/**
 	 * Normalize HTML string by removing extra whitespace and newlines
-	 * Also normalizes block comment JSON attributes to handle attributes
-	 * that WordPress omits during serialization
 	 *
-	 * WordPress omits certain attributes from block comments when they can be
-	 * inferred from HTML (e.g., button "text" and "url" are in the <a> tag).
-	 * This function removes those attributes from both the source content and
-	 * the AI-generated find strings to ensure they match.
+	 * Normalizes whitespace to ensure consistent comparison between
+	 * the content sent as context and the find/replace strings.
 	 *
 	 * @param {string} html The HTML string to normalize
 	 * @return {string} Normalized HTML string
 	 */
 	normalizeHtml(html) {
-		// First normalize whitespace
-		let normalized = html
+		// Normalize whitespace
+		return html
 			.replace(/\s+/g, " ") // Replace all whitespace sequences with single space
 			.replace(/>\s+</g, "><") // Remove spaces between tags
 			.replace(/\\\//g, "/") // Remove backslashes from slashes
 			.trim(); // Remove leading/trailing whitespace
-
-		// Normalize block comment attributes
-		// WordPress omits default attributes, so we need to normalize them
-		// Match block comments with JSON attributes (handles nested objects)
-		normalized = normalized.replace(
-			/<!--\s*wp:([^\s]+)\s+(\{.*?\})\s*-->/gs,
-			(match, blockName, jsonStr) => {
-				try {
-					// Find the matching closing brace for nested JSON
-					let braceCount = 0;
-					let endIndex = 0;
-					for (let i = 0; i < jsonStr.length; i++) {
-						if (jsonStr[i] === "{") {
-							braceCount++;
-						}
-						if (jsonStr[i] === "}") {
-							braceCount--;
-						}
-						if (braceCount === 0) {
-							endIndex = i + 1;
-							break;
-						}
-					}
-					const actualJsonStr = jsonStr.substring(0, endIndex);
-					const attrs = JSON.parse(actualJsonStr);
-
-					// Remove attributes that WordPress omits from serialization
-					// These are stored in HTML instead of block comments
-					if (blockName === "button") {
-						// WordPress doesn't serialize these in block comments
-						delete attrs.text; // Text is in the <a> tag content
-						delete attrs.url; // URL is in the href attribute
-						delete attrs.linkTarget; // Target is in the HTML
-						delete attrs.rel; // Rel is in the HTML
-						// Remove default attribute values
-						if (attrs.tagName === "a") {
-							delete attrs.tagName;
-						}
-						if (attrs.type === "button") {
-							delete attrs.type;
-						}
-					}
-
-					// Sort keys for consistent comparison
-					const sortedAttrs = Object.keys(attrs)
-						.sort()
-						.reduce((acc, key) => {
-							acc[key] = attrs[key];
-							return acc;
-						}, {});
-					const normalizedJson = JSON.stringify(sortedAttrs);
-					return `<!-- wp:${blockName} ${normalizedJson} -->`;
-				} catch (e) {
-					// If JSON parsing fails, return original
-					return match;
-				}
-			}
-		);
-
-		return normalized;
 	}
 
 	/**
