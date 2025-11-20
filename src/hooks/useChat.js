@@ -5,6 +5,7 @@
 import { useEffect, useState, useRef } from "@wordpress/element";
 import { __ } from "@wordpress/i18n";
 import { useDispatch, useSelect } from "@wordpress/data";
+import { store as coreStore } from "@wordpress/core-data";
 
 /**
  * Internal dependencies
@@ -134,6 +135,7 @@ const useChat = () => {
 	const [error, setError] = useState(null);
 	const [status, setStatus] = useState(null); // 'received', 'generating', 'completed', 'failed'
 	const [isSaving, setIsSaving] = useState(false);
+	const [hasGlobalStylesChanges, setHasGlobalStylesChanges] = useState(false);
 	const hasInitializedRef = useRef(false);
 	const pollingIntervalRef = useRef(null);
 	const pollingTimeoutRef = useRef(null);
@@ -141,6 +143,14 @@ const useChat = () => {
 
 	// Get WordPress editor dispatch functions
 	const { savePost } = useDispatch("core/editor");
+	const { saveEditedEntityRecord } = useDispatch(coreStore);
+	const { __experimentalGetCurrentGlobalStylesId } = useSelect(
+		(select) => ({
+			__experimentalGetCurrentGlobalStylesId:
+				select(coreStore).__experimentalGetCurrentGlobalStylesId,
+		}),
+		[]
+	);
 
 	// Get WordPress save status
 	const isSavingPost = useSelect((select) => select("core/editor").isSavingPost(), []);
@@ -159,6 +169,9 @@ const useChat = () => {
 					return msg;
 				})
 			);
+
+			// Reset global styles changes flag
+			setHasGlobalStylesChanges(false);
 
 			setIsSaving(false);
 		}
@@ -358,6 +371,14 @@ const useChat = () => {
 									// Execute the new action (this will modify the already-modified content)
 									await actionExecutor.executeActions(data.actions);
 									hasExecutedActions = true;
+
+									// Check if any action was change_site_colors
+									const hasColorChanges = data.actions.some(
+										(action) => action.action === "change_site_colors"
+									);
+									if (hasColorChanges) {
+										setHasGlobalStylesChanges(true);
+									}
 								} else {
 									// This is the FIRST action in a sequence
 									// We need to capture the initial state before any modifications
@@ -365,6 +386,14 @@ const useChat = () => {
 									// Execute actions and capture the initial state
 									const actionResult = await actionExecutor.executeActions(data.actions);
 									hasExecutedActions = true;
+
+									// Check if any action was change_site_colors
+									const hasColorChanges = data.actions.some(
+										(action) => action.action === "change_site_colors"
+									);
+									if (hasColorChanges) {
+										setHasGlobalStylesChanges(true);
+									}
 
 									// Extract the INITIAL undo data (state before this first action)
 									if (actionResult.results && actionResult.results.length > 0) {
@@ -475,9 +504,25 @@ const useChat = () => {
 	/**
 	 * Accept changes - trigger WordPress save and keep buttons visible until save completes
 	 */
-	const handleAcceptChanges = () => {
+	const handleAcceptChanges = async () => {
 		// Set saving state to true - this will disable the buttons
 		setIsSaving(true);
+
+		// Save global styles if they were changed
+		if (hasGlobalStylesChanges) {
+			try {
+				const globalStylesId = __experimentalGetCurrentGlobalStylesId
+					? __experimentalGetCurrentGlobalStylesId()
+					: undefined;
+
+				if (globalStylesId) {
+					await saveEditedEntityRecord("root", "globalStyles", globalStylesId);
+				}
+			} catch (saveError) {
+				// eslint-disable-next-line no-console
+				console.error("Error saving global styles:", saveError);
+			}
+		}
 
 		// Trigger WordPress save/publish
 		if (savePost) {
@@ -512,10 +557,12 @@ const useChat = () => {
 					return msg;
 				})
 			);
-			// eslint-disable-next-line no-shadow
-		} catch (error) {
+
+			// Reset global styles changes flag
+			setHasGlobalStylesChanges(false);
+		} catch (restoreError) {
 			// eslint-disable-next-line no-console
-			console.error("Error restoring blocks:", error);
+			console.error("Error restoring blocks:", restoreError);
 		}
 	};
 
