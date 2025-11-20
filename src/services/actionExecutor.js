@@ -913,7 +913,42 @@ class ActionExecutor {
 			message: "Site colors updated successfully",
 			colorsUpdated: data.colors.length,
 			originalStyles, // Include original state for undo
+			globalStylesId, // Include global styles ID for restore
 		};
+	}
+
+	/**
+	 * Restore global styles to their previous state
+	 *
+	 * @param {Object} undoData Object containing originalStyles and globalStylesId
+	 * @return {Promise<Object>} Result of the restore operation
+	 */
+	async restoreGlobalStyles(undoData) {
+		if (!undoData || !undoData.originalStyles || !undoData.globalStylesId) {
+			return { success: false, message: "No undo data available for global styles" };
+		}
+
+		const { originalStyles, globalStylesId } = undoData;
+		const { editEntityRecord } = dispatch(coreStore);
+
+		try {
+			// Restore the original settings
+			editEntityRecord("root", "globalStyles", globalStylesId, {
+				settings: originalStyles,
+			});
+
+			return {
+				success: true,
+				message: "Global styles restored successfully",
+			};
+		} catch (error) {
+			// eslint-disable-next-line no-console
+			console.error("Failed to restore global styles:", error);
+			return {
+				success: false,
+				message: `Failed to restore global styles: ${error.message}`,
+			};
+		}
 	}
 }
 

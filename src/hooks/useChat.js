@@ -366,7 +366,22 @@ const useChat = () => {
 								if (hasPendingAction) {
 									// There's already a pending action - reuse the initial undo data
 									const firstActionMessage = messages.find((msg) => msg.hasActions && msg.undoData);
-									undoData = firstActionMessage ? firstActionMessage.undoData : null;
+
+									// Normalize undo data structure (handle both old array format and new object format)
+									if (firstActionMessage && firstActionMessage.undoData) {
+										if (Array.isArray(firstActionMessage.undoData)) {
+											// Convert old array format to new object format
+											undoData = {
+												blocks: firstActionMessage.undoData,
+												globalStyles: null,
+											};
+										} else {
+											// Already in new object format
+											undoData = firstActionMessage.undoData;
+										}
+									} else {
+										undoData = null;
+									}
 
 									// Execute the new action (this will modify the already-modified content)
 									await actionExecutor.executeActions(data.actions);
@@ -396,15 +411,33 @@ const useChat = () => {
 									}
 
 									// Extract the INITIAL undo data (state before this first action)
+									// Structure: { blocks: [], globalStyles: { originalStyles, globalStylesId } }
+									undoData = {
+										blocks: [],
+										globalStyles: null,
+									};
+
 									if (actionResult.results && actionResult.results.length > 0) {
-										undoData = [];
 										actionResult.results.forEach((result) => {
+											// Handle block-based actions (edit_content)
 											if (result.results && Array.isArray(result.results)) {
 												result.results.forEach((blockResult) => {
 													if (blockResult.originalBlock) {
-														undoData.push(blockResult.originalBlock);
+														undoData.blocks.push(blockResult.originalBlock);
 													}
 												});
+											}
+
+											// Handle global styles actions (change_site_colors)
+											if (
+												result.type === "change_site_colors" &&
+												result.originalStyles &&
+												result.globalStylesId
+											) {
+												undoData.globalStyles = {
+													originalStyles: result.originalStyles,
+													globalStylesId: result.globalStylesId,
+												};
 											}
 										});
 									}
@@ -544,14 +577,33 @@ const useChat = () => {
 		}
 
 		try {
-			// Restore the blocks to their original state
-			await actionExecutor.restoreBlocks(firstActionMessage.undoData);
+			const undoData = firstActionMessage.undoData;
+
+			// Handle new structure: { blocks: [], globalStyles: {...} }
+			if (undoData && typeof undoData === "object" && !Array.isArray(undoData)) {
+				// Restore blocks if they exist
+				if (undoData.blocks && Array.isArray(undoData.blocks) && undoData.blocks.length > 0) {
+					await actionExecutor.restoreBlocks(undoData.blocks);
+				}
+
+				// Restore global styles if they exist
+				if (
+					undoData.globalStyles &&
+					undoData.globalStyles.originalStyles &&
+					undoData.globalStyles.globalStylesId
+				) {
+					await actionExecutor.restoreGlobalStyles(undoData.globalStyles);
+				}
+			} else if (Array.isArray(undoData)) {
+				// Handle old structure: array of blocks (backward compatibility)
+				await actionExecutor.restoreBlocks(undoData);
+			}
 
 			// Remove hasActions and undoData from ALL messages
 			setMessages((prev) =>
 				prev.map((msg) => {
 					if (msg.hasActions) {
-						const { hasActions, undoData, ...rest } = msg;
+						const { hasActions, undoData: msgUndoData, ...rest } = msg;
 						return rest;
 					}
 					return msg;
@@ -562,7 +614,7 @@ const useChat = () => {
 			setHasGlobalStylesChanges(false);
 		} catch (restoreError) {
 			// eslint-disable-next-line no-console
-			console.error("Error restoring blocks:", restoreError);
+			console.error("Error restoring changes:", restoreError);
 		}
 	};
 
