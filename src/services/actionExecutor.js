@@ -2,6 +2,7 @@
  * WordPress dependencies
  */
 import { dispatch, select } from "@wordpress/data";
+import { store as coreStore } from "@wordpress/core-data";
 import { serialize, parse, createBlock } from "@wordpress/blocks";
 
 /**
@@ -19,6 +20,7 @@ import {
  * Executes actions received from the AI chat API.
  * Supports the following action types:
  * - edit_content: Apply find/replace changes to block content (with edit, delete, add sub-actions)
+ * - change_site_colors: Update WordPress global styles color palette
  */
 class ActionExecutor {
 	/**
@@ -68,6 +70,10 @@ class ActionExecutor {
 	async executeAction(action) {
 		if (action.action === "edit_content") {
 			return this.handleEditContentAction(action);
+		}
+
+		if (action.action === "change_site_colors") {
+			return this.handleChangeSiteColorsAction(action);
 		}
 
 		throw new Error(`Unsupported action type: ${action.action}`);
@@ -825,6 +831,89 @@ class ActionExecutor {
 			: [];
 
 		return createBlock(parsedBlock.name, parsedBlock.attributes || {}, innerBlocks);
+	}
+
+	/**
+	 * Handle change_site_colors action
+	 *
+	 * Uses the same logic as useColorSettings hook's updateCustomColor function
+	 *
+	 * @param {Object} action The action data
+	 * @return {Promise<Object>} Result of the action
+	 */
+	async handleChangeSiteColorsAction(action) {
+		const { data } = action;
+
+		if (!data || !data.colors || !Array.isArray(data.colors)) {
+			throw new Error("Change site colors action requires data.colors array");
+		}
+
+		// Get global styles ID and settings using the same pattern as useColorSettings
+		const { __experimentalGetCurrentGlobalStylesId, getEditedEntityRecord } = select(coreStore);
+		const globalStylesId = __experimentalGetCurrentGlobalStylesId
+			? __experimentalGetCurrentGlobalStylesId()
+			: undefined;
+
+		if (!globalStylesId) {
+			throw new Error(
+				"Global styles not found. Please ensure you have permission to edit global styles."
+			);
+		}
+
+		// Get current global styles record (same as useColorSettings)
+		const record = getEditedEntityRecord("root", "globalStyles", globalStylesId);
+
+		if (!record || !record.settings) {
+			throw new Error("Unable to access global styles settings.");
+		}
+
+		const settings = record.settings;
+		const rawPalette = settings?.color?.palette?.theme;
+		const themePalette = rawPalette || [];
+
+		// Save original state for undo
+		const originalStyles = JSON.parse(JSON.stringify(settings));
+
+		// Update colors using the same logic as updateCustomColor from useColorSettings
+		// For each color update, map over themePalette and update matching slugs
+		let updatedPalette = themePalette;
+		for (const colorUpdate of data.colors) {
+			const { slug, color: newColor } = colorUpdate;
+
+			if (!slug || !newColor) {
+				// eslint-disable-next-line no-console
+				console.warn("Invalid color update:", colorUpdate);
+				continue;
+			}
+
+			// Use the same pattern as updateCustomColor: map and update matching slug
+			updatedPalette = updatedPalette.map((color) =>
+				color.slug === slug ? { ...color, color: newColor } : color
+			);
+		}
+
+		// Use the same pattern as setConfig from useColorSettings
+		const { editEntityRecord } = dispatch(coreStore);
+
+		editEntityRecord("root", "globalStyles", globalStylesId, {
+			settings: {
+				...(settings || {}),
+				color: {
+					palette: {
+						...(settings?.color?.palette || {}),
+						theme: updatedPalette,
+					},
+				},
+			},
+		});
+
+		return {
+			type: "change_site_colors",
+			success: true,
+			message: "Site colors updated successfully",
+			colorsUpdated: data.colors.length,
+			originalStyles, // Include original state for undo
+		};
 	}
 }
 
