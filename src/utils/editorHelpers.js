@@ -169,6 +169,9 @@ export const getSelectedBlock = () => {
 		return null;
 	}
 
+	// To prevent the LLM from using the clientId, we remove it from the block object
+	delete selectedBlock.clientId;
+
 	// Return the block with serialized content
 	// The AI needs the EXACT serialized HTML to match block comments properly
 	return {
