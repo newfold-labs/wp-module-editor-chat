@@ -264,35 +264,4 @@ class ChatController extends WP_REST_Controller {
 		// Format: { "status": "received|generating|completed|failed", "data": {...} }
 		return new WP_REST_Response( $response, 200 );
 	}
-
-	/**
-	 * Extract the assistant's message from the API response
-	 *
-	 * @param array $response The API response data.
-	 * @return string The assistant's message or a fallback message.
-	 */
-	private function extract_assistant_message( $response ) {
-		// Check for the nested structure: chat.current_message.assistant
-		if ( isset( $response['chat']['current_message']['assistant'] ) ) {
-			$message = $response['chat']['current_message']['assistant'];
-
-			// Return the message if it's not null/empty
-			if ( ! empty( $message ) ) {
-				return $message;
-			}
-		}
-
-		// Fallback: check for direct message field
-		if ( isset( $response['message'] ) && ! empty( $response['message'] ) ) {
-			return $response['message'];
-		}
-
-		// Fallback: check for response field
-		if ( isset( $response['response'] ) && ! empty( $response['response'] ) ) {
-			return $response['response'];
-		}
-
-		// Final fallback
-		return __( 'I received your message, but I\'m having trouble processing it right now. Please try again.', 'wp-module-editor-chat' );
-	}
 }

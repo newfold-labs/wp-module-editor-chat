@@ -44,6 +44,9 @@ const ChatEditor = () => {
 	const pendingActionsCount = messages.filter((msg) => msg.hasActions).length;
 	const hasPendingActions = pendingActionsCount > 0;
 
+	// Disable new chat button when there are no messages (brand new chat)
+	const isNewChatDisabled = messages.length === 0;
+
 	return (
 		<>
 			<PluginSidebarMoreMenuItem
@@ -61,7 +64,7 @@ const ChatEditor = () => {
 				icon={<AILogo width={24} height={24} />}
 				headerClassName="nfd-editor-chat-sidebar__header"
 				panelClassName="nfd-editor-chat-sidebar__panel"
-				header={<SidebarHeader onNewChat={handleNewChat} />}
+				header={<SidebarHeader onNewChat={handleNewChat} isNewChatDisabled={isNewChatDisabled} />}
 			>
 				<div className="nfd-editor-chat-sidebar__content">
 					{messages.length === 0 ? (

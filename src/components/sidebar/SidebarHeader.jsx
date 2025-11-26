@@ -14,11 +14,12 @@ import { Plus, Sparkles } from "lucide-react";
  *
  * Displays the sidebar header with title and action buttons.
  *
- * @param {Object}   props           Component props
- * @param {Function} props.onNewChat Function to call when new chat is requested
+ * @param {Object}   props                   Component props
+ * @param {Function} props.onNewChat         Function to call when new chat is requested
+ * @param {boolean}  props.isNewChatDisabled Whether the new chat button should be disabled
  * @return {JSX.Element} The SidebarHeader component.
  */
-const SidebarHeader = ({ onNewChat }) => {
+const SidebarHeader = ({ onNewChat, isNewChatDisabled = false }) => {
 	return (
 		<div className="nfd-editor-chat-sidebar__header-content">
 			<div className="interface-complementary-area-header__title">
@@ -35,6 +36,7 @@ const SidebarHeader = ({ onNewChat }) => {
 						label={__("New chat", "wp-module-editor-chat")}
 						onClick={onNewChat}
 						className="nfd-editor-chat-sidebar__new-chat"
+						disabled={isNewChatDisabled}
 					/>
 				</div>
 			)}
