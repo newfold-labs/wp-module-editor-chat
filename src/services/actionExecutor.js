@@ -18,7 +18,10 @@ import {
  *
  * Executes actions received from the AI chat API.
  * Supports the following action types:
- * - edit_content: Apply find/replace changes to block content (with edit, delete, add sub-actions)
+ * - edit_content: Edit block content with two modes:
+ *   - patch: Apply find/replace changes to block content
+ *   - rewrite: Replace entire block content
+ *   Also supports add and delete operations
  */
 class ActionExecutor {
 	/**
@@ -82,62 +85,60 @@ class ActionExecutor {
 	async handleEditContentAction(action) {
 		const { data } = action;
 
-		if (!data || !data.content || !Array.isArray(data.content)) {
-			throw new Error("Edit content action requires data.content array");
+		if (!data) {
+			throw new Error("Edit content action requires data object");
+		}
+
+		const operationType = data.operation_type;
+		if (!operationType) {
+			throw new Error("Edit content action requires data.operation_type");
 		}
 
 		const results = [];
 		const errors = [];
 
-		for (const contentItem of data.content) {
-			// API uses snake_case, convert to camelCase
-			const clientId = contentItem.client_id;
-			const contentAction = contentItem.action; // "edit", "delete", or "add"
-			const { changes } = contentItem;
-
-			if (!contentAction) {
-				errors.push("Content item missing 'action' property");
-				continue;
-			}
-
-			try {
-				let result;
-				if (contentAction === "edit") {
-					if (!clientId) {
-						errors.push("Edit action requires client_id");
-						continue;
-					}
-					if (!changes || !Array.isArray(changes)) {
-						errors.push(`Edit action for ${clientId} missing changes array`);
-						continue;
-					}
-					result = await this.handleEditAction(clientId, changes);
-				} else if (contentAction === "delete") {
-					if (!clientId) {
-						errors.push("Delete action requires client_id");
-						continue;
-					}
-					if (changes !== "remove_block") {
-						errors.push(`Delete action for ${clientId} must have changes: "remove_block"`);
-						continue;
-					}
-					result = await this.handleDeleteAction(clientId);
-				} else if (contentAction === "add") {
-					if (!changes || !Array.isArray(changes)) {
-						errors.push("Add action missing changes array");
-						continue;
-					}
-					result = await this.handleAddAction(clientId, changes);
-				} else {
-					errors.push(`Unsupported content action: ${contentAction}`);
-					continue;
+		try {
+			let result;
+			if (operationType === "edit") {
+				// Parser outputs: data.section and data.block_content
+				// The parser has already processed patch mode server-side,
+				// so we treat all edit operations as rewrite (full replacement)
+				const clientId = data.section;
+				if (!clientId) {
+					throw new Error("Edit action requires section");
 				}
+
+				const blockContent = data.block_content;
+				if (!blockContent) {
+					throw new Error("Edit action requires block_content");
+				}
+
+				result = await this.handleRewriteAction(clientId, blockContent);
 				results.push(result);
-			} catch (error) {
-				errors.push(`Failed to execute ${contentAction} action: ${error.message}`);
-				// eslint-disable-next-line no-console
-				console.error(`Failed to execute ${contentAction} action:`, error);
+			} else if (operationType === "delete") {
+				// Parser outputs: data.section
+				const clientId = data.section;
+				if (!clientId) {
+					throw new Error("Delete action requires section");
+				}
+				result = await this.handleDeleteAction(clientId);
+				results.push(result);
+			} else if (operationType === "add") {
+				// Parser outputs: data.location and data.block_content
+				const clientId = data.location; // Can be null for top of page
+				const blockContent = data.block_content;
+				if (!blockContent) {
+					throw new Error("Add action requires block_content");
+				}
+				result = await this.handleAddAction(clientId || null, [{ block_content: blockContent }]);
+				results.push(result);
+			} else {
+				throw new Error(`Unsupported operation_type: ${operationType}`);
 			}
+		} catch (error) {
+			errors.push(`Failed to execute ${operationType} action: ${error.message}`);
+			// eslint-disable-next-line no-console
+			console.error(`Failed to execute ${operationType} action:`, error);
 		}
 
 		return {
@@ -153,14 +154,85 @@ class ActionExecutor {
 	}
 
 	/**
-	 * Handle "edit" action - apply find/replace changes to a block's content
+	 * Handle "patch" action - apply find/replace changes to a block's content
 	 *
 	 * @param {string} clientId The block's client ID
 	 * @param {Array}  changes  Array of {find, replace} objects
 	 * @return {Promise<Object>} Result of the changes
 	 */
-	async handleEditAction(clientId, changes) {
+	async handlePatchAction(clientId, changes) {
 		return this.applyContentChanges(clientId, changes);
+	}
+
+	/**
+	 * Handle "rewrite" action - replace entire block content
+	 *
+	 * @param {string} clientId     The block's client ID
+	 * @param {string} blockContent The new block content HTML
+	 * @return {Promise<Object>} Result of the rewrite
+	 */
+	async handleRewriteAction(clientId, blockContent) {
+		const { getBlock } = select("core/block-editor");
+		const block = getBlock(clientId);
+
+		if (!block) {
+			throw new Error(`Block with clientId ${clientId} not found`);
+		}
+
+		// Check if this is a template part - handle differently
+		if (isTemplatePart(block)) {
+			return this.applyTemplatePartRewrite(clientId, block, blockContent);
+		}
+
+		// Save the original block state for undo
+		const originalBlock = {
+			clientId,
+			name: block.name,
+			attributes: { ...block.attributes },
+			innerBlocks: block.innerBlocks ? [...block.innerBlocks] : [],
+		};
+
+		// Parse the new block content into blocks
+		const updatedBlocks = parse(blockContent);
+
+		if (!updatedBlocks || updatedBlocks.length === 0) {
+			throw new Error("Failed to parse block_content into blocks");
+		}
+
+		// Get the first parsed block (should be the updated version of our block)
+		const updatedBlock = updatedBlocks[0];
+
+		if (!updatedBlock) {
+			throw new Error("Failed to parse updated block");
+		}
+
+		// Update the original block's attributes to preserve the clientID
+		const { updateBlockAttributes, replaceInnerBlocks } = dispatch("core/block-editor");
+
+		// Update block attributes
+		if (updatedBlock.attributes) {
+			updateBlockAttributes(clientId, updatedBlock.attributes);
+		}
+
+		// Update inner blocks if they exist
+		if (updatedBlock.innerBlocks && updatedBlock.innerBlocks.length > 0) {
+			// Map inner blocks to preserve their structure
+			const innerBlocks = updatedBlock.innerBlocks.map((innerBlock) => {
+				// Recursively handle nested inner blocks
+				return this.createBlockFromParsed(innerBlock);
+			});
+			replaceInnerBlocks(clientId, innerBlocks);
+		} else if (block.innerBlocks && block.innerBlocks.length > 0) {
+			// If the updated block has no inner blocks but original did, clear them
+			replaceInnerBlocks(clientId, []);
+		}
+
+		return {
+			clientId,
+			blockName: block.name,
+			message: `Block ${block.name} content rewritten successfully`,
+			originalBlock, // Include original block state for undo
+		};
 	}
 
 	/**
@@ -258,6 +330,65 @@ class ActionExecutor {
 			changesApplied: changes.length,
 			message: `Block ${block.name} content updated successfully`,
 			originalBlock, // Include original block state for undo
+		};
+	}
+
+	/**
+	 * Apply rewrite to a template part's content
+	 *
+	 * @param {string} clientId     The template part's client ID
+	 * @param {Object} block        The template part block
+	 * @param {string} blockContent The new block content HTML
+	 * @return {Promise<Object>} Result of the rewrite
+	 */
+	async applyTemplatePartRewrite(clientId, block, blockContent) {
+		// Get the template part entity to store original content
+		const originalEntity = await getTemplatePartEntity(block);
+
+		// Save original state for undo (includes entity data)
+		const originalBlock = {
+			clientId,
+			name: block.name,
+			attributes: { ...block.attributes },
+			innerBlocks: block.innerBlocks ? [...block.innerBlocks] : [],
+			isTemplatePart: true,
+			entityContent: originalEntity ? originalEntity.content : null,
+		};
+
+		// Parse the new block content into blocks
+		const updatedBlocks = parse(blockContent);
+
+		if (!updatedBlocks || updatedBlocks.length === 0) {
+			throw new Error("Failed to parse block_content into blocks");
+		}
+
+		// Update inner blocks in the editor
+		const { replaceInnerBlocks } = dispatch("core/block-editor");
+
+		// Convert parsed blocks to WordPress block format
+		const updatedInnerBlocks = updatedBlocks.map((parsedBlock) =>
+			this.createBlockFromParsed(parsedBlock)
+		);
+
+		// Replace all inner blocks of the template part
+		replaceInnerBlocks(clientId, updatedInnerBlocks);
+
+		// Save changes to the template part entity
+		// This ensures the changes persist across page reloads
+		const entityUpdateResult = await updateTemplatePartContent(block, updatedBlocks);
+
+		if (!entityUpdateResult.success) {
+			// eslint-disable-next-line no-console
+			console.warn("Template part entity update failed:", entityUpdateResult.message);
+		}
+
+		return {
+			clientId,
+			blockName: block.name,
+			message: `Template part content rewritten successfully`,
+			originalBlock,
+			isTemplatePart: true,
+			entityUpdateResult,
 		};
 	}
 
@@ -491,69 +622,11 @@ class ActionExecutor {
 	 */
 	normalizeHtml(html) {
 		// First normalize whitespace
-		let normalized = html
+		const normalized = html
 			.replace(/\s+/g, " ") // Replace all whitespace sequences with single space
 			.replace(/>\s+</g, "><") // Remove spaces between tags
 			.replace(/\\\//g, "/") // Remove backslashes from slashes
 			.trim(); // Remove leading/trailing whitespace
-
-		// Normalize block comment attributes
-		// WordPress omits default attributes, so we need to normalize them
-		// Match block comments with JSON attributes (handles nested objects)
-		normalized = normalized.replace(
-			/<!--\s*wp:([^\s]+)\s+(\{.*?\})\s*-->/gs,
-			(match, blockName, jsonStr) => {
-				try {
-					// Find the matching closing brace for nested JSON
-					let braceCount = 0;
-					let endIndex = 0;
-					for (let i = 0; i < jsonStr.length; i++) {
-						if (jsonStr[i] === "{") {
-							braceCount++;
-						}
-						if (jsonStr[i] === "}") {
-							braceCount--;
-						}
-						if (braceCount === 0) {
-							endIndex = i + 1;
-							break;
-						}
-					}
-					const actualJsonStr = jsonStr.substring(0, endIndex);
-					const attrs = JSON.parse(actualJsonStr);
-
-					// Remove attributes that WordPress omits from serialization
-					// These are stored in HTML instead of block comments
-					if (blockName === "button") {
-						// WordPress doesn't serialize these in block comments
-						delete attrs.text; // Text is in the <a> tag content
-						delete attrs.url; // URL is in the href attribute
-						delete attrs.linkTarget; // Target is in the HTML
-						delete attrs.rel; // Rel is in the HTML
-						// Remove default attribute values
-						if (attrs.tagName === "a") {
-							delete attrs.tagName;
-						}
-						if (attrs.type === "button") {
-							delete attrs.type;
-						}
-					}
-
-					// Sort keys for consistent comparison
-					const sortedAttrs = Object.keys(attrs)
-						.sort()
-						.reduce((acc, key) => {
-							acc[key] = attrs[key];
-							return acc;
-						}, {});
-					const normalizedJson = JSON.stringify(sortedAttrs);
-					return `<!-- wp:${blockName} ${normalizedJson} -->`;
-				} catch (e) {
-					// If JSON parsing fails, return original
-					return match;
-				}
-			}
-		);
 
 		return normalized;
 	}

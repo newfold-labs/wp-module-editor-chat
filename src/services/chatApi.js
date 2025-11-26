@@ -2,6 +2,7 @@
  * WordPress dependencies
  */
 import apiFetch from "@wordpress/api-fetch";
+import { serialize } from "@wordpress/blocks";
 
 /**
  * Internal dependencies
@@ -12,7 +13,6 @@ import {
 	getCurrentPageTitle,
 	getSelectedBlock,
 } from "../utils/editorHelpers";
-import actionExecutor from "./actionExecutor";
 
 /**
  * Chat API Service
@@ -28,11 +28,26 @@ import actionExecutor from "./actionExecutor";
  */
 
 const buildContext = async () => {
+	const selectedBlock = getSelectedBlock();
+	let selectedBlockForContext = null;
+
+	if (selectedBlock) {
+		// Create a copy without clientId to prevent the LLM from using it
+		const { clientId, ...blockWithoutClientId } = selectedBlock;
+
+		// Create the block object with serialized content
+		// The AI needs the EXACT serialized HTML to match block comments properly
+		selectedBlockForContext = {
+			...blockWithoutClientId,
+			originalContent: serialize(selectedBlock),
+		};
+	}
+
 	return {
 		page: {
 			page_id: getCurrentPageId(),
 			page_title: getCurrentPageTitle(),
-			selected_block: getSelectedBlock(),
+			selected_block: selectedBlockForContext,
 			content: await getCurrentPageContent(),
 		},
 	};

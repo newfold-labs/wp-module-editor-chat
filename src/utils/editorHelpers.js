@@ -169,12 +169,7 @@ export const getSelectedBlock = () => {
 		return null;
 	}
 
-	// Return the block with serialized content
-	// The AI needs the EXACT serialized HTML to match block comments properly
-	return {
-		...selectedBlock,
-		originalContent: serialize(selectedBlock),
-	};
+	return selectedBlock;
 };
 
 /**
