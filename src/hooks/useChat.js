@@ -5,6 +5,7 @@
 import { useEffect, useState, useRef } from "@wordpress/element";
 import { __ } from "@wordpress/i18n";
 import { useDispatch, useSelect } from "@wordpress/data";
+import { store as coreStore } from "@wordpress/core-data";
 
 /**
  * Internal dependencies
@@ -134,6 +135,7 @@ const useChat = () => {
 	const [error, setError] = useState(null);
 	const [status, setStatus] = useState(null); // 'received', 'generating', 'completed', 'failed'
 	const [isSaving, setIsSaving] = useState(false);
+	const [hasGlobalStylesChanges, setHasGlobalStylesChanges] = useState(false);
 	const hasInitializedRef = useRef(false);
 	const pollingIntervalRef = useRef(null);
 	const pollingTimeoutRef = useRef(null);
@@ -141,6 +143,14 @@ const useChat = () => {
 
 	// Get WordPress editor dispatch functions
 	const { savePost } = useDispatch("core/editor");
+	const { saveEditedEntityRecord } = useDispatch(coreStore);
+	const { __experimentalGetCurrentGlobalStylesId } = useSelect(
+		(select) => ({
+			__experimentalGetCurrentGlobalStylesId:
+				select(coreStore).__experimentalGetCurrentGlobalStylesId,
+		}),
+		[]
+	);
 
 	// Get WordPress save status
 	const isSavingPost = useSelect((select) => select("core/editor").isSavingPost(), []);
@@ -159,6 +169,9 @@ const useChat = () => {
 					return msg;
 				})
 			);
+
+			// Reset global styles changes flag
+			setHasGlobalStylesChanges(false);
 
 			setIsSaving(false);
 		}
@@ -354,11 +367,34 @@ const useChat = () => {
 								if (hasPendingAction) {
 									// There's already a pending action - reuse the initial undo data
 									const firstActionMessage = messages.find((msg) => msg.hasActions && msg.undoData);
-									undoData = firstActionMessage ? firstActionMessage.undoData : null;
+
+									// Normalize undo data structure (handle both old array format and new object format)
+									if (firstActionMessage && firstActionMessage.undoData) {
+										if (Array.isArray(firstActionMessage.undoData)) {
+											// Convert old array format to new object format
+											undoData = {
+												blocks: firstActionMessage.undoData,
+												globalStyles: null,
+											};
+										} else {
+											// Already in new object format
+											undoData = firstActionMessage.undoData;
+										}
+									} else {
+										undoData = null;
+									}
 
 									// Execute the new action (this will modify the already-modified content)
 									await actionExecutor.executeActions(data.actions);
 									hasExecutedActions = true;
+
+									// Check if any action was change_site_colors
+									const hasColorChanges = data.actions.some(
+										(action) => action.action === "change_site_colors"
+									);
+									if (hasColorChanges) {
+										setHasGlobalStylesChanges(true);
+									}
 								} else {
 									// This is the FIRST action in a sequence
 									// We need to capture the initial state before any modifications
@@ -367,16 +403,42 @@ const useChat = () => {
 									const actionResult = await actionExecutor.executeActions(data.actions);
 									hasExecutedActions = true;
 
+									// Check if any action was change_site_colors
+									const hasColorChanges = data.actions.some(
+										(action) => action.action === "change_site_colors"
+									);
+									if (hasColorChanges) {
+										setHasGlobalStylesChanges(true);
+									}
+
 									// Extract the INITIAL undo data (state before this first action)
+									// Structure: { blocks: [], globalStyles: { originalStyles, globalStylesId } }
+									undoData = {
+										blocks: [],
+										globalStyles: null,
+									};
+
 									if (actionResult.results && actionResult.results.length > 0) {
-										undoData = [];
 										actionResult.results.forEach((result) => {
+											// Handle block-based actions (edit_content)
 											if (result.results && Array.isArray(result.results)) {
 												result.results.forEach((blockResult) => {
 													if (blockResult.originalBlock) {
-														undoData.push(blockResult.originalBlock);
+														undoData.blocks.push(blockResult.originalBlock);
 													}
 												});
+											}
+
+											// Handle global styles actions (change_site_colors)
+											if (
+												result.type === "change_site_colors" &&
+												result.originalStyles &&
+												result.globalStylesId
+											) {
+												undoData.globalStyles = {
+													originalStyles: result.originalStyles,
+													globalStylesId: result.globalStylesId,
+												};
 											}
 										});
 									}
@@ -483,9 +545,25 @@ const useChat = () => {
 	/**
 	 * Accept changes - trigger WordPress save and keep buttons visible until save completes
 	 */
-	const handleAcceptChanges = () => {
+	const handleAcceptChanges = async () => {
 		// Set saving state to true - this will disable the buttons
 		setIsSaving(true);
+
+		// Save global styles if they were changed
+		if (hasGlobalStylesChanges) {
+			try {
+				const globalStylesId = __experimentalGetCurrentGlobalStylesId
+					? __experimentalGetCurrentGlobalStylesId()
+					: undefined;
+
+				if (globalStylesId) {
+					await saveEditedEntityRecord("root", "globalStyles", globalStylesId);
+				}
+			} catch (saveError) {
+				// eslint-disable-next-line no-console
+				console.error("Error saving global styles:", saveError);
+			}
+		}
 
 		// Trigger WordPress save/publish
 		if (savePost) {
@@ -507,23 +585,44 @@ const useChat = () => {
 		}
 
 		try {
-			// Restore the blocks to their original state
-			await actionExecutor.restoreBlocks(firstActionMessage.undoData);
+			const undoData = firstActionMessage.undoData;
+
+			// Handle new structure: { blocks: [], globalStyles: {...} }
+			if (undoData && typeof undoData === "object" && !Array.isArray(undoData)) {
+				// Restore blocks if they exist
+				if (undoData.blocks && Array.isArray(undoData.blocks) && undoData.blocks.length > 0) {
+					await actionExecutor.restoreBlocks(undoData.blocks);
+				}
+
+				// Restore global styles if they exist
+				if (
+					undoData.globalStyles &&
+					undoData.globalStyles.originalStyles &&
+					undoData.globalStyles.globalStylesId
+				) {
+					await actionExecutor.restoreGlobalStyles(undoData.globalStyles);
+				}
+			} else if (Array.isArray(undoData)) {
+				// Handle old structure: array of blocks (backward compatibility)
+				await actionExecutor.restoreBlocks(undoData);
+			}
 
 			// Remove hasActions and undoData from ALL messages
 			setMessages((prev) =>
 				prev.map((msg) => {
 					if (msg.hasActions) {
-						const { hasActions, undoData, ...rest } = msg;
+						const { hasActions, undoData: msgUndoData, ...rest } = msg;
 						return rest;
 					}
 					return msg;
 				})
 			);
-			// eslint-disable-next-line no-shadow
-		} catch (error) {
+
+			// Reset global styles changes flag
+			setHasGlobalStylesChanges(false);
+		} catch (restoreError) {
 			// eslint-disable-next-line no-console
-			console.error("Error restoring blocks:", error);
+			console.error("Error restoring changes:", restoreError);
 		}
 	};
 

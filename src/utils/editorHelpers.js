@@ -49,20 +49,31 @@ const getAllTemplatePartBlocks = () => {
 	return blocks.filter((b) => b.name === "core/template-part");
 };
 
-const fetchTemplatePartContent = async (tplBlock, coreResolve) => {
+/**
+ * Fetch template part content from entity
+ * This ensures we use the same content format that's sent as context to the AI
+ *
+ * @param {Object} tplBlock    The template part block
+ * @param {Object} coreResolve Optional core resolve selector (will be created if not provided)
+ * @return {Promise<string>}   The template part content as HTML string
+ */
+export const fetchTemplatePartContent = async (tplBlock, coreResolve = null) => {
 	if (!tplBlock || !tplBlock.attributes) {
 		return "";
 	}
 	const { ref, slug, theme } = tplBlock.attributes;
 
+	// Use provided coreResolve or create a new one
+	const resolve = coreResolve || resolveSelect("core");
+
 	if (ref) {
-		const rec = await coreResolve.getEntityRecord("postType", "wp_template_part", ref);
+		const rec = await resolve.getEntityRecord("postType", "wp_template_part", ref);
 		return (rec && rec.content && (rec.content.raw || rec.content.rendered)) || "";
 	}
 
 	if (slug && theme) {
 		const compositeId = `${theme}//${slug}`;
-		const recByComposite = await coreResolve.getEntityRecord(
+		const recByComposite = await resolve.getEntityRecord(
 			"postType",
 			"wp_template_part",
 			compositeId
@@ -74,7 +85,7 @@ const fetchTemplatePartContent = async (tplBlock, coreResolve) => {
 
 	if (slug) {
 		const query = theme ? { slug: [slug], theme } : { slug: [slug] };
-		const recs = await coreResolve.getEntityRecords("postType", "wp_template_part", query);
+		const recs = await resolve.getEntityRecords("postType", "wp_template_part", query);
 		if (Array.isArray(recs) && recs.length > 0) {
 			const exact = recs.find((r) => r && r.slug === slug && (!theme || r.theme === theme));
 			const rec = exact || recs[0];
@@ -99,6 +110,7 @@ const buildTemplatePartsMap = async (templatePartBlocks) => {
 		const block = templatePartBlocks[i];
 		const attrs = block.attributes || {};
 		const html = await fetchTemplatePartContent(block, coreResolve);
+
 		const key = pickTemplatePartKey(attrs, i);
 		if (key && !result[key]) {
 			result[key] = {
@@ -169,12 +181,7 @@ export const getSelectedBlock = () => {
 		return null;
 	}
 
-	// Return the block with serialized content
-	// The AI needs the EXACT serialized HTML to match block comments properly
-	return {
-		...selectedBlock,
-		originalContent: serialize(selectedBlock),
-	};
+	return selectedBlock;
 };
 
 /**

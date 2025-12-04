@@ -1,5 +1,3 @@
-const { resolve } = require("path");
-
 module.exports = (ctx) => ({
 	ident: "postcss",
 	sourceMap: ctx.env !== "production",

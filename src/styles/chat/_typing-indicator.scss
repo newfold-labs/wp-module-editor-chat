@@ -22,7 +22,8 @@
 .nfd-editor-chat-typing-indicator__loader {
 	width: 20px;
 	aspect-ratio: 2;
-	--_g: no-repeat
+	--_g:
+		no-repeat
 		radial-gradient(circle closest-side, var(--nfd-editor-chat-color-grey-medium) 90%, transparent);
 	background:
 		var(--_g) 0% 50%,
@@ -33,24 +34,28 @@
 }
 
 @keyframes nfd-editor-chat-loader {
+
 	20% {
 		background-position:
 			0% 100%,
 			50% 50%,
 			100% 50%;
 	}
+
 	40% {
 		background-position:
 			0% 0%,
 			50% 100%,
 			100% 50%;
 	}
+
 	60% {
 		background-position:
 			0% 50%,
 			50% 0%,
 			100% 100%;
 	}
+
 	80% {
 		background-position:
 			0% 50%,
