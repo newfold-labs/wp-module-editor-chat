@@ -22,7 +22,7 @@ import { simpleHash } from "../utils/helpers";
  */
 const getStorageKeys = () => {
 	// Hash the site origin to create a unique, compact identifier
-	const siteId = simpleHash(window.location.origin);
+	const siteId = simpleHash(window.nfdEditorChat.homeUrl);
 
 	return {
 		CONVERSATION_ID: `nfd-editor-chat-conversation-id-${siteId}`,

@@ -79,6 +79,7 @@ final class ChatEditor {
 				array(
 					'nonce'          => \wp_create_nonce( 'wp_rest' ),
 					'nfdRestURL'     => \get_home_url() . '/index.php?rest_route=/nfd-editor-chat/v1',
+					'homeUrl'        => \esc_url( \get_home_url() ),
 					'wpVer'          => \esc_html( \get_bloginfo( 'version' ) ),
 					'nfdChatVersion' => \esc_html( NFD_EDITOR_CHAT_VERSION ),
 				)
