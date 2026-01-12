@@ -1,16 +1,17 @@
+/* eslint-disable no-console */
 /**
- * OpenAI Client for WordPress
+ * OpenAI Client that proxies requests through WordPress REST API
  *
- * Handles streaming chat completions through WordPress REST API proxy.
- * Supports tool calls and MCP integration.
+ * This client uses the OpenAI SDK configured to route requests through
+ * the WordPress proxy endpoint, which then forwards to Cloudflare AI Gateway
+ * or direct OpenAI API.
  */
-
-/* global window, fetch, TextDecoder */
+import OpenAI from "openai";
 
 const DEFAULT_MODEL = "gpt-4o-mini";
 
 /**
- * Custom error class for OpenAI operations
+ * Custom error class for OpenAI errors
  */
 export class OpenAIError extends Error {
 	constructor(message, status = null, code = null) {
@@ -22,318 +23,188 @@ export class OpenAIError extends Error {
 }
 
 /**
- * OpenAI Client class for WordPress
+ * OpenAI client that proxies requests through WordPress REST API
  */
-export class WordPressOpenAIClient {
+class CloudflareOpenAIClient {
 	constructor() {
-		this.abortController = null;
+		this.openai = null;
+		this.config = null;
 	}
 
 	/**
-	 * Get WordPress configuration from global variable
+	 * Get configuration from WordPress
 	 *
-	 * @return {Object} WordPress config
+	 * @return {Object} Configuration object
 	 */
 	getConfig() {
-		const config = window.nfdEditorChat || {};
-		return {
-			nonce: config.nonce || "",
-			restUrl: config.restUrl || "/wp-json/nfd-editor-chat/v1/",
-			homeUrl: config.homeUrl || "",
-			currentUser: config.currentUser || { display_name: "User" },
-		};
+		if (this.config) {
+			return this.config;
+		}
+
+		// Get config from WordPress localized script
+		if (typeof window !== "undefined" && window.nfdEditorChat) {
+			this.config = {
+				nonce: window.nfdEditorChat.nonce,
+				restUrl: window.nfdEditorChat.restUrl,
+				homeUrl: window.nfdEditorChat.homeUrl,
+				currentUser: window.nfdEditorChat.currentUser || {},
+			};
+		} else {
+			this.config = {
+				nonce: "",
+				restUrl: "",
+				homeUrl: "",
+				currentUser: {},
+			};
+		}
+
+		return this.config;
+	}
+
+	/**
+	 * Initialize the OpenAI client
+	 *
+	 * @return {OpenAI} OpenAI client instance
+	 */
+	getOpenAIClient() {
+		if (this.openai) {
+			return this.openai;
+		}
+
+		const config = this.getConfig();
+
+		// Use WordPress proxy endpoint - all authentication handled server-side
+		this.openai = new OpenAI({
+			apiKey: "proxy", // Dummy key - real key is on the server
+			baseURL: `${config.restUrl}ai`,
+			dangerouslyAllowBrowser: true,
+			defaultHeaders: {
+				"X-WP-Nonce": config.nonce,
+			},
+		});
+
+		return this.openai;
+	}
+
+	/**
+	 * Create a chat completion request (non-streaming)
+	 *
+	 * @param {Object} request Chat completion request params
+	 * @return {Promise<Object>} Chat completion response
+	 */
+	async createChatCompletion(request) {
+		try {
+			const openai = this.getOpenAIClient();
+			const response = await openai.chat.completions.create({
+				model: request.model || DEFAULT_MODEL,
+				messages: request.messages,
+				tools: request.tools,
+				tool_choice: request.tool_choice,
+				stream: false,
+				max_tokens: request.max_tokens,
+				temperature: request.temperature,
+			});
+
+			return response;
+		} catch (error) {
+			throw new OpenAIError(error.message || "OpenAI API request failed", error.status, error.code);
+		}
 	}
 
 	/**
 	 * Create a streaming chat completion
 	 *
-	 * @param {Object}   options            Request options
-	 * @param {Array}    options.messages   Chat messages
-	 * @param {Array}    options.tools      Available tools (optional)
-	 * @param {string}   options.model      Model to use (optional)
-	 * @param {number}   options.maxTokens  Max tokens (optional)
-	 * @param {number}   options.temperature Temperature (optional)
-	 * @param {Function} onChunk            Callback for each chunk
-	 * @param {Function} onToolCall         Callback for tool calls
-	 * @param {Function} onComplete         Callback when complete
-	 * @param {Function} onError            Callback on error
+	 * @param {Object}   request    Chat completion request params
+	 * @param {Function} onChunk    Callback for each chunk
+	 * @param {Function} onComplete Callback when complete
+	 * @param {Function} onError    Callback for errors
 	 * @return {Promise<void>}
 	 */
-	async createStreamingCompletion(
-		{ messages, tools = [], model = DEFAULT_MODEL, maxTokens = 2000, temperature = 0.7 },
-		onChunk,
-		onToolCall,
-		onComplete,
-		onError
-	) {
-		const config = this.getConfig();
-
-		// Create abort controller for this request
-		this.abortController = new AbortController();
-
+	async createStreamingCompletion(request, onChunk, onComplete, onError) {
 		try {
-			const requestBody = {
-				model,
-				messages,
+			const openai = this.getOpenAIClient();
+			const stream = await openai.chat.completions.create({
+				...request,
+				messages: request.messages,
 				stream: true,
-				max_tokens: maxTokens,
-				temperature,
-			};
-
-			// Add tools if available
-			if (tools && tools.length > 0) {
-				requestBody.tools = tools;
-				requestBody.tool_choice = "auto";
-			}
-
-			const response = await fetch(`${config.restUrl}ai/stream`, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					"X-WP-Nonce": config.nonce,
-				},
-				body: JSON.stringify(requestBody),
-				signal: this.abortController.signal,
 			});
 
-			if (!response.ok) {
-				const errorData = await response.json().catch(() => ({}));
-				throw new OpenAIError(
-					errorData.message || `HTTP error: ${response.status}`,
-					response.status,
-					errorData.code
-				);
-			}
+			let fullMessage = "";
+			const toolCallsInProgress = {};
 
-			// Process the stream
-			const reader = response.body.getReader();
-			const decoder = new TextDecoder();
-			let buffer = "";
-			let fullContent = "";
-			const toolCalls = [];
-			let currentToolCall = null;
+			for await (const chunk of stream) {
+				const delta = chunk.choices[0]?.delta;
 
-			while (true) {
-				const { done, value } = await reader.read();
-
-				if (done) {
-					break;
+				if (delta?.content) {
+					fullMessage += delta.content;
+					onChunk({
+						type: "content",
+						content: delta.content,
+					});
 				}
 
-				buffer += decoder.decode(value, { stream: true });
+				// Handle streaming tool calls
+				if (delta?.tool_calls) {
+					for (const toolCall of delta.tool_calls) {
+						const index = toolCall.index;
 
-				// Process SSE events
-				const lines = buffer.split("\n");
-				buffer = lines.pop() || ""; // Keep incomplete line in buffer
-
-				for (const line of lines) {
-					if (line.startsWith("data: ")) {
-						const data = line.slice(6).trim();
-
-						if (data === "[DONE]") {
-							continue;
+						if (!toolCallsInProgress[index]) {
+							toolCallsInProgress[index] = {
+								id: toolCall.id || "",
+								type: "function",
+								function: {
+									name: toolCall.function?.name || "",
+									arguments: "",
+								},
+							};
 						}
 
-						try {
-							const parsed = JSON.parse(data);
-							const delta = parsed.choices?.[0]?.delta;
-							const finishReason = parsed.choices?.[0]?.finish_reason;
+						if (toolCall.id) {
+							toolCallsInProgress[index].id = toolCall.id;
+						}
 
-							if (delta) {
-								// Handle content chunks
-								if (delta.content) {
-									fullContent += delta.content;
-									if (onChunk) {
-										onChunk({
-											type: "content",
-											content: delta.content,
-											fullContent,
-										});
-									}
-								}
+						if (toolCall.function?.name) {
+							toolCallsInProgress[index].function.name = toolCall.function.name;
+						}
 
-								// Handle tool calls
-								if (delta.tool_calls) {
-									for (const toolCallDelta of delta.tool_calls) {
-										const index = toolCallDelta.index;
-
-										if (!toolCalls[index]) {
-											toolCalls[index] = {
-												id: toolCallDelta.id || "",
-												type: "function",
-												function: {
-													name: "",
-													arguments: "",
-												},
-											};
-										}
-
-										currentToolCall = toolCalls[index];
-
-										if (toolCallDelta.id) {
-											currentToolCall.id = toolCallDelta.id;
-										}
-
-										if (toolCallDelta.function?.name) {
-											currentToolCall.function.name = toolCallDelta.function.name;
-										}
-
-										if (toolCallDelta.function?.arguments) {
-											currentToolCall.function.arguments += toolCallDelta.function.arguments;
-										}
-									}
-								}
-							}
-
-							// Check for completion
-							if (finishReason === "tool_calls" && toolCalls.length > 0) {
-								// Process tool calls
-								const processedToolCalls = toolCalls.map((tc) => ({
-									id: tc.id,
-									name: tc.function.name,
-									arguments: this.safeParseJSON(tc.function.arguments),
-								}));
-
-								if (onToolCall) {
-									onToolCall(processedToolCalls);
-								}
-							} else if (finishReason === "stop") {
-								if (onComplete) {
-									onComplete({
-										content: fullContent,
-										toolCalls: toolCalls.length > 0 ? toolCalls : null,
-									});
-								}
-							}
-						} catch {
-							// Ignore JSON parse errors for malformed chunks
+						if (toolCall.function?.arguments) {
+							toolCallsInProgress[index].function.arguments += toolCall.function.arguments;
 						}
 					}
+
+					onChunk({
+						type: "tool_calls",
+						tool_calls: Object.values(toolCallsInProgress),
+					});
+				}
+
+				if (chunk.choices[0]?.finish_reason) {
+					// Convert tool calls to final format
+					const finalToolCalls = Object.values(toolCallsInProgress).map((tc) => ({
+						id: tc.id,
+						name: tc.function.name,
+						arguments: tc.function.arguments ? JSON.parse(tc.function.arguments) : {},
+					}));
+
+					// Await onComplete in case it's async (e.g., handles tool calls)
+					await onComplete(fullMessage, finalToolCalls.length > 0 ? finalToolCalls : null);
+					break;
 				}
 			}
-
-			// Final completion callback if not already called
-			if (onComplete && fullContent) {
-				onComplete({
-					content: fullContent,
-					toolCalls: toolCalls.length > 0 ? toolCalls : null,
-				});
-			}
 		} catch (error) {
-			if (error.name === "AbortError") {
-				return; // Request was cancelled
-			}
-
-			const openAIError =
-				error instanceof OpenAIError ? error : new OpenAIError(error.message || "Streaming request failed");
-
-			if (onError) {
-				onError(openAIError);
-			} else {
-				throw openAIError;
-			}
-		} finally {
-			this.abortController = null;
-		}
-	}
-
-	/**
-	 * Send a non-streaming chat completion (for follow-up with tool results)
-	 *
-	 * @param {Object} options Request options
-	 * @return {Promise<Object>} Response with content and optional tool calls
-	 */
-	async createChatCompletion({
-		messages,
-		tools = [],
-		model = DEFAULT_MODEL,
-		maxTokens = 2000,
-		temperature = 0.7,
-	}) {
-		const config = this.getConfig();
-
-		const requestBody = {
-			model,
-			messages,
-			stream: false,
-			max_tokens: maxTokens,
-			temperature,
-		};
-
-		if (tools && tools.length > 0) {
-			requestBody.tools = tools;
-			requestBody.tool_choice = "auto";
-		}
-
-		const response = await fetch(`${config.restUrl}ai/stream`, {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				"X-WP-Nonce": config.nonce,
-			},
-			body: JSON.stringify(requestBody),
-		});
-
-		if (!response.ok) {
-			const errorData = await response.json().catch(() => ({}));
-			throw new OpenAIError(
-				errorData.message || `HTTP error: ${response.status}`,
-				response.status,
-				errorData.code
+			onError(
+				new OpenAIError(error.message || "Streaming request failed", error.status, error.code)
 			);
-		}
-
-		const data = await response.json();
-		const choice = data.choices?.[0];
-
-		if (!choice) {
-			throw new OpenAIError("No response from AI");
-		}
-
-		const result = {
-			content: choice.message?.content || "",
-			toolCalls: null,
-		};
-
-		if (choice.message?.tool_calls) {
-			result.toolCalls = choice.message.tool_calls.map((tc) => ({
-				id: tc.id,
-				name: tc.function.name,
-				arguments: this.safeParseJSON(tc.function.arguments),
-			}));
-		}
-
-		return result;
-	}
-
-	/**
-	 * Stop the current streaming request
-	 */
-	stop() {
-		if (this.abortController) {
-			this.abortController.abort();
-			this.abortController = null;
-		}
-	}
-
-	/**
-	 * Safely parse JSON string
-	 *
-	 * @param {string} str JSON string
-	 * @return {Object} Parsed object or empty object
-	 */
-	safeParseJSON(str) {
-		try {
-			return JSON.parse(str || "{}");
-		} catch {
-			return {};
 		}
 	}
 
 	/**
 	 * Convert chat messages to OpenAI format
 	 *
-	 * @param {Array} messages Chat messages
+	 * OpenAI requires that tool messages MUST follow an assistant message with tool_calls.
+	 * This function ensures that constraint is satisfied.
+	 *
+	 * @param {Array} messages Array of chat messages
 	 * @return {Array} OpenAI formatted messages
 	 */
 	convertMessagesToOpenAI(messages) {
@@ -343,78 +214,220 @@ export class WordPressOpenAIClient {
 			if (message.role === "system" || message.role === "user") {
 				openaiMessages.push({
 					role: message.role,
-					content: message.content,
+					content: message.content || "",
 				});
 			} else if (message.role === "assistant") {
 				const assistantMessage = {
 					role: "assistant",
-					content: message.content,
+					content: message.content || "",
 				};
 
 				// Add tool calls if present
-				if (message.toolCalls && message.toolCalls.length > 0) {
+				const hasToolCalls = message.toolCalls && message.toolCalls.length > 0;
+				if (hasToolCalls) {
 					assistantMessage.tool_calls = message.toolCalls.map((call) => ({
 						id: call.id,
 						type: "function",
 						function: {
 							name: call.name,
-							arguments: JSON.stringify(call.arguments),
+							arguments:
+								typeof call.arguments === "string"
+									? call.arguments
+									: JSON.stringify(call.arguments),
 						},
 					}));
 				}
 
 				openaiMessages.push(assistantMessage);
 
-				// Add tool results as separate tool messages
-				if (message.toolResults && message.toolResults.length > 0) {
+				// ONLY add tool results if there are corresponding tool_calls
+				// OpenAI requires tool messages to follow an assistant message with tool_calls
+				if (hasToolCalls && message.toolResults && message.toolResults.length > 0) {
 					for (const result of message.toolResults) {
-						openaiMessages.push({
-							role: "tool",
-							content: result.error || JSON.stringify(result.result),
-							tool_call_id: result.id,
-						});
+						// Only add if this result has a matching tool call
+						const hasMatchingCall = message.toolCalls.some((call) => call.id === result.id);
+						if (hasMatchingCall) {
+							openaiMessages.push({
+								role: "tool",
+								content: result.error || JSON.stringify(result.result),
+								tool_call_id: result.id,
+							});
+						}
 					}
 				}
 			}
+			// Skip standalone tool messages - they're only valid after assistant tool_calls
+			// which we handle above
 		}
 
 		return openaiMessages;
 	}
 
 	/**
-	 * Create a WordPress context system message
+	 * Convert MCP tools to OpenAI tools format
+	 *
+	 * @param {Array} mcpTools Array of MCP tools
+	 * @return {Array} OpenAI tools array
+	 */
+	convertMCPToolsToOpenAI(mcpTools) {
+		return mcpTools.map((tool) => ({
+			type: "function",
+			function: {
+				name: tool.name,
+				description: tool.description,
+				parameters: tool.inputSchema,
+			},
+		}));
+	}
+
+	/**
+	 * Process tool calls from OpenAI response
+	 *
+	 * @param {Array} toolCalls Raw tool calls from OpenAI
+	 * @return {Array} Processed tool calls
+	 */
+	processToolCalls(toolCalls) {
+		return toolCalls.map((call) => ({
+			id: call.id,
+			name: call.function.name,
+			arguments: JSON.parse(call.function.arguments || "{}"),
+		}));
+	}
+
+	/**
+	 * Send a simple chat message
+	 *
+	 * @param {string} message  User message
+	 * @param {Array}  context  Previous messages for context
+	 * @param {Array}  tools    Available MCP tools
+	 * @return {Promise<Object>} Response with message and optional tool calls
+	 */
+	async sendMessage(message, context = [], tools = []) {
+		const messages = this.convertMessagesToOpenAI([
+			...context,
+			{
+				id: `user-${Date.now()}`,
+				role: "user",
+				content: message,
+				timestamp: new Date(),
+			},
+		]);
+
+		const request = {
+			model: DEFAULT_MODEL,
+			messages,
+			tools: tools.length > 0 ? this.convertMCPToolsToOpenAI(tools) : undefined,
+			tool_choice: tools.length > 0 ? "auto" : undefined,
+			temperature: 0.7,
+			max_tokens: 2000,
+		};
+
+		try {
+			const response = await this.createChatCompletion(request);
+			const choice = response.choices[0];
+
+			if (!choice) {
+				throw new OpenAIError("No response from OpenAI");
+			}
+
+			const result = {
+				message: choice.message.content || "",
+			};
+
+			if (choice.message.tool_calls) {
+				result.toolCalls = this.processToolCalls(choice.message.tool_calls);
+			}
+
+			return result;
+		} catch (error) {
+			if (error instanceof OpenAIError) {
+				throw error;
+			}
+			throw new OpenAIError(`Failed to send message: ${error}`);
+		}
+	}
+
+	/**
+	 * Create a system message for WordPress context
 	 *
 	 * @return {Object} System message object
 	 */
-	createSystemMessage() {
+	createWordPressSystemMessage() {
 		const config = this.getConfig();
 
 		return {
 			role: "system",
-			content: `You are a helpful AI assistant integrated into a WordPress editor. You can interact with WordPress through MCP (Model Context Protocol) tools.
+			content: `You are a helpful AI assistant integrated into a WordPress editor. You specialize in managing global styles and color palettes.
 
-Available capabilities:
-- Create, read, update, and manage WordPress posts and pages
-- Access site information and settings
-- Interact with the WordPress system through predefined tools
+## How to Use MCP Tools
 
-Guidelines:
-- Always be helpful and provide accurate information
-- When performing WordPress actions, explain what you're doing
-- Ask for confirmation before making significant changes
-- Respect user permissions and WordPress security
-- Provide clear, actionable responses
+You have THREE tools available:
+1. **mcp-adapter-discover-abilities** - Lists all available WordPress abilities
+2. **mcp-adapter-get-ability-info** - Gets detailed info about a specific ability  
+3. **mcp-adapter-execute-ability** - EXECUTES an ability to perform actions
 
-Site Information:
-- Site URL: ${config.homeUrl}
-- Current User: ${config.currentUser?.display_name || "User"}
+## Bluehost Blueprint Theme Color Mappings
 
-You should use the available MCP tools to interact with WordPress when users request actions like creating posts, managing content, or retrieving site information.`,
+This site uses the Bluehost Blueprint theme with these color slugs:
+- **accent-2** = Primary color (main brand color)
+- **accent-5** = Secondary color
+- **base** = Background color
+- **contrast** = Text color
+- **accent-1** = Darkest accent shade
+- **accent-3, accent-4, accent-6** = Lighter accent shades
+
+### Color Request Mappings:
+- "primary color" or "main color" → use slug \`accent-2\`
+- "secondary color" → use slug \`accent-5\`
+- "background color" → use slug \`base\`
+- "text color" or "foreground" → use slug \`contrast\`
+
+### Accent Palette Generation (for primary color changes):
+When changing the primary/accent color, generate ALL 6 accent shades from the provided color:
+- **accent-1**: Darkest (lightness -24%, saturation -3%)
+- **accent-2**: Primary color (unchanged - this is the user's color)
+- **accent-3**: Lighter (lightness +18%, saturation +1%)
+- **accent-4**: Lighter (lightness +28%, saturation +2%)
+- **accent-5**: Lighter (lightness +56%, saturation +3%)
+- **accent-6**: Lightest (lightness +63%, saturation +5%)
+
+## Available Abilities
+
+- \`nfd-editor-chat/get-global-styles\` - Get current palette
+- \`nfd-editor-chat/update-global-palette\` - Update colors
+
+## Examples
+
+User: "Change the primary color to blue (#0073aa)"
+Call update-global-palette with ALL accent colors generated from blue:
+{ "colors": [
+  { "slug": "accent-1", "color": "#003d5c", "name": "Accent 1" },
+  { "slug": "accent-2", "color": "#0073aa", "name": "Accent 2" },
+  { "slug": "accent-3", "color": "#3399cc", "name": "Accent 3" },
+  { "slug": "accent-4", "color": "#66b3d9", "name": "Accent 4" },
+  { "slug": "accent-5", "color": "#b3d9ec", "name": "Accent 5" },
+  { "slug": "accent-6", "color": "#cce6f2", "name": "Accent 6" }
+] }
+
+User: "Change the background to #d3d3d3"
+Call: mcp-adapter-execute-ability with { "ability_name": "nfd-editor-chat/update-global-palette", "parameters": { "colors": [{ "slug": "base", "color": "#d3d3d3", "name": "Base" }] } }
+
+User: "Make the text color black"
+Call: mcp-adapter-execute-ability with { "ability_name": "nfd-editor-chat/update-global-palette", "parameters": { "colors": [{ "slug": "contrast", "color": "#000000", "name": "Contrast" }] } }
+
+## Guidelines
+- Use the EXACT color slugs listed above for this theme
+- When changing primary color, generate ALL 6 accent shades
+- For background changes, use "base" slug
+- For text changes, use "contrast" slug
+- All colors must be in HEX format (#RRGGBB)
+
+Site: ${config.homeUrl} | User: ${config.currentUser?.display_name || "Unknown"}`,
 		};
 	}
 }
 
 // Export a singleton instance
-export const openaiClient = new WordPressOpenAIClient();
+export const openaiClient = new CloudflareOpenAIClient();
 
 export default openaiClient;

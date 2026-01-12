@@ -1,4 +1,5 @@
 /******/ (() => { // webpackBootstrap
+/******/ 	"use strict";
 /******/ 	var __webpack_modules__ = ({
 
 /***/ "./node_modules/@modelcontextprotocol/sdk/dist/esm/client/auth.js":
@@ -7,7 +8,6 @@
   \************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   UnauthorizedError: () => (/* binding */ UnauthorizedError),
@@ -867,7 +867,6 @@ async function registerClient(authorizationServerUrl, { metadata, clientMetadata
   \*************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   Client: () => (/* binding */ Client),
@@ -1510,7 +1509,6 @@ class Client extends _shared_protocol_js__WEBPACK_IMPORTED_MODULE_0__.Protocol {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   StreamableHTTPClientTransport: () => (/* binding */ StreamableHTTPClientTransport),
@@ -2006,7 +2004,6 @@ class StreamableHTTPClientTransport {
   \**************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   ExperimentalClientTasks: () => (/* binding */ ExperimentalClientTasks)
@@ -2205,7 +2202,6 @@ class ExperimentalClientTasks {
   \***************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   assertClientRequestTaskCapability: () => (/* binding */ assertClientRequestTaskCapability),
@@ -2284,7 +2280,6 @@ function assertClientRequestTaskCapability(requests, method, entityName) {
   \******************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   isTerminal: () => (/* binding */ isTerminal)
@@ -2314,7 +2309,6 @@ function isTerminal(status) {
   \*******************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   AccessDeniedError: () => (/* binding */ AccessDeniedError),
@@ -2527,7 +2521,6 @@ const OAUTH_ERRORS = {
   \******************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   getLiteralValue: () => (/* binding */ getLiteralValue),
@@ -2761,7 +2754,6 @@ function getLiteralValue(schema) {
   \******************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   getMethodLiteral: () => (/* binding */ getMethodLiteral),
@@ -2831,7 +2823,6 @@ function parseWithCompat(schema, data) {
   \******************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   checkResourceAllowed: () => (/* binding */ checkResourceAllowed),
@@ -2890,7 +2881,6 @@ function checkResourceAllowed({ requestedResource, configuredResource }) {
   \************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   OAuthClientInformationFullSchema: () => (/* binding */ OAuthClientInformationFullSchema),
@@ -3109,7 +3099,6 @@ const OAuthTokenRevocationRequestSchema = zod_v4__WEBPACK_IMPORTED_MODULE_0__.ob
   \****************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   DEFAULT_REQUEST_TIMEOUT_MSEC: () => (/* binding */ DEFAULT_REQUEST_TIMEOUT_MSEC),
@@ -4215,7 +4204,6 @@ function mergeCapabilities(base, additional) {
   \*****************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   createFetchWithInit: () => (/* binding */ createFetchWithInit),
@@ -4269,7 +4257,6 @@ function createFetchWithInit(baseFetch = fetch, baseInit) {
   \******************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   AnnotationsSchema: () => (/* binding */ AnnotationsSchema),
@@ -6489,7 +6476,6 @@ class UrlElicitationRequiredError extends McpError {
   \************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   AjvJsonSchemaValidator: () => (/* binding */ AjvJsonSchemaValidator)
@@ -6592,7 +6578,6 @@ class AjvJsonSchemaValidator {
   \*****************************************************************************************/
 /***/ ((__unused_webpack_module, exports) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.formatNames = exports.fastFormats = exports.fullFormats = void 0;
@@ -6810,7 +6795,6 @@ function regex(str) {
   \***************************************************************************************/
 /***/ ((module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const formats_1 = __webpack_require__(/*! ./formats */ "./node_modules/@modelcontextprotocol/sdk/node_modules/ajv-formats/dist/formats.js");
@@ -6857,7 +6841,6 @@ exports["default"] = formatsPlugin;
   \***************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.formatLimitDefinition = void 0;
@@ -6936,7 +6919,6 @@ exports["default"] = formatLimitPlugin;
   \*****************************************************************************/
 /***/ ((module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.MissingRefError = exports.ValidationError = exports.CodeGen = exports.Name = exports.nil = exports.stringify = exports.str = exports._ = exports.KeywordCxt = exports.Ajv = void 0;
@@ -6996,7 +6978,6 @@ Object.defineProperty(exports, "MissingRefError", ({ enumerable: true, get: func
   \**********************************************************************************************/
 /***/ ((__unused_webpack_module, exports) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.regexpCode = exports.getEsmExportName = exports.getProperty = exports.safeStringify = exports.stringify = exports.strConcat = exports.addCodeArg = exports.str = exports._ = exports.nil = exports._Code = exports.Name = exports.IDENTIFIER = exports._CodeOrName = void 0;
@@ -7162,7 +7143,6 @@ exports.regexpCode = regexpCode;
   \***********************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.or = exports.and = exports.not = exports.CodeGen = exports.operators = exports.varKinds = exports.ValueScopeName = exports.ValueScope = exports.Scope = exports.Name = exports.regexpCode = exports.stringify = exports.getProperty = exports.nil = exports.strConcat = exports.str = exports._ = void 0;
@@ -7869,7 +7849,6 @@ function par(x) {
   \***********************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ValueScope = exports.ValueScopeName = exports.Scope = exports.varKinds = exports.UsedValueState = void 0;
@@ -8022,7 +8001,6 @@ exports.ValueScope = ValueScope;
   \****************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.extendErrors = exports.resetErrorsCount = exports.reportExtraError = exports.reportError = exports.keyword$DataError = exports.keywordError = void 0;
@@ -8155,7 +8133,6 @@ function extraErrorProps(cxt, { params, message }, keyValues) {
   \***************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.resolveSchema = exports.getCompilingSchema = exports.resolveRef = exports.compileSchema = exports.SchemaEnv = void 0;
@@ -8407,7 +8384,6 @@ function getJsonPointer(parsedRef, { baseId, schema, root }) {
   \***************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const codegen_1 = __webpack_require__(/*! ./codegen */ "./node_modules/@modelcontextprotocol/sdk/node_modules/ajv/dist/compile/codegen/index.js");
@@ -8445,7 +8421,6 @@ exports["default"] = names;
   \*******************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const resolve_1 = __webpack_require__(/*! ./resolve */ "./node_modules/@modelcontextprotocol/sdk/node_modules/ajv/dist/compile/resolve.js");
@@ -8467,7 +8442,6 @@ exports["default"] = MissingRefError;
   \*****************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getSchemaRefs = exports.resolveUrl = exports.normalizeId = exports._getFullPath = exports.getFullPath = exports.inlineRef = void 0;
@@ -8632,7 +8606,6 @@ exports.getSchemaRefs = getSchemaRefs;
   \***************************************************************************************/
 /***/ ((__unused_webpack_module, exports) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getRules = exports.isJSONType = void 0;
@@ -8668,7 +8641,6 @@ exports.getRules = getRules;
   \**************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.checkStrictMode = exports.getErrorPath = exports.Type = exports.useFunc = exports.setEvaluated = exports.evaluatedPropsToName = exports.mergeEvaluated = exports.eachItem = exports.unescapeJsonPointer = exports.escapeJsonPointer = exports.escapeFragment = exports.unescapeFragment = exports.schemaRefOrVal = exports.schemaHasRulesButRef = exports.schemaHasRules = exports.checkUnknownRules = exports.alwaysValidSchema = exports.toHash = void 0;
@@ -8856,7 +8828,6 @@ exports.checkStrictMode = checkStrictMode;
   \********************************************************************************************************/
 /***/ ((__unused_webpack_module, exports) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.shouldUseRule = exports.shouldUseGroup = exports.schemaHasRulesForType = void 0;
@@ -8885,7 +8856,6 @@ exports.shouldUseRule = shouldUseRule;
   \*****************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.boolOrEmptySchema = exports.topBoolOrEmptySchema = void 0;
@@ -8945,7 +8915,6 @@ function falseSchemaError(it, overrideAllErrors) {
   \***************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.reportTypeError = exports.checkDataTypes = exports.checkDataType = exports.coerceAndCheckDataType = exports.getJSONTypes = exports.getSchemaTypes = exports.DataType = void 0;
@@ -9158,7 +9127,6 @@ function getTypeErrorContext(it) {
   \***************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.assignDefaults = void 0;
@@ -9203,7 +9171,6 @@ function assignDefault(it, prop, defaultValue) {
   \************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getData = exports.KeywordCxt = exports.validateFunctionCode = void 0;
@@ -9733,7 +9700,6 @@ exports.getData = getData;
   \**************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.validateKeywordUsage = exports.validSchemaType = exports.funcKeywordCode = exports.macroKeywordCode = void 0;
@@ -9867,7 +9833,6 @@ exports.validateKeywordUsage = validateKeywordUsage;
   \****************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.extendSubschemaMode = exports.extendSubschemaData = exports.getSubschema = void 0;
@@ -9958,7 +9923,6 @@ exports.extendSubschemaMode = extendSubschemaMode;
   \******************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.CodeGen = exports.Name = exports.nil = exports.stringify = exports.str = exports._ = exports.KeywordCxt = void 0;
@@ -10586,7 +10550,6 @@ function schemaOrData(schema) {
   \*************************************************************************************/
 /***/ ((module) => {
 
-"use strict";
 module.exports = /*#__PURE__*/JSON.parse('{"$id":"https://raw.githubusercontent.com/ajv-validator/ajv/master/lib/refs/data.json#","description":"Meta-schema for $data reference (JSON AnySchema extension proposal)","type":"object","required":["$data"],"properties":{"$data":{"type":"string","anyOf":[{"format":"relative-json-pointer"},{"format":"json-pointer"}]}},"additionalProperties":false}');
 
 /***/ }),
@@ -10597,7 +10560,6 @@ module.exports = /*#__PURE__*/JSON.parse('{"$id":"https://raw.githubusercontent.
   \*****************************************************************************************************/
 /***/ ((module) => {
 
-"use strict";
 module.exports = /*#__PURE__*/JSON.parse('{"$schema":"http://json-schema.org/draft-07/schema#","$id":"http://json-schema.org/draft-07/schema#","title":"Core schema meta-schema","definitions":{"schemaArray":{"type":"array","minItems":1,"items":{"$ref":"#"}},"nonNegativeInteger":{"type":"integer","minimum":0},"nonNegativeIntegerDefault0":{"allOf":[{"$ref":"#/definitions/nonNegativeInteger"},{"default":0}]},"simpleTypes":{"enum":["array","boolean","integer","null","number","object","string"]},"stringArray":{"type":"array","items":{"type":"string"},"uniqueItems":true,"default":[]}},"type":["object","boolean"],"properties":{"$id":{"type":"string","format":"uri-reference"},"$schema":{"type":"string","format":"uri"},"$ref":{"type":"string","format":"uri-reference"},"$comment":{"type":"string"},"title":{"type":"string"},"description":{"type":"string"},"default":true,"readOnly":{"type":"boolean","default":false},"examples":{"type":"array","items":true},"multipleOf":{"type":"number","exclusiveMinimum":0},"maximum":{"type":"number"},"exclusiveMaximum":{"type":"number"},"minimum":{"type":"number"},"exclusiveMinimum":{"type":"number"},"maxLength":{"$ref":"#/definitions/nonNegativeInteger"},"minLength":{"$ref":"#/definitions/nonNegativeIntegerDefault0"},"pattern":{"type":"string","format":"regex"},"additionalItems":{"$ref":"#"},"items":{"anyOf":[{"$ref":"#"},{"$ref":"#/definitions/schemaArray"}],"default":true},"maxItems":{"$ref":"#/definitions/nonNegativeInteger"},"minItems":{"$ref":"#/definitions/nonNegativeIntegerDefault0"},"uniqueItems":{"type":"boolean","default":false},"contains":{"$ref":"#"},"maxProperties":{"$ref":"#/definitions/nonNegativeInteger"},"minProperties":{"$ref":"#/definitions/nonNegativeIntegerDefault0"},"required":{"$ref":"#/definitions/stringArray"},"additionalProperties":{"$ref":"#"},"definitions":{"type":"object","additionalProperties":{"$ref":"#"},"default":{}},"properties":{"type":"object","additionalProperties":{"$ref":"#"},"default":{}},"patternProperties":{"type":"object","additionalProperties":{"$ref":"#"},"propertyNames":{"format":"regex"},"default":{}},"dependencies":{"type":"object","additionalProperties":{"anyOf":[{"$ref":"#"},{"$ref":"#/definitions/stringArray"}]}},"propertyNames":{"$ref":"#"},"const":true,"enum":{"type":"array","items":true,"minItems":1,"uniqueItems":true},"type":{"anyOf":[{"$ref":"#/definitions/simpleTypes"},{"type":"array","items":{"$ref":"#/definitions/simpleTypes"},"minItems":1,"uniqueItems":true}]},"format":{"type":"string"},"contentMediaType":{"type":"string"},"contentEncoding":{"type":"string"},"if":{"$ref":"#"},"then":{"$ref":"#"},"else":{"$ref":"#"},"allOf":{"$ref":"#/definitions/schemaArray"},"anyOf":{"$ref":"#/definitions/schemaArray"},"oneOf":{"$ref":"#/definitions/schemaArray"},"not":{"$ref":"#"}},"default":true}');
 
 /***/ }),
@@ -10608,7 +10570,6 @@ module.exports = /*#__PURE__*/JSON.parse('{"$schema":"http://json-schema.org/dra
   \***************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 // https://github.com/ajv-validator/ajv/issues/889
@@ -10625,7 +10586,6 @@ exports["default"] = equal;
   \********************************************************************************************/
 /***/ ((__unused_webpack_module, exports) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 // https://mathiasbynens.be/notes/javascript-encoding
@@ -10659,7 +10619,6 @@ ucs2length.code = 'require("ajv/dist/runtime/ucs2length").default';
   \*************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const uri = __webpack_require__(/*! fast-uri */ "./node_modules/fast-uri/index.js");
@@ -10675,7 +10634,6 @@ exports["default"] = uri;
   \**************************************************************************************************/
 /***/ ((__unused_webpack_module, exports) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 class ValidationError extends Error {
@@ -10696,7 +10654,6 @@ exports["default"] = ValidationError;
   \*****************************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.validateAdditionalItems = void 0;
@@ -10755,7 +10712,6 @@ exports["default"] = def;
   \**********************************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const code_1 = __webpack_require__(/*! ../code */ "./node_modules/@modelcontextprotocol/sdk/node_modules/ajv/dist/vocabularies/code.js");
@@ -10871,7 +10827,6 @@ exports["default"] = def;
   \*******************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const util_1 = __webpack_require__(/*! ../../compile/util */ "./node_modules/@modelcontextprotocol/sdk/node_modules/ajv/dist/compile/util.js");
@@ -10904,7 +10859,6 @@ exports["default"] = def;
   \*******************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const code_1 = __webpack_require__(/*! ../code */ "./node_modules/@modelcontextprotocol/sdk/node_modules/ajv/dist/vocabularies/code.js");
@@ -10926,7 +10880,6 @@ exports["default"] = def;
   \**********************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const codegen_1 = __webpack_require__(/*! ../../compile/codegen */ "./node_modules/@modelcontextprotocol/sdk/node_modules/ajv/dist/compile/codegen/index.js");
@@ -11031,7 +10984,6 @@ exports["default"] = def;
   \**************************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.validateSchemaDeps = exports.validatePropertyDeps = exports.error = void 0;
@@ -11126,7 +11078,6 @@ exports["default"] = def;
   \****************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const codegen_1 = __webpack_require__(/*! ../../compile/codegen */ "./node_modules/@modelcontextprotocol/sdk/node_modules/ajv/dist/compile/codegen/index.js");
@@ -11202,7 +11153,6 @@ exports["default"] = def;
   \*******************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const additionalItems_1 = __webpack_require__(/*! ./additionalItems */ "./node_modules/@modelcontextprotocol/sdk/node_modules/ajv/dist/vocabularies/applicator/additionalItems.js");
@@ -11256,7 +11206,6 @@ exports["default"] = getApplicator;
   \*******************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.validateTuple = void 0;
@@ -11318,7 +11267,6 @@ exports["default"] = def;
   \***********************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const codegen_1 = __webpack_require__(/*! ../../compile/codegen */ "./node_modules/@modelcontextprotocol/sdk/node_modules/ajv/dist/compile/codegen/index.js");
@@ -11358,7 +11306,6 @@ exports["default"] = def;
   \*****************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const util_1 = __webpack_require__(/*! ../../compile/util */ "./node_modules/@modelcontextprotocol/sdk/node_modules/ajv/dist/compile/util.js");
@@ -11394,7 +11341,6 @@ exports["default"] = def;
   \*******************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const codegen_1 = __webpack_require__(/*! ../../compile/codegen */ "./node_modules/@modelcontextprotocol/sdk/node_modules/ajv/dist/compile/codegen/index.js");
@@ -11464,7 +11410,6 @@ exports["default"] = def;
   \*******************************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const code_1 = __webpack_require__(/*! ../code */ "./node_modules/@modelcontextprotocol/sdk/node_modules/ajv/dist/vocabularies/code.js");
@@ -11549,7 +11494,6 @@ exports["default"] = def;
   \*************************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const items_1 = __webpack_require__(/*! ./items */ "./node_modules/@modelcontextprotocol/sdk/node_modules/ajv/dist/vocabularies/applicator/items.js");
@@ -11571,7 +11515,6 @@ exports["default"] = def;
   \************************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const validate_1 = __webpack_require__(/*! ../../compile/validate */ "./node_modules/@modelcontextprotocol/sdk/node_modules/ajv/dist/compile/validate/index.js");
@@ -11635,7 +11578,6 @@ exports["default"] = def;
   \***************************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const codegen_1 = __webpack_require__(/*! ../../compile/codegen */ "./node_modules/@modelcontextprotocol/sdk/node_modules/ajv/dist/compile/codegen/index.js");
@@ -11683,7 +11625,6 @@ exports["default"] = def;
   \**********************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const util_1 = __webpack_require__(/*! ../../compile/util */ "./node_modules/@modelcontextprotocol/sdk/node_modules/ajv/dist/compile/util.js");
@@ -11706,7 +11647,6 @@ exports["default"] = def;
   \*******************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.validateUnion = exports.validateArray = exports.usePattern = exports.callValidateCode = exports.schemaProperties = exports.allSchemaProperties = exports.noPropertyInData = exports.propertyInData = exports.isOwnProperty = exports.hasPropFunc = exports.reportMissingProp = exports.checkMissingProp = exports.checkReportMissingProp = void 0;
@@ -11847,7 +11787,6 @@ exports.validateUnion = validateUnion;
   \**********************************************************************************************/
 /***/ ((__unused_webpack_module, exports) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const def = {
@@ -11867,7 +11806,6 @@ exports["default"] = def;
   \*************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const id_1 = __webpack_require__(/*! ./id */ "./node_modules/@modelcontextprotocol/sdk/node_modules/ajv/dist/vocabularies/core/id.js");
@@ -11893,7 +11831,6 @@ exports["default"] = core;
   \***********************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.callRef = exports.getValidate = void 0;
@@ -12025,7 +11962,6 @@ exports["default"] = def;
   \**********************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const codegen_1 = __webpack_require__(/*! ../../compile/codegen */ "./node_modules/@modelcontextprotocol/sdk/node_modules/ajv/dist/compile/codegen/index.js");
@@ -12139,7 +12075,6 @@ exports["default"] = def;
   \**********************************************************************************************************/
 /***/ ((__unused_webpack_module, exports) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.DiscrError = void 0;
@@ -12158,7 +12093,6 @@ var DiscrError;
   \*********************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core_1 = __webpack_require__(/*! ./core */ "./node_modules/@modelcontextprotocol/sdk/node_modules/ajv/dist/vocabularies/core/index.js");
@@ -12185,7 +12119,6 @@ exports["default"] = draft7Vocabularies;
   \****************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const codegen_1 = __webpack_require__(/*! ../../compile/codegen */ "./node_modules/@modelcontextprotocol/sdk/node_modules/ajv/dist/compile/codegen/index.js");
@@ -12287,7 +12220,6 @@ exports["default"] = def;
   \***************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const format_1 = __webpack_require__(/*! ./format */ "./node_modules/@modelcontextprotocol/sdk/node_modules/ajv/dist/vocabularies/format/format.js");
@@ -12303,7 +12235,6 @@ exports["default"] = format;
   \***********************************************************************************************/
 /***/ ((__unused_webpack_module, exports) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.contentVocabulary = exports.metadataVocabulary = void 0;
@@ -12331,7 +12262,6 @@ exports.contentVocabulary = [
   \*******************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const codegen_1 = __webpack_require__(/*! ../../compile/codegen */ "./node_modules/@modelcontextprotocol/sdk/node_modules/ajv/dist/compile/codegen/index.js");
@@ -12366,7 +12296,6 @@ exports["default"] = def;
   \******************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const codegen_1 = __webpack_require__(/*! ../../compile/codegen */ "./node_modules/@modelcontextprotocol/sdk/node_modules/ajv/dist/compile/codegen/index.js");
@@ -12424,7 +12353,6 @@ exports["default"] = def;
   \*******************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const limitNumber_1 = __webpack_require__(/*! ./limitNumber */ "./node_modules/@modelcontextprotocol/sdk/node_modules/ajv/dist/vocabularies/validation/limitNumber.js");
@@ -12467,7 +12395,6 @@ exports["default"] = validation;
   \************************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const codegen_1 = __webpack_require__(/*! ../../compile/codegen */ "./node_modules/@modelcontextprotocol/sdk/node_modules/ajv/dist/compile/codegen/index.js");
@@ -12501,7 +12428,6 @@ exports["default"] = def;
   \*************************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const codegen_1 = __webpack_require__(/*! ../../compile/codegen */ "./node_modules/@modelcontextprotocol/sdk/node_modules/ajv/dist/compile/codegen/index.js");
@@ -12538,7 +12464,6 @@ exports["default"] = def;
   \*************************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const codegen_1 = __webpack_require__(/*! ../../compile/codegen */ "./node_modules/@modelcontextprotocol/sdk/node_modules/ajv/dist/compile/codegen/index.js");
@@ -12575,7 +12500,6 @@ exports["default"] = def;
   \*****************************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const codegen_1 = __webpack_require__(/*! ../../compile/codegen */ "./node_modules/@modelcontextprotocol/sdk/node_modules/ajv/dist/compile/codegen/index.js");
@@ -12609,7 +12533,6 @@ exports["default"] = def;
   \************************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const codegen_1 = __webpack_require__(/*! ../../compile/codegen */ "./node_modules/@modelcontextprotocol/sdk/node_modules/ajv/dist/compile/codegen/index.js");
@@ -12645,7 +12568,6 @@ exports["default"] = def;
   \*********************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const code_1 = __webpack_require__(/*! ../code */ "./node_modules/@modelcontextprotocol/sdk/node_modules/ajv/dist/vocabularies/code.js");
@@ -12679,7 +12601,6 @@ exports["default"] = def;
   \**********************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const code_1 = __webpack_require__(/*! ../code */ "./node_modules/@modelcontextprotocol/sdk/node_modules/ajv/dist/vocabularies/code.js");
@@ -12768,7 +12689,6 @@ exports["default"] = def;
   \*************************************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const dataType_1 = __webpack_require__(/*! ../../compile/validate/dataType */ "./node_modules/@modelcontextprotocol/sdk/node_modules/ajv/dist/compile/validate/dataType.js");
@@ -12842,7 +12762,6 @@ exports["default"] = def;
   \*******************************************************************************************/
 /***/ ((module) => {
 
-"use strict";
 
 
 var traverse = module.exports = function (schema, opts, cb) {
@@ -12946,7 +12865,6 @@ function escapeJsonPtr(str) {
   \****************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   defaultOptions: () => (/* binding */ defaultOptions),
@@ -13010,7 +12928,6 @@ const getDefaultOptions = (options) => (typeof options === "string"
   \*************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   getRefs: () => (/* binding */ getRefs)
@@ -13048,7 +12965,6 @@ const getRefs = (options) => {
   \**********************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   addErrorMessage: () => (/* binding */ addErrorMessage),
@@ -13078,7 +12994,6 @@ function setResponseValueAndErrors(res, key, value, errorMessage, refs) {
   \************************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   getRelativePath: () => (/* binding */ getRelativePath)
@@ -13101,7 +13016,6 @@ const getRelativePath = (pathA, pathB) => {
   \**************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   addErrorMessage: () => (/* reexport safe */ _errorMessages_js__WEBPACK_IMPORTED_MODULE_2__.addErrorMessage),
@@ -13237,7 +13151,6 @@ __webpack_require__.r(__webpack_exports__);
   \*****************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   parseDef: () => (/* binding */ parseDef)
@@ -13318,7 +13231,6 @@ const addMeta = (def, refs, jsonSchema) => {
   \*******************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 
 
@@ -13331,7 +13243,6 @@ __webpack_require__.r(__webpack_exports__);
   \********************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   parseAnyDef: () => (/* binding */ parseAnyDef)
@@ -13364,7 +13275,6 @@ function parseAnyDef(refs) {
   \**********************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   parseArrayDef: () => (/* binding */ parseArrayDef)
@@ -13408,7 +13318,6 @@ function parseArrayDef(def, refs) {
   \***********************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   parseBigintDef: () => (/* binding */ parseBigintDef)
@@ -13473,7 +13382,6 @@ function parseBigintDef(def, refs) {
   \************************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   parseBooleanDef: () => (/* binding */ parseBooleanDef)
@@ -13493,7 +13401,6 @@ function parseBooleanDef() {
   \************************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   parseBrandedDef: () => (/* binding */ parseBrandedDef)
@@ -13513,7 +13420,6 @@ function parseBrandedDef(_def, refs) {
   \**********************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   parseCatchDef: () => (/* binding */ parseCatchDef)
@@ -13533,7 +13439,6 @@ const parseCatchDef = (def, refs) => {
   \*********************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   parseDateDef: () => (/* binding */ parseDateDef)
@@ -13595,7 +13500,6 @@ const integerDateParser = (def, refs) => {
   \************************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   parseDefaultDef: () => (/* binding */ parseDefaultDef)
@@ -13618,7 +13522,6 @@ function parseDefaultDef(_def, refs) {
   \************************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   parseEffectsDef: () => (/* binding */ parseEffectsDef)
@@ -13642,7 +13545,6 @@ function parseEffectsDef(_def, refs) {
   \*********************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   parseEnumDef: () => (/* binding */ parseEnumDef)
@@ -13663,7 +13565,6 @@ function parseEnumDef(def) {
   \*****************************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   parseIntersectionDef: () => (/* binding */ parseIntersectionDef)
@@ -13731,7 +13632,6 @@ function parseIntersectionDef(def, refs) {
   \************************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   parseLiteralDef: () => (/* binding */ parseLiteralDef)
@@ -13767,7 +13667,6 @@ function parseLiteralDef(def, refs) {
   \********************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   parseMapDef: () => (/* binding */ parseMapDef)
@@ -13811,7 +13710,6 @@ function parseMapDef(def, refs) {
   \***************************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   parseNativeEnumDef: () => (/* binding */ parseNativeEnumDef)
@@ -13842,7 +13740,6 @@ function parseNativeEnumDef(def) {
   \**********************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   parseNeverDef: () => (/* binding */ parseNeverDef)
@@ -13869,7 +13766,6 @@ function parseNeverDef(refs) {
   \*********************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   parseNullDef: () => (/* binding */ parseNullDef)
@@ -13894,7 +13790,6 @@ function parseNullDef(refs) {
   \*************************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   parseNullableDef: () => (/* binding */ parseNullableDef)
@@ -13944,7 +13839,6 @@ function parseNullableDef(def, refs) {
   \***********************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   parseNumberDef: () => (/* binding */ parseNumberDef)
@@ -14012,7 +13906,6 @@ function parseNumberDef(def, refs) {
   \***********************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   parseObjectDef: () => (/* binding */ parseObjectDef)
@@ -14100,7 +13993,6 @@ function safeIsOptional(schema) {
   \*************************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   parseOptionalDef: () => (/* binding */ parseOptionalDef)
@@ -14138,7 +14030,6 @@ const parseOptionalDef = (def, refs) => {
   \*************************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   parsePipelineDef: () => (/* binding */ parsePipelineDef)
@@ -14174,7 +14065,6 @@ const parsePipelineDef = (def, refs) => {
   \************************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   parsePromiseDef: () => (/* binding */ parsePromiseDef)
@@ -14194,7 +14084,6 @@ function parsePromiseDef(def, refs) {
   \*************************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   parseReadonlyDef: () => (/* binding */ parseReadonlyDef)
@@ -14214,7 +14103,6 @@ const parseReadonlyDef = (def, refs) => {
   \***********************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   parseRecordDef: () => (/* binding */ parseRecordDef)
@@ -14295,7 +14183,6 @@ function parseRecordDef(def, refs) {
   \********************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   parseSetDef: () => (/* binding */ parseSetDef)
@@ -14332,7 +14219,6 @@ function parseSetDef(def, refs) {
   \***********************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   parseStringDef: () => (/* binding */ parseStringDef),
@@ -14701,7 +14587,6 @@ function stringifyRegExpWithFlags(regex, refs) {
   \**********************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   parseTupleDef: () => (/* binding */ parseTupleDef)
@@ -14749,7 +14634,6 @@ function parseTupleDef(def, refs) {
   \**************************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   parseUndefinedDef: () => (/* binding */ parseUndefinedDef)
@@ -14771,7 +14655,6 @@ function parseUndefinedDef(refs) {
   \**********************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   parseUnionDef: () => (/* binding */ parseUnionDef),
@@ -14868,7 +14751,6 @@ const asAnyOf = (def, refs) => {
   \************************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   parseUnknownDef: () => (/* binding */ parseUnknownDef)
@@ -14888,7 +14770,6 @@ function parseUnknownDef(refs) {
   \*********************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   selectParser: () => (/* binding */ selectParser)
@@ -15039,7 +14920,6 @@ const selectParser = (def, typeName, refs) => {
   \************************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   zodToJsonSchema: () => (/* binding */ zodToJsonSchema)
@@ -15144,7 +15024,6 @@ const zodToJsonSchema = (schema, options) => {
   \********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   ZodError: () => (/* binding */ ZodError),
@@ -15295,7 +15174,6 @@ ZodError.create = (issues) => {
   \******************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   defaultErrorMap: () => (/* reexport safe */ _locales_en_js__WEBPACK_IMPORTED_MODULE_0__["default"]),
@@ -15322,7 +15200,6 @@ function getErrorMap() {
   \********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   BRAND: () => (/* reexport safe */ _types_js__WEBPACK_IMPORTED_MODULE_4__.BRAND),
@@ -15455,7 +15332,6 @@ __webpack_require__.r(__webpack_exports__);
   \*****************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   errorUtil: () => (/* binding */ errorUtil)
@@ -15476,7 +15352,6 @@ var errorUtil;
   \*****************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   DIRTY: () => (/* binding */ DIRTY),
@@ -15612,7 +15487,6 @@ const isAsync = (x) => typeof Promise !== "undefined" && x instanceof Promise;
   \*******************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 
 
@@ -15625,7 +15499,6 @@ __webpack_require__.r(__webpack_exports__);
   \************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   ZodParsedType: () => (/* binding */ ZodParsedType),
@@ -15776,7 +15649,6 @@ const getParsedType = (data) => {
   \*****************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   BRAND: () => (/* reexport safe */ _external_js__WEBPACK_IMPORTED_MODULE_0__.BRAND),
@@ -15904,7 +15776,6 @@ __webpack_require__.r(__webpack_exports__);
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
@@ -16030,7 +15901,6 @@ const errorMap = (issue, _ctx) => {
   \*****************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   BRAND: () => (/* binding */ BRAND),
@@ -19830,7 +19700,6 @@ const NEVER = _helpers_parseUtil_js__WEBPACK_IMPORTED_MODULE_3__.INVALID;
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   $brand: () => (/* reexport safe */ _v4_mini_index_js__WEBPACK_IMPORTED_MODULE_0__.$brand),
@@ -20083,7 +19952,6 @@ __webpack_require__.r(__webpack_exports__);
   \**************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   endsWith: () => (/* reexport safe */ _core_index_js__WEBPACK_IMPORTED_MODULE_0__._endsWith),
@@ -20128,7 +19996,6 @@ __webpack_require__.r(__webpack_exports__);
   \**************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   bigint: () => (/* binding */ bigint),
@@ -20166,7 +20033,6 @@ function date(params) {
   \**************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   $brand: () => (/* reexport safe */ _core_index_js__WEBPACK_IMPORTED_MODULE_0__.$brand),
@@ -20218,7 +20084,6 @@ var ZodFirstPartyTypeKind;
   \**************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   ZodError: () => (/* binding */ ZodError),
@@ -20284,7 +20149,6 @@ const ZodRealError = _core_index_js__WEBPACK_IMPORTED_MODULE_0__.$constructor("Z
   \****************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   $brand: () => (/* reexport safe */ _core_index_js__WEBPACK_IMPORTED_MODULE_0__.$brand),
@@ -20566,7 +20430,6 @@ __webpack_require__.r(__webpack_exports__);
   \************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   fromJSONSchema: () => (/* binding */ fromJSONSchema)
@@ -21169,7 +21032,6 @@ function fromJSONSchema(schema, params) {
   \*************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   $brand: () => (/* reexport safe */ _external_js__WEBPACK_IMPORTED_MODULE_0__.$brand),
@@ -21426,7 +21288,6 @@ __webpack_require__.r(__webpack_exports__);
   \***********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   ZodISODate: () => (/* binding */ ZodISODate),
@@ -21480,7 +21341,6 @@ function duration(params) {
   \*************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   decode: () => (/* binding */ decode),
@@ -21523,7 +21383,6 @@ const safeDecodeAsync = /* @__PURE__ */ _core_index_js__WEBPACK_IMPORTED_MODULE_
   \***************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   ZodAny: () => (/* binding */ ZodAny),
@@ -22864,7 +22723,6 @@ function preprocess(fn, schema) {
   \********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   TimePrecision: () => (/* binding */ TimePrecision),
@@ -24077,7 +23935,6 @@ function _stringFormat(Class, format, fnOrRegex, _params = {}) {
   \***********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   $ZodCheck: () => (/* binding */ $ZodCheck),
@@ -24691,7 +24548,6 @@ const $ZodCheckOverwrite = /*@__PURE__*/ _core_js__WEBPACK_IMPORTED_MODULE_0__.$
   \*********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   $ZodAsyncError: () => (/* binding */ $ZodAsyncError),
@@ -24788,7 +24644,6 @@ function config(newConfig) {
   \********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   Doc: () => (/* binding */ Doc)
@@ -24838,7 +24693,6 @@ class Doc {
   \***********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   $ZodError: () => (/* binding */ $ZodError),
@@ -25043,7 +24897,6 @@ function prettifyError(error) {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   $ZodAny: () => (/* reexport safe */ _schemas_js__WEBPACK_IMPORTED_MODULE_3__.$ZodAny),
@@ -25362,7 +25215,6 @@ __webpack_require__.r(__webpack_exports__);
   \**************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   JSONSchemaGenerator: () => (/* binding */ JSONSchemaGenerator)
@@ -25474,7 +25326,6 @@ class JSONSchemaGenerator {
   \***************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   allProcessors: () => (/* binding */ allProcessors),
@@ -26136,7 +25987,6 @@ function toJSONSchema(input, params) {
   \****************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 
 
@@ -26149,7 +25999,6 @@ __webpack_require__.r(__webpack_exports__);
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   _decode: () => (/* binding */ _decode),
@@ -26283,7 +26132,6 @@ const safeDecodeAsync = /* @__PURE__*/ _safeDecodeAsync(_errors_js__WEBPACK_IMPO
   \************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   base64: () => (/* binding */ base64),
@@ -26489,7 +26337,6 @@ const sha512_base64url = /*@__PURE__*/ fixedBase64url(86);
   \***************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   $ZodRegistry: () => (/* binding */ $ZodRegistry),
@@ -26559,7 +26406,6 @@ const globalRegistry = globalThis.__zod_globalRegistry;
   \************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   $ZodAny: () => (/* binding */ $ZodAny),
@@ -28752,7 +28598,6 @@ function handleRefineResult(result, payload, input, inst) {
   \*******************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   createStandardJSONSchemaMethod: () => (/* binding */ createStandardJSONSchemaMethod),
@@ -29210,7 +29055,6 @@ const createStandardJSONSchemaMethod = (schema, io, processors = {}) => (params)
   \*********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   BIGINT_FORMAT_RANGES: () => (/* binding */ BIGINT_FORMAT_RANGES),
@@ -29937,7 +29781,6 @@ class Class {
   \*************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   version: () => (/* binding */ version)
@@ -29957,7 +29800,6 @@ const version = {
   \*****************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   $brand: () => (/* reexport safe */ _classic_index_js__WEBPACK_IMPORTED_MODULE_0__.$brand),
@@ -30213,7 +30055,6 @@ __webpack_require__.r(__webpack_exports__);
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -30335,7 +30176,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -30456,7 +30296,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -30628,7 +30467,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -30764,7 +30602,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -30887,7 +30724,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -31014,7 +30850,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -31145,7 +30980,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -31269,7 +31103,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -31394,7 +31227,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -31519,7 +31351,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -31667,7 +31498,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -31797,7 +31627,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -31925,7 +31754,6 @@ const error = () => {
   \*************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -32048,7 +31876,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -32172,7 +31999,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -32402,7 +32228,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -32526,7 +32351,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -32689,7 +32513,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -32811,7 +32634,6 @@ const error = () => {
   \*************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   ar: () => (/* reexport safe */ _ar_js__WEBPACK_IMPORTED_MODULE_0__["default"]),
@@ -32972,7 +32794,6 @@ __webpack_require__.r(__webpack_exports__);
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -33097,7 +32918,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -33221,7 +33041,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -33344,7 +33163,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -33472,7 +33290,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -33493,7 +33310,6 @@ __webpack_require__.r(__webpack_exports__);
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -33619,7 +33435,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -33746,7 +33561,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -33965,7 +33779,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -34090,7 +33903,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -34213,7 +34025,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -34339,7 +34150,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -34463,7 +34273,6 @@ const error = () => {
   \***********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -34588,7 +34397,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -34713,7 +34521,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -34843,7 +34650,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -34967,7 +34773,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -35139,7 +34944,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -35264,7 +35068,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -35390,7 +35193,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -35516,7 +35318,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -35642,7 +35443,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -35763,7 +35563,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -35784,7 +35583,6 @@ __webpack_require__.r(__webpack_exports__);
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -35908,7 +35706,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -36034,7 +35831,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -36159,7 +35955,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -36283,7 +36078,6 @@ const error = () => {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -36406,7 +36200,6 @@ const error = () => {
   \*************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -36531,7 +36324,6 @@ const error = () => {
   \*************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
@@ -36654,7 +36446,6 @@ const error = () => {
   \***********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   endsWith: () => (/* reexport safe */ _core_index_js__WEBPACK_IMPORTED_MODULE_0__._endsWith),
@@ -36700,7 +36491,6 @@ __webpack_require__.r(__webpack_exports__);
   \***********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   bigint: () => (/* binding */ bigint),
@@ -36743,7 +36533,6 @@ function date(params) {
   \*************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   $brand: () => (/* reexport safe */ _core_index_js__WEBPACK_IMPORTED_MODULE_0__.$brand),
@@ -37015,7 +36804,6 @@ __webpack_require__.r(__webpack_exports__);
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   $brand: () => (/* reexport safe */ _external_js__WEBPACK_IMPORTED_MODULE_0__.$brand),
@@ -37270,7 +37058,6 @@ __webpack_require__.r(__webpack_exports__);
   \********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   ZodMiniISODate: () => (/* binding */ ZodMiniISODate),
@@ -37328,7 +37115,6 @@ function duration(params) {
   \**********************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   decode: () => (/* reexport safe */ _core_index_js__WEBPACK_IMPORTED_MODULE_0__.decode),
@@ -37356,7 +37142,6 @@ __webpack_require__.r(__webpack_exports__);
   \************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   ZodMiniAny: () => (/* binding */ ZodMiniAny),
@@ -38468,7 +38253,6 @@ function _function(params) {
   \*********************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
@@ -38500,7 +38284,6 @@ const check = /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx
   \***************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
@@ -38532,7 +38315,6 @@ const closeSmall = /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1_
   \**************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
@@ -38566,7 +38348,6 @@ const starEmpty = /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__
   \***************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
@@ -38598,7 +38379,6 @@ const starFilled = /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1_
   \****************************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
@@ -38694,7 +38474,6 @@ ActionItem.Slot = ActionItemSlot;
   \*******************************************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
@@ -38721,7 +38500,6 @@ __webpack_require__.r(__webpack_exports__);
   \******************************************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
@@ -38783,7 +38561,6 @@ const ComplementaryAreaHeader = ({
   \**************************************************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ ComplementaryAreaMoreMenuItem)
@@ -38850,7 +38627,6 @@ function ComplementaryAreaMoreMenuItem({
   \******************************************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
@@ -38930,7 +38706,6 @@ function ComplementaryAreaToggle({
   \***********************************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
@@ -39239,7 +39014,6 @@ ComplementaryAreaWrapped.Slot = ComplementaryAreaSlot;
   \********************************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
@@ -39294,7 +39068,6 @@ const FullscreenMode = ({
   \****************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   ActionItem: () => (/* reexport safe */ _action_item__WEBPACK_IMPORTED_MODULE_5__["default"]),
@@ -39329,7 +39102,6 @@ __webpack_require__.r(__webpack_exports__);
   \***********************************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
@@ -39553,7 +39325,6 @@ function InterfaceSkeleton({
   \*********************************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ NavigableRegion)
@@ -39592,7 +39363,6 @@ function NavigableRegion({
   \*****************************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
@@ -39647,7 +39417,6 @@ PinnedItems.Slot = PinnedItemsSlot;
   \*****************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   ActionItem: () => (/* reexport safe */ _components__WEBPACK_IMPORTED_MODULE_0__.ActionItem),
@@ -39673,7 +39442,6 @@ __webpack_require__.r(__webpack_exports__);
   \*************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   closeModal: () => (/* binding */ closeModal),
@@ -39908,7 +39676,6 @@ function closeModal() {
   \***************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   STORE_NAME: () => (/* binding */ STORE_NAME)
@@ -39929,7 +39696,6 @@ const STORE_NAME = 'core/interface';
   \****************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   normalizeComplementaryAreaName: () => (/* binding */ normalizeComplementaryAreaName),
@@ -39979,7 +39745,6 @@ function normalizeComplementaryAreaName(scope, name) {
   \***********************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   store: () => (/* binding */ store)
@@ -40029,7 +39794,6 @@ const store = (0,_wordpress_data__WEBPACK_IMPORTED_MODULE_0__.createReduxStore)(
   \*************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   activeModal: () => (/* binding */ activeModal),
@@ -40106,7 +39870,6 @@ function activeModal(state = null, action) {
   \***************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   getActiveComplementaryArea: () => (/* binding */ getActiveComplementaryArea),
@@ -40216,100 +39979,12 @@ function isModalActive(state, modalName) {
 
 /***/ }),
 
-/***/ "./node_modules/classnames/index.js":
-/*!******************************************!*\
-  !*** ./node_modules/classnames/index.js ***!
-  \******************************************/
-/***/ ((module, exports) => {
-
-var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
-	Copyright (c) 2018 Jed Watson.
-	Licensed under the MIT License (MIT), see
-	http://jedwatson.github.io/classnames
-*/
-/* global define */
-
-(function () {
-	'use strict';
-
-	var hasOwn = {}.hasOwnProperty;
-
-	function classNames () {
-		var classes = '';
-
-		for (var i = 0; i < arguments.length; i++) {
-			var arg = arguments[i];
-			if (arg) {
-				classes = appendClass(classes, parseValue(arg));
-			}
-		}
-
-		return classes;
-	}
-
-	function parseValue (arg) {
-		if (typeof arg === 'string' || typeof arg === 'number') {
-			return arg;
-		}
-
-		if (typeof arg !== 'object') {
-			return '';
-		}
-
-		if (Array.isArray(arg)) {
-			return classNames.apply(null, arg);
-		}
-
-		if (arg.toString !== Object.prototype.toString && !arg.toString.toString().includes('[native code]')) {
-			return arg.toString();
-		}
-
-		var classes = '';
-
-		for (var key in arg) {
-			if (hasOwn.call(arg, key) && arg[key]) {
-				classes = appendClass(classes, key);
-			}
-		}
-
-		return classes;
-	}
-
-	function appendClass (value, newClass) {
-		if (!newClass) {
-			return value;
-		}
-	
-		if (value) {
-			return value + ' ' + newClass;
-		}
-	
-		return value + newClass;
-	}
-
-	if ( true && module.exports) {
-		classNames.default = classNames;
-		module.exports = classNames;
-	} else if (true) {
-		// register as 'classnames', consistent with npm package name
-		!(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_RESULT__ = (function () {
-			return classNames;
-		}).apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__),
-		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
-	} else // removed by dead control flow
-{}
-}());
-
-
-/***/ }),
-
 /***/ "./node_modules/clsx/dist/clsx.mjs":
 /*!*****************************************!*\
   !*** ./node_modules/clsx/dist/clsx.mjs ***!
   \*****************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   clsx: () => (/* binding */ clsx),
@@ -40325,7 +40000,6 @@ function r(e){var t,f,n="";if("string"==typeof e||"number"==typeof e)n+=e;else i
   \***************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ purify)
@@ -41720,7 +41394,6 @@ var purify = createDOMPurify();
   \*******************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   ParseError: () => (/* binding */ ParseError),
@@ -41839,7 +41512,6 @@ function splitLines(chunk) {
   \********************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   EventSourceParserStream: () => (/* binding */ EventSourceParserStream),
@@ -41882,7 +41554,6 @@ class EventSourceParserStream extends TransformStream {
   \***********************************************/
 /***/ ((module) => {
 
-"use strict";
 
 
 // do not edit .js files directly - edit src/index.jst
@@ -41939,7 +41610,6 @@ module.exports = function equal(a, b) {
   \****************************************/
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-"use strict";
 
 
 const { normalizeIPv6, removeDotSegments, recomposeAuthority, normalizeComponentEncoding, isIPv4, nonSimpleDomain } = __webpack_require__(/*! ./lib/utils */ "./node_modules/fast-uri/lib/utils.js")
@@ -42290,7 +41960,6 @@ module.exports.fastUri = fastUri
   \**********************************************/
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-"use strict";
 
 
 const { isUUID } = __webpack_require__(/*! ./utils */ "./node_modules/fast-uri/lib/utils.js")
@@ -42568,7 +42237,6 @@ module.exports = {
   \********************************************/
 /***/ ((module) => {
 
-"use strict";
 
 
 /** @type {(value: string) => boolean} */
@@ -42915,7 +42583,6 @@ module.exports = {
   \****************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ Icon)
@@ -42978,7 +42645,6 @@ const Icon = (0,react__WEBPACK_IMPORTED_MODULE_0__.forwardRef)(
   \****************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ createLucideIcon)
@@ -43023,7 +42689,6 @@ const createLucideIcon = (iconName, iconNode) => {
   \*****************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ defaultAttributes)
@@ -43059,7 +42724,6 @@ var defaultAttributes = {
   \**************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ ArrowUp)
@@ -43091,7 +42755,6 @@ const ArrowUp = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])
   \*************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ AtSign)
@@ -43123,7 +42786,6 @@ const AtSign = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])(
   \***********************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ Check)
@@ -43146,107 +42808,12 @@ const Check = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])("
 
 /***/ }),
 
-/***/ "./node_modules/lucide-react/dist/esm/icons/chevron-down.js":
-/*!******************************************************************!*\
-  !*** ./node_modules/lucide-react/dist/esm/icons/chevron-down.js ***!
-  \******************************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (/* binding */ ChevronDown)
-/* harmony export */ });
-/* harmony import */ var _createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../createLucideIcon.js */ "./node_modules/lucide-react/dist/esm/createLucideIcon.js");
-/**
- * @license lucide-react v0.468.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-
-
-
-const ChevronDown = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])("ChevronDown", [
-  ["path", { d: "m6 9 6 6 6-6", key: "qrunsl" }]
-]);
-
-
-//# sourceMappingURL=chevron-down.js.map
-
-
-/***/ }),
-
-/***/ "./node_modules/lucide-react/dist/esm/icons/chevron-right.js":
-/*!*******************************************************************!*\
-  !*** ./node_modules/lucide-react/dist/esm/icons/chevron-right.js ***!
-  \*******************************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (/* binding */ ChevronRight)
-/* harmony export */ });
-/* harmony import */ var _createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../createLucideIcon.js */ "./node_modules/lucide-react/dist/esm/createLucideIcon.js");
-/**
- * @license lucide-react v0.468.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-
-
-
-const ChevronRight = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])("ChevronRight", [
-  ["path", { d: "m9 18 6-6-6-6", key: "mthhwq" }]
-]);
-
-
-//# sourceMappingURL=chevron-right.js.map
-
-
-/***/ }),
-
-/***/ "./node_modules/lucide-react/dist/esm/icons/circle-check-big.js":
-/*!**********************************************************************!*\
-  !*** ./node_modules/lucide-react/dist/esm/icons/circle-check-big.js ***!
-  \**********************************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (/* binding */ CircleCheckBig)
-/* harmony export */ });
-/* harmony import */ var _createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../createLucideIcon.js */ "./node_modules/lucide-react/dist/esm/createLucideIcon.js");
-/**
- * @license lucide-react v0.468.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-
-
-
-const CircleCheckBig = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])("CircleCheckBig", [
-  ["path", { d: "M21.801 10A10 10 0 1 1 17 3.335", key: "yps3ct" }],
-  ["path", { d: "m9 11 3 3L22 4", key: "1pflzl" }]
-]);
-
-
-//# sourceMappingURL=circle-check-big.js.map
-
-
-/***/ }),
-
 /***/ "./node_modules/lucide-react/dist/esm/icons/circle-stop.js":
 /*!*****************************************************************!*\
   !*** ./node_modules/lucide-react/dist/esm/icons/circle-stop.js ***!
   \*****************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ CircleStop)
@@ -43278,7 +42845,6 @@ const CircleStop = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default
   \**************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ CircleX)
@@ -43311,7 +42877,6 @@ const CircleX = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])
   \***************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ FilePlus)
@@ -43345,7 +42910,6 @@ const FilePlus = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"]
   \************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ Layers)
@@ -43390,44 +42954,12 @@ const Layers = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])(
 
 /***/ }),
 
-/***/ "./node_modules/lucide-react/dist/esm/icons/loader-circle.js":
-/*!*******************************************************************!*\
-  !*** ./node_modules/lucide-react/dist/esm/icons/loader-circle.js ***!
-  \*******************************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (/* binding */ LoaderCircle)
-/* harmony export */ });
-/* harmony import */ var _createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../createLucideIcon.js */ "./node_modules/lucide-react/dist/esm/createLucideIcon.js");
-/**
- * @license lucide-react v0.468.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-
-
-
-const LoaderCircle = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])("LoaderCircle", [
-  ["path", { d: "M21 12a9 9 0 1 1-6.219-8.56", key: "13zald" }]
-]);
-
-
-//# sourceMappingURL=loader-circle.js.map
-
-
-/***/ }),
-
 /***/ "./node_modules/lucide-react/dist/esm/icons/palette.js":
 /*!*************************************************************!*\
   !*** ./node_modules/lucide-react/dist/esm/icons/palette.js ***!
   \*************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ Palette)
@@ -43468,7 +43000,6 @@ const Palette = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])
   \**************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ PenLine)
@@ -43506,7 +43037,6 @@ const PenLine = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])
   \**********************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ Plus)
@@ -43532,52 +43062,12 @@ const Plus = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])("P
 
 /***/ }),
 
-/***/ "./node_modules/lucide-react/dist/esm/icons/shield-alert.js":
-/*!******************************************************************!*\
-  !*** ./node_modules/lucide-react/dist/esm/icons/shield-alert.js ***!
-  \******************************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (/* binding */ ShieldAlert)
-/* harmony export */ });
-/* harmony import */ var _createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../createLucideIcon.js */ "./node_modules/lucide-react/dist/esm/createLucideIcon.js");
-/**
- * @license lucide-react v0.468.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-
-
-
-const ShieldAlert = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])("ShieldAlert", [
-  [
-    "path",
-    {
-      d: "M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z",
-      key: "oel41y"
-    }
-  ],
-  ["path", { d: "M12 8v4", key: "1got3b" }],
-  ["path", { d: "M12 16h.01", key: "1drbdi" }]
-]);
-
-
-//# sourceMappingURL=shield-alert.js.map
-
-
-/***/ }),
-
 /***/ "./node_modules/lucide-react/dist/esm/icons/sparkles.js":
 /*!**************************************************************!*\
   !*** ./node_modules/lucide-react/dist/esm/icons/sparkles.js ***!
   \**************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ Sparkles)
@@ -43612,50 +43102,12 @@ const Sparkles = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"]
 
 /***/ }),
 
-/***/ "./node_modules/lucide-react/dist/esm/icons/wrench.js":
-/*!************************************************************!*\
-  !*** ./node_modules/lucide-react/dist/esm/icons/wrench.js ***!
-  \************************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (/* binding */ Wrench)
-/* harmony export */ });
-/* harmony import */ var _createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../createLucideIcon.js */ "./node_modules/lucide-react/dist/esm/createLucideIcon.js");
-/**
- * @license lucide-react v0.468.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-
-
-
-const Wrench = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])("Wrench", [
-  [
-    "path",
-    {
-      d: "M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z",
-      key: "cbrjhi"
-    }
-  ]
-]);
-
-
-//# sourceMappingURL=wrench.js.map
-
-
-/***/ }),
-
 /***/ "./node_modules/lucide-react/dist/esm/icons/x.js":
 /*!*******************************************************!*\
   !*** ./node_modules/lucide-react/dist/esm/icons/x.js ***!
   \*******************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ X)
@@ -43687,7 +43139,6 @@ const X = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])("X", 
   \****************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   mergeClasses: () => (/* binding */ mergeClasses),
@@ -43711,13 +43162,8724 @@ const mergeClasses = (...classes) => classes.filter((className, index, array) =>
 
 /***/ }),
 
+/***/ "./node_modules/openai/_shims/MultipartBody.mjs":
+/*!******************************************************!*\
+  !*** ./node_modules/openai/_shims/MultipartBody.mjs ***!
+  \******************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   MultipartBody: () => (/* binding */ MultipartBody)
+/* harmony export */ });
+/**
+ * Disclaimer: modules in _shims aren't intended to be imported by SDK users.
+ */
+class MultipartBody {
+    constructor(body) {
+        this.body = body;
+    }
+    get [Symbol.toStringTag]() {
+        return 'MultipartBody';
+    }
+}
+//# sourceMappingURL=MultipartBody.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/_shims/index.mjs":
+/*!**********************************************!*\
+  !*** ./node_modules/openai/_shims/index.mjs ***!
+  \**********************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Blob: () => (/* reexport safe */ _registry_mjs__WEBPACK_IMPORTED_MODULE_0__.Blob),
+/* harmony export */   File: () => (/* reexport safe */ _registry_mjs__WEBPACK_IMPORTED_MODULE_0__.File),
+/* harmony export */   FormData: () => (/* reexport safe */ _registry_mjs__WEBPACK_IMPORTED_MODULE_0__.FormData),
+/* harmony export */   Headers: () => (/* reexport safe */ _registry_mjs__WEBPACK_IMPORTED_MODULE_0__.Headers),
+/* harmony export */   ReadableStream: () => (/* reexport safe */ _registry_mjs__WEBPACK_IMPORTED_MODULE_0__.ReadableStream),
+/* harmony export */   Request: () => (/* reexport safe */ _registry_mjs__WEBPACK_IMPORTED_MODULE_0__.Request),
+/* harmony export */   Response: () => (/* reexport safe */ _registry_mjs__WEBPACK_IMPORTED_MODULE_0__.Response),
+/* harmony export */   auto: () => (/* reexport safe */ _registry_mjs__WEBPACK_IMPORTED_MODULE_0__.auto),
+/* harmony export */   fetch: () => (/* reexport safe */ _registry_mjs__WEBPACK_IMPORTED_MODULE_0__.fetch),
+/* harmony export */   fileFromPath: () => (/* reexport safe */ _registry_mjs__WEBPACK_IMPORTED_MODULE_0__.fileFromPath),
+/* harmony export */   getDefaultAgent: () => (/* reexport safe */ _registry_mjs__WEBPACK_IMPORTED_MODULE_0__.getDefaultAgent),
+/* harmony export */   getMultipartRequestOptions: () => (/* reexport safe */ _registry_mjs__WEBPACK_IMPORTED_MODULE_0__.getMultipartRequestOptions),
+/* harmony export */   init: () => (/* binding */ init),
+/* harmony export */   isFsReadStream: () => (/* reexport safe */ _registry_mjs__WEBPACK_IMPORTED_MODULE_0__.isFsReadStream),
+/* harmony export */   kind: () => (/* reexport safe */ _registry_mjs__WEBPACK_IMPORTED_MODULE_0__.kind),
+/* harmony export */   setShims: () => (/* reexport safe */ _registry_mjs__WEBPACK_IMPORTED_MODULE_0__.setShims)
+/* harmony export */ });
+/* harmony import */ var _registry_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./registry.mjs */ "./node_modules/openai/_shims/registry.mjs");
+/* harmony import */ var openai_shims_auto_runtime__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! openai/_shims/auto/runtime */ "./node_modules/openai/_shims/web-runtime.mjs");
+/**
+ * Disclaimer: modules in _shims aren't intended to be imported by SDK users.
+ */
+
+
+const init = () => {
+  if (!_registry_mjs__WEBPACK_IMPORTED_MODULE_0__.kind) _registry_mjs__WEBPACK_IMPORTED_MODULE_0__.setShims(openai_shims_auto_runtime__WEBPACK_IMPORTED_MODULE_1__.getRuntime(), { auto: true });
+};
+
+
+init();
+
+
+/***/ }),
+
+/***/ "./node_modules/openai/_shims/registry.mjs":
+/*!*************************************************!*\
+  !*** ./node_modules/openai/_shims/registry.mjs ***!
+  \*************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Blob: () => (/* binding */ Blob),
+/* harmony export */   File: () => (/* binding */ File),
+/* harmony export */   FormData: () => (/* binding */ FormData),
+/* harmony export */   Headers: () => (/* binding */ Headers),
+/* harmony export */   ReadableStream: () => (/* binding */ ReadableStream),
+/* harmony export */   Request: () => (/* binding */ Request),
+/* harmony export */   Response: () => (/* binding */ Response),
+/* harmony export */   auto: () => (/* binding */ auto),
+/* harmony export */   fetch: () => (/* binding */ fetch),
+/* harmony export */   fileFromPath: () => (/* binding */ fileFromPath),
+/* harmony export */   getDefaultAgent: () => (/* binding */ getDefaultAgent),
+/* harmony export */   getMultipartRequestOptions: () => (/* binding */ getMultipartRequestOptions),
+/* harmony export */   isFsReadStream: () => (/* binding */ isFsReadStream),
+/* harmony export */   kind: () => (/* binding */ kind),
+/* harmony export */   setShims: () => (/* binding */ setShims)
+/* harmony export */ });
+let auto = false;
+let kind = undefined;
+let fetch = undefined;
+let Request = undefined;
+let Response = undefined;
+let Headers = undefined;
+let FormData = undefined;
+let Blob = undefined;
+let File = undefined;
+let ReadableStream = undefined;
+let getMultipartRequestOptions = undefined;
+let getDefaultAgent = undefined;
+let fileFromPath = undefined;
+let isFsReadStream = undefined;
+function setShims(shims, options = { auto: false }) {
+    if (auto) {
+        throw new Error(`you must \`import 'openai/shims/${shims.kind}'\` before importing anything else from openai`);
+    }
+    if (kind) {
+        throw new Error(`can't \`import 'openai/shims/${shims.kind}'\` after \`import 'openai/shims/${kind}'\``);
+    }
+    auto = options.auto;
+    kind = shims.kind;
+    fetch = shims.fetch;
+    Request = shims.Request;
+    Response = shims.Response;
+    Headers = shims.Headers;
+    FormData = shims.FormData;
+    Blob = shims.Blob;
+    File = shims.File;
+    ReadableStream = shims.ReadableStream;
+    getMultipartRequestOptions = shims.getMultipartRequestOptions;
+    getDefaultAgent = shims.getDefaultAgent;
+    fileFromPath = shims.fileFromPath;
+    isFsReadStream = shims.isFsReadStream;
+}
+//# sourceMappingURL=registry.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/_shims/web-runtime.mjs":
+/*!****************************************************!*\
+  !*** ./node_modules/openai/_shims/web-runtime.mjs ***!
+  \****************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   getRuntime: () => (/* binding */ getRuntime)
+/* harmony export */ });
+/* harmony import */ var _MultipartBody_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./MultipartBody.mjs */ "./node_modules/openai/_shims/MultipartBody.mjs");
+
+function getRuntime({ manuallyImported } = {}) {
+    const recommendation = manuallyImported ?
+        `You may need to use polyfills`
+        : `Add one of these imports before your first \`import … from 'openai'\`:
+- \`import 'openai/shims/node'\` (if you're running on Node)
+- \`import 'openai/shims/web'\` (otherwise)
+`;
+    let _fetch, _Request, _Response, _Headers;
+    try {
+        // @ts-ignore
+        _fetch = fetch;
+        // @ts-ignore
+        _Request = Request;
+        // @ts-ignore
+        _Response = Response;
+        // @ts-ignore
+        _Headers = Headers;
+    }
+    catch (error) {
+        throw new Error(`this environment is missing the following Web Fetch API type: ${error.message}. ${recommendation}`);
+    }
+    return {
+        kind: 'web',
+        fetch: _fetch,
+        Request: _Request,
+        Response: _Response,
+        Headers: _Headers,
+        FormData: 
+        // @ts-ignore
+        typeof FormData !== 'undefined' ? FormData : (class FormData {
+            // @ts-ignore
+            constructor() {
+                throw new Error(`file uploads aren't supported in this environment yet as 'FormData' is undefined. ${recommendation}`);
+            }
+        }),
+        Blob: typeof Blob !== 'undefined' ? Blob : (class Blob {
+            constructor() {
+                throw new Error(`file uploads aren't supported in this environment yet as 'Blob' is undefined. ${recommendation}`);
+            }
+        }),
+        File: 
+        // @ts-ignore
+        typeof File !== 'undefined' ? File : (class File {
+            // @ts-ignore
+            constructor() {
+                throw new Error(`file uploads aren't supported in this environment yet as 'File' is undefined. ${recommendation}`);
+            }
+        }),
+        ReadableStream: 
+        // @ts-ignore
+        typeof ReadableStream !== 'undefined' ? ReadableStream : (class ReadableStream {
+            // @ts-ignore
+            constructor() {
+                throw new Error(`streaming isn't supported in this environment yet as 'ReadableStream' is undefined. ${recommendation}`);
+            }
+        }),
+        getMultipartRequestOptions: async (
+        // @ts-ignore
+        form, opts) => ({
+            ...opts,
+            body: new _MultipartBody_mjs__WEBPACK_IMPORTED_MODULE_0__.MultipartBody(form),
+        }),
+        getDefaultAgent: (url) => undefined,
+        fileFromPath: () => {
+            throw new Error('The `fileFromPath` function is only supported in Node. See the README for more details: https://www.github.com/openai/openai-node#file-uploads');
+        },
+        isFsReadStream: (value) => false,
+    };
+}
+//# sourceMappingURL=web-runtime.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/_vendor/partial-json-parser/parser.mjs":
+/*!********************************************************************!*\
+  !*** ./node_modules/openai/_vendor/partial-json-parser/parser.mjs ***!
+  \********************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   MalformedJSON: () => (/* binding */ MalformedJSON),
+/* harmony export */   PartialJSON: () => (/* binding */ PartialJSON),
+/* harmony export */   partialParse: () => (/* binding */ partialParse)
+/* harmony export */ });
+const STR = 0b000000001;
+const NUM = 0b000000010;
+const ARR = 0b000000100;
+const OBJ = 0b000001000;
+const NULL = 0b000010000;
+const BOOL = 0b000100000;
+const NAN = 0b001000000;
+const INFINITY = 0b010000000;
+const MINUS_INFINITY = 0b100000000;
+const INF = INFINITY | MINUS_INFINITY;
+const SPECIAL = NULL | BOOL | INF | NAN;
+const ATOM = STR | NUM | SPECIAL;
+const COLLECTION = ARR | OBJ;
+const ALL = ATOM | COLLECTION;
+const Allow = {
+    STR,
+    NUM,
+    ARR,
+    OBJ,
+    NULL,
+    BOOL,
+    NAN,
+    INFINITY,
+    MINUS_INFINITY,
+    INF,
+    SPECIAL,
+    ATOM,
+    COLLECTION,
+    ALL,
+};
+// The JSON string segment was unable to be parsed completely
+class PartialJSON extends Error {
+}
+class MalformedJSON extends Error {
+}
+/**
+ * Parse incomplete JSON
+ * @param {string} jsonString Partial JSON to be parsed
+ * @param {number} allowPartial Specify what types are allowed to be partial, see {@link Allow} for details
+ * @returns The parsed JSON
+ * @throws {PartialJSON} If the JSON is incomplete (related to the `allow` parameter)
+ * @throws {MalformedJSON} If the JSON is malformed
+ */
+function parseJSON(jsonString, allowPartial = Allow.ALL) {
+    if (typeof jsonString !== 'string') {
+        throw new TypeError(`expecting str, got ${typeof jsonString}`);
+    }
+    if (!jsonString.trim()) {
+        throw new Error(`${jsonString} is empty`);
+    }
+    return _parseJSON(jsonString.trim(), allowPartial);
+}
+const _parseJSON = (jsonString, allow) => {
+    const length = jsonString.length;
+    let index = 0;
+    const markPartialJSON = (msg) => {
+        throw new PartialJSON(`${msg} at position ${index}`);
+    };
+    const throwMalformedError = (msg) => {
+        throw new MalformedJSON(`${msg} at position ${index}`);
+    };
+    const parseAny = () => {
+        skipBlank();
+        if (index >= length)
+            markPartialJSON('Unexpected end of input');
+        if (jsonString[index] === '"')
+            return parseStr();
+        if (jsonString[index] === '{')
+            return parseObj();
+        if (jsonString[index] === '[')
+            return parseArr();
+        if (jsonString.substring(index, index + 4) === 'null' ||
+            (Allow.NULL & allow && length - index < 4 && 'null'.startsWith(jsonString.substring(index)))) {
+            index += 4;
+            return null;
+        }
+        if (jsonString.substring(index, index + 4) === 'true' ||
+            (Allow.BOOL & allow && length - index < 4 && 'true'.startsWith(jsonString.substring(index)))) {
+            index += 4;
+            return true;
+        }
+        if (jsonString.substring(index, index + 5) === 'false' ||
+            (Allow.BOOL & allow && length - index < 5 && 'false'.startsWith(jsonString.substring(index)))) {
+            index += 5;
+            return false;
+        }
+        if (jsonString.substring(index, index + 8) === 'Infinity' ||
+            (Allow.INFINITY & allow && length - index < 8 && 'Infinity'.startsWith(jsonString.substring(index)))) {
+            index += 8;
+            return Infinity;
+        }
+        if (jsonString.substring(index, index + 9) === '-Infinity' ||
+            (Allow.MINUS_INFINITY & allow &&
+                1 < length - index &&
+                length - index < 9 &&
+                '-Infinity'.startsWith(jsonString.substring(index)))) {
+            index += 9;
+            return -Infinity;
+        }
+        if (jsonString.substring(index, index + 3) === 'NaN' ||
+            (Allow.NAN & allow && length - index < 3 && 'NaN'.startsWith(jsonString.substring(index)))) {
+            index += 3;
+            return NaN;
+        }
+        return parseNum();
+    };
+    const parseStr = () => {
+        const start = index;
+        let escape = false;
+        index++; // skip initial quote
+        while (index < length && (jsonString[index] !== '"' || (escape && jsonString[index - 1] === '\\'))) {
+            escape = jsonString[index] === '\\' ? !escape : false;
+            index++;
+        }
+        if (jsonString.charAt(index) == '"') {
+            try {
+                return JSON.parse(jsonString.substring(start, ++index - Number(escape)));
+            }
+            catch (e) {
+                throwMalformedError(String(e));
+            }
+        }
+        else if (Allow.STR & allow) {
+            try {
+                return JSON.parse(jsonString.substring(start, index - Number(escape)) + '"');
+            }
+            catch (e) {
+                // SyntaxError: Invalid escape sequence
+                return JSON.parse(jsonString.substring(start, jsonString.lastIndexOf('\\')) + '"');
+            }
+        }
+        markPartialJSON('Unterminated string literal');
+    };
+    const parseObj = () => {
+        index++; // skip initial brace
+        skipBlank();
+        const obj = {};
+        try {
+            while (jsonString[index] !== '}') {
+                skipBlank();
+                if (index >= length && Allow.OBJ & allow)
+                    return obj;
+                const key = parseStr();
+                skipBlank();
+                index++; // skip colon
+                try {
+                    const value = parseAny();
+                    Object.defineProperty(obj, key, { value, writable: true, enumerable: true, configurable: true });
+                }
+                catch (e) {
+                    if (Allow.OBJ & allow)
+                        return obj;
+                    else
+                        throw e;
+                }
+                skipBlank();
+                if (jsonString[index] === ',')
+                    index++; // skip comma
+            }
+        }
+        catch (e) {
+            if (Allow.OBJ & allow)
+                return obj;
+            else
+                markPartialJSON("Expected '}' at end of object");
+        }
+        index++; // skip final brace
+        return obj;
+    };
+    const parseArr = () => {
+        index++; // skip initial bracket
+        const arr = [];
+        try {
+            while (jsonString[index] !== ']') {
+                arr.push(parseAny());
+                skipBlank();
+                if (jsonString[index] === ',') {
+                    index++; // skip comma
+                }
+            }
+        }
+        catch (e) {
+            if (Allow.ARR & allow) {
+                return arr;
+            }
+            markPartialJSON("Expected ']' at end of array");
+        }
+        index++; // skip final bracket
+        return arr;
+    };
+    const parseNum = () => {
+        if (index === 0) {
+            if (jsonString === '-' && Allow.NUM & allow)
+                markPartialJSON("Not sure what '-' is");
+            try {
+                return JSON.parse(jsonString);
+            }
+            catch (e) {
+                if (Allow.NUM & allow) {
+                    try {
+                        if ('.' === jsonString[jsonString.length - 1])
+                            return JSON.parse(jsonString.substring(0, jsonString.lastIndexOf('.')));
+                        return JSON.parse(jsonString.substring(0, jsonString.lastIndexOf('e')));
+                    }
+                    catch (e) { }
+                }
+                throwMalformedError(String(e));
+            }
+        }
+        const start = index;
+        if (jsonString[index] === '-')
+            index++;
+        while (jsonString[index] && !',]}'.includes(jsonString[index]))
+            index++;
+        if (index == length && !(Allow.NUM & allow))
+            markPartialJSON('Unterminated number literal');
+        try {
+            return JSON.parse(jsonString.substring(start, index));
+        }
+        catch (e) {
+            if (jsonString.substring(start, index) === '-' && Allow.NUM & allow)
+                markPartialJSON("Not sure what '-' is");
+            try {
+                return JSON.parse(jsonString.substring(start, jsonString.lastIndexOf('e')));
+            }
+            catch (e) {
+                throwMalformedError(String(e));
+            }
+        }
+    };
+    const skipBlank = () => {
+        while (index < length && ' \n\r\t'.includes(jsonString[index])) {
+            index++;
+        }
+    };
+    return parseAny();
+};
+// using this function with malformed JSON is undefined behavior
+const partialParse = (input) => parseJSON(input, Allow.ALL ^ Allow.NUM);
+
+//# sourceMappingURL=parser.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/core.mjs":
+/*!**************************************!*\
+  !*** ./node_modules/openai/core.mjs ***!
+  \**************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   APIClient: () => (/* binding */ APIClient),
+/* harmony export */   APIPromise: () => (/* binding */ APIPromise),
+/* harmony export */   AbstractPage: () => (/* binding */ AbstractPage),
+/* harmony export */   PagePromise: () => (/* binding */ PagePromise),
+/* harmony export */   castToError: () => (/* binding */ castToError),
+/* harmony export */   coerceBoolean: () => (/* binding */ coerceBoolean),
+/* harmony export */   coerceFloat: () => (/* binding */ coerceFloat),
+/* harmony export */   coerceInteger: () => (/* binding */ coerceInteger),
+/* harmony export */   createForm: () => (/* reexport safe */ _uploads_mjs__WEBPACK_IMPORTED_MODULE_4__.createForm),
+/* harmony export */   createResponseHeaders: () => (/* binding */ createResponseHeaders),
+/* harmony export */   debug: () => (/* binding */ debug),
+/* harmony export */   ensurePresent: () => (/* binding */ ensurePresent),
+/* harmony export */   getHeader: () => (/* binding */ getHeader),
+/* harmony export */   getRequiredHeader: () => (/* binding */ getRequiredHeader),
+/* harmony export */   hasOwn: () => (/* binding */ hasOwn),
+/* harmony export */   isEmptyObj: () => (/* binding */ isEmptyObj),
+/* harmony export */   isHeadersProtocol: () => (/* binding */ isHeadersProtocol),
+/* harmony export */   isObj: () => (/* binding */ isObj),
+/* harmony export */   isRequestOptions: () => (/* binding */ isRequestOptions),
+/* harmony export */   isRunningInBrowser: () => (/* binding */ isRunningInBrowser),
+/* harmony export */   maybeCoerceBoolean: () => (/* binding */ maybeCoerceBoolean),
+/* harmony export */   maybeCoerceFloat: () => (/* binding */ maybeCoerceFloat),
+/* harmony export */   maybeCoerceInteger: () => (/* binding */ maybeCoerceInteger),
+/* harmony export */   maybeMultipartFormRequestOptions: () => (/* reexport safe */ _uploads_mjs__WEBPACK_IMPORTED_MODULE_4__.maybeMultipartFormRequestOptions),
+/* harmony export */   multipartFormRequestOptions: () => (/* reexport safe */ _uploads_mjs__WEBPACK_IMPORTED_MODULE_4__.multipartFormRequestOptions),
+/* harmony export */   readEnv: () => (/* binding */ readEnv),
+/* harmony export */   safeJSON: () => (/* binding */ safeJSON),
+/* harmony export */   sleep: () => (/* binding */ sleep),
+/* harmony export */   toBase64: () => (/* binding */ toBase64),
+/* harmony export */   toFloat32Array: () => (/* binding */ toFloat32Array)
+/* harmony export */ });
+/* harmony import */ var _version_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./version.mjs */ "./node_modules/openai/version.mjs");
+/* harmony import */ var _streaming_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./streaming.mjs */ "./node_modules/openai/streaming.mjs");
+/* harmony import */ var _error_mjs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./error.mjs */ "./node_modules/openai/error.mjs");
+/* harmony import */ var _shims_index_mjs__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./_shims/index.mjs */ "./node_modules/openai/_shims/index.mjs");
+/* harmony import */ var _uploads_mjs__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./uploads.mjs */ "./node_modules/openai/uploads.mjs");
+var __classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, state, value, kind, f) {
+    if (kind === "m") throw new TypeError("Private method is not writable");
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+    return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
+};
+var __classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, state, kind, f) {
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+    return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+};
+var _AbstractPage_client;
+
+
+
+
+// try running side effects outside of _shims/index to workaround https://github.com/vercel/next.js/issues/76881
+(0,_shims_index_mjs__WEBPACK_IMPORTED_MODULE_3__.init)();
+
+
+async function defaultParseResponse(props) {
+    const { response } = props;
+    if (props.options.stream) {
+        debug('response', response.status, response.url, response.headers, response.body);
+        // Note: there is an invariant here that isn't represented in the type system
+        // that if you set `stream: true` the response type must also be `Stream<T>`
+        if (props.options.__streamClass) {
+            return props.options.__streamClass.fromSSEResponse(response, props.controller);
+        }
+        return _streaming_mjs__WEBPACK_IMPORTED_MODULE_1__.Stream.fromSSEResponse(response, props.controller);
+    }
+    // fetch refuses to read the body when the status code is 204.
+    if (response.status === 204) {
+        return null;
+    }
+    if (props.options.__binaryResponse) {
+        return response;
+    }
+    const contentType = response.headers.get('content-type');
+    const mediaType = contentType?.split(';')[0]?.trim();
+    const isJSON = mediaType?.includes('application/json') || mediaType?.endsWith('+json');
+    if (isJSON) {
+        const json = await response.json();
+        debug('response', response.status, response.url, response.headers, json);
+        return _addRequestID(json, response);
+    }
+    const text = await response.text();
+    debug('response', response.status, response.url, response.headers, text);
+    // TODO handle blob, arraybuffer, other content types, etc.
+    return text;
+}
+function _addRequestID(value, response) {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+        return value;
+    }
+    return Object.defineProperty(value, '_request_id', {
+        value: response.headers.get('x-request-id'),
+        enumerable: false,
+    });
+}
+/**
+ * A subclass of `Promise` providing additional helper methods
+ * for interacting with the SDK.
+ */
+class APIPromise extends Promise {
+    constructor(responsePromise, parseResponse = defaultParseResponse) {
+        super((resolve) => {
+            // this is maybe a bit weird but this has to be a no-op to not implicitly
+            // parse the response body; instead .then, .catch, .finally are overridden
+            // to parse the response
+            resolve(null);
+        });
+        this.responsePromise = responsePromise;
+        this.parseResponse = parseResponse;
+    }
+    _thenUnwrap(transform) {
+        return new APIPromise(this.responsePromise, async (props) => _addRequestID(transform(await this.parseResponse(props), props), props.response));
+    }
+    /**
+     * Gets the raw `Response` instance instead of parsing the response
+     * data.
+     *
+     * If you want to parse the response body but still get the `Response`
+     * instance, you can use {@link withResponse()}.
+     *
+     * 👋 Getting the wrong TypeScript type for `Response`?
+     * Try setting `"moduleResolution": "NodeNext"` if you can,
+     * or add one of these imports before your first `import … from 'openai'`:
+     * - `import 'openai/shims/node'` (if you're running on Node)
+     * - `import 'openai/shims/web'` (otherwise)
+     */
+    asResponse() {
+        return this.responsePromise.then((p) => p.response);
+    }
+    /**
+     * Gets the parsed response data, the raw `Response` instance and the ID of the request,
+     * returned via the X-Request-ID header which is useful for debugging requests and reporting
+     * issues to OpenAI.
+     *
+     * If you just want to get the raw `Response` instance without parsing it,
+     * you can use {@link asResponse()}.
+     *
+     *
+     * 👋 Getting the wrong TypeScript type for `Response`?
+     * Try setting `"moduleResolution": "NodeNext"` if you can,
+     * or add one of these imports before your first `import … from 'openai'`:
+     * - `import 'openai/shims/node'` (if you're running on Node)
+     * - `import 'openai/shims/web'` (otherwise)
+     */
+    async withResponse() {
+        const [data, response] = await Promise.all([this.parse(), this.asResponse()]);
+        return { data, response, request_id: response.headers.get('x-request-id') };
+    }
+    parse() {
+        if (!this.parsedPromise) {
+            this.parsedPromise = this.responsePromise.then(this.parseResponse);
+        }
+        return this.parsedPromise;
+    }
+    then(onfulfilled, onrejected) {
+        return this.parse().then(onfulfilled, onrejected);
+    }
+    catch(onrejected) {
+        return this.parse().catch(onrejected);
+    }
+    finally(onfinally) {
+        return this.parse().finally(onfinally);
+    }
+}
+class APIClient {
+    constructor({ baseURL, maxRetries = 2, timeout = 600000, // 10 minutes
+    httpAgent, fetch: overriddenFetch, }) {
+        this.baseURL = baseURL;
+        this.maxRetries = validatePositiveInteger('maxRetries', maxRetries);
+        this.timeout = validatePositiveInteger('timeout', timeout);
+        this.httpAgent = httpAgent;
+        this.fetch = overriddenFetch ?? _shims_index_mjs__WEBPACK_IMPORTED_MODULE_3__.fetch;
+    }
+    authHeaders(opts) {
+        return {};
+    }
+    /**
+     * Override this to add your own default headers, for example:
+     *
+     *  {
+     *    ...super.defaultHeaders(),
+     *    Authorization: 'Bearer 123',
+     *  }
+     */
+    defaultHeaders(opts) {
+        return {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            'User-Agent': this.getUserAgent(),
+            ...getPlatformHeaders(),
+            ...this.authHeaders(opts),
+        };
+    }
+    /**
+     * Override this to add your own headers validation:
+     */
+    validateHeaders(headers, customHeaders) { }
+    defaultIdempotencyKey() {
+        return `stainless-node-retry-${uuid4()}`;
+    }
+    get(path, opts) {
+        return this.methodRequest('get', path, opts);
+    }
+    post(path, opts) {
+        return this.methodRequest('post', path, opts);
+    }
+    patch(path, opts) {
+        return this.methodRequest('patch', path, opts);
+    }
+    put(path, opts) {
+        return this.methodRequest('put', path, opts);
+    }
+    delete(path, opts) {
+        return this.methodRequest('delete', path, opts);
+    }
+    methodRequest(method, path, opts) {
+        return this.request(Promise.resolve(opts).then(async (opts) => {
+            const body = opts && (0,_uploads_mjs__WEBPACK_IMPORTED_MODULE_4__.isBlobLike)(opts?.body) ? new DataView(await opts.body.arrayBuffer())
+                : opts?.body instanceof DataView ? opts.body
+                    : opts?.body instanceof ArrayBuffer ? new DataView(opts.body)
+                        : opts && ArrayBuffer.isView(opts?.body) ? new DataView(opts.body.buffer)
+                            : opts?.body;
+            return { method, path, ...opts, body };
+        }));
+    }
+    getAPIList(path, Page, opts) {
+        return this.requestAPIList(Page, { method: 'get', path, ...opts });
+    }
+    calculateContentLength(body) {
+        if (typeof body === 'string') {
+            if (typeof Buffer !== 'undefined') {
+                return Buffer.byteLength(body, 'utf8').toString();
+            }
+            if (typeof TextEncoder !== 'undefined') {
+                const encoder = new TextEncoder();
+                const encoded = encoder.encode(body);
+                return encoded.length.toString();
+            }
+        }
+        else if (ArrayBuffer.isView(body)) {
+            return body.byteLength.toString();
+        }
+        return null;
+    }
+    buildRequest(inputOptions, { retryCount = 0 } = {}) {
+        const options = { ...inputOptions };
+        const { method, path, query, headers: headers = {} } = options;
+        const body = ArrayBuffer.isView(options.body) || (options.__binaryRequest && typeof options.body === 'string') ?
+            options.body
+            : (0,_uploads_mjs__WEBPACK_IMPORTED_MODULE_4__.isMultipartBody)(options.body) ? options.body.body
+                : options.body ? JSON.stringify(options.body, null, 2)
+                    : null;
+        const contentLength = this.calculateContentLength(body);
+        const url = this.buildURL(path, query);
+        if ('timeout' in options)
+            validatePositiveInteger('timeout', options.timeout);
+        options.timeout = options.timeout ?? this.timeout;
+        const httpAgent = options.httpAgent ?? this.httpAgent ?? (0,_shims_index_mjs__WEBPACK_IMPORTED_MODULE_3__.getDefaultAgent)(url);
+        const minAgentTimeout = options.timeout + 1000;
+        if (typeof httpAgent?.options?.timeout === 'number' &&
+            minAgentTimeout > (httpAgent.options.timeout ?? 0)) {
+            // Allow any given request to bump our agent active socket timeout.
+            // This may seem strange, but leaking active sockets should be rare and not particularly problematic,
+            // and without mutating agent we would need to create more of them.
+            // This tradeoff optimizes for performance.
+            httpAgent.options.timeout = minAgentTimeout;
+        }
+        if (this.idempotencyHeader && method !== 'get') {
+            if (!inputOptions.idempotencyKey)
+                inputOptions.idempotencyKey = this.defaultIdempotencyKey();
+            headers[this.idempotencyHeader] = inputOptions.idempotencyKey;
+        }
+        const reqHeaders = this.buildHeaders({ options, headers, contentLength, retryCount });
+        const req = {
+            method,
+            ...(body && { body: body }),
+            headers: reqHeaders,
+            ...(httpAgent && { agent: httpAgent }),
+            // @ts-ignore node-fetch uses a custom AbortSignal type that is
+            // not compatible with standard web types
+            signal: options.signal ?? null,
+        };
+        return { req, url, timeout: options.timeout };
+    }
+    buildHeaders({ options, headers, contentLength, retryCount, }) {
+        const reqHeaders = {};
+        if (contentLength) {
+            reqHeaders['content-length'] = contentLength;
+        }
+        const defaultHeaders = this.defaultHeaders(options);
+        applyHeadersMut(reqHeaders, defaultHeaders);
+        applyHeadersMut(reqHeaders, headers);
+        // let builtin fetch set the Content-Type for multipart bodies
+        if ((0,_uploads_mjs__WEBPACK_IMPORTED_MODULE_4__.isMultipartBody)(options.body) && _shims_index_mjs__WEBPACK_IMPORTED_MODULE_3__.kind !== 'node') {
+            delete reqHeaders['content-type'];
+        }
+        // Don't set theses headers if they were already set or removed through default headers or by the caller.
+        // We check `defaultHeaders` and `headers`, which can contain nulls, instead of `reqHeaders` to account
+        // for the removal case.
+        if (getHeader(defaultHeaders, 'x-stainless-retry-count') === undefined &&
+            getHeader(headers, 'x-stainless-retry-count') === undefined) {
+            reqHeaders['x-stainless-retry-count'] = String(retryCount);
+        }
+        if (getHeader(defaultHeaders, 'x-stainless-timeout') === undefined &&
+            getHeader(headers, 'x-stainless-timeout') === undefined &&
+            options.timeout) {
+            reqHeaders['x-stainless-timeout'] = String(Math.trunc(options.timeout / 1000));
+        }
+        this.validateHeaders(reqHeaders, headers);
+        return reqHeaders;
+    }
+    /**
+     * Used as a callback for mutating the given `FinalRequestOptions` object.
+     */
+    async prepareOptions(options) { }
+    /**
+     * Used as a callback for mutating the given `RequestInit` object.
+     *
+     * This is useful for cases where you want to add certain headers based off of
+     * the request properties, e.g. `method` or `url`.
+     */
+    async prepareRequest(request, { url, options }) { }
+    parseHeaders(headers) {
+        return (!headers ? {}
+            : Symbol.iterator in headers ?
+                Object.fromEntries(Array.from(headers).map((header) => [...header]))
+                : { ...headers });
+    }
+    makeStatusError(status, error, message, headers) {
+        return _error_mjs__WEBPACK_IMPORTED_MODULE_2__.APIError.generate(status, error, message, headers);
+    }
+    request(options, remainingRetries = null) {
+        return new APIPromise(this.makeRequest(options, remainingRetries));
+    }
+    async makeRequest(optionsInput, retriesRemaining) {
+        const options = await optionsInput;
+        const maxRetries = options.maxRetries ?? this.maxRetries;
+        if (retriesRemaining == null) {
+            retriesRemaining = maxRetries;
+        }
+        await this.prepareOptions(options);
+        const { req, url, timeout } = this.buildRequest(options, { retryCount: maxRetries - retriesRemaining });
+        await this.prepareRequest(req, { url, options });
+        debug('request', url, options, req.headers);
+        if (options.signal?.aborted) {
+            throw new _error_mjs__WEBPACK_IMPORTED_MODULE_2__.APIUserAbortError();
+        }
+        const controller = new AbortController();
+        const response = await this.fetchWithTimeout(url, req, timeout, controller).catch(castToError);
+        if (response instanceof Error) {
+            if (options.signal?.aborted) {
+                throw new _error_mjs__WEBPACK_IMPORTED_MODULE_2__.APIUserAbortError();
+            }
+            if (retriesRemaining) {
+                return this.retryRequest(options, retriesRemaining);
+            }
+            if (response.name === 'AbortError') {
+                throw new _error_mjs__WEBPACK_IMPORTED_MODULE_2__.APIConnectionTimeoutError();
+            }
+            throw new _error_mjs__WEBPACK_IMPORTED_MODULE_2__.APIConnectionError({ cause: response });
+        }
+        const responseHeaders = createResponseHeaders(response.headers);
+        if (!response.ok) {
+            if (retriesRemaining && this.shouldRetry(response)) {
+                const retryMessage = `retrying, ${retriesRemaining} attempts remaining`;
+                debug(`response (error; ${retryMessage})`, response.status, url, responseHeaders);
+                return this.retryRequest(options, retriesRemaining, responseHeaders);
+            }
+            const errText = await response.text().catch((e) => castToError(e).message);
+            const errJSON = safeJSON(errText);
+            const errMessage = errJSON ? undefined : errText;
+            const retryMessage = retriesRemaining ? `(error; no more retries left)` : `(error; not retryable)`;
+            debug(`response (error; ${retryMessage})`, response.status, url, responseHeaders, errMessage);
+            const err = this.makeStatusError(response.status, errJSON, errMessage, responseHeaders);
+            throw err;
+        }
+        return { response, options, controller };
+    }
+    requestAPIList(Page, options) {
+        const request = this.makeRequest(options, null);
+        return new PagePromise(this, request, Page);
+    }
+    buildURL(path, query) {
+        const url = isAbsoluteURL(path) ?
+            new URL(path)
+            : new URL(this.baseURL + (this.baseURL.endsWith('/') && path.startsWith('/') ? path.slice(1) : path));
+        const defaultQuery = this.defaultQuery();
+        if (!isEmptyObj(defaultQuery)) {
+            query = { ...defaultQuery, ...query };
+        }
+        if (typeof query === 'object' && query && !Array.isArray(query)) {
+            url.search = this.stringifyQuery(query);
+        }
+        return url.toString();
+    }
+    stringifyQuery(query) {
+        return Object.entries(query)
+            .filter(([_, value]) => typeof value !== 'undefined')
+            .map(([key, value]) => {
+            if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+                return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+            }
+            if (value === null) {
+                return `${encodeURIComponent(key)}=`;
+            }
+            throw new _error_mjs__WEBPACK_IMPORTED_MODULE_2__.OpenAIError(`Cannot stringify type ${typeof value}; Expected string, number, boolean, or null. If you need to pass nested query parameters, you can manually encode them, e.g. { query: { 'foo[key1]': value1, 'foo[key2]': value2 } }, and please open a GitHub issue requesting better support for your use case.`);
+        })
+            .join('&');
+    }
+    async fetchWithTimeout(url, init, ms, controller) {
+        const { signal, ...options } = init || {};
+        if (signal)
+            signal.addEventListener('abort', () => controller.abort());
+        const timeout = setTimeout(() => controller.abort(), ms);
+        const fetchOptions = {
+            signal: controller.signal,
+            ...options,
+        };
+        if (fetchOptions.method) {
+            // Custom methods like 'patch' need to be uppercased
+            // See https://github.com/nodejs/undici/issues/2294
+            fetchOptions.method = fetchOptions.method.toUpperCase();
+        }
+        return (
+        // use undefined this binding; fetch errors if bound to something else in browser/cloudflare
+        this.fetch.call(undefined, url, fetchOptions).finally(() => {
+            clearTimeout(timeout);
+        }));
+    }
+    shouldRetry(response) {
+        // Note this is not a standard header.
+        const shouldRetryHeader = response.headers.get('x-should-retry');
+        // If the server explicitly says whether or not to retry, obey.
+        if (shouldRetryHeader === 'true')
+            return true;
+        if (shouldRetryHeader === 'false')
+            return false;
+        // Retry on request timeouts.
+        if (response.status === 408)
+            return true;
+        // Retry on lock timeouts.
+        if (response.status === 409)
+            return true;
+        // Retry on rate limits.
+        if (response.status === 429)
+            return true;
+        // Retry internal errors.
+        if (response.status >= 500)
+            return true;
+        return false;
+    }
+    async retryRequest(options, retriesRemaining, responseHeaders) {
+        let timeoutMillis;
+        // Note the `retry-after-ms` header may not be standard, but is a good idea and we'd like proactive support for it.
+        const retryAfterMillisHeader = responseHeaders?.['retry-after-ms'];
+        if (retryAfterMillisHeader) {
+            const timeoutMs = parseFloat(retryAfterMillisHeader);
+            if (!Number.isNaN(timeoutMs)) {
+                timeoutMillis = timeoutMs;
+            }
+        }
+        // About the Retry-After header: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Retry-After
+        const retryAfterHeader = responseHeaders?.['retry-after'];
+        if (retryAfterHeader && !timeoutMillis) {
+            const timeoutSeconds = parseFloat(retryAfterHeader);
+            if (!Number.isNaN(timeoutSeconds)) {
+                timeoutMillis = timeoutSeconds * 1000;
+            }
+            else {
+                timeoutMillis = Date.parse(retryAfterHeader) - Date.now();
+            }
+        }
+        // If the API asks us to wait a certain amount of time (and it's a reasonable amount),
+        // just do what it says, but otherwise calculate a default
+        if (!(timeoutMillis && 0 <= timeoutMillis && timeoutMillis < 60 * 1000)) {
+            const maxRetries = options.maxRetries ?? this.maxRetries;
+            timeoutMillis = this.calculateDefaultRetryTimeoutMillis(retriesRemaining, maxRetries);
+        }
+        await sleep(timeoutMillis);
+        return this.makeRequest(options, retriesRemaining - 1);
+    }
+    calculateDefaultRetryTimeoutMillis(retriesRemaining, maxRetries) {
+        const initialRetryDelay = 0.5;
+        const maxRetryDelay = 8.0;
+        const numRetries = maxRetries - retriesRemaining;
+        // Apply exponential backoff, but not more than the max.
+        const sleepSeconds = Math.min(initialRetryDelay * Math.pow(2, numRetries), maxRetryDelay);
+        // Apply some jitter, take up to at most 25 percent of the retry time.
+        const jitter = 1 - Math.random() * 0.25;
+        return sleepSeconds * jitter * 1000;
+    }
+    getUserAgent() {
+        return `${this.constructor.name}/JS ${_version_mjs__WEBPACK_IMPORTED_MODULE_0__.VERSION}`;
+    }
+}
+class AbstractPage {
+    constructor(client, response, body, options) {
+        _AbstractPage_client.set(this, void 0);
+        __classPrivateFieldSet(this, _AbstractPage_client, client, "f");
+        this.options = options;
+        this.response = response;
+        this.body = body;
+    }
+    hasNextPage() {
+        const items = this.getPaginatedItems();
+        if (!items.length)
+            return false;
+        return this.nextPageInfo() != null;
+    }
+    async getNextPage() {
+        const nextInfo = this.nextPageInfo();
+        if (!nextInfo) {
+            throw new _error_mjs__WEBPACK_IMPORTED_MODULE_2__.OpenAIError('No next page expected; please check `.hasNextPage()` before calling `.getNextPage()`.');
+        }
+        const nextOptions = { ...this.options };
+        if ('params' in nextInfo && typeof nextOptions.query === 'object') {
+            nextOptions.query = { ...nextOptions.query, ...nextInfo.params };
+        }
+        else if ('url' in nextInfo) {
+            const params = [...Object.entries(nextOptions.query || {}), ...nextInfo.url.searchParams.entries()];
+            for (const [key, value] of params) {
+                nextInfo.url.searchParams.set(key, value);
+            }
+            nextOptions.query = undefined;
+            nextOptions.path = nextInfo.url.toString();
+        }
+        return await __classPrivateFieldGet(this, _AbstractPage_client, "f").requestAPIList(this.constructor, nextOptions);
+    }
+    async *iterPages() {
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        let page = this;
+        yield page;
+        while (page.hasNextPage()) {
+            page = await page.getNextPage();
+            yield page;
+        }
+    }
+    async *[(_AbstractPage_client = new WeakMap(), Symbol.asyncIterator)]() {
+        for await (const page of this.iterPages()) {
+            for (const item of page.getPaginatedItems()) {
+                yield item;
+            }
+        }
+    }
+}
+/**
+ * This subclass of Promise will resolve to an instantiated Page once the request completes.
+ *
+ * It also implements AsyncIterable to allow auto-paginating iteration on an unawaited list call, eg:
+ *
+ *    for await (const item of client.items.list()) {
+ *      console.log(item)
+ *    }
+ */
+class PagePromise extends APIPromise {
+    constructor(client, request, Page) {
+        super(request, async (props) => new Page(client, props.response, await defaultParseResponse(props), props.options));
+    }
+    /**
+     * Allow auto-paginating iteration on an unawaited list call, eg:
+     *
+     *    for await (const item of client.items.list()) {
+     *      console.log(item)
+     *    }
+     */
+    async *[Symbol.asyncIterator]() {
+        const page = await this;
+        for await (const item of page) {
+            yield item;
+        }
+    }
+}
+const createResponseHeaders = (headers) => {
+    return new Proxy(Object.fromEntries(
+    // @ts-ignore
+    headers.entries()), {
+        get(target, name) {
+            const key = name.toString();
+            return target[key.toLowerCase()] || target[key];
+        },
+    });
+};
+// This is required so that we can determine if a given object matches the RequestOptions
+// type at runtime. While this requires duplication, it is enforced by the TypeScript
+// compiler such that any missing / extraneous keys will cause an error.
+const requestOptionsKeys = {
+    method: true,
+    path: true,
+    query: true,
+    body: true,
+    headers: true,
+    maxRetries: true,
+    stream: true,
+    timeout: true,
+    httpAgent: true,
+    signal: true,
+    idempotencyKey: true,
+    __metadata: true,
+    __binaryRequest: true,
+    __binaryResponse: true,
+    __streamClass: true,
+};
+const isRequestOptions = (obj) => {
+    return (typeof obj === 'object' &&
+        obj !== null &&
+        !isEmptyObj(obj) &&
+        Object.keys(obj).every((k) => hasOwn(requestOptionsKeys, k)));
+};
+const getPlatformProperties = () => {
+    if (typeof Deno !== 'undefined' && Deno.build != null) {
+        return {
+            'X-Stainless-Lang': 'js',
+            'X-Stainless-Package-Version': _version_mjs__WEBPACK_IMPORTED_MODULE_0__.VERSION,
+            'X-Stainless-OS': normalizePlatform(Deno.build.os),
+            'X-Stainless-Arch': normalizeArch(Deno.build.arch),
+            'X-Stainless-Runtime': 'deno',
+            'X-Stainless-Runtime-Version': typeof Deno.version === 'string' ? Deno.version : Deno.version?.deno ?? 'unknown',
+        };
+    }
+    if (typeof EdgeRuntime !== 'undefined') {
+        return {
+            'X-Stainless-Lang': 'js',
+            'X-Stainless-Package-Version': _version_mjs__WEBPACK_IMPORTED_MODULE_0__.VERSION,
+            'X-Stainless-OS': 'Unknown',
+            'X-Stainless-Arch': `other:${EdgeRuntime}`,
+            'X-Stainless-Runtime': 'edge',
+            'X-Stainless-Runtime-Version': process.version,
+        };
+    }
+    // Check if Node.js
+    if (Object.prototype.toString.call(typeof process !== 'undefined' ? process : 0) === '[object process]') {
+        return {
+            'X-Stainless-Lang': 'js',
+            'X-Stainless-Package-Version': _version_mjs__WEBPACK_IMPORTED_MODULE_0__.VERSION,
+            'X-Stainless-OS': normalizePlatform(process.platform),
+            'X-Stainless-Arch': normalizeArch(process.arch),
+            'X-Stainless-Runtime': 'node',
+            'X-Stainless-Runtime-Version': process.version,
+        };
+    }
+    const browserInfo = getBrowserInfo();
+    if (browserInfo) {
+        return {
+            'X-Stainless-Lang': 'js',
+            'X-Stainless-Package-Version': _version_mjs__WEBPACK_IMPORTED_MODULE_0__.VERSION,
+            'X-Stainless-OS': 'Unknown',
+            'X-Stainless-Arch': 'unknown',
+            'X-Stainless-Runtime': `browser:${browserInfo.browser}`,
+            'X-Stainless-Runtime-Version': browserInfo.version,
+        };
+    }
+    // TODO add support for Cloudflare workers, etc.
+    return {
+        'X-Stainless-Lang': 'js',
+        'X-Stainless-Package-Version': _version_mjs__WEBPACK_IMPORTED_MODULE_0__.VERSION,
+        'X-Stainless-OS': 'Unknown',
+        'X-Stainless-Arch': 'unknown',
+        'X-Stainless-Runtime': 'unknown',
+        'X-Stainless-Runtime-Version': 'unknown',
+    };
+};
+// Note: modified from https://github.com/JS-DevTools/host-environment/blob/b1ab79ecde37db5d6e163c050e54fe7d287d7c92/src/isomorphic.browser.ts
+function getBrowserInfo() {
+    if (typeof navigator === 'undefined' || !navigator) {
+        return null;
+    }
+    // NOTE: The order matters here!
+    const browserPatterns = [
+        { key: 'edge', pattern: /Edge(?:\W+(\d+)\.(\d+)(?:\.(\d+))?)?/ },
+        { key: 'ie', pattern: /MSIE(?:\W+(\d+)\.(\d+)(?:\.(\d+))?)?/ },
+        { key: 'ie', pattern: /Trident(?:.*rv\:(\d+)\.(\d+)(?:\.(\d+))?)?/ },
+        { key: 'chrome', pattern: /Chrome(?:\W+(\d+)\.(\d+)(?:\.(\d+))?)?/ },
+        { key: 'firefox', pattern: /Firefox(?:\W+(\d+)\.(\d+)(?:\.(\d+))?)?/ },
+        { key: 'safari', pattern: /(?:Version\W+(\d+)\.(\d+)(?:\.(\d+))?)?(?:\W+Mobile\S*)?\W+Safari/ },
+    ];
+    // Find the FIRST matching browser
+    for (const { key, pattern } of browserPatterns) {
+        const match = pattern.exec(navigator.userAgent);
+        if (match) {
+            const major = match[1] || 0;
+            const minor = match[2] || 0;
+            const patch = match[3] || 0;
+            return { browser: key, version: `${major}.${minor}.${patch}` };
+        }
+    }
+    return null;
+}
+const normalizeArch = (arch) => {
+    // Node docs:
+    // - https://nodejs.org/api/process.html#processarch
+    // Deno docs:
+    // - https://doc.deno.land/deno/stable/~/Deno.build
+    if (arch === 'x32')
+        return 'x32';
+    if (arch === 'x86_64' || arch === 'x64')
+        return 'x64';
+    if (arch === 'arm')
+        return 'arm';
+    if (arch === 'aarch64' || arch === 'arm64')
+        return 'arm64';
+    if (arch)
+        return `other:${arch}`;
+    return 'unknown';
+};
+const normalizePlatform = (platform) => {
+    // Node platforms:
+    // - https://nodejs.org/api/process.html#processplatform
+    // Deno platforms:
+    // - https://doc.deno.land/deno/stable/~/Deno.build
+    // - https://github.com/denoland/deno/issues/14799
+    platform = platform.toLowerCase();
+    // NOTE: this iOS check is untested and may not work
+    // Node does not work natively on IOS, there is a fork at
+    // https://github.com/nodejs-mobile/nodejs-mobile
+    // however it is unknown at the time of writing how to detect if it is running
+    if (platform.includes('ios'))
+        return 'iOS';
+    if (platform === 'android')
+        return 'Android';
+    if (platform === 'darwin')
+        return 'MacOS';
+    if (platform === 'win32')
+        return 'Windows';
+    if (platform === 'freebsd')
+        return 'FreeBSD';
+    if (platform === 'openbsd')
+        return 'OpenBSD';
+    if (platform === 'linux')
+        return 'Linux';
+    if (platform)
+        return `Other:${platform}`;
+    return 'Unknown';
+};
+let _platformHeaders;
+const getPlatformHeaders = () => {
+    return (_platformHeaders ?? (_platformHeaders = getPlatformProperties()));
+};
+const safeJSON = (text) => {
+    try {
+        return JSON.parse(text);
+    }
+    catch (err) {
+        return undefined;
+    }
+};
+// https://url.spec.whatwg.org/#url-scheme-string
+const startsWithSchemeRegexp = /^[a-z][a-z0-9+.-]*:/i;
+const isAbsoluteURL = (url) => {
+    return startsWithSchemeRegexp.test(url);
+};
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const validatePositiveInteger = (name, n) => {
+    if (typeof n !== 'number' || !Number.isInteger(n)) {
+        throw new _error_mjs__WEBPACK_IMPORTED_MODULE_2__.OpenAIError(`${name} must be an integer`);
+    }
+    if (n < 0) {
+        throw new _error_mjs__WEBPACK_IMPORTED_MODULE_2__.OpenAIError(`${name} must be a positive integer`);
+    }
+    return n;
+};
+const castToError = (err) => {
+    if (err instanceof Error)
+        return err;
+    if (typeof err === 'object' && err !== null) {
+        try {
+            return new Error(JSON.stringify(err));
+        }
+        catch { }
+    }
+    return new Error(err);
+};
+const ensurePresent = (value) => {
+    if (value == null)
+        throw new _error_mjs__WEBPACK_IMPORTED_MODULE_2__.OpenAIError(`Expected a value to be given but received ${value} instead.`);
+    return value;
+};
+/**
+ * Read an environment variable.
+ *
+ * Trims beginning and trailing whitespace.
+ *
+ * Will return undefined if the environment variable doesn't exist or cannot be accessed.
+ */
+const readEnv = (env) => {
+    if (typeof process !== 'undefined') {
+        return process.env?.[env]?.trim() ?? undefined;
+    }
+    if (typeof Deno !== 'undefined') {
+        return Deno.env?.get?.(env)?.trim();
+    }
+    return undefined;
+};
+const coerceInteger = (value) => {
+    if (typeof value === 'number')
+        return Math.round(value);
+    if (typeof value === 'string')
+        return parseInt(value, 10);
+    throw new _error_mjs__WEBPACK_IMPORTED_MODULE_2__.OpenAIError(`Could not coerce ${value} (type: ${typeof value}) into a number`);
+};
+const coerceFloat = (value) => {
+    if (typeof value === 'number')
+        return value;
+    if (typeof value === 'string')
+        return parseFloat(value);
+    throw new _error_mjs__WEBPACK_IMPORTED_MODULE_2__.OpenAIError(`Could not coerce ${value} (type: ${typeof value}) into a number`);
+};
+const coerceBoolean = (value) => {
+    if (typeof value === 'boolean')
+        return value;
+    if (typeof value === 'string')
+        return value === 'true';
+    return Boolean(value);
+};
+const maybeCoerceInteger = (value) => {
+    if (value === undefined) {
+        return undefined;
+    }
+    return coerceInteger(value);
+};
+const maybeCoerceFloat = (value) => {
+    if (value === undefined) {
+        return undefined;
+    }
+    return coerceFloat(value);
+};
+const maybeCoerceBoolean = (value) => {
+    if (value === undefined) {
+        return undefined;
+    }
+    return coerceBoolean(value);
+};
+// https://stackoverflow.com/a/34491287
+function isEmptyObj(obj) {
+    if (!obj)
+        return true;
+    for (const _k in obj)
+        return false;
+    return true;
+}
+// https://eslint.org/docs/latest/rules/no-prototype-builtins
+function hasOwn(obj, key) {
+    return Object.prototype.hasOwnProperty.call(obj, key);
+}
+/**
+ * Copies headers from "newHeaders" onto "targetHeaders",
+ * using lower-case for all properties,
+ * ignoring any keys with undefined values,
+ * and deleting any keys with null values.
+ */
+function applyHeadersMut(targetHeaders, newHeaders) {
+    for (const k in newHeaders) {
+        if (!hasOwn(newHeaders, k))
+            continue;
+        const lowerKey = k.toLowerCase();
+        if (!lowerKey)
+            continue;
+        const val = newHeaders[k];
+        if (val === null) {
+            delete targetHeaders[lowerKey];
+        }
+        else if (val !== undefined) {
+            targetHeaders[lowerKey] = val;
+        }
+    }
+}
+const SENSITIVE_HEADERS = new Set(['authorization', 'api-key']);
+function debug(action, ...args) {
+    if (typeof process !== 'undefined' && process?.env?.['DEBUG'] === 'true') {
+        const modifiedArgs = args.map((arg) => {
+            if (!arg) {
+                return arg;
+            }
+            // Check for sensitive headers in request body 'headers' object
+            if (arg['headers']) {
+                // clone so we don't mutate
+                const modifiedArg = { ...arg, headers: { ...arg['headers'] } };
+                for (const header in arg['headers']) {
+                    if (SENSITIVE_HEADERS.has(header.toLowerCase())) {
+                        modifiedArg['headers'][header] = 'REDACTED';
+                    }
+                }
+                return modifiedArg;
+            }
+            let modifiedArg = null;
+            // Check for sensitive headers in headers object
+            for (const header in arg) {
+                if (SENSITIVE_HEADERS.has(header.toLowerCase())) {
+                    // avoid making a copy until we need to
+                    modifiedArg ?? (modifiedArg = { ...arg });
+                    modifiedArg[header] = 'REDACTED';
+                }
+            }
+            return modifiedArg ?? arg;
+        });
+        console.log(`OpenAI:DEBUG:${action}`, ...modifiedArgs);
+    }
+}
+/**
+ * https://stackoverflow.com/a/2117523
+ */
+const uuid4 = () => {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+    });
+};
+const isRunningInBrowser = () => {
+    return (
+    // @ts-ignore
+    typeof window !== 'undefined' &&
+        // @ts-ignore
+        typeof window.document !== 'undefined' &&
+        // @ts-ignore
+        typeof navigator !== 'undefined');
+};
+const isHeadersProtocol = (headers) => {
+    return typeof headers?.get === 'function';
+};
+const getRequiredHeader = (headers, header) => {
+    const foundHeader = getHeader(headers, header);
+    if (foundHeader === undefined) {
+        throw new Error(`Could not find ${header} header`);
+    }
+    return foundHeader;
+};
+const getHeader = (headers, header) => {
+    const lowerCasedHeader = header.toLowerCase();
+    if (isHeadersProtocol(headers)) {
+        // to deal with the case where the header looks like Stainless-Event-Id
+        const intercapsHeader = header[0]?.toUpperCase() +
+            header.substring(1).replace(/([^\w])(\w)/g, (_m, g1, g2) => g1 + g2.toUpperCase());
+        for (const key of [header, lowerCasedHeader, header.toUpperCase(), intercapsHeader]) {
+            const value = headers.get(key);
+            if (value) {
+                return value;
+            }
+        }
+    }
+    for (const [key, value] of Object.entries(headers)) {
+        if (key.toLowerCase() === lowerCasedHeader) {
+            if (Array.isArray(value)) {
+                if (value.length <= 1)
+                    return value[0];
+                console.warn(`Received ${value.length} entries for the ${header} header, using the first entry.`);
+                return value[0];
+            }
+            return value;
+        }
+    }
+    return undefined;
+};
+/**
+ * Encodes a string to Base64 format.
+ */
+const toBase64 = (str) => {
+    if (!str)
+        return '';
+    if (typeof Buffer !== 'undefined') {
+        return Buffer.from(str).toString('base64');
+    }
+    if (typeof btoa !== 'undefined') {
+        return btoa(str);
+    }
+    throw new _error_mjs__WEBPACK_IMPORTED_MODULE_2__.OpenAIError('Cannot generate b64 string; Expected `Buffer` or `btoa` to be defined');
+};
+/**
+ * Converts a Base64 encoded string to a Float32Array.
+ * @param base64Str - The Base64 encoded string.
+ * @returns An Array of numbers interpreted as Float32 values.
+ */
+const toFloat32Array = (base64Str) => {
+    if (typeof Buffer !== 'undefined') {
+        // for Node.js environment
+        const buf = Buffer.from(base64Str, 'base64');
+        return Array.from(new Float32Array(buf.buffer, buf.byteOffset, buf.length / Float32Array.BYTES_PER_ELEMENT));
+    }
+    else {
+        // for legacy web platform APIs
+        const binaryStr = atob(base64Str);
+        const len = binaryStr.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+            bytes[i] = binaryStr.charCodeAt(i);
+        }
+        return Array.from(new Float32Array(bytes.buffer));
+    }
+};
+function isObj(obj) {
+    return obj != null && typeof obj === 'object' && !Array.isArray(obj);
+}
+//# sourceMappingURL=core.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/error.mjs":
+/*!***************************************!*\
+  !*** ./node_modules/openai/error.mjs ***!
+  \***************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   APIConnectionError: () => (/* binding */ APIConnectionError),
+/* harmony export */   APIConnectionTimeoutError: () => (/* binding */ APIConnectionTimeoutError),
+/* harmony export */   APIError: () => (/* binding */ APIError),
+/* harmony export */   APIUserAbortError: () => (/* binding */ APIUserAbortError),
+/* harmony export */   AuthenticationError: () => (/* binding */ AuthenticationError),
+/* harmony export */   BadRequestError: () => (/* binding */ BadRequestError),
+/* harmony export */   ConflictError: () => (/* binding */ ConflictError),
+/* harmony export */   ContentFilterFinishReasonError: () => (/* binding */ ContentFilterFinishReasonError),
+/* harmony export */   InternalServerError: () => (/* binding */ InternalServerError),
+/* harmony export */   LengthFinishReasonError: () => (/* binding */ LengthFinishReasonError),
+/* harmony export */   NotFoundError: () => (/* binding */ NotFoundError),
+/* harmony export */   OpenAIError: () => (/* binding */ OpenAIError),
+/* harmony export */   PermissionDeniedError: () => (/* binding */ PermissionDeniedError),
+/* harmony export */   RateLimitError: () => (/* binding */ RateLimitError),
+/* harmony export */   UnprocessableEntityError: () => (/* binding */ UnprocessableEntityError)
+/* harmony export */ });
+/* harmony import */ var _core_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./core.mjs */ "./node_modules/openai/core.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+class OpenAIError extends Error {
+}
+class APIError extends OpenAIError {
+    constructor(status, error, message, headers) {
+        super(`${APIError.makeMessage(status, error, message)}`);
+        this.status = status;
+        this.headers = headers;
+        this.request_id = headers?.['x-request-id'];
+        this.error = error;
+        const data = error;
+        this.code = data?.['code'];
+        this.param = data?.['param'];
+        this.type = data?.['type'];
+    }
+    static makeMessage(status, error, message) {
+        const msg = error?.message ?
+            typeof error.message === 'string' ?
+                error.message
+                : JSON.stringify(error.message)
+            : error ? JSON.stringify(error)
+                : message;
+        if (status && msg) {
+            return `${status} ${msg}`;
+        }
+        if (status) {
+            return `${status} status code (no body)`;
+        }
+        if (msg) {
+            return msg;
+        }
+        return '(no status code or body)';
+    }
+    static generate(status, errorResponse, message, headers) {
+        if (!status || !headers) {
+            return new APIConnectionError({ message, cause: (0,_core_mjs__WEBPACK_IMPORTED_MODULE_0__.castToError)(errorResponse) });
+        }
+        const error = errorResponse?.['error'];
+        if (status === 400) {
+            return new BadRequestError(status, error, message, headers);
+        }
+        if (status === 401) {
+            return new AuthenticationError(status, error, message, headers);
+        }
+        if (status === 403) {
+            return new PermissionDeniedError(status, error, message, headers);
+        }
+        if (status === 404) {
+            return new NotFoundError(status, error, message, headers);
+        }
+        if (status === 409) {
+            return new ConflictError(status, error, message, headers);
+        }
+        if (status === 422) {
+            return new UnprocessableEntityError(status, error, message, headers);
+        }
+        if (status === 429) {
+            return new RateLimitError(status, error, message, headers);
+        }
+        if (status >= 500) {
+            return new InternalServerError(status, error, message, headers);
+        }
+        return new APIError(status, error, message, headers);
+    }
+}
+class APIUserAbortError extends APIError {
+    constructor({ message } = {}) {
+        super(undefined, undefined, message || 'Request was aborted.', undefined);
+    }
+}
+class APIConnectionError extends APIError {
+    constructor({ message, cause }) {
+        super(undefined, undefined, message || 'Connection error.', undefined);
+        // in some environments the 'cause' property is already declared
+        // @ts-ignore
+        if (cause)
+            this.cause = cause;
+    }
+}
+class APIConnectionTimeoutError extends APIConnectionError {
+    constructor({ message } = {}) {
+        super({ message: message ?? 'Request timed out.' });
+    }
+}
+class BadRequestError extends APIError {
+}
+class AuthenticationError extends APIError {
+}
+class PermissionDeniedError extends APIError {
+}
+class NotFoundError extends APIError {
+}
+class ConflictError extends APIError {
+}
+class UnprocessableEntityError extends APIError {
+}
+class RateLimitError extends APIError {
+}
+class InternalServerError extends APIError {
+}
+class LengthFinishReasonError extends OpenAIError {
+    constructor() {
+        super(`Could not parse response content as the length limit was reached`);
+    }
+}
+class ContentFilterFinishReasonError extends OpenAIError {
+    constructor() {
+        super(`Could not parse response content as the request was rejected by the content filter`);
+    }
+}
+//# sourceMappingURL=error.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/index.mjs":
+/*!***************************************!*\
+  !*** ./node_modules/openai/index.mjs ***!
+  \***************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   APIConnectionError: () => (/* reexport safe */ _error_mjs__WEBPACK_IMPORTED_MODULE_2__.APIConnectionError),
+/* harmony export */   APIConnectionTimeoutError: () => (/* reexport safe */ _error_mjs__WEBPACK_IMPORTED_MODULE_2__.APIConnectionTimeoutError),
+/* harmony export */   APIError: () => (/* reexport safe */ _error_mjs__WEBPACK_IMPORTED_MODULE_2__.APIError),
+/* harmony export */   APIUserAbortError: () => (/* reexport safe */ _error_mjs__WEBPACK_IMPORTED_MODULE_2__.APIUserAbortError),
+/* harmony export */   AuthenticationError: () => (/* reexport safe */ _error_mjs__WEBPACK_IMPORTED_MODULE_2__.AuthenticationError),
+/* harmony export */   AzureOpenAI: () => (/* binding */ AzureOpenAI),
+/* harmony export */   BadRequestError: () => (/* reexport safe */ _error_mjs__WEBPACK_IMPORTED_MODULE_2__.BadRequestError),
+/* harmony export */   ConflictError: () => (/* reexport safe */ _error_mjs__WEBPACK_IMPORTED_MODULE_2__.ConflictError),
+/* harmony export */   InternalServerError: () => (/* reexport safe */ _error_mjs__WEBPACK_IMPORTED_MODULE_2__.InternalServerError),
+/* harmony export */   NotFoundError: () => (/* reexport safe */ _error_mjs__WEBPACK_IMPORTED_MODULE_2__.NotFoundError),
+/* harmony export */   OpenAI: () => (/* binding */ OpenAI),
+/* harmony export */   OpenAIError: () => (/* reexport safe */ _error_mjs__WEBPACK_IMPORTED_MODULE_2__.OpenAIError),
+/* harmony export */   PermissionDeniedError: () => (/* reexport safe */ _error_mjs__WEBPACK_IMPORTED_MODULE_2__.PermissionDeniedError),
+/* harmony export */   RateLimitError: () => (/* reexport safe */ _error_mjs__WEBPACK_IMPORTED_MODULE_2__.RateLimitError),
+/* harmony export */   UnprocessableEntityError: () => (/* reexport safe */ _error_mjs__WEBPACK_IMPORTED_MODULE_2__.UnprocessableEntityError),
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__),
+/* harmony export */   fileFromPath: () => (/* reexport safe */ _uploads_mjs__WEBPACK_IMPORTED_MODULE_4__.fileFromPath),
+/* harmony export */   toFile: () => (/* reexport safe */ _uploads_mjs__WEBPACK_IMPORTED_MODULE_3__.toFile)
+/* harmony export */ });
+/* harmony import */ var _internal_qs_index_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./internal/qs/index.mjs */ "./node_modules/openai/internal/qs/stringify.mjs");
+/* harmony import */ var _core_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./core.mjs */ "./node_modules/openai/core.mjs");
+/* harmony import */ var _error_mjs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./error.mjs */ "./node_modules/openai/error.mjs");
+/* harmony import */ var _uploads_mjs__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./uploads.mjs */ "./node_modules/openai/uploads.mjs");
+/* harmony import */ var _uploads_mjs__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./uploads.mjs */ "./node_modules/openai/_shims/index.mjs");
+/* harmony import */ var _resources_index_mjs__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./resources/chat/chat.mjs */ "./node_modules/openai/resources/chat/chat.mjs");
+/* harmony import */ var _resources_index_mjs__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./resources/audio/audio.mjs */ "./node_modules/openai/resources/audio/audio.mjs");
+/* harmony import */ var _resources_index_mjs__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./resources/batches.mjs */ "./node_modules/openai/resources/batches.mjs");
+/* harmony import */ var _resources_index_mjs__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./resources/beta/beta.mjs */ "./node_modules/openai/resources/beta/beta.mjs");
+/* harmony import */ var _resources_index_mjs__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./resources/completions.mjs */ "./node_modules/openai/resources/completions.mjs");
+/* harmony import */ var _resources_index_mjs__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./resources/containers/containers.mjs */ "./node_modules/openai/resources/containers/containers.mjs");
+/* harmony import */ var _resources_index_mjs__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./resources/embeddings.mjs */ "./node_modules/openai/resources/embeddings.mjs");
+/* harmony import */ var _resources_index_mjs__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./resources/evals/evals.mjs */ "./node_modules/openai/resources/evals/evals.mjs");
+/* harmony import */ var _resources_index_mjs__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./resources/files.mjs */ "./node_modules/openai/resources/files.mjs");
+/* harmony import */ var _resources_index_mjs__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ./resources/fine-tuning/fine-tuning.mjs */ "./node_modules/openai/resources/fine-tuning/fine-tuning.mjs");
+/* harmony import */ var _resources_index_mjs__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ./resources/graders/graders.mjs */ "./node_modules/openai/resources/graders/graders.mjs");
+/* harmony import */ var _resources_index_mjs__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ./resources/images.mjs */ "./node_modules/openai/resources/images.mjs");
+/* harmony import */ var _resources_index_mjs__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! ./resources/models.mjs */ "./node_modules/openai/resources/models.mjs");
+/* harmony import */ var _resources_index_mjs__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! ./resources/moderations.mjs */ "./node_modules/openai/resources/moderations.mjs");
+/* harmony import */ var _resources_index_mjs__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(/*! ./resources/responses/responses.mjs */ "./node_modules/openai/resources/responses/responses.mjs");
+/* harmony import */ var _resources_index_mjs__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(/*! ./resources/uploads/uploads.mjs */ "./node_modules/openai/resources/uploads/uploads.mjs");
+/* harmony import */ var _resources_index_mjs__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(/*! ./resources/vector-stores/vector-stores.mjs */ "./node_modules/openai/resources/vector-stores/vector-stores.mjs");
+/* harmony import */ var _resources_chat_completions_completions_mjs__WEBPACK_IMPORTED_MODULE_22__ = __webpack_require__(/*! ./resources/chat/completions/completions.mjs */ "./node_modules/openai/resources/chat/completions/completions.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+var _a;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * API Client for interfacing with the OpenAI API.
+ */
+class OpenAI extends _core_mjs__WEBPACK_IMPORTED_MODULE_1__.APIClient {
+    /**
+     * API Client for interfacing with the OpenAI API.
+     *
+     * @param {string | undefined} [opts.apiKey=process.env['OPENAI_API_KEY'] ?? undefined]
+     * @param {string | null | undefined} [opts.organization=process.env['OPENAI_ORG_ID'] ?? null]
+     * @param {string | null | undefined} [opts.project=process.env['OPENAI_PROJECT_ID'] ?? null]
+     * @param {string} [opts.baseURL=process.env['OPENAI_BASE_URL'] ?? https://api.openai.com/v1] - Override the default base URL for the API.
+     * @param {number} [opts.timeout=10 minutes] - The maximum amount of time (in milliseconds) the client will wait for a response before timing out.
+     * @param {number} [opts.httpAgent] - An HTTP agent used to manage HTTP(s) connections.
+     * @param {Core.Fetch} [opts.fetch] - Specify a custom `fetch` function implementation.
+     * @param {number} [opts.maxRetries=2] - The maximum number of times the client will retry a request.
+     * @param {Core.Headers} opts.defaultHeaders - Default headers to include with every request to the API.
+     * @param {Core.DefaultQuery} opts.defaultQuery - Default query parameters to include with every request to the API.
+     * @param {boolean} [opts.dangerouslyAllowBrowser=false] - By default, client-side use of this library is not allowed, as it risks exposing your secret API credentials to attackers.
+     */
+    constructor({ baseURL = _core_mjs__WEBPACK_IMPORTED_MODULE_1__.readEnv('OPENAI_BASE_URL'), apiKey = _core_mjs__WEBPACK_IMPORTED_MODULE_1__.readEnv('OPENAI_API_KEY'), organization = _core_mjs__WEBPACK_IMPORTED_MODULE_1__.readEnv('OPENAI_ORG_ID') ?? null, project = _core_mjs__WEBPACK_IMPORTED_MODULE_1__.readEnv('OPENAI_PROJECT_ID') ?? null, ...opts } = {}) {
+        if (apiKey === undefined) {
+            throw new _error_mjs__WEBPACK_IMPORTED_MODULE_2__.OpenAIError("The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).");
+        }
+        const options = {
+            apiKey,
+            organization,
+            project,
+            ...opts,
+            baseURL: baseURL || `https://api.openai.com/v1`,
+        };
+        if (!options.dangerouslyAllowBrowser && _core_mjs__WEBPACK_IMPORTED_MODULE_1__.isRunningInBrowser()) {
+            throw new _error_mjs__WEBPACK_IMPORTED_MODULE_2__.OpenAIError("It looks like you're running in a browser-like environment.\n\nThis is disabled by default, as it risks exposing your secret API credentials to attackers.\nIf you understand the risks and have appropriate mitigations in place,\nyou can set the `dangerouslyAllowBrowser` option to `true`, e.g.,\n\nnew OpenAI({ apiKey, dangerouslyAllowBrowser: true });\n\nhttps://help.openai.com/en/articles/5112595-best-practices-for-api-key-safety\n");
+        }
+        super({
+            baseURL: options.baseURL,
+            timeout: options.timeout ?? 600000 /* 10 minutes */,
+            httpAgent: options.httpAgent,
+            maxRetries: options.maxRetries,
+            fetch: options.fetch,
+        });
+        this.completions = new _resources_index_mjs__WEBPACK_IMPORTED_MODULE_9__.Completions(this);
+        this.chat = new _resources_index_mjs__WEBPACK_IMPORTED_MODULE_5__.Chat(this);
+        this.embeddings = new _resources_index_mjs__WEBPACK_IMPORTED_MODULE_11__.Embeddings(this);
+        this.files = new _resources_index_mjs__WEBPACK_IMPORTED_MODULE_13__.Files(this);
+        this.images = new _resources_index_mjs__WEBPACK_IMPORTED_MODULE_16__.Images(this);
+        this.audio = new _resources_index_mjs__WEBPACK_IMPORTED_MODULE_6__.Audio(this);
+        this.moderations = new _resources_index_mjs__WEBPACK_IMPORTED_MODULE_18__.Moderations(this);
+        this.models = new _resources_index_mjs__WEBPACK_IMPORTED_MODULE_17__.Models(this);
+        this.fineTuning = new _resources_index_mjs__WEBPACK_IMPORTED_MODULE_14__.FineTuning(this);
+        this.graders = new _resources_index_mjs__WEBPACK_IMPORTED_MODULE_15__.Graders(this);
+        this.vectorStores = new _resources_index_mjs__WEBPACK_IMPORTED_MODULE_21__.VectorStores(this);
+        this.beta = new _resources_index_mjs__WEBPACK_IMPORTED_MODULE_8__.Beta(this);
+        this.batches = new _resources_index_mjs__WEBPACK_IMPORTED_MODULE_7__.Batches(this);
+        this.uploads = new _resources_index_mjs__WEBPACK_IMPORTED_MODULE_20__.Uploads(this);
+        this.responses = new _resources_index_mjs__WEBPACK_IMPORTED_MODULE_19__.Responses(this);
+        this.evals = new _resources_index_mjs__WEBPACK_IMPORTED_MODULE_12__.Evals(this);
+        this.containers = new _resources_index_mjs__WEBPACK_IMPORTED_MODULE_10__.Containers(this);
+        this._options = options;
+        this.apiKey = apiKey;
+        this.organization = organization;
+        this.project = project;
+    }
+    defaultQuery() {
+        return this._options.defaultQuery;
+    }
+    defaultHeaders(opts) {
+        return {
+            ...super.defaultHeaders(opts),
+            'OpenAI-Organization': this.organization,
+            'OpenAI-Project': this.project,
+            ...this._options.defaultHeaders,
+        };
+    }
+    authHeaders(opts) {
+        return { Authorization: `Bearer ${this.apiKey}` };
+    }
+    stringifyQuery(query) {
+        return _internal_qs_index_mjs__WEBPACK_IMPORTED_MODULE_0__.stringify(query, { arrayFormat: 'brackets' });
+    }
+}
+_a = OpenAI;
+OpenAI.OpenAI = _a;
+OpenAI.DEFAULT_TIMEOUT = 600000; // 10 minutes
+OpenAI.OpenAIError = _error_mjs__WEBPACK_IMPORTED_MODULE_2__.OpenAIError;
+OpenAI.APIError = _error_mjs__WEBPACK_IMPORTED_MODULE_2__.APIError;
+OpenAI.APIConnectionError = _error_mjs__WEBPACK_IMPORTED_MODULE_2__.APIConnectionError;
+OpenAI.APIConnectionTimeoutError = _error_mjs__WEBPACK_IMPORTED_MODULE_2__.APIConnectionTimeoutError;
+OpenAI.APIUserAbortError = _error_mjs__WEBPACK_IMPORTED_MODULE_2__.APIUserAbortError;
+OpenAI.NotFoundError = _error_mjs__WEBPACK_IMPORTED_MODULE_2__.NotFoundError;
+OpenAI.ConflictError = _error_mjs__WEBPACK_IMPORTED_MODULE_2__.ConflictError;
+OpenAI.RateLimitError = _error_mjs__WEBPACK_IMPORTED_MODULE_2__.RateLimitError;
+OpenAI.BadRequestError = _error_mjs__WEBPACK_IMPORTED_MODULE_2__.BadRequestError;
+OpenAI.AuthenticationError = _error_mjs__WEBPACK_IMPORTED_MODULE_2__.AuthenticationError;
+OpenAI.InternalServerError = _error_mjs__WEBPACK_IMPORTED_MODULE_2__.InternalServerError;
+OpenAI.PermissionDeniedError = _error_mjs__WEBPACK_IMPORTED_MODULE_2__.PermissionDeniedError;
+OpenAI.UnprocessableEntityError = _error_mjs__WEBPACK_IMPORTED_MODULE_2__.UnprocessableEntityError;
+OpenAI.toFile = _uploads_mjs__WEBPACK_IMPORTED_MODULE_3__.toFile;
+OpenAI.fileFromPath = _uploads_mjs__WEBPACK_IMPORTED_MODULE_4__.fileFromPath;
+OpenAI.Completions = _resources_index_mjs__WEBPACK_IMPORTED_MODULE_9__.Completions;
+OpenAI.Chat = _resources_index_mjs__WEBPACK_IMPORTED_MODULE_5__.Chat;
+OpenAI.ChatCompletionsPage = _resources_chat_completions_completions_mjs__WEBPACK_IMPORTED_MODULE_22__.ChatCompletionsPage;
+OpenAI.Embeddings = _resources_index_mjs__WEBPACK_IMPORTED_MODULE_11__.Embeddings;
+OpenAI.Files = _resources_index_mjs__WEBPACK_IMPORTED_MODULE_13__.Files;
+OpenAI.FileObjectsPage = _resources_index_mjs__WEBPACK_IMPORTED_MODULE_13__.FileObjectsPage;
+OpenAI.Images = _resources_index_mjs__WEBPACK_IMPORTED_MODULE_16__.Images;
+OpenAI.Audio = _resources_index_mjs__WEBPACK_IMPORTED_MODULE_6__.Audio;
+OpenAI.Moderations = _resources_index_mjs__WEBPACK_IMPORTED_MODULE_18__.Moderations;
+OpenAI.Models = _resources_index_mjs__WEBPACK_IMPORTED_MODULE_17__.Models;
+OpenAI.ModelsPage = _resources_index_mjs__WEBPACK_IMPORTED_MODULE_17__.ModelsPage;
+OpenAI.FineTuning = _resources_index_mjs__WEBPACK_IMPORTED_MODULE_14__.FineTuning;
+OpenAI.Graders = _resources_index_mjs__WEBPACK_IMPORTED_MODULE_15__.Graders;
+OpenAI.VectorStores = _resources_index_mjs__WEBPACK_IMPORTED_MODULE_21__.VectorStores;
+OpenAI.VectorStoresPage = _resources_index_mjs__WEBPACK_IMPORTED_MODULE_21__.VectorStoresPage;
+OpenAI.VectorStoreSearchResponsesPage = _resources_index_mjs__WEBPACK_IMPORTED_MODULE_21__.VectorStoreSearchResponsesPage;
+OpenAI.Beta = _resources_index_mjs__WEBPACK_IMPORTED_MODULE_8__.Beta;
+OpenAI.Batches = _resources_index_mjs__WEBPACK_IMPORTED_MODULE_7__.Batches;
+OpenAI.BatchesPage = _resources_index_mjs__WEBPACK_IMPORTED_MODULE_7__.BatchesPage;
+OpenAI.Uploads = _resources_index_mjs__WEBPACK_IMPORTED_MODULE_20__.Uploads;
+OpenAI.Responses = _resources_index_mjs__WEBPACK_IMPORTED_MODULE_19__.Responses;
+OpenAI.Evals = _resources_index_mjs__WEBPACK_IMPORTED_MODULE_12__.Evals;
+OpenAI.EvalListResponsesPage = _resources_index_mjs__WEBPACK_IMPORTED_MODULE_12__.EvalListResponsesPage;
+OpenAI.Containers = _resources_index_mjs__WEBPACK_IMPORTED_MODULE_10__.Containers;
+OpenAI.ContainerListResponsesPage = _resources_index_mjs__WEBPACK_IMPORTED_MODULE_10__.ContainerListResponsesPage;
+/** API Client for interfacing with the Azure OpenAI API. */
+class AzureOpenAI extends OpenAI {
+    /**
+     * API Client for interfacing with the Azure OpenAI API.
+     *
+     * @param {string | undefined} [opts.apiVersion=process.env['OPENAI_API_VERSION'] ?? undefined]
+     * @param {string | undefined} [opts.endpoint=process.env['AZURE_OPENAI_ENDPOINT'] ?? undefined] - Your Azure endpoint, including the resource, e.g. `https://example-resource.azure.openai.com/`
+     * @param {string | undefined} [opts.apiKey=process.env['AZURE_OPENAI_API_KEY'] ?? undefined]
+     * @param {string | undefined} opts.deployment - A model deployment, if given, sets the base client URL to include `/deployments/{deployment}`.
+     * @param {string | null | undefined} [opts.organization=process.env['OPENAI_ORG_ID'] ?? null]
+     * @param {string} [opts.baseURL=process.env['OPENAI_BASE_URL']] - Sets the base URL for the API, e.g. `https://example-resource.azure.openai.com/openai/`.
+     * @param {number} [opts.timeout=10 minutes] - The maximum amount of time (in milliseconds) the client will wait for a response before timing out.
+     * @param {number} [opts.httpAgent] - An HTTP agent used to manage HTTP(s) connections.
+     * @param {Core.Fetch} [opts.fetch] - Specify a custom `fetch` function implementation.
+     * @param {number} [opts.maxRetries=2] - The maximum number of times the client will retry a request.
+     * @param {Core.Headers} opts.defaultHeaders - Default headers to include with every request to the API.
+     * @param {Core.DefaultQuery} opts.defaultQuery - Default query parameters to include with every request to the API.
+     * @param {boolean} [opts.dangerouslyAllowBrowser=false] - By default, client-side use of this library is not allowed, as it risks exposing your secret API credentials to attackers.
+     */
+    constructor({ baseURL = _core_mjs__WEBPACK_IMPORTED_MODULE_1__.readEnv('OPENAI_BASE_URL'), apiKey = _core_mjs__WEBPACK_IMPORTED_MODULE_1__.readEnv('AZURE_OPENAI_API_KEY'), apiVersion = _core_mjs__WEBPACK_IMPORTED_MODULE_1__.readEnv('OPENAI_API_VERSION'), endpoint, deployment, azureADTokenProvider, dangerouslyAllowBrowser, ...opts } = {}) {
+        if (!apiVersion) {
+            throw new _error_mjs__WEBPACK_IMPORTED_MODULE_2__.OpenAIError("The OPENAI_API_VERSION environment variable is missing or empty; either provide it, or instantiate the AzureOpenAI client with an apiVersion option, like new AzureOpenAI({ apiVersion: 'My API Version' }).");
+        }
+        if (typeof azureADTokenProvider === 'function') {
+            dangerouslyAllowBrowser = true;
+        }
+        if (!azureADTokenProvider && !apiKey) {
+            throw new _error_mjs__WEBPACK_IMPORTED_MODULE_2__.OpenAIError('Missing credentials. Please pass one of `apiKey` and `azureADTokenProvider`, or set the `AZURE_OPENAI_API_KEY` environment variable.');
+        }
+        if (azureADTokenProvider && apiKey) {
+            throw new _error_mjs__WEBPACK_IMPORTED_MODULE_2__.OpenAIError('The `apiKey` and `azureADTokenProvider` arguments are mutually exclusive; only one can be passed at a time.');
+        }
+        // define a sentinel value to avoid any typing issues
+        apiKey ?? (apiKey = API_KEY_SENTINEL);
+        opts.defaultQuery = { ...opts.defaultQuery, 'api-version': apiVersion };
+        if (!baseURL) {
+            if (!endpoint) {
+                endpoint = process.env['AZURE_OPENAI_ENDPOINT'];
+            }
+            if (!endpoint) {
+                throw new _error_mjs__WEBPACK_IMPORTED_MODULE_2__.OpenAIError('Must provide one of the `baseURL` or `endpoint` arguments, or the `AZURE_OPENAI_ENDPOINT` environment variable');
+            }
+            baseURL = `${endpoint}/openai`;
+        }
+        else {
+            if (endpoint) {
+                throw new _error_mjs__WEBPACK_IMPORTED_MODULE_2__.OpenAIError('baseURL and endpoint are mutually exclusive');
+            }
+        }
+        super({
+            apiKey,
+            baseURL,
+            ...opts,
+            ...(dangerouslyAllowBrowser !== undefined ? { dangerouslyAllowBrowser } : {}),
+        });
+        this.apiVersion = '';
+        this._azureADTokenProvider = azureADTokenProvider;
+        this.apiVersion = apiVersion;
+        this.deploymentName = deployment;
+    }
+    buildRequest(options, props = {}) {
+        if (_deployments_endpoints.has(options.path) && options.method === 'post' && options.body !== undefined) {
+            if (!_core_mjs__WEBPACK_IMPORTED_MODULE_1__.isObj(options.body)) {
+                throw new Error('Expected request body to be an object');
+            }
+            const model = this.deploymentName || options.body['model'] || options.__metadata?.['model'];
+            if (model !== undefined && !this.baseURL.includes('/deployments')) {
+                options.path = `/deployments/${model}${options.path}`;
+            }
+        }
+        return super.buildRequest(options, props);
+    }
+    async _getAzureADToken() {
+        if (typeof this._azureADTokenProvider === 'function') {
+            const token = await this._azureADTokenProvider();
+            if (!token || typeof token !== 'string') {
+                throw new _error_mjs__WEBPACK_IMPORTED_MODULE_2__.OpenAIError(`Expected 'azureADTokenProvider' argument to return a string but it returned ${token}`);
+            }
+            return token;
+        }
+        return undefined;
+    }
+    authHeaders(opts) {
+        return {};
+    }
+    async prepareOptions(opts) {
+        /**
+         * The user should provide a bearer token provider if they want
+         * to use Azure AD authentication. The user shouldn't set the
+         * Authorization header manually because the header is overwritten
+         * with the Azure AD token if a bearer token provider is provided.
+         */
+        if (opts.headers?.['api-key']) {
+            return super.prepareOptions(opts);
+        }
+        const token = await this._getAzureADToken();
+        opts.headers ?? (opts.headers = {});
+        if (token) {
+            opts.headers['Authorization'] = `Bearer ${token}`;
+        }
+        else if (this.apiKey !== API_KEY_SENTINEL) {
+            opts.headers['api-key'] = this.apiKey;
+        }
+        else {
+            throw new _error_mjs__WEBPACK_IMPORTED_MODULE_2__.OpenAIError('Unable to handle auth');
+        }
+        return super.prepareOptions(opts);
+    }
+}
+const _deployments_endpoints = new Set([
+    '/completions',
+    '/chat/completions',
+    '/embeddings',
+    '/audio/transcriptions',
+    '/audio/translations',
+    '/audio/speech',
+    '/images/generations',
+    '/images/edits',
+]);
+const API_KEY_SENTINEL = '<Missing Key>';
+
+
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (OpenAI);
+//# sourceMappingURL=index.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/internal/decoders/line.mjs":
+/*!********************************************************!*\
+  !*** ./node_modules/openai/internal/decoders/line.mjs ***!
+  \********************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   LineDecoder: () => (/* binding */ LineDecoder),
+/* harmony export */   findDoubleNewlineIndex: () => (/* binding */ findDoubleNewlineIndex)
+/* harmony export */ });
+/* harmony import */ var _error_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../error.mjs */ "./node_modules/openai/error.mjs");
+var __classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, state, value, kind, f) {
+    if (kind === "m") throw new TypeError("Private method is not writable");
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+    return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
+};
+var __classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, state, kind, f) {
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+    return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+};
+var _LineDecoder_carriageReturnIndex;
+
+/**
+ * A re-implementation of httpx's `LineDecoder` in Python that handles incrementally
+ * reading lines from text.
+ *
+ * https://github.com/encode/httpx/blob/920333ea98118e9cf617f246905d7b202510941c/httpx/_decoders.py#L258
+ */
+class LineDecoder {
+    constructor() {
+        _LineDecoder_carriageReturnIndex.set(this, void 0);
+        this.buffer = new Uint8Array();
+        __classPrivateFieldSet(this, _LineDecoder_carriageReturnIndex, null, "f");
+    }
+    decode(chunk) {
+        if (chunk == null) {
+            return [];
+        }
+        const binaryChunk = chunk instanceof ArrayBuffer ? new Uint8Array(chunk)
+            : typeof chunk === 'string' ? new TextEncoder().encode(chunk)
+                : chunk;
+        let newData = new Uint8Array(this.buffer.length + binaryChunk.length);
+        newData.set(this.buffer);
+        newData.set(binaryChunk, this.buffer.length);
+        this.buffer = newData;
+        const lines = [];
+        let patternIndex;
+        while ((patternIndex = findNewlineIndex(this.buffer, __classPrivateFieldGet(this, _LineDecoder_carriageReturnIndex, "f"))) != null) {
+            if (patternIndex.carriage && __classPrivateFieldGet(this, _LineDecoder_carriageReturnIndex, "f") == null) {
+                // skip until we either get a corresponding `\n`, a new `\r` or nothing
+                __classPrivateFieldSet(this, _LineDecoder_carriageReturnIndex, patternIndex.index, "f");
+                continue;
+            }
+            // we got double \r or \rtext\n
+            if (__classPrivateFieldGet(this, _LineDecoder_carriageReturnIndex, "f") != null &&
+                (patternIndex.index !== __classPrivateFieldGet(this, _LineDecoder_carriageReturnIndex, "f") + 1 || patternIndex.carriage)) {
+                lines.push(this.decodeText(this.buffer.slice(0, __classPrivateFieldGet(this, _LineDecoder_carriageReturnIndex, "f") - 1)));
+                this.buffer = this.buffer.slice(__classPrivateFieldGet(this, _LineDecoder_carriageReturnIndex, "f"));
+                __classPrivateFieldSet(this, _LineDecoder_carriageReturnIndex, null, "f");
+                continue;
+            }
+            const endIndex = __classPrivateFieldGet(this, _LineDecoder_carriageReturnIndex, "f") !== null ? patternIndex.preceding - 1 : patternIndex.preceding;
+            const line = this.decodeText(this.buffer.slice(0, endIndex));
+            lines.push(line);
+            this.buffer = this.buffer.slice(patternIndex.index);
+            __classPrivateFieldSet(this, _LineDecoder_carriageReturnIndex, null, "f");
+        }
+        return lines;
+    }
+    decodeText(bytes) {
+        if (bytes == null)
+            return '';
+        if (typeof bytes === 'string')
+            return bytes;
+        // Node:
+        if (typeof Buffer !== 'undefined') {
+            if (bytes instanceof Buffer) {
+                return bytes.toString();
+            }
+            if (bytes instanceof Uint8Array) {
+                return Buffer.from(bytes).toString();
+            }
+            throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError(`Unexpected: received non-Uint8Array (${bytes.constructor.name}) stream chunk in an environment with a global "Buffer" defined, which this library assumes to be Node. Please report this error.`);
+        }
+        // Browser
+        if (typeof TextDecoder !== 'undefined') {
+            if (bytes instanceof Uint8Array || bytes instanceof ArrayBuffer) {
+                this.textDecoder ?? (this.textDecoder = new TextDecoder('utf8'));
+                return this.textDecoder.decode(bytes);
+            }
+            throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError(`Unexpected: received non-Uint8Array/ArrayBuffer (${bytes.constructor.name}) in a web platform. Please report this error.`);
+        }
+        throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError(`Unexpected: neither Buffer nor TextDecoder are available as globals. Please report this error.`);
+    }
+    flush() {
+        if (!this.buffer.length) {
+            return [];
+        }
+        return this.decode('\n');
+    }
+}
+_LineDecoder_carriageReturnIndex = new WeakMap();
+// prettier-ignore
+LineDecoder.NEWLINE_CHARS = new Set(['\n', '\r']);
+LineDecoder.NEWLINE_REGEXP = /\r\n|[\n\r]/g;
+/**
+ * This function searches the buffer for the end patterns, (\r or \n)
+ * and returns an object with the index preceding the matched newline and the
+ * index after the newline char. `null` is returned if no new line is found.
+ *
+ * ```ts
+ * findNewLineIndex('abc\ndef') -> { preceding: 2, index: 3 }
+ * ```
+ */
+function findNewlineIndex(buffer, startIndex) {
+    const newline = 0x0a; // \n
+    const carriage = 0x0d; // \r
+    for (let i = startIndex ?? 0; i < buffer.length; i++) {
+        if (buffer[i] === newline) {
+            return { preceding: i, index: i + 1, carriage: false };
+        }
+        if (buffer[i] === carriage) {
+            return { preceding: i, index: i + 1, carriage: true };
+        }
+    }
+    return null;
+}
+function findDoubleNewlineIndex(buffer) {
+    // This function searches the buffer for the end patterns (\r\r, \n\n, \r\n\r\n)
+    // and returns the index right after the first occurrence of any pattern,
+    // or -1 if none of the patterns are found.
+    const newline = 0x0a; // \n
+    const carriage = 0x0d; // \r
+    for (let i = 0; i < buffer.length - 1; i++) {
+        if (buffer[i] === newline && buffer[i + 1] === newline) {
+            // \n\n
+            return i + 2;
+        }
+        if (buffer[i] === carriage && buffer[i + 1] === carriage) {
+            // \r\r
+            return i + 2;
+        }
+        if (buffer[i] === carriage &&
+            buffer[i + 1] === newline &&
+            i + 3 < buffer.length &&
+            buffer[i + 2] === carriage &&
+            buffer[i + 3] === newline) {
+            // \r\n\r\n
+            return i + 4;
+        }
+    }
+    return -1;
+}
+//# sourceMappingURL=line.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/internal/qs/formats.mjs":
+/*!*****************************************************!*\
+  !*** ./node_modules/openai/internal/qs/formats.mjs ***!
+  \*****************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   RFC1738: () => (/* binding */ RFC1738),
+/* harmony export */   RFC3986: () => (/* binding */ RFC3986),
+/* harmony export */   default_format: () => (/* binding */ default_format),
+/* harmony export */   formatters: () => (/* binding */ formatters)
+/* harmony export */ });
+const default_format = 'RFC3986';
+const formatters = {
+    RFC1738: (v) => String(v).replace(/%20/g, '+'),
+    RFC3986: (v) => String(v),
+};
+const RFC1738 = 'RFC1738';
+const RFC3986 = 'RFC3986';
+//# sourceMappingURL=formats.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/internal/qs/stringify.mjs":
+/*!*******************************************************!*\
+  !*** ./node_modules/openai/internal/qs/stringify.mjs ***!
+  \*******************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   stringify: () => (/* binding */ stringify)
+/* harmony export */ });
+/* harmony import */ var _utils_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./utils.mjs */ "./node_modules/openai/internal/qs/utils.mjs");
+/* harmony import */ var _formats_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./formats.mjs */ "./node_modules/openai/internal/qs/formats.mjs");
+
+
+const has = Object.prototype.hasOwnProperty;
+const array_prefix_generators = {
+    brackets(prefix) {
+        return String(prefix) + '[]';
+    },
+    comma: 'comma',
+    indices(prefix, key) {
+        return String(prefix) + '[' + key + ']';
+    },
+    repeat(prefix) {
+        return String(prefix);
+    },
+};
+const is_array = Array.isArray;
+const push = Array.prototype.push;
+const push_to_array = function (arr, value_or_array) {
+    push.apply(arr, is_array(value_or_array) ? value_or_array : [value_or_array]);
+};
+const to_ISO = Date.prototype.toISOString;
+const defaults = {
+    addQueryPrefix: false,
+    allowDots: false,
+    allowEmptyArrays: false,
+    arrayFormat: 'indices',
+    charset: 'utf-8',
+    charsetSentinel: false,
+    delimiter: '&',
+    encode: true,
+    encodeDotInKeys: false,
+    encoder: _utils_mjs__WEBPACK_IMPORTED_MODULE_0__.encode,
+    encodeValuesOnly: false,
+    format: _formats_mjs__WEBPACK_IMPORTED_MODULE_1__.default_format,
+    formatter: _formats_mjs__WEBPACK_IMPORTED_MODULE_1__.formatters[_formats_mjs__WEBPACK_IMPORTED_MODULE_1__.default_format],
+    /** @deprecated */
+    indices: false,
+    serializeDate(date) {
+        return to_ISO.call(date);
+    },
+    skipNulls: false,
+    strictNullHandling: false,
+};
+function is_non_nullish_primitive(v) {
+    return (typeof v === 'string' ||
+        typeof v === 'number' ||
+        typeof v === 'boolean' ||
+        typeof v === 'symbol' ||
+        typeof v === 'bigint');
+}
+const sentinel = {};
+function inner_stringify(object, prefix, generateArrayPrefix, commaRoundTrip, allowEmptyArrays, strictNullHandling, skipNulls, encodeDotInKeys, encoder, filter, sort, allowDots, serializeDate, format, formatter, encodeValuesOnly, charset, sideChannel) {
+    let obj = object;
+    let tmp_sc = sideChannel;
+    let step = 0;
+    let find_flag = false;
+    while ((tmp_sc = tmp_sc.get(sentinel)) !== void undefined && !find_flag) {
+        // Where object last appeared in the ref tree
+        const pos = tmp_sc.get(object);
+        step += 1;
+        if (typeof pos !== 'undefined') {
+            if (pos === step) {
+                throw new RangeError('Cyclic object value');
+            }
+            else {
+                find_flag = true; // Break while
+            }
+        }
+        if (typeof tmp_sc.get(sentinel) === 'undefined') {
+            step = 0;
+        }
+    }
+    if (typeof filter === 'function') {
+        obj = filter(prefix, obj);
+    }
+    else if (obj instanceof Date) {
+        obj = serializeDate?.(obj);
+    }
+    else if (generateArrayPrefix === 'comma' && is_array(obj)) {
+        obj = (0,_utils_mjs__WEBPACK_IMPORTED_MODULE_0__.maybe_map)(obj, function (value) {
+            if (value instanceof Date) {
+                return serializeDate?.(value);
+            }
+            return value;
+        });
+    }
+    if (obj === null) {
+        if (strictNullHandling) {
+            return encoder && !encodeValuesOnly ?
+                // @ts-expect-error
+                encoder(prefix, defaults.encoder, charset, 'key', format)
+                : prefix;
+        }
+        obj = '';
+    }
+    if (is_non_nullish_primitive(obj) || (0,_utils_mjs__WEBPACK_IMPORTED_MODULE_0__.is_buffer)(obj)) {
+        if (encoder) {
+            const key_value = encodeValuesOnly ? prefix
+                // @ts-expect-error
+                : encoder(prefix, defaults.encoder, charset, 'key', format);
+            return [
+                formatter?.(key_value) +
+                    '=' +
+                    // @ts-expect-error
+                    formatter?.(encoder(obj, defaults.encoder, charset, 'value', format)),
+            ];
+        }
+        return [formatter?.(prefix) + '=' + formatter?.(String(obj))];
+    }
+    const values = [];
+    if (typeof obj === 'undefined') {
+        return values;
+    }
+    let obj_keys;
+    if (generateArrayPrefix === 'comma' && is_array(obj)) {
+        // we need to join elements in
+        if (encodeValuesOnly && encoder) {
+            // @ts-expect-error values only
+            obj = (0,_utils_mjs__WEBPACK_IMPORTED_MODULE_0__.maybe_map)(obj, encoder);
+        }
+        obj_keys = [{ value: obj.length > 0 ? obj.join(',') || null : void undefined }];
+    }
+    else if (is_array(filter)) {
+        obj_keys = filter;
+    }
+    else {
+        const keys = Object.keys(obj);
+        obj_keys = sort ? keys.sort(sort) : keys;
+    }
+    const encoded_prefix = encodeDotInKeys ? String(prefix).replace(/\./g, '%2E') : String(prefix);
+    const adjusted_prefix = commaRoundTrip && is_array(obj) && obj.length === 1 ? encoded_prefix + '[]' : encoded_prefix;
+    if (allowEmptyArrays && is_array(obj) && obj.length === 0) {
+        return adjusted_prefix + '[]';
+    }
+    for (let j = 0; j < obj_keys.length; ++j) {
+        const key = obj_keys[j];
+        const value = 
+        // @ts-ignore
+        typeof key === 'object' && typeof key.value !== 'undefined' ? key.value : obj[key];
+        if (skipNulls && value === null) {
+            continue;
+        }
+        // @ts-ignore
+        const encoded_key = allowDots && encodeDotInKeys ? key.replace(/\./g, '%2E') : key;
+        const key_prefix = is_array(obj) ?
+            typeof generateArrayPrefix === 'function' ?
+                generateArrayPrefix(adjusted_prefix, encoded_key)
+                : adjusted_prefix
+            : adjusted_prefix + (allowDots ? '.' + encoded_key : '[' + encoded_key + ']');
+        sideChannel.set(object, step);
+        const valueSideChannel = new WeakMap();
+        valueSideChannel.set(sentinel, sideChannel);
+        push_to_array(values, inner_stringify(value, key_prefix, generateArrayPrefix, commaRoundTrip, allowEmptyArrays, strictNullHandling, skipNulls, encodeDotInKeys, 
+        // @ts-ignore
+        generateArrayPrefix === 'comma' && encodeValuesOnly && is_array(obj) ? null : encoder, filter, sort, allowDots, serializeDate, format, formatter, encodeValuesOnly, charset, valueSideChannel));
+    }
+    return values;
+}
+function normalize_stringify_options(opts = defaults) {
+    if (typeof opts.allowEmptyArrays !== 'undefined' && typeof opts.allowEmptyArrays !== 'boolean') {
+        throw new TypeError('`allowEmptyArrays` option can only be `true` or `false`, when provided');
+    }
+    if (typeof opts.encodeDotInKeys !== 'undefined' && typeof opts.encodeDotInKeys !== 'boolean') {
+        throw new TypeError('`encodeDotInKeys` option can only be `true` or `false`, when provided');
+    }
+    if (opts.encoder !== null && typeof opts.encoder !== 'undefined' && typeof opts.encoder !== 'function') {
+        throw new TypeError('Encoder has to be a function.');
+    }
+    const charset = opts.charset || defaults.charset;
+    if (typeof opts.charset !== 'undefined' && opts.charset !== 'utf-8' && opts.charset !== 'iso-8859-1') {
+        throw new TypeError('The charset option must be either utf-8, iso-8859-1, or undefined');
+    }
+    let format = _formats_mjs__WEBPACK_IMPORTED_MODULE_1__.default_format;
+    if (typeof opts.format !== 'undefined') {
+        if (!has.call(_formats_mjs__WEBPACK_IMPORTED_MODULE_1__.formatters, opts.format)) {
+            throw new TypeError('Unknown format option provided.');
+        }
+        format = opts.format;
+    }
+    const formatter = _formats_mjs__WEBPACK_IMPORTED_MODULE_1__.formatters[format];
+    let filter = defaults.filter;
+    if (typeof opts.filter === 'function' || is_array(opts.filter)) {
+        filter = opts.filter;
+    }
+    let arrayFormat;
+    if (opts.arrayFormat && opts.arrayFormat in array_prefix_generators) {
+        arrayFormat = opts.arrayFormat;
+    }
+    else if ('indices' in opts) {
+        arrayFormat = opts.indices ? 'indices' : 'repeat';
+    }
+    else {
+        arrayFormat = defaults.arrayFormat;
+    }
+    if ('commaRoundTrip' in opts && typeof opts.commaRoundTrip !== 'boolean') {
+        throw new TypeError('`commaRoundTrip` must be a boolean, or absent');
+    }
+    const allowDots = typeof opts.allowDots === 'undefined' ?
+        !!opts.encodeDotInKeys === true ?
+            true
+            : defaults.allowDots
+        : !!opts.allowDots;
+    return {
+        addQueryPrefix: typeof opts.addQueryPrefix === 'boolean' ? opts.addQueryPrefix : defaults.addQueryPrefix,
+        // @ts-ignore
+        allowDots: allowDots,
+        allowEmptyArrays: typeof opts.allowEmptyArrays === 'boolean' ? !!opts.allowEmptyArrays : defaults.allowEmptyArrays,
+        arrayFormat: arrayFormat,
+        charset: charset,
+        charsetSentinel: typeof opts.charsetSentinel === 'boolean' ? opts.charsetSentinel : defaults.charsetSentinel,
+        commaRoundTrip: !!opts.commaRoundTrip,
+        delimiter: typeof opts.delimiter === 'undefined' ? defaults.delimiter : opts.delimiter,
+        encode: typeof opts.encode === 'boolean' ? opts.encode : defaults.encode,
+        encodeDotInKeys: typeof opts.encodeDotInKeys === 'boolean' ? opts.encodeDotInKeys : defaults.encodeDotInKeys,
+        encoder: typeof opts.encoder === 'function' ? opts.encoder : defaults.encoder,
+        encodeValuesOnly: typeof opts.encodeValuesOnly === 'boolean' ? opts.encodeValuesOnly : defaults.encodeValuesOnly,
+        filter: filter,
+        format: format,
+        formatter: formatter,
+        serializeDate: typeof opts.serializeDate === 'function' ? opts.serializeDate : defaults.serializeDate,
+        skipNulls: typeof opts.skipNulls === 'boolean' ? opts.skipNulls : defaults.skipNulls,
+        // @ts-ignore
+        sort: typeof opts.sort === 'function' ? opts.sort : null,
+        strictNullHandling: typeof opts.strictNullHandling === 'boolean' ? opts.strictNullHandling : defaults.strictNullHandling,
+    };
+}
+function stringify(object, opts = {}) {
+    let obj = object;
+    const options = normalize_stringify_options(opts);
+    let obj_keys;
+    let filter;
+    if (typeof options.filter === 'function') {
+        filter = options.filter;
+        obj = filter('', obj);
+    }
+    else if (is_array(options.filter)) {
+        filter = options.filter;
+        obj_keys = filter;
+    }
+    const keys = [];
+    if (typeof obj !== 'object' || obj === null) {
+        return '';
+    }
+    const generateArrayPrefix = array_prefix_generators[options.arrayFormat];
+    const commaRoundTrip = generateArrayPrefix === 'comma' && options.commaRoundTrip;
+    if (!obj_keys) {
+        obj_keys = Object.keys(obj);
+    }
+    if (options.sort) {
+        obj_keys.sort(options.sort);
+    }
+    const sideChannel = new WeakMap();
+    for (let i = 0; i < obj_keys.length; ++i) {
+        const key = obj_keys[i];
+        if (options.skipNulls && obj[key] === null) {
+            continue;
+        }
+        push_to_array(keys, inner_stringify(obj[key], key, 
+        // @ts-expect-error
+        generateArrayPrefix, commaRoundTrip, options.allowEmptyArrays, options.strictNullHandling, options.skipNulls, options.encodeDotInKeys, options.encode ? options.encoder : null, options.filter, options.sort, options.allowDots, options.serializeDate, options.format, options.formatter, options.encodeValuesOnly, options.charset, sideChannel));
+    }
+    const joined = keys.join(options.delimiter);
+    let prefix = options.addQueryPrefix === true ? '?' : '';
+    if (options.charsetSentinel) {
+        if (options.charset === 'iso-8859-1') {
+            // encodeURIComponent('&#10003;'), the "numeric entity" representation of a checkmark
+            prefix += 'utf8=%26%2310003%3B&';
+        }
+        else {
+            // encodeURIComponent('✓')
+            prefix += 'utf8=%E2%9C%93&';
+        }
+    }
+    return joined.length > 0 ? prefix + joined : '';
+}
+//# sourceMappingURL=stringify.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/internal/qs/utils.mjs":
+/*!***************************************************!*\
+  !*** ./node_modules/openai/internal/qs/utils.mjs ***!
+  \***************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   assign_single_source: () => (/* binding */ assign_single_source),
+/* harmony export */   combine: () => (/* binding */ combine),
+/* harmony export */   compact: () => (/* binding */ compact),
+/* harmony export */   decode: () => (/* binding */ decode),
+/* harmony export */   encode: () => (/* binding */ encode),
+/* harmony export */   is_buffer: () => (/* binding */ is_buffer),
+/* harmony export */   is_regexp: () => (/* binding */ is_regexp),
+/* harmony export */   maybe_map: () => (/* binding */ maybe_map),
+/* harmony export */   merge: () => (/* binding */ merge)
+/* harmony export */ });
+/* harmony import */ var _formats_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./formats.mjs */ "./node_modules/openai/internal/qs/formats.mjs");
+
+const has = Object.prototype.hasOwnProperty;
+const is_array = Array.isArray;
+const hex_table = (() => {
+    const array = [];
+    for (let i = 0; i < 256; ++i) {
+        array.push('%' + ((i < 16 ? '0' : '') + i.toString(16)).toUpperCase());
+    }
+    return array;
+})();
+function compact_queue(queue) {
+    while (queue.length > 1) {
+        const item = queue.pop();
+        if (!item)
+            continue;
+        const obj = item.obj[item.prop];
+        if (is_array(obj)) {
+            const compacted = [];
+            for (let j = 0; j < obj.length; ++j) {
+                if (typeof obj[j] !== 'undefined') {
+                    compacted.push(obj[j]);
+                }
+            }
+            // @ts-ignore
+            item.obj[item.prop] = compacted;
+        }
+    }
+}
+function array_to_object(source, options) {
+    const obj = options && options.plainObjects ? Object.create(null) : {};
+    for (let i = 0; i < source.length; ++i) {
+        if (typeof source[i] !== 'undefined') {
+            obj[i] = source[i];
+        }
+    }
+    return obj;
+}
+function merge(target, source, options = {}) {
+    if (!source) {
+        return target;
+    }
+    if (typeof source !== 'object') {
+        if (is_array(target)) {
+            target.push(source);
+        }
+        else if (target && typeof target === 'object') {
+            if ((options && (options.plainObjects || options.allowPrototypes)) ||
+                !has.call(Object.prototype, source)) {
+                target[source] = true;
+            }
+        }
+        else {
+            return [target, source];
+        }
+        return target;
+    }
+    if (!target || typeof target !== 'object') {
+        return [target].concat(source);
+    }
+    let mergeTarget = target;
+    if (is_array(target) && !is_array(source)) {
+        // @ts-ignore
+        mergeTarget = array_to_object(target, options);
+    }
+    if (is_array(target) && is_array(source)) {
+        source.forEach(function (item, i) {
+            if (has.call(target, i)) {
+                const targetItem = target[i];
+                if (targetItem && typeof targetItem === 'object' && item && typeof item === 'object') {
+                    target[i] = merge(targetItem, item, options);
+                }
+                else {
+                    target.push(item);
+                }
+            }
+            else {
+                target[i] = item;
+            }
+        });
+        return target;
+    }
+    return Object.keys(source).reduce(function (acc, key) {
+        const value = source[key];
+        if (has.call(acc, key)) {
+            acc[key] = merge(acc[key], value, options);
+        }
+        else {
+            acc[key] = value;
+        }
+        return acc;
+    }, mergeTarget);
+}
+function assign_single_source(target, source) {
+    return Object.keys(source).reduce(function (acc, key) {
+        acc[key] = source[key];
+        return acc;
+    }, target);
+}
+function decode(str, _, charset) {
+    const strWithoutPlus = str.replace(/\+/g, ' ');
+    if (charset === 'iso-8859-1') {
+        // unescape never throws, no try...catch needed:
+        return strWithoutPlus.replace(/%[0-9a-f]{2}/gi, unescape);
+    }
+    // utf-8
+    try {
+        return decodeURIComponent(strWithoutPlus);
+    }
+    catch (e) {
+        return strWithoutPlus;
+    }
+}
+const limit = 1024;
+const encode = (str, _defaultEncoder, charset, _kind, format) => {
+    // This code was originally written by Brian White for the io.js core querystring library.
+    // It has been adapted here for stricter adherence to RFC 3986
+    if (str.length === 0) {
+        return str;
+    }
+    let string = str;
+    if (typeof str === 'symbol') {
+        string = Symbol.prototype.toString.call(str);
+    }
+    else if (typeof str !== 'string') {
+        string = String(str);
+    }
+    if (charset === 'iso-8859-1') {
+        return escape(string).replace(/%u[0-9a-f]{4}/gi, function ($0) {
+            return '%26%23' + parseInt($0.slice(2), 16) + '%3B';
+        });
+    }
+    let out = '';
+    for (let j = 0; j < string.length; j += limit) {
+        const segment = string.length >= limit ? string.slice(j, j + limit) : string;
+        const arr = [];
+        for (let i = 0; i < segment.length; ++i) {
+            let c = segment.charCodeAt(i);
+            if (c === 0x2d || // -
+                c === 0x2e || // .
+                c === 0x5f || // _
+                c === 0x7e || // ~
+                (c >= 0x30 && c <= 0x39) || // 0-9
+                (c >= 0x41 && c <= 0x5a) || // a-z
+                (c >= 0x61 && c <= 0x7a) || // A-Z
+                (format === _formats_mjs__WEBPACK_IMPORTED_MODULE_0__.RFC1738 && (c === 0x28 || c === 0x29)) // ( )
+            ) {
+                arr[arr.length] = segment.charAt(i);
+                continue;
+            }
+            if (c < 0x80) {
+                arr[arr.length] = hex_table[c];
+                continue;
+            }
+            if (c < 0x800) {
+                arr[arr.length] = hex_table[0xc0 | (c >> 6)] + hex_table[0x80 | (c & 0x3f)];
+                continue;
+            }
+            if (c < 0xd800 || c >= 0xe000) {
+                arr[arr.length] =
+                    hex_table[0xe0 | (c >> 12)] + hex_table[0x80 | ((c >> 6) & 0x3f)] + hex_table[0x80 | (c & 0x3f)];
+                continue;
+            }
+            i += 1;
+            c = 0x10000 + (((c & 0x3ff) << 10) | (segment.charCodeAt(i) & 0x3ff));
+            arr[arr.length] =
+                hex_table[0xf0 | (c >> 18)] +
+                    hex_table[0x80 | ((c >> 12) & 0x3f)] +
+                    hex_table[0x80 | ((c >> 6) & 0x3f)] +
+                    hex_table[0x80 | (c & 0x3f)];
+        }
+        out += arr.join('');
+    }
+    return out;
+};
+function compact(value) {
+    const queue = [{ obj: { o: value }, prop: 'o' }];
+    const refs = [];
+    for (let i = 0; i < queue.length; ++i) {
+        const item = queue[i];
+        // @ts-ignore
+        const obj = item.obj[item.prop];
+        const keys = Object.keys(obj);
+        for (let j = 0; j < keys.length; ++j) {
+            const key = keys[j];
+            const val = obj[key];
+            if (typeof val === 'object' && val !== null && refs.indexOf(val) === -1) {
+                queue.push({ obj: obj, prop: key });
+                refs.push(val);
+            }
+        }
+    }
+    compact_queue(queue);
+    return value;
+}
+function is_regexp(obj) {
+    return Object.prototype.toString.call(obj) === '[object RegExp]';
+}
+function is_buffer(obj) {
+    if (!obj || typeof obj !== 'object') {
+        return false;
+    }
+    return !!(obj.constructor && obj.constructor.isBuffer && obj.constructor.isBuffer(obj));
+}
+function combine(a, b) {
+    return [].concat(a, b);
+}
+function maybe_map(val, fn) {
+    if (is_array(val)) {
+        const mapped = [];
+        for (let i = 0; i < val.length; i += 1) {
+            mapped.push(fn(val[i]));
+        }
+        return mapped;
+    }
+    return fn(val);
+}
+//# sourceMappingURL=utils.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/internal/stream-utils.mjs":
+/*!*******************************************************!*\
+  !*** ./node_modules/openai/internal/stream-utils.mjs ***!
+  \*******************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   ReadableStreamToAsyncIterable: () => (/* binding */ ReadableStreamToAsyncIterable)
+/* harmony export */ });
+/**
+ * Most browsers don't yet have async iterable support for ReadableStream,
+ * and Node has a very different way of reading bytes from its "ReadableStream".
+ *
+ * This polyfill was pulled from https://github.com/MattiasBuelens/web-streams-polyfill/pull/122#issuecomment-1627354490
+ */
+function ReadableStreamToAsyncIterable(stream) {
+    if (stream[Symbol.asyncIterator])
+        return stream;
+    const reader = stream.getReader();
+    return {
+        async next() {
+            try {
+                const result = await reader.read();
+                if (result?.done)
+                    reader.releaseLock(); // release lock when stream becomes closed
+                return result;
+            }
+            catch (e) {
+                reader.releaseLock(); // release lock when stream becomes errored
+                throw e;
+            }
+        },
+        async return() {
+            const cancelPromise = reader.cancel();
+            reader.releaseLock();
+            await cancelPromise;
+            return { done: true, value: undefined };
+        },
+        [Symbol.asyncIterator]() {
+            return this;
+        },
+    };
+}
+//# sourceMappingURL=stream-utils.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/lib/AbstractChatCompletionRunner.mjs":
+/*!******************************************************************!*\
+  !*** ./node_modules/openai/lib/AbstractChatCompletionRunner.mjs ***!
+  \******************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   AbstractChatCompletionRunner: () => (/* binding */ AbstractChatCompletionRunner)
+/* harmony export */ });
+/* harmony import */ var _error_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../error.mjs */ "./node_modules/openai/error.mjs");
+/* harmony import */ var _RunnableFunction_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./RunnableFunction.mjs */ "./node_modules/openai/lib/RunnableFunction.mjs");
+/* harmony import */ var _chatCompletionUtils_mjs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./chatCompletionUtils.mjs */ "./node_modules/openai/lib/chatCompletionUtils.mjs");
+/* harmony import */ var _EventStream_mjs__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./EventStream.mjs */ "./node_modules/openai/lib/EventStream.mjs");
+/* harmony import */ var _lib_parser_mjs__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../lib/parser.mjs */ "./node_modules/openai/lib/parser.mjs");
+var __classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, state, kind, f) {
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+    return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+};
+var _AbstractChatCompletionRunner_instances, _AbstractChatCompletionRunner_getFinalContent, _AbstractChatCompletionRunner_getFinalMessage, _AbstractChatCompletionRunner_getFinalFunctionCall, _AbstractChatCompletionRunner_getFinalFunctionCallResult, _AbstractChatCompletionRunner_calculateTotalUsage, _AbstractChatCompletionRunner_validateParams, _AbstractChatCompletionRunner_stringifyFunctionCallResult;
+
+
+
+
+
+const DEFAULT_MAX_CHAT_COMPLETIONS = 10;
+class AbstractChatCompletionRunner extends _EventStream_mjs__WEBPACK_IMPORTED_MODULE_3__.EventStream {
+    constructor() {
+        super(...arguments);
+        _AbstractChatCompletionRunner_instances.add(this);
+        this._chatCompletions = [];
+        this.messages = [];
+    }
+    _addChatCompletion(chatCompletion) {
+        this._chatCompletions.push(chatCompletion);
+        this._emit('chatCompletion', chatCompletion);
+        const message = chatCompletion.choices[0]?.message;
+        if (message)
+            this._addMessage(message);
+        return chatCompletion;
+    }
+    _addMessage(message, emit = true) {
+        if (!('content' in message))
+            message.content = null;
+        this.messages.push(message);
+        if (emit) {
+            this._emit('message', message);
+            if (((0,_chatCompletionUtils_mjs__WEBPACK_IMPORTED_MODULE_2__.isFunctionMessage)(message) || (0,_chatCompletionUtils_mjs__WEBPACK_IMPORTED_MODULE_2__.isToolMessage)(message)) && message.content) {
+                // Note, this assumes that {role: 'tool', content: …} is always the result of a call of tool of type=function.
+                this._emit('functionCallResult', message.content);
+            }
+            else if ((0,_chatCompletionUtils_mjs__WEBPACK_IMPORTED_MODULE_2__.isAssistantMessage)(message) && message.function_call) {
+                this._emit('functionCall', message.function_call);
+            }
+            else if ((0,_chatCompletionUtils_mjs__WEBPACK_IMPORTED_MODULE_2__.isAssistantMessage)(message) && message.tool_calls) {
+                for (const tool_call of message.tool_calls) {
+                    if (tool_call.type === 'function') {
+                        this._emit('functionCall', tool_call.function);
+                    }
+                }
+            }
+        }
+    }
+    /**
+     * @returns a promise that resolves with the final ChatCompletion, or rejects
+     * if an error occurred or the stream ended prematurely without producing a ChatCompletion.
+     */
+    async finalChatCompletion() {
+        await this.done();
+        const completion = this._chatCompletions[this._chatCompletions.length - 1];
+        if (!completion)
+            throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError('stream ended without producing a ChatCompletion');
+        return completion;
+    }
+    /**
+     * @returns a promise that resolves with the content of the final ChatCompletionMessage, or rejects
+     * if an error occurred or the stream ended prematurely without producing a ChatCompletionMessage.
+     */
+    async finalContent() {
+        await this.done();
+        return __classPrivateFieldGet(this, _AbstractChatCompletionRunner_instances, "m", _AbstractChatCompletionRunner_getFinalContent).call(this);
+    }
+    /**
+     * @returns a promise that resolves with the the final assistant ChatCompletionMessage response,
+     * or rejects if an error occurred or the stream ended prematurely without producing a ChatCompletionMessage.
+     */
+    async finalMessage() {
+        await this.done();
+        return __classPrivateFieldGet(this, _AbstractChatCompletionRunner_instances, "m", _AbstractChatCompletionRunner_getFinalMessage).call(this);
+    }
+    /**
+     * @returns a promise that resolves with the content of the final FunctionCall, or rejects
+     * if an error occurred or the stream ended prematurely without producing a ChatCompletionMessage.
+     */
+    async finalFunctionCall() {
+        await this.done();
+        return __classPrivateFieldGet(this, _AbstractChatCompletionRunner_instances, "m", _AbstractChatCompletionRunner_getFinalFunctionCall).call(this);
+    }
+    async finalFunctionCallResult() {
+        await this.done();
+        return __classPrivateFieldGet(this, _AbstractChatCompletionRunner_instances, "m", _AbstractChatCompletionRunner_getFinalFunctionCallResult).call(this);
+    }
+    async totalUsage() {
+        await this.done();
+        return __classPrivateFieldGet(this, _AbstractChatCompletionRunner_instances, "m", _AbstractChatCompletionRunner_calculateTotalUsage).call(this);
+    }
+    allChatCompletions() {
+        return [...this._chatCompletions];
+    }
+    _emitFinal() {
+        const completion = this._chatCompletions[this._chatCompletions.length - 1];
+        if (completion)
+            this._emit('finalChatCompletion', completion);
+        const finalMessage = __classPrivateFieldGet(this, _AbstractChatCompletionRunner_instances, "m", _AbstractChatCompletionRunner_getFinalMessage).call(this);
+        if (finalMessage)
+            this._emit('finalMessage', finalMessage);
+        const finalContent = __classPrivateFieldGet(this, _AbstractChatCompletionRunner_instances, "m", _AbstractChatCompletionRunner_getFinalContent).call(this);
+        if (finalContent)
+            this._emit('finalContent', finalContent);
+        const finalFunctionCall = __classPrivateFieldGet(this, _AbstractChatCompletionRunner_instances, "m", _AbstractChatCompletionRunner_getFinalFunctionCall).call(this);
+        if (finalFunctionCall)
+            this._emit('finalFunctionCall', finalFunctionCall);
+        const finalFunctionCallResult = __classPrivateFieldGet(this, _AbstractChatCompletionRunner_instances, "m", _AbstractChatCompletionRunner_getFinalFunctionCallResult).call(this);
+        if (finalFunctionCallResult != null)
+            this._emit('finalFunctionCallResult', finalFunctionCallResult);
+        if (this._chatCompletions.some((c) => c.usage)) {
+            this._emit('totalUsage', __classPrivateFieldGet(this, _AbstractChatCompletionRunner_instances, "m", _AbstractChatCompletionRunner_calculateTotalUsage).call(this));
+        }
+    }
+    async _createChatCompletion(client, params, options) {
+        const signal = options?.signal;
+        if (signal) {
+            if (signal.aborted)
+                this.controller.abort();
+            signal.addEventListener('abort', () => this.controller.abort());
+        }
+        __classPrivateFieldGet(this, _AbstractChatCompletionRunner_instances, "m", _AbstractChatCompletionRunner_validateParams).call(this, params);
+        const chatCompletion = await client.chat.completions.create({ ...params, stream: false }, { ...options, signal: this.controller.signal });
+        this._connected();
+        return this._addChatCompletion((0,_lib_parser_mjs__WEBPACK_IMPORTED_MODULE_4__.parseChatCompletion)(chatCompletion, params));
+    }
+    async _runChatCompletion(client, params, options) {
+        for (const message of params.messages) {
+            this._addMessage(message, false);
+        }
+        return await this._createChatCompletion(client, params, options);
+    }
+    async _runFunctions(client, params, options) {
+        const role = 'function';
+        const { function_call = 'auto', stream, ...restParams } = params;
+        const singleFunctionToCall = typeof function_call !== 'string' && function_call?.name;
+        const { maxChatCompletions = DEFAULT_MAX_CHAT_COMPLETIONS } = options || {};
+        const functionsByName = {};
+        for (const f of params.functions) {
+            functionsByName[f.name || f.function.name] = f;
+        }
+        const functions = params.functions.map((f) => ({
+            name: f.name || f.function.name,
+            parameters: f.parameters,
+            description: f.description,
+        }));
+        for (const message of params.messages) {
+            this._addMessage(message, false);
+        }
+        for (let i = 0; i < maxChatCompletions; ++i) {
+            const chatCompletion = await this._createChatCompletion(client, {
+                ...restParams,
+                function_call,
+                functions,
+                messages: [...this.messages],
+            }, options);
+            const message = chatCompletion.choices[0]?.message;
+            if (!message) {
+                throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError(`missing message in ChatCompletion response`);
+            }
+            if (!message.function_call)
+                return;
+            const { name, arguments: args } = message.function_call;
+            const fn = functionsByName[name];
+            if (!fn) {
+                const content = `Invalid function_call: ${JSON.stringify(name)}. Available options are: ${functions
+                    .map((f) => JSON.stringify(f.name))
+                    .join(', ')}. Please try again`;
+                this._addMessage({ role, name, content });
+                continue;
+            }
+            else if (singleFunctionToCall && singleFunctionToCall !== name) {
+                const content = `Invalid function_call: ${JSON.stringify(name)}. ${JSON.stringify(singleFunctionToCall)} requested. Please try again`;
+                this._addMessage({ role, name, content });
+                continue;
+            }
+            let parsed;
+            try {
+                parsed = (0,_RunnableFunction_mjs__WEBPACK_IMPORTED_MODULE_1__.isRunnableFunctionWithParse)(fn) ? await fn.parse(args) : args;
+            }
+            catch (error) {
+                this._addMessage({
+                    role,
+                    name,
+                    content: error instanceof Error ? error.message : String(error),
+                });
+                continue;
+            }
+            // @ts-expect-error it can't rule out `never` type.
+            const rawContent = await fn.function(parsed, this);
+            const content = __classPrivateFieldGet(this, _AbstractChatCompletionRunner_instances, "m", _AbstractChatCompletionRunner_stringifyFunctionCallResult).call(this, rawContent);
+            this._addMessage({ role, name, content });
+            if (singleFunctionToCall)
+                return;
+        }
+    }
+    async _runTools(client, params, options) {
+        const role = 'tool';
+        const { tool_choice = 'auto', stream, ...restParams } = params;
+        const singleFunctionToCall = typeof tool_choice !== 'string' && tool_choice?.function?.name;
+        const { maxChatCompletions = DEFAULT_MAX_CHAT_COMPLETIONS } = options || {};
+        // TODO(someday): clean this logic up
+        const inputTools = params.tools.map((tool) => {
+            if ((0,_lib_parser_mjs__WEBPACK_IMPORTED_MODULE_4__.isAutoParsableTool)(tool)) {
+                if (!tool.$callback) {
+                    throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError('Tool given to `.runTools()` that does not have an associated function');
+                }
+                return {
+                    type: 'function',
+                    function: {
+                        function: tool.$callback,
+                        name: tool.function.name,
+                        description: tool.function.description || '',
+                        parameters: tool.function.parameters,
+                        parse: tool.$parseRaw,
+                        strict: true,
+                    },
+                };
+            }
+            return tool;
+        });
+        const functionsByName = {};
+        for (const f of inputTools) {
+            if (f.type === 'function') {
+                functionsByName[f.function.name || f.function.function.name] = f.function;
+            }
+        }
+        const tools = 'tools' in params ?
+            inputTools.map((t) => t.type === 'function' ?
+                {
+                    type: 'function',
+                    function: {
+                        name: t.function.name || t.function.function.name,
+                        parameters: t.function.parameters,
+                        description: t.function.description,
+                        strict: t.function.strict,
+                    },
+                }
+                : t)
+            : undefined;
+        for (const message of params.messages) {
+            this._addMessage(message, false);
+        }
+        for (let i = 0; i < maxChatCompletions; ++i) {
+            const chatCompletion = await this._createChatCompletion(client, {
+                ...restParams,
+                tool_choice,
+                tools,
+                messages: [...this.messages],
+            }, options);
+            const message = chatCompletion.choices[0]?.message;
+            if (!message) {
+                throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError(`missing message in ChatCompletion response`);
+            }
+            if (!message.tool_calls?.length) {
+                return;
+            }
+            for (const tool_call of message.tool_calls) {
+                if (tool_call.type !== 'function')
+                    continue;
+                const tool_call_id = tool_call.id;
+                const { name, arguments: args } = tool_call.function;
+                const fn = functionsByName[name];
+                if (!fn) {
+                    const content = `Invalid tool_call: ${JSON.stringify(name)}. Available options are: ${Object.keys(functionsByName)
+                        .map((name) => JSON.stringify(name))
+                        .join(', ')}. Please try again`;
+                    this._addMessage({ role, tool_call_id, content });
+                    continue;
+                }
+                else if (singleFunctionToCall && singleFunctionToCall !== name) {
+                    const content = `Invalid tool_call: ${JSON.stringify(name)}. ${JSON.stringify(singleFunctionToCall)} requested. Please try again`;
+                    this._addMessage({ role, tool_call_id, content });
+                    continue;
+                }
+                let parsed;
+                try {
+                    parsed = (0,_RunnableFunction_mjs__WEBPACK_IMPORTED_MODULE_1__.isRunnableFunctionWithParse)(fn) ? await fn.parse(args) : args;
+                }
+                catch (error) {
+                    const content = error instanceof Error ? error.message : String(error);
+                    this._addMessage({ role, tool_call_id, content });
+                    continue;
+                }
+                // @ts-expect-error it can't rule out `never` type.
+                const rawContent = await fn.function(parsed, this);
+                const content = __classPrivateFieldGet(this, _AbstractChatCompletionRunner_instances, "m", _AbstractChatCompletionRunner_stringifyFunctionCallResult).call(this, rawContent);
+                this._addMessage({ role, tool_call_id, content });
+                if (singleFunctionToCall) {
+                    return;
+                }
+            }
+        }
+        return;
+    }
+}
+_AbstractChatCompletionRunner_instances = new WeakSet(), _AbstractChatCompletionRunner_getFinalContent = function _AbstractChatCompletionRunner_getFinalContent() {
+    return __classPrivateFieldGet(this, _AbstractChatCompletionRunner_instances, "m", _AbstractChatCompletionRunner_getFinalMessage).call(this).content ?? null;
+}, _AbstractChatCompletionRunner_getFinalMessage = function _AbstractChatCompletionRunner_getFinalMessage() {
+    let i = this.messages.length;
+    while (i-- > 0) {
+        const message = this.messages[i];
+        if ((0,_chatCompletionUtils_mjs__WEBPACK_IMPORTED_MODULE_2__.isAssistantMessage)(message)) {
+            const { function_call, ...rest } = message;
+            // TODO: support audio here
+            const ret = {
+                ...rest,
+                content: message.content ?? null,
+                refusal: message.refusal ?? null,
+            };
+            if (function_call) {
+                ret.function_call = function_call;
+            }
+            return ret;
+        }
+    }
+    throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError('stream ended without producing a ChatCompletionMessage with role=assistant');
+}, _AbstractChatCompletionRunner_getFinalFunctionCall = function _AbstractChatCompletionRunner_getFinalFunctionCall() {
+    for (let i = this.messages.length - 1; i >= 0; i--) {
+        const message = this.messages[i];
+        if ((0,_chatCompletionUtils_mjs__WEBPACK_IMPORTED_MODULE_2__.isAssistantMessage)(message) && message?.function_call) {
+            return message.function_call;
+        }
+        if ((0,_chatCompletionUtils_mjs__WEBPACK_IMPORTED_MODULE_2__.isAssistantMessage)(message) && message?.tool_calls?.length) {
+            return message.tool_calls.at(-1)?.function;
+        }
+    }
+    return;
+}, _AbstractChatCompletionRunner_getFinalFunctionCallResult = function _AbstractChatCompletionRunner_getFinalFunctionCallResult() {
+    for (let i = this.messages.length - 1; i >= 0; i--) {
+        const message = this.messages[i];
+        if ((0,_chatCompletionUtils_mjs__WEBPACK_IMPORTED_MODULE_2__.isFunctionMessage)(message) && message.content != null) {
+            return message.content;
+        }
+        if ((0,_chatCompletionUtils_mjs__WEBPACK_IMPORTED_MODULE_2__.isToolMessage)(message) &&
+            message.content != null &&
+            typeof message.content === 'string' &&
+            this.messages.some((x) => x.role === 'assistant' &&
+                x.tool_calls?.some((y) => y.type === 'function' && y.id === message.tool_call_id))) {
+            return message.content;
+        }
+    }
+    return;
+}, _AbstractChatCompletionRunner_calculateTotalUsage = function _AbstractChatCompletionRunner_calculateTotalUsage() {
+    const total = {
+        completion_tokens: 0,
+        prompt_tokens: 0,
+        total_tokens: 0,
+    };
+    for (const { usage } of this._chatCompletions) {
+        if (usage) {
+            total.completion_tokens += usage.completion_tokens;
+            total.prompt_tokens += usage.prompt_tokens;
+            total.total_tokens += usage.total_tokens;
+        }
+    }
+    return total;
+}, _AbstractChatCompletionRunner_validateParams = function _AbstractChatCompletionRunner_validateParams(params) {
+    if (params.n != null && params.n > 1) {
+        throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError('ChatCompletion convenience helpers only support n=1 at this time. To use n>1, please use chat.completions.create() directly.');
+    }
+}, _AbstractChatCompletionRunner_stringifyFunctionCallResult = function _AbstractChatCompletionRunner_stringifyFunctionCallResult(rawContent) {
+    return (typeof rawContent === 'string' ? rawContent
+        : rawContent === undefined ? 'undefined'
+            : JSON.stringify(rawContent));
+};
+//# sourceMappingURL=AbstractChatCompletionRunner.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/lib/AssistantStream.mjs":
+/*!*****************************************************!*\
+  !*** ./node_modules/openai/lib/AssistantStream.mjs ***!
+  \*****************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   AssistantStream: () => (/* binding */ AssistantStream)
+/* harmony export */ });
+/* harmony import */ var _core_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../core.mjs */ "./node_modules/openai/core.mjs");
+/* harmony import */ var _streaming_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../streaming.mjs */ "./node_modules/openai/streaming.mjs");
+/* harmony import */ var _error_mjs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../error.mjs */ "./node_modules/openai/error.mjs");
+/* harmony import */ var _EventStream_mjs__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./EventStream.mjs */ "./node_modules/openai/lib/EventStream.mjs");
+var __classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, state, kind, f) {
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+    return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+};
+var __classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, state, value, kind, f) {
+    if (kind === "m") throw new TypeError("Private method is not writable");
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+    return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
+};
+var _AssistantStream_instances, _AssistantStream_events, _AssistantStream_runStepSnapshots, _AssistantStream_messageSnapshots, _AssistantStream_messageSnapshot, _AssistantStream_finalRun, _AssistantStream_currentContentIndex, _AssistantStream_currentContent, _AssistantStream_currentToolCallIndex, _AssistantStream_currentToolCall, _AssistantStream_currentEvent, _AssistantStream_currentRunSnapshot, _AssistantStream_currentRunStepSnapshot, _AssistantStream_addEvent, _AssistantStream_endRequest, _AssistantStream_handleMessage, _AssistantStream_handleRunStep, _AssistantStream_handleEvent, _AssistantStream_accumulateRunStep, _AssistantStream_accumulateMessage, _AssistantStream_accumulateContent, _AssistantStream_handleRun;
+
+
+
+
+class AssistantStream extends _EventStream_mjs__WEBPACK_IMPORTED_MODULE_3__.EventStream {
+    constructor() {
+        super(...arguments);
+        _AssistantStream_instances.add(this);
+        //Track all events in a single list for reference
+        _AssistantStream_events.set(this, []);
+        //Used to accumulate deltas
+        //We are accumulating many types so the value here is not strict
+        _AssistantStream_runStepSnapshots.set(this, {});
+        _AssistantStream_messageSnapshots.set(this, {});
+        _AssistantStream_messageSnapshot.set(this, void 0);
+        _AssistantStream_finalRun.set(this, void 0);
+        _AssistantStream_currentContentIndex.set(this, void 0);
+        _AssistantStream_currentContent.set(this, void 0);
+        _AssistantStream_currentToolCallIndex.set(this, void 0);
+        _AssistantStream_currentToolCall.set(this, void 0);
+        //For current snapshot methods
+        _AssistantStream_currentEvent.set(this, void 0);
+        _AssistantStream_currentRunSnapshot.set(this, void 0);
+        _AssistantStream_currentRunStepSnapshot.set(this, void 0);
+    }
+    [(_AssistantStream_events = new WeakMap(), _AssistantStream_runStepSnapshots = new WeakMap(), _AssistantStream_messageSnapshots = new WeakMap(), _AssistantStream_messageSnapshot = new WeakMap(), _AssistantStream_finalRun = new WeakMap(), _AssistantStream_currentContentIndex = new WeakMap(), _AssistantStream_currentContent = new WeakMap(), _AssistantStream_currentToolCallIndex = new WeakMap(), _AssistantStream_currentToolCall = new WeakMap(), _AssistantStream_currentEvent = new WeakMap(), _AssistantStream_currentRunSnapshot = new WeakMap(), _AssistantStream_currentRunStepSnapshot = new WeakMap(), _AssistantStream_instances = new WeakSet(), Symbol.asyncIterator)]() {
+        const pushQueue = [];
+        const readQueue = [];
+        let done = false;
+        //Catch all for passing along all events
+        this.on('event', (event) => {
+            const reader = readQueue.shift();
+            if (reader) {
+                reader.resolve(event);
+            }
+            else {
+                pushQueue.push(event);
+            }
+        });
+        this.on('end', () => {
+            done = true;
+            for (const reader of readQueue) {
+                reader.resolve(undefined);
+            }
+            readQueue.length = 0;
+        });
+        this.on('abort', (err) => {
+            done = true;
+            for (const reader of readQueue) {
+                reader.reject(err);
+            }
+            readQueue.length = 0;
+        });
+        this.on('error', (err) => {
+            done = true;
+            for (const reader of readQueue) {
+                reader.reject(err);
+            }
+            readQueue.length = 0;
+        });
+        return {
+            next: async () => {
+                if (!pushQueue.length) {
+                    if (done) {
+                        return { value: undefined, done: true };
+                    }
+                    return new Promise((resolve, reject) => readQueue.push({ resolve, reject })).then((chunk) => (chunk ? { value: chunk, done: false } : { value: undefined, done: true }));
+                }
+                const chunk = pushQueue.shift();
+                return { value: chunk, done: false };
+            },
+            return: async () => {
+                this.abort();
+                return { value: undefined, done: true };
+            },
+        };
+    }
+    static fromReadableStream(stream) {
+        const runner = new AssistantStream();
+        runner._run(() => runner._fromReadableStream(stream));
+        return runner;
+    }
+    async _fromReadableStream(readableStream, options) {
+        const signal = options?.signal;
+        if (signal) {
+            if (signal.aborted)
+                this.controller.abort();
+            signal.addEventListener('abort', () => this.controller.abort());
+        }
+        this._connected();
+        const stream = _streaming_mjs__WEBPACK_IMPORTED_MODULE_1__.Stream.fromReadableStream(readableStream, this.controller);
+        for await (const event of stream) {
+            __classPrivateFieldGet(this, _AssistantStream_instances, "m", _AssistantStream_addEvent).call(this, event);
+        }
+        if (stream.controller.signal?.aborted) {
+            throw new _error_mjs__WEBPACK_IMPORTED_MODULE_2__.APIUserAbortError();
+        }
+        return this._addRun(__classPrivateFieldGet(this, _AssistantStream_instances, "m", _AssistantStream_endRequest).call(this));
+    }
+    toReadableStream() {
+        const stream = new _streaming_mjs__WEBPACK_IMPORTED_MODULE_1__.Stream(this[Symbol.asyncIterator].bind(this), this.controller);
+        return stream.toReadableStream();
+    }
+    static createToolAssistantStream(threadId, runId, runs, params, options) {
+        const runner = new AssistantStream();
+        runner._run(() => runner._runToolAssistantStream(threadId, runId, runs, params, {
+            ...options,
+            headers: { ...options?.headers, 'X-Stainless-Helper-Method': 'stream' },
+        }));
+        return runner;
+    }
+    async _createToolAssistantStream(run, threadId, runId, params, options) {
+        const signal = options?.signal;
+        if (signal) {
+            if (signal.aborted)
+                this.controller.abort();
+            signal.addEventListener('abort', () => this.controller.abort());
+        }
+        const body = { ...params, stream: true };
+        const stream = await run.submitToolOutputs(threadId, runId, body, {
+            ...options,
+            signal: this.controller.signal,
+        });
+        this._connected();
+        for await (const event of stream) {
+            __classPrivateFieldGet(this, _AssistantStream_instances, "m", _AssistantStream_addEvent).call(this, event);
+        }
+        if (stream.controller.signal?.aborted) {
+            throw new _error_mjs__WEBPACK_IMPORTED_MODULE_2__.APIUserAbortError();
+        }
+        return this._addRun(__classPrivateFieldGet(this, _AssistantStream_instances, "m", _AssistantStream_endRequest).call(this));
+    }
+    static createThreadAssistantStream(params, thread, options) {
+        const runner = new AssistantStream();
+        runner._run(() => runner._threadAssistantStream(params, thread, {
+            ...options,
+            headers: { ...options?.headers, 'X-Stainless-Helper-Method': 'stream' },
+        }));
+        return runner;
+    }
+    static createAssistantStream(threadId, runs, params, options) {
+        const runner = new AssistantStream();
+        runner._run(() => runner._runAssistantStream(threadId, runs, params, {
+            ...options,
+            headers: { ...options?.headers, 'X-Stainless-Helper-Method': 'stream' },
+        }));
+        return runner;
+    }
+    currentEvent() {
+        return __classPrivateFieldGet(this, _AssistantStream_currentEvent, "f");
+    }
+    currentRun() {
+        return __classPrivateFieldGet(this, _AssistantStream_currentRunSnapshot, "f");
+    }
+    currentMessageSnapshot() {
+        return __classPrivateFieldGet(this, _AssistantStream_messageSnapshot, "f");
+    }
+    currentRunStepSnapshot() {
+        return __classPrivateFieldGet(this, _AssistantStream_currentRunStepSnapshot, "f");
+    }
+    async finalRunSteps() {
+        await this.done();
+        return Object.values(__classPrivateFieldGet(this, _AssistantStream_runStepSnapshots, "f"));
+    }
+    async finalMessages() {
+        await this.done();
+        return Object.values(__classPrivateFieldGet(this, _AssistantStream_messageSnapshots, "f"));
+    }
+    async finalRun() {
+        await this.done();
+        if (!__classPrivateFieldGet(this, _AssistantStream_finalRun, "f"))
+            throw Error('Final run was not received.');
+        return __classPrivateFieldGet(this, _AssistantStream_finalRun, "f");
+    }
+    async _createThreadAssistantStream(thread, params, options) {
+        const signal = options?.signal;
+        if (signal) {
+            if (signal.aborted)
+                this.controller.abort();
+            signal.addEventListener('abort', () => this.controller.abort());
+        }
+        const body = { ...params, stream: true };
+        const stream = await thread.createAndRun(body, { ...options, signal: this.controller.signal });
+        this._connected();
+        for await (const event of stream) {
+            __classPrivateFieldGet(this, _AssistantStream_instances, "m", _AssistantStream_addEvent).call(this, event);
+        }
+        if (stream.controller.signal?.aborted) {
+            throw new _error_mjs__WEBPACK_IMPORTED_MODULE_2__.APIUserAbortError();
+        }
+        return this._addRun(__classPrivateFieldGet(this, _AssistantStream_instances, "m", _AssistantStream_endRequest).call(this));
+    }
+    async _createAssistantStream(run, threadId, params, options) {
+        const signal = options?.signal;
+        if (signal) {
+            if (signal.aborted)
+                this.controller.abort();
+            signal.addEventListener('abort', () => this.controller.abort());
+        }
+        const body = { ...params, stream: true };
+        const stream = await run.create(threadId, body, { ...options, signal: this.controller.signal });
+        this._connected();
+        for await (const event of stream) {
+            __classPrivateFieldGet(this, _AssistantStream_instances, "m", _AssistantStream_addEvent).call(this, event);
+        }
+        if (stream.controller.signal?.aborted) {
+            throw new _error_mjs__WEBPACK_IMPORTED_MODULE_2__.APIUserAbortError();
+        }
+        return this._addRun(__classPrivateFieldGet(this, _AssistantStream_instances, "m", _AssistantStream_endRequest).call(this));
+    }
+    static accumulateDelta(acc, delta) {
+        for (const [key, deltaValue] of Object.entries(delta)) {
+            if (!acc.hasOwnProperty(key)) {
+                acc[key] = deltaValue;
+                continue;
+            }
+            let accValue = acc[key];
+            if (accValue === null || accValue === undefined) {
+                acc[key] = deltaValue;
+                continue;
+            }
+            // We don't accumulate these special properties
+            if (key === 'index' || key === 'type') {
+                acc[key] = deltaValue;
+                continue;
+            }
+            // Type-specific accumulation logic
+            if (typeof accValue === 'string' && typeof deltaValue === 'string') {
+                accValue += deltaValue;
+            }
+            else if (typeof accValue === 'number' && typeof deltaValue === 'number') {
+                accValue += deltaValue;
+            }
+            else if (_core_mjs__WEBPACK_IMPORTED_MODULE_0__.isObj(accValue) && _core_mjs__WEBPACK_IMPORTED_MODULE_0__.isObj(deltaValue)) {
+                accValue = this.accumulateDelta(accValue, deltaValue);
+            }
+            else if (Array.isArray(accValue) && Array.isArray(deltaValue)) {
+                if (accValue.every((x) => typeof x === 'string' || typeof x === 'number')) {
+                    accValue.push(...deltaValue); // Use spread syntax for efficient addition
+                    continue;
+                }
+                for (const deltaEntry of deltaValue) {
+                    if (!_core_mjs__WEBPACK_IMPORTED_MODULE_0__.isObj(deltaEntry)) {
+                        throw new Error(`Expected array delta entry to be an object but got: ${deltaEntry}`);
+                    }
+                    const index = deltaEntry['index'];
+                    if (index == null) {
+                        console.error(deltaEntry);
+                        throw new Error('Expected array delta entry to have an `index` property');
+                    }
+                    if (typeof index !== 'number') {
+                        throw new Error(`Expected array delta entry \`index\` property to be a number but got ${index}`);
+                    }
+                    const accEntry = accValue[index];
+                    if (accEntry == null) {
+                        accValue.push(deltaEntry);
+                    }
+                    else {
+                        accValue[index] = this.accumulateDelta(accEntry, deltaEntry);
+                    }
+                }
+                continue;
+            }
+            else {
+                throw Error(`Unhandled record type: ${key}, deltaValue: ${deltaValue}, accValue: ${accValue}`);
+            }
+            acc[key] = accValue;
+        }
+        return acc;
+    }
+    _addRun(run) {
+        return run;
+    }
+    async _threadAssistantStream(params, thread, options) {
+        return await this._createThreadAssistantStream(thread, params, options);
+    }
+    async _runAssistantStream(threadId, runs, params, options) {
+        return await this._createAssistantStream(runs, threadId, params, options);
+    }
+    async _runToolAssistantStream(threadId, runId, runs, params, options) {
+        return await this._createToolAssistantStream(runs, threadId, runId, params, options);
+    }
+}
+_AssistantStream_addEvent = function _AssistantStream_addEvent(event) {
+    if (this.ended)
+        return;
+    __classPrivateFieldSet(this, _AssistantStream_currentEvent, event, "f");
+    __classPrivateFieldGet(this, _AssistantStream_instances, "m", _AssistantStream_handleEvent).call(this, event);
+    switch (event.event) {
+        case 'thread.created':
+            //No action on this event.
+            break;
+        case 'thread.run.created':
+        case 'thread.run.queued':
+        case 'thread.run.in_progress':
+        case 'thread.run.requires_action':
+        case 'thread.run.completed':
+        case 'thread.run.incomplete':
+        case 'thread.run.failed':
+        case 'thread.run.cancelling':
+        case 'thread.run.cancelled':
+        case 'thread.run.expired':
+            __classPrivateFieldGet(this, _AssistantStream_instances, "m", _AssistantStream_handleRun).call(this, event);
+            break;
+        case 'thread.run.step.created':
+        case 'thread.run.step.in_progress':
+        case 'thread.run.step.delta':
+        case 'thread.run.step.completed':
+        case 'thread.run.step.failed':
+        case 'thread.run.step.cancelled':
+        case 'thread.run.step.expired':
+            __classPrivateFieldGet(this, _AssistantStream_instances, "m", _AssistantStream_handleRunStep).call(this, event);
+            break;
+        case 'thread.message.created':
+        case 'thread.message.in_progress':
+        case 'thread.message.delta':
+        case 'thread.message.completed':
+        case 'thread.message.incomplete':
+            __classPrivateFieldGet(this, _AssistantStream_instances, "m", _AssistantStream_handleMessage).call(this, event);
+            break;
+        case 'error':
+            //This is included for completeness, but errors are processed in the SSE event processing so this should not occur
+            throw new Error('Encountered an error event in event processing - errors should be processed earlier');
+        default:
+            assertNever(event);
+    }
+}, _AssistantStream_endRequest = function _AssistantStream_endRequest() {
+    if (this.ended) {
+        throw new _error_mjs__WEBPACK_IMPORTED_MODULE_2__.OpenAIError(`stream has ended, this shouldn't happen`);
+    }
+    if (!__classPrivateFieldGet(this, _AssistantStream_finalRun, "f"))
+        throw Error('Final run has not been received');
+    return __classPrivateFieldGet(this, _AssistantStream_finalRun, "f");
+}, _AssistantStream_handleMessage = function _AssistantStream_handleMessage(event) {
+    const [accumulatedMessage, newContent] = __classPrivateFieldGet(this, _AssistantStream_instances, "m", _AssistantStream_accumulateMessage).call(this, event, __classPrivateFieldGet(this, _AssistantStream_messageSnapshot, "f"));
+    __classPrivateFieldSet(this, _AssistantStream_messageSnapshot, accumulatedMessage, "f");
+    __classPrivateFieldGet(this, _AssistantStream_messageSnapshots, "f")[accumulatedMessage.id] = accumulatedMessage;
+    for (const content of newContent) {
+        const snapshotContent = accumulatedMessage.content[content.index];
+        if (snapshotContent?.type == 'text') {
+            this._emit('textCreated', snapshotContent.text);
+        }
+    }
+    switch (event.event) {
+        case 'thread.message.created':
+            this._emit('messageCreated', event.data);
+            break;
+        case 'thread.message.in_progress':
+            break;
+        case 'thread.message.delta':
+            this._emit('messageDelta', event.data.delta, accumulatedMessage);
+            if (event.data.delta.content) {
+                for (const content of event.data.delta.content) {
+                    //If it is text delta, emit a text delta event
+                    if (content.type == 'text' && content.text) {
+                        let textDelta = content.text;
+                        let snapshot = accumulatedMessage.content[content.index];
+                        if (snapshot && snapshot.type == 'text') {
+                            this._emit('textDelta', textDelta, snapshot.text);
+                        }
+                        else {
+                            throw Error('The snapshot associated with this text delta is not text or missing');
+                        }
+                    }
+                    if (content.index != __classPrivateFieldGet(this, _AssistantStream_currentContentIndex, "f")) {
+                        //See if we have in progress content
+                        if (__classPrivateFieldGet(this, _AssistantStream_currentContent, "f")) {
+                            switch (__classPrivateFieldGet(this, _AssistantStream_currentContent, "f").type) {
+                                case 'text':
+                                    this._emit('textDone', __classPrivateFieldGet(this, _AssistantStream_currentContent, "f").text, __classPrivateFieldGet(this, _AssistantStream_messageSnapshot, "f"));
+                                    break;
+                                case 'image_file':
+                                    this._emit('imageFileDone', __classPrivateFieldGet(this, _AssistantStream_currentContent, "f").image_file, __classPrivateFieldGet(this, _AssistantStream_messageSnapshot, "f"));
+                                    break;
+                            }
+                        }
+                        __classPrivateFieldSet(this, _AssistantStream_currentContentIndex, content.index, "f");
+                    }
+                    __classPrivateFieldSet(this, _AssistantStream_currentContent, accumulatedMessage.content[content.index], "f");
+                }
+            }
+            break;
+        case 'thread.message.completed':
+        case 'thread.message.incomplete':
+            //We emit the latest content we were working on on completion (including incomplete)
+            if (__classPrivateFieldGet(this, _AssistantStream_currentContentIndex, "f") !== undefined) {
+                const currentContent = event.data.content[__classPrivateFieldGet(this, _AssistantStream_currentContentIndex, "f")];
+                if (currentContent) {
+                    switch (currentContent.type) {
+                        case 'image_file':
+                            this._emit('imageFileDone', currentContent.image_file, __classPrivateFieldGet(this, _AssistantStream_messageSnapshot, "f"));
+                            break;
+                        case 'text':
+                            this._emit('textDone', currentContent.text, __classPrivateFieldGet(this, _AssistantStream_messageSnapshot, "f"));
+                            break;
+                    }
+                }
+            }
+            if (__classPrivateFieldGet(this, _AssistantStream_messageSnapshot, "f")) {
+                this._emit('messageDone', event.data);
+            }
+            __classPrivateFieldSet(this, _AssistantStream_messageSnapshot, undefined, "f");
+    }
+}, _AssistantStream_handleRunStep = function _AssistantStream_handleRunStep(event) {
+    const accumulatedRunStep = __classPrivateFieldGet(this, _AssistantStream_instances, "m", _AssistantStream_accumulateRunStep).call(this, event);
+    __classPrivateFieldSet(this, _AssistantStream_currentRunStepSnapshot, accumulatedRunStep, "f");
+    switch (event.event) {
+        case 'thread.run.step.created':
+            this._emit('runStepCreated', event.data);
+            break;
+        case 'thread.run.step.delta':
+            const delta = event.data.delta;
+            if (delta.step_details &&
+                delta.step_details.type == 'tool_calls' &&
+                delta.step_details.tool_calls &&
+                accumulatedRunStep.step_details.type == 'tool_calls') {
+                for (const toolCall of delta.step_details.tool_calls) {
+                    if (toolCall.index == __classPrivateFieldGet(this, _AssistantStream_currentToolCallIndex, "f")) {
+                        this._emit('toolCallDelta', toolCall, accumulatedRunStep.step_details.tool_calls[toolCall.index]);
+                    }
+                    else {
+                        if (__classPrivateFieldGet(this, _AssistantStream_currentToolCall, "f")) {
+                            this._emit('toolCallDone', __classPrivateFieldGet(this, _AssistantStream_currentToolCall, "f"));
+                        }
+                        __classPrivateFieldSet(this, _AssistantStream_currentToolCallIndex, toolCall.index, "f");
+                        __classPrivateFieldSet(this, _AssistantStream_currentToolCall, accumulatedRunStep.step_details.tool_calls[toolCall.index], "f");
+                        if (__classPrivateFieldGet(this, _AssistantStream_currentToolCall, "f"))
+                            this._emit('toolCallCreated', __classPrivateFieldGet(this, _AssistantStream_currentToolCall, "f"));
+                    }
+                }
+            }
+            this._emit('runStepDelta', event.data.delta, accumulatedRunStep);
+            break;
+        case 'thread.run.step.completed':
+        case 'thread.run.step.failed':
+        case 'thread.run.step.cancelled':
+        case 'thread.run.step.expired':
+            __classPrivateFieldSet(this, _AssistantStream_currentRunStepSnapshot, undefined, "f");
+            const details = event.data.step_details;
+            if (details.type == 'tool_calls') {
+                if (__classPrivateFieldGet(this, _AssistantStream_currentToolCall, "f")) {
+                    this._emit('toolCallDone', __classPrivateFieldGet(this, _AssistantStream_currentToolCall, "f"));
+                    __classPrivateFieldSet(this, _AssistantStream_currentToolCall, undefined, "f");
+                }
+            }
+            this._emit('runStepDone', event.data, accumulatedRunStep);
+            break;
+        case 'thread.run.step.in_progress':
+            break;
+    }
+}, _AssistantStream_handleEvent = function _AssistantStream_handleEvent(event) {
+    __classPrivateFieldGet(this, _AssistantStream_events, "f").push(event);
+    this._emit('event', event);
+}, _AssistantStream_accumulateRunStep = function _AssistantStream_accumulateRunStep(event) {
+    switch (event.event) {
+        case 'thread.run.step.created':
+            __classPrivateFieldGet(this, _AssistantStream_runStepSnapshots, "f")[event.data.id] = event.data;
+            return event.data;
+        case 'thread.run.step.delta':
+            let snapshot = __classPrivateFieldGet(this, _AssistantStream_runStepSnapshots, "f")[event.data.id];
+            if (!snapshot) {
+                throw Error('Received a RunStepDelta before creation of a snapshot');
+            }
+            let data = event.data;
+            if (data.delta) {
+                const accumulated = AssistantStream.accumulateDelta(snapshot, data.delta);
+                __classPrivateFieldGet(this, _AssistantStream_runStepSnapshots, "f")[event.data.id] = accumulated;
+            }
+            return __classPrivateFieldGet(this, _AssistantStream_runStepSnapshots, "f")[event.data.id];
+        case 'thread.run.step.completed':
+        case 'thread.run.step.failed':
+        case 'thread.run.step.cancelled':
+        case 'thread.run.step.expired':
+        case 'thread.run.step.in_progress':
+            __classPrivateFieldGet(this, _AssistantStream_runStepSnapshots, "f")[event.data.id] = event.data;
+            break;
+    }
+    if (__classPrivateFieldGet(this, _AssistantStream_runStepSnapshots, "f")[event.data.id])
+        return __classPrivateFieldGet(this, _AssistantStream_runStepSnapshots, "f")[event.data.id];
+    throw new Error('No snapshot available');
+}, _AssistantStream_accumulateMessage = function _AssistantStream_accumulateMessage(event, snapshot) {
+    let newContent = [];
+    switch (event.event) {
+        case 'thread.message.created':
+            //On creation the snapshot is just the initial message
+            return [event.data, newContent];
+        case 'thread.message.delta':
+            if (!snapshot) {
+                throw Error('Received a delta with no existing snapshot (there should be one from message creation)');
+            }
+            let data = event.data;
+            //If this delta does not have content, nothing to process
+            if (data.delta.content) {
+                for (const contentElement of data.delta.content) {
+                    if (contentElement.index in snapshot.content) {
+                        let currentContent = snapshot.content[contentElement.index];
+                        snapshot.content[contentElement.index] = __classPrivateFieldGet(this, _AssistantStream_instances, "m", _AssistantStream_accumulateContent).call(this, contentElement, currentContent);
+                    }
+                    else {
+                        snapshot.content[contentElement.index] = contentElement;
+                        // This is a new element
+                        newContent.push(contentElement);
+                    }
+                }
+            }
+            return [snapshot, newContent];
+        case 'thread.message.in_progress':
+        case 'thread.message.completed':
+        case 'thread.message.incomplete':
+            //No changes on other thread events
+            if (snapshot) {
+                return [snapshot, newContent];
+            }
+            else {
+                throw Error('Received thread message event with no existing snapshot');
+            }
+    }
+    throw Error('Tried to accumulate a non-message event');
+}, _AssistantStream_accumulateContent = function _AssistantStream_accumulateContent(contentElement, currentContent) {
+    return AssistantStream.accumulateDelta(currentContent, contentElement);
+}, _AssistantStream_handleRun = function _AssistantStream_handleRun(event) {
+    __classPrivateFieldSet(this, _AssistantStream_currentRunSnapshot, event.data, "f");
+    switch (event.event) {
+        case 'thread.run.created':
+            break;
+        case 'thread.run.queued':
+            break;
+        case 'thread.run.in_progress':
+            break;
+        case 'thread.run.requires_action':
+        case 'thread.run.cancelled':
+        case 'thread.run.failed':
+        case 'thread.run.completed':
+        case 'thread.run.expired':
+            __classPrivateFieldSet(this, _AssistantStream_finalRun, event.data, "f");
+            if (__classPrivateFieldGet(this, _AssistantStream_currentToolCall, "f")) {
+                this._emit('toolCallDone', __classPrivateFieldGet(this, _AssistantStream_currentToolCall, "f"));
+                __classPrivateFieldSet(this, _AssistantStream_currentToolCall, undefined, "f");
+            }
+            break;
+        case 'thread.run.cancelling':
+            break;
+    }
+};
+function assertNever(_x) { }
+//# sourceMappingURL=AssistantStream.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/lib/ChatCompletionRunner.mjs":
+/*!**********************************************************!*\
+  !*** ./node_modules/openai/lib/ChatCompletionRunner.mjs ***!
+  \**********************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   ChatCompletionRunner: () => (/* binding */ ChatCompletionRunner)
+/* harmony export */ });
+/* harmony import */ var _AbstractChatCompletionRunner_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./AbstractChatCompletionRunner.mjs */ "./node_modules/openai/lib/AbstractChatCompletionRunner.mjs");
+/* harmony import */ var _chatCompletionUtils_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./chatCompletionUtils.mjs */ "./node_modules/openai/lib/chatCompletionUtils.mjs");
+
+
+class ChatCompletionRunner extends _AbstractChatCompletionRunner_mjs__WEBPACK_IMPORTED_MODULE_0__.AbstractChatCompletionRunner {
+    /** @deprecated - please use `runTools` instead. */
+    static runFunctions(client, params, options) {
+        const runner = new ChatCompletionRunner();
+        const opts = {
+            ...options,
+            headers: { ...options?.headers, 'X-Stainless-Helper-Method': 'runFunctions' },
+        };
+        runner._run(() => runner._runFunctions(client, params, opts));
+        return runner;
+    }
+    static runTools(client, params, options) {
+        const runner = new ChatCompletionRunner();
+        const opts = {
+            ...options,
+            headers: { ...options?.headers, 'X-Stainless-Helper-Method': 'runTools' },
+        };
+        runner._run(() => runner._runTools(client, params, opts));
+        return runner;
+    }
+    _addMessage(message, emit = true) {
+        super._addMessage(message, emit);
+        if ((0,_chatCompletionUtils_mjs__WEBPACK_IMPORTED_MODULE_1__.isAssistantMessage)(message) && message.content) {
+            this._emit('content', message.content);
+        }
+    }
+}
+//# sourceMappingURL=ChatCompletionRunner.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/lib/ChatCompletionStream.mjs":
+/*!**********************************************************!*\
+  !*** ./node_modules/openai/lib/ChatCompletionStream.mjs ***!
+  \**********************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   ChatCompletionStream: () => (/* binding */ ChatCompletionStream)
+/* harmony export */ });
+/* harmony import */ var _error_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../error.mjs */ "./node_modules/openai/error.mjs");
+/* harmony import */ var _AbstractChatCompletionRunner_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./AbstractChatCompletionRunner.mjs */ "./node_modules/openai/lib/AbstractChatCompletionRunner.mjs");
+/* harmony import */ var _streaming_mjs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../streaming.mjs */ "./node_modules/openai/streaming.mjs");
+/* harmony import */ var _lib_parser_mjs__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../lib/parser.mjs */ "./node_modules/openai/lib/parser.mjs");
+/* harmony import */ var _vendor_partial_json_parser_parser_mjs__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../_vendor/partial-json-parser/parser.mjs */ "./node_modules/openai/_vendor/partial-json-parser/parser.mjs");
+var __classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, state, value, kind, f) {
+    if (kind === "m") throw new TypeError("Private method is not writable");
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+    return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
+};
+var __classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, state, kind, f) {
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+    return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+};
+var _ChatCompletionStream_instances, _ChatCompletionStream_params, _ChatCompletionStream_choiceEventStates, _ChatCompletionStream_currentChatCompletionSnapshot, _ChatCompletionStream_beginRequest, _ChatCompletionStream_getChoiceEventState, _ChatCompletionStream_addChunk, _ChatCompletionStream_emitToolCallDoneEvent, _ChatCompletionStream_emitContentDoneEvents, _ChatCompletionStream_endRequest, _ChatCompletionStream_getAutoParseableResponseFormat, _ChatCompletionStream_accumulateChatCompletion;
+
+
+
+
+
+class ChatCompletionStream extends _AbstractChatCompletionRunner_mjs__WEBPACK_IMPORTED_MODULE_1__.AbstractChatCompletionRunner {
+    constructor(params) {
+        super();
+        _ChatCompletionStream_instances.add(this);
+        _ChatCompletionStream_params.set(this, void 0);
+        _ChatCompletionStream_choiceEventStates.set(this, void 0);
+        _ChatCompletionStream_currentChatCompletionSnapshot.set(this, void 0);
+        __classPrivateFieldSet(this, _ChatCompletionStream_params, params, "f");
+        __classPrivateFieldSet(this, _ChatCompletionStream_choiceEventStates, [], "f");
+    }
+    get currentChatCompletionSnapshot() {
+        return __classPrivateFieldGet(this, _ChatCompletionStream_currentChatCompletionSnapshot, "f");
+    }
+    /**
+     * Intended for use on the frontend, consuming a stream produced with
+     * `.toReadableStream()` on the backend.
+     *
+     * Note that messages sent to the model do not appear in `.on('message')`
+     * in this context.
+     */
+    static fromReadableStream(stream) {
+        const runner = new ChatCompletionStream(null);
+        runner._run(() => runner._fromReadableStream(stream));
+        return runner;
+    }
+    static createChatCompletion(client, params, options) {
+        const runner = new ChatCompletionStream(params);
+        runner._run(() => runner._runChatCompletion(client, { ...params, stream: true }, { ...options, headers: { ...options?.headers, 'X-Stainless-Helper-Method': 'stream' } }));
+        return runner;
+    }
+    async _createChatCompletion(client, params, options) {
+        super._createChatCompletion;
+        const signal = options?.signal;
+        if (signal) {
+            if (signal.aborted)
+                this.controller.abort();
+            signal.addEventListener('abort', () => this.controller.abort());
+        }
+        __classPrivateFieldGet(this, _ChatCompletionStream_instances, "m", _ChatCompletionStream_beginRequest).call(this);
+        const stream = await client.chat.completions.create({ ...params, stream: true }, { ...options, signal: this.controller.signal });
+        this._connected();
+        for await (const chunk of stream) {
+            __classPrivateFieldGet(this, _ChatCompletionStream_instances, "m", _ChatCompletionStream_addChunk).call(this, chunk);
+        }
+        if (stream.controller.signal?.aborted) {
+            throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.APIUserAbortError();
+        }
+        return this._addChatCompletion(__classPrivateFieldGet(this, _ChatCompletionStream_instances, "m", _ChatCompletionStream_endRequest).call(this));
+    }
+    async _fromReadableStream(readableStream, options) {
+        const signal = options?.signal;
+        if (signal) {
+            if (signal.aborted)
+                this.controller.abort();
+            signal.addEventListener('abort', () => this.controller.abort());
+        }
+        __classPrivateFieldGet(this, _ChatCompletionStream_instances, "m", _ChatCompletionStream_beginRequest).call(this);
+        this._connected();
+        const stream = _streaming_mjs__WEBPACK_IMPORTED_MODULE_2__.Stream.fromReadableStream(readableStream, this.controller);
+        let chatId;
+        for await (const chunk of stream) {
+            if (chatId && chatId !== chunk.id) {
+                // A new request has been made.
+                this._addChatCompletion(__classPrivateFieldGet(this, _ChatCompletionStream_instances, "m", _ChatCompletionStream_endRequest).call(this));
+            }
+            __classPrivateFieldGet(this, _ChatCompletionStream_instances, "m", _ChatCompletionStream_addChunk).call(this, chunk);
+            chatId = chunk.id;
+        }
+        if (stream.controller.signal?.aborted) {
+            throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.APIUserAbortError();
+        }
+        return this._addChatCompletion(__classPrivateFieldGet(this, _ChatCompletionStream_instances, "m", _ChatCompletionStream_endRequest).call(this));
+    }
+    [(_ChatCompletionStream_params = new WeakMap(), _ChatCompletionStream_choiceEventStates = new WeakMap(), _ChatCompletionStream_currentChatCompletionSnapshot = new WeakMap(), _ChatCompletionStream_instances = new WeakSet(), _ChatCompletionStream_beginRequest = function _ChatCompletionStream_beginRequest() {
+        if (this.ended)
+            return;
+        __classPrivateFieldSet(this, _ChatCompletionStream_currentChatCompletionSnapshot, undefined, "f");
+    }, _ChatCompletionStream_getChoiceEventState = function _ChatCompletionStream_getChoiceEventState(choice) {
+        let state = __classPrivateFieldGet(this, _ChatCompletionStream_choiceEventStates, "f")[choice.index];
+        if (state) {
+            return state;
+        }
+        state = {
+            content_done: false,
+            refusal_done: false,
+            logprobs_content_done: false,
+            logprobs_refusal_done: false,
+            done_tool_calls: new Set(),
+            current_tool_call_index: null,
+        };
+        __classPrivateFieldGet(this, _ChatCompletionStream_choiceEventStates, "f")[choice.index] = state;
+        return state;
+    }, _ChatCompletionStream_addChunk = function _ChatCompletionStream_addChunk(chunk) {
+        if (this.ended)
+            return;
+        const completion = __classPrivateFieldGet(this, _ChatCompletionStream_instances, "m", _ChatCompletionStream_accumulateChatCompletion).call(this, chunk);
+        this._emit('chunk', chunk, completion);
+        for (const choice of chunk.choices) {
+            const choiceSnapshot = completion.choices[choice.index];
+            if (choice.delta.content != null &&
+                choiceSnapshot.message?.role === 'assistant' &&
+                choiceSnapshot.message?.content) {
+                this._emit('content', choice.delta.content, choiceSnapshot.message.content);
+                this._emit('content.delta', {
+                    delta: choice.delta.content,
+                    snapshot: choiceSnapshot.message.content,
+                    parsed: choiceSnapshot.message.parsed,
+                });
+            }
+            if (choice.delta.refusal != null &&
+                choiceSnapshot.message?.role === 'assistant' &&
+                choiceSnapshot.message?.refusal) {
+                this._emit('refusal.delta', {
+                    delta: choice.delta.refusal,
+                    snapshot: choiceSnapshot.message.refusal,
+                });
+            }
+            if (choice.logprobs?.content != null && choiceSnapshot.message?.role === 'assistant') {
+                this._emit('logprobs.content.delta', {
+                    content: choice.logprobs?.content,
+                    snapshot: choiceSnapshot.logprobs?.content ?? [],
+                });
+            }
+            if (choice.logprobs?.refusal != null && choiceSnapshot.message?.role === 'assistant') {
+                this._emit('logprobs.refusal.delta', {
+                    refusal: choice.logprobs?.refusal,
+                    snapshot: choiceSnapshot.logprobs?.refusal ?? [],
+                });
+            }
+            const state = __classPrivateFieldGet(this, _ChatCompletionStream_instances, "m", _ChatCompletionStream_getChoiceEventState).call(this, choiceSnapshot);
+            if (choiceSnapshot.finish_reason) {
+                __classPrivateFieldGet(this, _ChatCompletionStream_instances, "m", _ChatCompletionStream_emitContentDoneEvents).call(this, choiceSnapshot);
+                if (state.current_tool_call_index != null) {
+                    __classPrivateFieldGet(this, _ChatCompletionStream_instances, "m", _ChatCompletionStream_emitToolCallDoneEvent).call(this, choiceSnapshot, state.current_tool_call_index);
+                }
+            }
+            for (const toolCall of choice.delta.tool_calls ?? []) {
+                if (state.current_tool_call_index !== toolCall.index) {
+                    __classPrivateFieldGet(this, _ChatCompletionStream_instances, "m", _ChatCompletionStream_emitContentDoneEvents).call(this, choiceSnapshot);
+                    // new tool call started, the previous one is done
+                    if (state.current_tool_call_index != null) {
+                        __classPrivateFieldGet(this, _ChatCompletionStream_instances, "m", _ChatCompletionStream_emitToolCallDoneEvent).call(this, choiceSnapshot, state.current_tool_call_index);
+                    }
+                }
+                state.current_tool_call_index = toolCall.index;
+            }
+            for (const toolCallDelta of choice.delta.tool_calls ?? []) {
+                const toolCallSnapshot = choiceSnapshot.message.tool_calls?.[toolCallDelta.index];
+                if (!toolCallSnapshot?.type) {
+                    continue;
+                }
+                if (toolCallSnapshot?.type === 'function') {
+                    this._emit('tool_calls.function.arguments.delta', {
+                        name: toolCallSnapshot.function?.name,
+                        index: toolCallDelta.index,
+                        arguments: toolCallSnapshot.function.arguments,
+                        parsed_arguments: toolCallSnapshot.function.parsed_arguments,
+                        arguments_delta: toolCallDelta.function?.arguments ?? '',
+                    });
+                }
+                else {
+                    assertNever(toolCallSnapshot?.type);
+                }
+            }
+        }
+    }, _ChatCompletionStream_emitToolCallDoneEvent = function _ChatCompletionStream_emitToolCallDoneEvent(choiceSnapshot, toolCallIndex) {
+        const state = __classPrivateFieldGet(this, _ChatCompletionStream_instances, "m", _ChatCompletionStream_getChoiceEventState).call(this, choiceSnapshot);
+        if (state.done_tool_calls.has(toolCallIndex)) {
+            // we've already fired the done event
+            return;
+        }
+        const toolCallSnapshot = choiceSnapshot.message.tool_calls?.[toolCallIndex];
+        if (!toolCallSnapshot) {
+            throw new Error('no tool call snapshot');
+        }
+        if (!toolCallSnapshot.type) {
+            throw new Error('tool call snapshot missing `type`');
+        }
+        if (toolCallSnapshot.type === 'function') {
+            const inputTool = __classPrivateFieldGet(this, _ChatCompletionStream_params, "f")?.tools?.find((tool) => tool.type === 'function' && tool.function.name === toolCallSnapshot.function.name);
+            this._emit('tool_calls.function.arguments.done', {
+                name: toolCallSnapshot.function.name,
+                index: toolCallIndex,
+                arguments: toolCallSnapshot.function.arguments,
+                parsed_arguments: (0,_lib_parser_mjs__WEBPACK_IMPORTED_MODULE_3__.isAutoParsableTool)(inputTool) ? inputTool.$parseRaw(toolCallSnapshot.function.arguments)
+                    : inputTool?.function.strict ? JSON.parse(toolCallSnapshot.function.arguments)
+                        : null,
+            });
+        }
+        else {
+            assertNever(toolCallSnapshot.type);
+        }
+    }, _ChatCompletionStream_emitContentDoneEvents = function _ChatCompletionStream_emitContentDoneEvents(choiceSnapshot) {
+        const state = __classPrivateFieldGet(this, _ChatCompletionStream_instances, "m", _ChatCompletionStream_getChoiceEventState).call(this, choiceSnapshot);
+        if (choiceSnapshot.message.content && !state.content_done) {
+            state.content_done = true;
+            const responseFormat = __classPrivateFieldGet(this, _ChatCompletionStream_instances, "m", _ChatCompletionStream_getAutoParseableResponseFormat).call(this);
+            this._emit('content.done', {
+                content: choiceSnapshot.message.content,
+                parsed: responseFormat ? responseFormat.$parseRaw(choiceSnapshot.message.content) : null,
+            });
+        }
+        if (choiceSnapshot.message.refusal && !state.refusal_done) {
+            state.refusal_done = true;
+            this._emit('refusal.done', { refusal: choiceSnapshot.message.refusal });
+        }
+        if (choiceSnapshot.logprobs?.content && !state.logprobs_content_done) {
+            state.logprobs_content_done = true;
+            this._emit('logprobs.content.done', { content: choiceSnapshot.logprobs.content });
+        }
+        if (choiceSnapshot.logprobs?.refusal && !state.logprobs_refusal_done) {
+            state.logprobs_refusal_done = true;
+            this._emit('logprobs.refusal.done', { refusal: choiceSnapshot.logprobs.refusal });
+        }
+    }, _ChatCompletionStream_endRequest = function _ChatCompletionStream_endRequest() {
+        if (this.ended) {
+            throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError(`stream has ended, this shouldn't happen`);
+        }
+        const snapshot = __classPrivateFieldGet(this, _ChatCompletionStream_currentChatCompletionSnapshot, "f");
+        if (!snapshot) {
+            throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError(`request ended without sending any chunks`);
+        }
+        __classPrivateFieldSet(this, _ChatCompletionStream_currentChatCompletionSnapshot, undefined, "f");
+        __classPrivateFieldSet(this, _ChatCompletionStream_choiceEventStates, [], "f");
+        return finalizeChatCompletion(snapshot, __classPrivateFieldGet(this, _ChatCompletionStream_params, "f"));
+    }, _ChatCompletionStream_getAutoParseableResponseFormat = function _ChatCompletionStream_getAutoParseableResponseFormat() {
+        const responseFormat = __classPrivateFieldGet(this, _ChatCompletionStream_params, "f")?.response_format;
+        if ((0,_lib_parser_mjs__WEBPACK_IMPORTED_MODULE_3__.isAutoParsableResponseFormat)(responseFormat)) {
+            return responseFormat;
+        }
+        return null;
+    }, _ChatCompletionStream_accumulateChatCompletion = function _ChatCompletionStream_accumulateChatCompletion(chunk) {
+        var _a, _b, _c, _d;
+        let snapshot = __classPrivateFieldGet(this, _ChatCompletionStream_currentChatCompletionSnapshot, "f");
+        const { choices, ...rest } = chunk;
+        if (!snapshot) {
+            snapshot = __classPrivateFieldSet(this, _ChatCompletionStream_currentChatCompletionSnapshot, {
+                ...rest,
+                choices: [],
+            }, "f");
+        }
+        else {
+            Object.assign(snapshot, rest);
+        }
+        for (const { delta, finish_reason, index, logprobs = null, ...other } of chunk.choices) {
+            let choice = snapshot.choices[index];
+            if (!choice) {
+                choice = snapshot.choices[index] = { finish_reason, index, message: {}, logprobs, ...other };
+            }
+            if (logprobs) {
+                if (!choice.logprobs) {
+                    choice.logprobs = Object.assign({}, logprobs);
+                }
+                else {
+                    const { content, refusal, ...rest } = logprobs;
+                    assertIsEmpty(rest);
+                    Object.assign(choice.logprobs, rest);
+                    if (content) {
+                        (_a = choice.logprobs).content ?? (_a.content = []);
+                        choice.logprobs.content.push(...content);
+                    }
+                    if (refusal) {
+                        (_b = choice.logprobs).refusal ?? (_b.refusal = []);
+                        choice.logprobs.refusal.push(...refusal);
+                    }
+                }
+            }
+            if (finish_reason) {
+                choice.finish_reason = finish_reason;
+                if (__classPrivateFieldGet(this, _ChatCompletionStream_params, "f") && (0,_lib_parser_mjs__WEBPACK_IMPORTED_MODULE_3__.hasAutoParseableInput)(__classPrivateFieldGet(this, _ChatCompletionStream_params, "f"))) {
+                    if (finish_reason === 'length') {
+                        throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.LengthFinishReasonError();
+                    }
+                    if (finish_reason === 'content_filter') {
+                        throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.ContentFilterFinishReasonError();
+                    }
+                }
+            }
+            Object.assign(choice, other);
+            if (!delta)
+                continue; // Shouldn't happen; just in case.
+            const { content, refusal, function_call, role, tool_calls, ...rest } = delta;
+            assertIsEmpty(rest);
+            Object.assign(choice.message, rest);
+            if (refusal) {
+                choice.message.refusal = (choice.message.refusal || '') + refusal;
+            }
+            if (role)
+                choice.message.role = role;
+            if (function_call) {
+                if (!choice.message.function_call) {
+                    choice.message.function_call = function_call;
+                }
+                else {
+                    if (function_call.name)
+                        choice.message.function_call.name = function_call.name;
+                    if (function_call.arguments) {
+                        (_c = choice.message.function_call).arguments ?? (_c.arguments = '');
+                        choice.message.function_call.arguments += function_call.arguments;
+                    }
+                }
+            }
+            if (content) {
+                choice.message.content = (choice.message.content || '') + content;
+                if (!choice.message.refusal && __classPrivateFieldGet(this, _ChatCompletionStream_instances, "m", _ChatCompletionStream_getAutoParseableResponseFormat).call(this)) {
+                    choice.message.parsed = (0,_vendor_partial_json_parser_parser_mjs__WEBPACK_IMPORTED_MODULE_4__.partialParse)(choice.message.content);
+                }
+            }
+            if (tool_calls) {
+                if (!choice.message.tool_calls)
+                    choice.message.tool_calls = [];
+                for (const { index, id, type, function: fn, ...rest } of tool_calls) {
+                    const tool_call = ((_d = choice.message.tool_calls)[index] ?? (_d[index] = {}));
+                    Object.assign(tool_call, rest);
+                    if (id)
+                        tool_call.id = id;
+                    if (type)
+                        tool_call.type = type;
+                    if (fn)
+                        tool_call.function ?? (tool_call.function = { name: fn.name ?? '', arguments: '' });
+                    if (fn?.name)
+                        tool_call.function.name = fn.name;
+                    if (fn?.arguments) {
+                        tool_call.function.arguments += fn.arguments;
+                        if ((0,_lib_parser_mjs__WEBPACK_IMPORTED_MODULE_3__.shouldParseToolCall)(__classPrivateFieldGet(this, _ChatCompletionStream_params, "f"), tool_call)) {
+                            tool_call.function.parsed_arguments = (0,_vendor_partial_json_parser_parser_mjs__WEBPACK_IMPORTED_MODULE_4__.partialParse)(tool_call.function.arguments);
+                        }
+                    }
+                }
+            }
+        }
+        return snapshot;
+    }, Symbol.asyncIterator)]() {
+        const pushQueue = [];
+        const readQueue = [];
+        let done = false;
+        this.on('chunk', (chunk) => {
+            const reader = readQueue.shift();
+            if (reader) {
+                reader.resolve(chunk);
+            }
+            else {
+                pushQueue.push(chunk);
+            }
+        });
+        this.on('end', () => {
+            done = true;
+            for (const reader of readQueue) {
+                reader.resolve(undefined);
+            }
+            readQueue.length = 0;
+        });
+        this.on('abort', (err) => {
+            done = true;
+            for (const reader of readQueue) {
+                reader.reject(err);
+            }
+            readQueue.length = 0;
+        });
+        this.on('error', (err) => {
+            done = true;
+            for (const reader of readQueue) {
+                reader.reject(err);
+            }
+            readQueue.length = 0;
+        });
+        return {
+            next: async () => {
+                if (!pushQueue.length) {
+                    if (done) {
+                        return { value: undefined, done: true };
+                    }
+                    return new Promise((resolve, reject) => readQueue.push({ resolve, reject })).then((chunk) => (chunk ? { value: chunk, done: false } : { value: undefined, done: true }));
+                }
+                const chunk = pushQueue.shift();
+                return { value: chunk, done: false };
+            },
+            return: async () => {
+                this.abort();
+                return { value: undefined, done: true };
+            },
+        };
+    }
+    toReadableStream() {
+        const stream = new _streaming_mjs__WEBPACK_IMPORTED_MODULE_2__.Stream(this[Symbol.asyncIterator].bind(this), this.controller);
+        return stream.toReadableStream();
+    }
+}
+function finalizeChatCompletion(snapshot, params) {
+    const { id, choices, created, model, system_fingerprint, ...rest } = snapshot;
+    const completion = {
+        ...rest,
+        id,
+        choices: choices.map(({ message, finish_reason, index, logprobs, ...choiceRest }) => {
+            if (!finish_reason) {
+                throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError(`missing finish_reason for choice ${index}`);
+            }
+            const { content = null, function_call, tool_calls, ...messageRest } = message;
+            const role = message.role; // this is what we expect; in theory it could be different which would make our types a slight lie but would be fine.
+            if (!role) {
+                throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError(`missing role for choice ${index}`);
+            }
+            if (function_call) {
+                const { arguments: args, name } = function_call;
+                if (args == null) {
+                    throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError(`missing function_call.arguments for choice ${index}`);
+                }
+                if (!name) {
+                    throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError(`missing function_call.name for choice ${index}`);
+                }
+                return {
+                    ...choiceRest,
+                    message: {
+                        content,
+                        function_call: { arguments: args, name },
+                        role,
+                        refusal: message.refusal ?? null,
+                    },
+                    finish_reason,
+                    index,
+                    logprobs,
+                };
+            }
+            if (tool_calls) {
+                return {
+                    ...choiceRest,
+                    index,
+                    finish_reason,
+                    logprobs,
+                    message: {
+                        ...messageRest,
+                        role,
+                        content,
+                        refusal: message.refusal ?? null,
+                        tool_calls: tool_calls.map((tool_call, i) => {
+                            const { function: fn, type, id, ...toolRest } = tool_call;
+                            const { arguments: args, name, ...fnRest } = fn || {};
+                            if (id == null) {
+                                throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError(`missing choices[${index}].tool_calls[${i}].id\n${str(snapshot)}`);
+                            }
+                            if (type == null) {
+                                throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError(`missing choices[${index}].tool_calls[${i}].type\n${str(snapshot)}`);
+                            }
+                            if (name == null) {
+                                throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError(`missing choices[${index}].tool_calls[${i}].function.name\n${str(snapshot)}`);
+                            }
+                            if (args == null) {
+                                throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError(`missing choices[${index}].tool_calls[${i}].function.arguments\n${str(snapshot)}`);
+                            }
+                            return { ...toolRest, id, type, function: { ...fnRest, name, arguments: args } };
+                        }),
+                    },
+                };
+            }
+            return {
+                ...choiceRest,
+                message: { ...messageRest, content, role, refusal: message.refusal ?? null },
+                finish_reason,
+                index,
+                logprobs,
+            };
+        }),
+        created,
+        model,
+        object: 'chat.completion',
+        ...(system_fingerprint ? { system_fingerprint } : {}),
+    };
+    return (0,_lib_parser_mjs__WEBPACK_IMPORTED_MODULE_3__.maybeParseChatCompletion)(completion, params);
+}
+function str(x) {
+    return JSON.stringify(x);
+}
+/**
+ * Ensures the given argument is an empty object, useful for
+ * asserting that all known properties on an object have been
+ * destructured.
+ */
+function assertIsEmpty(obj) {
+    return;
+}
+function assertNever(_x) { }
+//# sourceMappingURL=ChatCompletionStream.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/lib/ChatCompletionStreamingRunner.mjs":
+/*!*******************************************************************!*\
+  !*** ./node_modules/openai/lib/ChatCompletionStreamingRunner.mjs ***!
+  \*******************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   ChatCompletionStreamingRunner: () => (/* binding */ ChatCompletionStreamingRunner)
+/* harmony export */ });
+/* harmony import */ var _ChatCompletionStream_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./ChatCompletionStream.mjs */ "./node_modules/openai/lib/ChatCompletionStream.mjs");
+
+class ChatCompletionStreamingRunner extends _ChatCompletionStream_mjs__WEBPACK_IMPORTED_MODULE_0__.ChatCompletionStream {
+    static fromReadableStream(stream) {
+        const runner = new ChatCompletionStreamingRunner(null);
+        runner._run(() => runner._fromReadableStream(stream));
+        return runner;
+    }
+    /** @deprecated - please use `runTools` instead. */
+    static runFunctions(client, params, options) {
+        const runner = new ChatCompletionStreamingRunner(null);
+        const opts = {
+            ...options,
+            headers: { ...options?.headers, 'X-Stainless-Helper-Method': 'runFunctions' },
+        };
+        runner._run(() => runner._runFunctions(client, params, opts));
+        return runner;
+    }
+    static runTools(client, params, options) {
+        const runner = new ChatCompletionStreamingRunner(
+        // @ts-expect-error TODO these types are incompatible
+        params);
+        const opts = {
+            ...options,
+            headers: { ...options?.headers, 'X-Stainless-Helper-Method': 'runTools' },
+        };
+        runner._run(() => runner._runTools(client, params, opts));
+        return runner;
+    }
+}
+//# sourceMappingURL=ChatCompletionStreamingRunner.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/lib/EventStream.mjs":
+/*!*************************************************!*\
+  !*** ./node_modules/openai/lib/EventStream.mjs ***!
+  \*************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   EventStream: () => (/* binding */ EventStream)
+/* harmony export */ });
+/* harmony import */ var _error_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../error.mjs */ "./node_modules/openai/error.mjs");
+var __classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, state, value, kind, f) {
+    if (kind === "m") throw new TypeError("Private method is not writable");
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+    return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
+};
+var __classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, state, kind, f) {
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+    return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+};
+var _EventStream_instances, _EventStream_connectedPromise, _EventStream_resolveConnectedPromise, _EventStream_rejectConnectedPromise, _EventStream_endPromise, _EventStream_resolveEndPromise, _EventStream_rejectEndPromise, _EventStream_listeners, _EventStream_ended, _EventStream_errored, _EventStream_aborted, _EventStream_catchingPromiseCreated, _EventStream_handleError;
+
+class EventStream {
+    constructor() {
+        _EventStream_instances.add(this);
+        this.controller = new AbortController();
+        _EventStream_connectedPromise.set(this, void 0);
+        _EventStream_resolveConnectedPromise.set(this, () => { });
+        _EventStream_rejectConnectedPromise.set(this, () => { });
+        _EventStream_endPromise.set(this, void 0);
+        _EventStream_resolveEndPromise.set(this, () => { });
+        _EventStream_rejectEndPromise.set(this, () => { });
+        _EventStream_listeners.set(this, {});
+        _EventStream_ended.set(this, false);
+        _EventStream_errored.set(this, false);
+        _EventStream_aborted.set(this, false);
+        _EventStream_catchingPromiseCreated.set(this, false);
+        __classPrivateFieldSet(this, _EventStream_connectedPromise, new Promise((resolve, reject) => {
+            __classPrivateFieldSet(this, _EventStream_resolveConnectedPromise, resolve, "f");
+            __classPrivateFieldSet(this, _EventStream_rejectConnectedPromise, reject, "f");
+        }), "f");
+        __classPrivateFieldSet(this, _EventStream_endPromise, new Promise((resolve, reject) => {
+            __classPrivateFieldSet(this, _EventStream_resolveEndPromise, resolve, "f");
+            __classPrivateFieldSet(this, _EventStream_rejectEndPromise, reject, "f");
+        }), "f");
+        // Don't let these promises cause unhandled rejection errors.
+        // we will manually cause an unhandled rejection error later
+        // if the user hasn't registered any error listener or called
+        // any promise-returning method.
+        __classPrivateFieldGet(this, _EventStream_connectedPromise, "f").catch(() => { });
+        __classPrivateFieldGet(this, _EventStream_endPromise, "f").catch(() => { });
+    }
+    _run(executor) {
+        // Unfortunately if we call `executor()` immediately we get runtime errors about
+        // references to `this` before the `super()` constructor call returns.
+        setTimeout(() => {
+            executor().then(() => {
+                this._emitFinal();
+                this._emit('end');
+            }, __classPrivateFieldGet(this, _EventStream_instances, "m", _EventStream_handleError).bind(this));
+        }, 0);
+    }
+    _connected() {
+        if (this.ended)
+            return;
+        __classPrivateFieldGet(this, _EventStream_resolveConnectedPromise, "f").call(this);
+        this._emit('connect');
+    }
+    get ended() {
+        return __classPrivateFieldGet(this, _EventStream_ended, "f");
+    }
+    get errored() {
+        return __classPrivateFieldGet(this, _EventStream_errored, "f");
+    }
+    get aborted() {
+        return __classPrivateFieldGet(this, _EventStream_aborted, "f");
+    }
+    abort() {
+        this.controller.abort();
+    }
+    /**
+     * Adds the listener function to the end of the listeners array for the event.
+     * No checks are made to see if the listener has already been added. Multiple calls passing
+     * the same combination of event and listener will result in the listener being added, and
+     * called, multiple times.
+     * @returns this ChatCompletionStream, so that calls can be chained
+     */
+    on(event, listener) {
+        const listeners = __classPrivateFieldGet(this, _EventStream_listeners, "f")[event] || (__classPrivateFieldGet(this, _EventStream_listeners, "f")[event] = []);
+        listeners.push({ listener });
+        return this;
+    }
+    /**
+     * Removes the specified listener from the listener array for the event.
+     * off() will remove, at most, one instance of a listener from the listener array. If any single
+     * listener has been added multiple times to the listener array for the specified event, then
+     * off() must be called multiple times to remove each instance.
+     * @returns this ChatCompletionStream, so that calls can be chained
+     */
+    off(event, listener) {
+        const listeners = __classPrivateFieldGet(this, _EventStream_listeners, "f")[event];
+        if (!listeners)
+            return this;
+        const index = listeners.findIndex((l) => l.listener === listener);
+        if (index >= 0)
+            listeners.splice(index, 1);
+        return this;
+    }
+    /**
+     * Adds a one-time listener function for the event. The next time the event is triggered,
+     * this listener is removed and then invoked.
+     * @returns this ChatCompletionStream, so that calls can be chained
+     */
+    once(event, listener) {
+        const listeners = __classPrivateFieldGet(this, _EventStream_listeners, "f")[event] || (__classPrivateFieldGet(this, _EventStream_listeners, "f")[event] = []);
+        listeners.push({ listener, once: true });
+        return this;
+    }
+    /**
+     * This is similar to `.once()`, but returns a Promise that resolves the next time
+     * the event is triggered, instead of calling a listener callback.
+     * @returns a Promise that resolves the next time given event is triggered,
+     * or rejects if an error is emitted.  (If you request the 'error' event,
+     * returns a promise that resolves with the error).
+     *
+     * Example:
+     *
+     *   const message = await stream.emitted('message') // rejects if the stream errors
+     */
+    emitted(event) {
+        return new Promise((resolve, reject) => {
+            __classPrivateFieldSet(this, _EventStream_catchingPromiseCreated, true, "f");
+            if (event !== 'error')
+                this.once('error', reject);
+            this.once(event, resolve);
+        });
+    }
+    async done() {
+        __classPrivateFieldSet(this, _EventStream_catchingPromiseCreated, true, "f");
+        await __classPrivateFieldGet(this, _EventStream_endPromise, "f");
+    }
+    _emit(event, ...args) {
+        // make sure we don't emit any events after end
+        if (__classPrivateFieldGet(this, _EventStream_ended, "f")) {
+            return;
+        }
+        if (event === 'end') {
+            __classPrivateFieldSet(this, _EventStream_ended, true, "f");
+            __classPrivateFieldGet(this, _EventStream_resolveEndPromise, "f").call(this);
+        }
+        const listeners = __classPrivateFieldGet(this, _EventStream_listeners, "f")[event];
+        if (listeners) {
+            __classPrivateFieldGet(this, _EventStream_listeners, "f")[event] = listeners.filter((l) => !l.once);
+            listeners.forEach(({ listener }) => listener(...args));
+        }
+        if (event === 'abort') {
+            const error = args[0];
+            if (!__classPrivateFieldGet(this, _EventStream_catchingPromiseCreated, "f") && !listeners?.length) {
+                Promise.reject(error);
+            }
+            __classPrivateFieldGet(this, _EventStream_rejectConnectedPromise, "f").call(this, error);
+            __classPrivateFieldGet(this, _EventStream_rejectEndPromise, "f").call(this, error);
+            this._emit('end');
+            return;
+        }
+        if (event === 'error') {
+            // NOTE: _emit('error', error) should only be called from #handleError().
+            const error = args[0];
+            if (!__classPrivateFieldGet(this, _EventStream_catchingPromiseCreated, "f") && !listeners?.length) {
+                // Trigger an unhandled rejection if the user hasn't registered any error handlers.
+                // If you are seeing stack traces here, make sure to handle errors via either:
+                // - runner.on('error', () => ...)
+                // - await runner.done()
+                // - await runner.finalChatCompletion()
+                // - etc.
+                Promise.reject(error);
+            }
+            __classPrivateFieldGet(this, _EventStream_rejectConnectedPromise, "f").call(this, error);
+            __classPrivateFieldGet(this, _EventStream_rejectEndPromise, "f").call(this, error);
+            this._emit('end');
+        }
+    }
+    _emitFinal() { }
+}
+_EventStream_connectedPromise = new WeakMap(), _EventStream_resolveConnectedPromise = new WeakMap(), _EventStream_rejectConnectedPromise = new WeakMap(), _EventStream_endPromise = new WeakMap(), _EventStream_resolveEndPromise = new WeakMap(), _EventStream_rejectEndPromise = new WeakMap(), _EventStream_listeners = new WeakMap(), _EventStream_ended = new WeakMap(), _EventStream_errored = new WeakMap(), _EventStream_aborted = new WeakMap(), _EventStream_catchingPromiseCreated = new WeakMap(), _EventStream_instances = new WeakSet(), _EventStream_handleError = function _EventStream_handleError(error) {
+    __classPrivateFieldSet(this, _EventStream_errored, true, "f");
+    if (error instanceof Error && error.name === 'AbortError') {
+        error = new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.APIUserAbortError();
+    }
+    if (error instanceof _error_mjs__WEBPACK_IMPORTED_MODULE_0__.APIUserAbortError) {
+        __classPrivateFieldSet(this, _EventStream_aborted, true, "f");
+        return this._emit('abort', error);
+    }
+    if (error instanceof _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError) {
+        return this._emit('error', error);
+    }
+    if (error instanceof Error) {
+        const openAIError = new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError(error.message);
+        // @ts-ignore
+        openAIError.cause = error;
+        return this._emit('error', openAIError);
+    }
+    return this._emit('error', new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError(String(error)));
+};
+//# sourceMappingURL=EventStream.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/lib/ResponsesParser.mjs":
+/*!*****************************************************!*\
+  !*** ./node_modules/openai/lib/ResponsesParser.mjs ***!
+  \*****************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   addOutputText: () => (/* binding */ addOutputText),
+/* harmony export */   hasAutoParseableInput: () => (/* binding */ hasAutoParseableInput),
+/* harmony export */   isAutoParsableTool: () => (/* binding */ isAutoParsableTool),
+/* harmony export */   makeParseableResponseTool: () => (/* binding */ makeParseableResponseTool),
+/* harmony export */   maybeParseResponse: () => (/* binding */ maybeParseResponse),
+/* harmony export */   parseResponse: () => (/* binding */ parseResponse),
+/* harmony export */   shouldParseToolCall: () => (/* binding */ shouldParseToolCall),
+/* harmony export */   validateInputTools: () => (/* binding */ validateInputTools)
+/* harmony export */ });
+/* harmony import */ var _error_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../error.mjs */ "./node_modules/openai/error.mjs");
+/* harmony import */ var _lib_parser_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../lib/parser.mjs */ "./node_modules/openai/lib/parser.mjs");
+
+
+function maybeParseResponse(response, params) {
+    if (!params || !hasAutoParseableInput(params)) {
+        return {
+            ...response,
+            output_parsed: null,
+            output: response.output.map((item) => {
+                if (item.type === 'function_call') {
+                    return {
+                        ...item,
+                        parsed_arguments: null,
+                    };
+                }
+                if (item.type === 'message') {
+                    return {
+                        ...item,
+                        content: item.content.map((content) => ({
+                            ...content,
+                            parsed: null,
+                        })),
+                    };
+                }
+                else {
+                    return item;
+                }
+            }),
+        };
+    }
+    return parseResponse(response, params);
+}
+function parseResponse(response, params) {
+    const output = response.output.map((item) => {
+        if (item.type === 'function_call') {
+            return {
+                ...item,
+                parsed_arguments: parseToolCall(params, item),
+            };
+        }
+        if (item.type === 'message') {
+            const content = item.content.map((content) => {
+                if (content.type === 'output_text') {
+                    return {
+                        ...content,
+                        parsed: parseTextFormat(params, content.text),
+                    };
+                }
+                return content;
+            });
+            return {
+                ...item,
+                content,
+            };
+        }
+        return item;
+    });
+    const parsed = Object.assign({}, response, { output });
+    if (!Object.getOwnPropertyDescriptor(response, 'output_text')) {
+        addOutputText(parsed);
+    }
+    Object.defineProperty(parsed, 'output_parsed', {
+        enumerable: true,
+        get() {
+            for (const output of parsed.output) {
+                if (output.type !== 'message') {
+                    continue;
+                }
+                for (const content of output.content) {
+                    if (content.type === 'output_text' && content.parsed !== null) {
+                        return content.parsed;
+                    }
+                }
+            }
+            return null;
+        },
+    });
+    return parsed;
+}
+function parseTextFormat(params, content) {
+    if (params.text?.format?.type !== 'json_schema') {
+        return null;
+    }
+    if ('$parseRaw' in params.text?.format) {
+        const text_format = params.text?.format;
+        return text_format.$parseRaw(content);
+    }
+    return JSON.parse(content);
+}
+function hasAutoParseableInput(params) {
+    if ((0,_lib_parser_mjs__WEBPACK_IMPORTED_MODULE_1__.isAutoParsableResponseFormat)(params.text?.format)) {
+        return true;
+    }
+    return false;
+}
+function makeParseableResponseTool(tool, { parser, callback, }) {
+    const obj = { ...tool };
+    Object.defineProperties(obj, {
+        $brand: {
+            value: 'auto-parseable-tool',
+            enumerable: false,
+        },
+        $parseRaw: {
+            value: parser,
+            enumerable: false,
+        },
+        $callback: {
+            value: callback,
+            enumerable: false,
+        },
+    });
+    return obj;
+}
+function isAutoParsableTool(tool) {
+    return tool?.['$brand'] === 'auto-parseable-tool';
+}
+function getInputToolByName(input_tools, name) {
+    return input_tools.find((tool) => tool.type === 'function' && tool.name === name);
+}
+function parseToolCall(params, toolCall) {
+    const inputTool = getInputToolByName(params.tools ?? [], toolCall.name);
+    return {
+        ...toolCall,
+        ...toolCall,
+        parsed_arguments: isAutoParsableTool(inputTool) ? inputTool.$parseRaw(toolCall.arguments)
+            : inputTool?.strict ? JSON.parse(toolCall.arguments)
+                : null,
+    };
+}
+function shouldParseToolCall(params, toolCall) {
+    if (!params) {
+        return false;
+    }
+    const inputTool = getInputToolByName(params.tools ?? [], toolCall.name);
+    return isAutoParsableTool(inputTool) || inputTool?.strict || false;
+}
+function validateInputTools(tools) {
+    for (const tool of tools ?? []) {
+        if (tool.type !== 'function') {
+            throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError(`Currently only \`function\` tool types support auto-parsing; Received \`${tool.type}\``);
+        }
+        if (tool.function.strict !== true) {
+            throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError(`The \`${tool.function.name}\` tool is not marked with \`strict: true\`. Only strict function tools can be auto-parsed`);
+        }
+    }
+}
+function addOutputText(rsp) {
+    const texts = [];
+    for (const output of rsp.output) {
+        if (output.type !== 'message') {
+            continue;
+        }
+        for (const content of output.content) {
+            if (content.type === 'output_text') {
+                texts.push(content.text);
+            }
+        }
+    }
+    rsp.output_text = texts.join('');
+}
+//# sourceMappingURL=ResponsesParser.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/lib/RunnableFunction.mjs":
+/*!******************************************************!*\
+  !*** ./node_modules/openai/lib/RunnableFunction.mjs ***!
+  \******************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   ParsingFunction: () => (/* binding */ ParsingFunction),
+/* harmony export */   ParsingToolFunction: () => (/* binding */ ParsingToolFunction),
+/* harmony export */   isRunnableFunctionWithParse: () => (/* binding */ isRunnableFunctionWithParse)
+/* harmony export */ });
+function isRunnableFunctionWithParse(fn) {
+    return typeof fn.parse === 'function';
+}
+/**
+ * This is helper class for passing a `function` and `parse` where the `function`
+ * argument type matches the `parse` return type.
+ *
+ * @deprecated - please use ParsingToolFunction instead.
+ */
+class ParsingFunction {
+    constructor(input) {
+        this.function = input.function;
+        this.parse = input.parse;
+        this.parameters = input.parameters;
+        this.description = input.description;
+        this.name = input.name;
+    }
+}
+/**
+ * This is helper class for passing a `function` and `parse` where the `function`
+ * argument type matches the `parse` return type.
+ */
+class ParsingToolFunction {
+    constructor(input) {
+        this.type = 'function';
+        this.function = input;
+    }
+}
+//# sourceMappingURL=RunnableFunction.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/lib/Util.mjs":
+/*!******************************************!*\
+  !*** ./node_modules/openai/lib/Util.mjs ***!
+  \******************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   allSettledWithThrow: () => (/* binding */ allSettledWithThrow)
+/* harmony export */ });
+/**
+ * Like `Promise.allSettled()` but throws an error if any promises are rejected.
+ */
+const allSettledWithThrow = async (promises) => {
+    const results = await Promise.allSettled(promises);
+    const rejected = results.filter((result) => result.status === 'rejected');
+    if (rejected.length) {
+        for (const result of rejected) {
+            console.error(result.reason);
+        }
+        throw new Error(`${rejected.length} promise(s) failed - see the above errors`);
+    }
+    // Note: TS was complaining about using `.filter().map()` here for some reason
+    const values = [];
+    for (const result of results) {
+        if (result.status === 'fulfilled') {
+            values.push(result.value);
+        }
+    }
+    return values;
+};
+//# sourceMappingURL=Util.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/lib/chatCompletionUtils.mjs":
+/*!*********************************************************!*\
+  !*** ./node_modules/openai/lib/chatCompletionUtils.mjs ***!
+  \*********************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   isAssistantMessage: () => (/* binding */ isAssistantMessage),
+/* harmony export */   isFunctionMessage: () => (/* binding */ isFunctionMessage),
+/* harmony export */   isPresent: () => (/* binding */ isPresent),
+/* harmony export */   isToolMessage: () => (/* binding */ isToolMessage)
+/* harmony export */ });
+const isAssistantMessage = (message) => {
+    return message?.role === 'assistant';
+};
+const isFunctionMessage = (message) => {
+    return message?.role === 'function';
+};
+const isToolMessage = (message) => {
+    return message?.role === 'tool';
+};
+function isPresent(obj) {
+    return obj != null;
+}
+//# sourceMappingURL=chatCompletionUtils.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/lib/parser.mjs":
+/*!********************************************!*\
+  !*** ./node_modules/openai/lib/parser.mjs ***!
+  \********************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   hasAutoParseableInput: () => (/* binding */ hasAutoParseableInput),
+/* harmony export */   isAutoParsableResponseFormat: () => (/* binding */ isAutoParsableResponseFormat),
+/* harmony export */   isAutoParsableTool: () => (/* binding */ isAutoParsableTool),
+/* harmony export */   makeParseableResponseFormat: () => (/* binding */ makeParseableResponseFormat),
+/* harmony export */   makeParseableTextFormat: () => (/* binding */ makeParseableTextFormat),
+/* harmony export */   makeParseableTool: () => (/* binding */ makeParseableTool),
+/* harmony export */   maybeParseChatCompletion: () => (/* binding */ maybeParseChatCompletion),
+/* harmony export */   parseChatCompletion: () => (/* binding */ parseChatCompletion),
+/* harmony export */   shouldParseToolCall: () => (/* binding */ shouldParseToolCall),
+/* harmony export */   validateInputTools: () => (/* binding */ validateInputTools)
+/* harmony export */ });
+/* harmony import */ var _error_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../error.mjs */ "./node_modules/openai/error.mjs");
+
+function makeParseableResponseFormat(response_format, parser) {
+    const obj = { ...response_format };
+    Object.defineProperties(obj, {
+        $brand: {
+            value: 'auto-parseable-response-format',
+            enumerable: false,
+        },
+        $parseRaw: {
+            value: parser,
+            enumerable: false,
+        },
+    });
+    return obj;
+}
+function makeParseableTextFormat(response_format, parser) {
+    const obj = { ...response_format };
+    Object.defineProperties(obj, {
+        $brand: {
+            value: 'auto-parseable-response-format',
+            enumerable: false,
+        },
+        $parseRaw: {
+            value: parser,
+            enumerable: false,
+        },
+    });
+    return obj;
+}
+function isAutoParsableResponseFormat(response_format) {
+    return response_format?.['$brand'] === 'auto-parseable-response-format';
+}
+function makeParseableTool(tool, { parser, callback, }) {
+    const obj = { ...tool };
+    Object.defineProperties(obj, {
+        $brand: {
+            value: 'auto-parseable-tool',
+            enumerable: false,
+        },
+        $parseRaw: {
+            value: parser,
+            enumerable: false,
+        },
+        $callback: {
+            value: callback,
+            enumerable: false,
+        },
+    });
+    return obj;
+}
+function isAutoParsableTool(tool) {
+    return tool?.['$brand'] === 'auto-parseable-tool';
+}
+function maybeParseChatCompletion(completion, params) {
+    if (!params || !hasAutoParseableInput(params)) {
+        return {
+            ...completion,
+            choices: completion.choices.map((choice) => ({
+                ...choice,
+                message: {
+                    ...choice.message,
+                    parsed: null,
+                    ...(choice.message.tool_calls ?
+                        {
+                            tool_calls: choice.message.tool_calls,
+                        }
+                        : undefined),
+                },
+            })),
+        };
+    }
+    return parseChatCompletion(completion, params);
+}
+function parseChatCompletion(completion, params) {
+    const choices = completion.choices.map((choice) => {
+        if (choice.finish_reason === 'length') {
+            throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.LengthFinishReasonError();
+        }
+        if (choice.finish_reason === 'content_filter') {
+            throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.ContentFilterFinishReasonError();
+        }
+        return {
+            ...choice,
+            message: {
+                ...choice.message,
+                ...(choice.message.tool_calls ?
+                    {
+                        tool_calls: choice.message.tool_calls?.map((toolCall) => parseToolCall(params, toolCall)) ?? undefined,
+                    }
+                    : undefined),
+                parsed: choice.message.content && !choice.message.refusal ?
+                    parseResponseFormat(params, choice.message.content)
+                    : null,
+            },
+        };
+    });
+    return { ...completion, choices };
+}
+function parseResponseFormat(params, content) {
+    if (params.response_format?.type !== 'json_schema') {
+        return null;
+    }
+    if (params.response_format?.type === 'json_schema') {
+        if ('$parseRaw' in params.response_format) {
+            const response_format = params.response_format;
+            return response_format.$parseRaw(content);
+        }
+        return JSON.parse(content);
+    }
+    return null;
+}
+function parseToolCall(params, toolCall) {
+    const inputTool = params.tools?.find((inputTool) => inputTool.function?.name === toolCall.function.name);
+    return {
+        ...toolCall,
+        function: {
+            ...toolCall.function,
+            parsed_arguments: isAutoParsableTool(inputTool) ? inputTool.$parseRaw(toolCall.function.arguments)
+                : inputTool?.function.strict ? JSON.parse(toolCall.function.arguments)
+                    : null,
+        },
+    };
+}
+function shouldParseToolCall(params, toolCall) {
+    if (!params) {
+        return false;
+    }
+    const inputTool = params.tools?.find((inputTool) => inputTool.function?.name === toolCall.function.name);
+    return isAutoParsableTool(inputTool) || inputTool?.function.strict || false;
+}
+function hasAutoParseableInput(params) {
+    if (isAutoParsableResponseFormat(params.response_format)) {
+        return true;
+    }
+    return (params.tools?.some((t) => isAutoParsableTool(t) || (t.type === 'function' && t.function.strict === true)) ?? false);
+}
+function validateInputTools(tools) {
+    for (const tool of tools ?? []) {
+        if (tool.type !== 'function') {
+            throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError(`Currently only \`function\` tool types support auto-parsing; Received \`${tool.type}\``);
+        }
+        if (tool.function.strict !== true) {
+            throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError(`The \`${tool.function.name}\` tool is not marked with \`strict: true\`. Only strict function tools can be auto-parsed`);
+        }
+    }
+}
+//# sourceMappingURL=parser.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/lib/responses/ResponseStream.mjs":
+/*!**************************************************************!*\
+  !*** ./node_modules/openai/lib/responses/ResponseStream.mjs ***!
+  \**************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   ResponseStream: () => (/* binding */ ResponseStream)
+/* harmony export */ });
+/* harmony import */ var _error_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../error.mjs */ "./node_modules/openai/error.mjs");
+/* harmony import */ var _EventStream_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../EventStream.mjs */ "./node_modules/openai/lib/EventStream.mjs");
+/* harmony import */ var _ResponsesParser_mjs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../ResponsesParser.mjs */ "./node_modules/openai/lib/ResponsesParser.mjs");
+var __classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, state, value, kind, f) {
+    if (kind === "m") throw new TypeError("Private method is not writable");
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+    return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
+};
+var __classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, state, kind, f) {
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+    return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+};
+var _ResponseStream_instances, _ResponseStream_params, _ResponseStream_currentResponseSnapshot, _ResponseStream_finalResponse, _ResponseStream_beginRequest, _ResponseStream_addEvent, _ResponseStream_endRequest, _ResponseStream_accumulateResponse;
+
+
+
+class ResponseStream extends _EventStream_mjs__WEBPACK_IMPORTED_MODULE_1__.EventStream {
+    constructor(params) {
+        super();
+        _ResponseStream_instances.add(this);
+        _ResponseStream_params.set(this, void 0);
+        _ResponseStream_currentResponseSnapshot.set(this, void 0);
+        _ResponseStream_finalResponse.set(this, void 0);
+        __classPrivateFieldSet(this, _ResponseStream_params, params, "f");
+    }
+    static createResponse(client, params, options) {
+        const runner = new ResponseStream(params);
+        runner._run(() => runner._createOrRetrieveResponse(client, params, {
+            ...options,
+            headers: { ...options?.headers, 'X-Stainless-Helper-Method': 'stream' },
+        }));
+        return runner;
+    }
+    async _createOrRetrieveResponse(client, params, options) {
+        const signal = options?.signal;
+        if (signal) {
+            if (signal.aborted)
+                this.controller.abort();
+            signal.addEventListener('abort', () => this.controller.abort());
+        }
+        __classPrivateFieldGet(this, _ResponseStream_instances, "m", _ResponseStream_beginRequest).call(this);
+        let stream;
+        let starting_after = null;
+        if ('response_id' in params) {
+            stream = await client.responses.retrieve(params.response_id, { stream: true }, { ...options, signal: this.controller.signal, stream: true });
+            starting_after = params.starting_after ?? null;
+        }
+        else {
+            stream = await client.responses.create({ ...params, stream: true }, { ...options, signal: this.controller.signal });
+        }
+        this._connected();
+        for await (const event of stream) {
+            __classPrivateFieldGet(this, _ResponseStream_instances, "m", _ResponseStream_addEvent).call(this, event, starting_after);
+        }
+        if (stream.controller.signal?.aborted) {
+            throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.APIUserAbortError();
+        }
+        return __classPrivateFieldGet(this, _ResponseStream_instances, "m", _ResponseStream_endRequest).call(this);
+    }
+    [(_ResponseStream_params = new WeakMap(), _ResponseStream_currentResponseSnapshot = new WeakMap(), _ResponseStream_finalResponse = new WeakMap(), _ResponseStream_instances = new WeakSet(), _ResponseStream_beginRequest = function _ResponseStream_beginRequest() {
+        if (this.ended)
+            return;
+        __classPrivateFieldSet(this, _ResponseStream_currentResponseSnapshot, undefined, "f");
+    }, _ResponseStream_addEvent = function _ResponseStream_addEvent(event, starting_after) {
+        if (this.ended)
+            return;
+        const maybeEmit = (name, event) => {
+            if (starting_after == null || event.sequence_number > starting_after) {
+                this._emit(name, event);
+            }
+        };
+        const response = __classPrivateFieldGet(this, _ResponseStream_instances, "m", _ResponseStream_accumulateResponse).call(this, event);
+        maybeEmit('event', event);
+        switch (event.type) {
+            case 'response.output_text.delta': {
+                const output = response.output[event.output_index];
+                if (!output) {
+                    throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError(`missing output at index ${event.output_index}`);
+                }
+                if (output.type === 'message') {
+                    const content = output.content[event.content_index];
+                    if (!content) {
+                        throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError(`missing content at index ${event.content_index}`);
+                    }
+                    if (content.type !== 'output_text') {
+                        throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError(`expected content to be 'output_text', got ${content.type}`);
+                    }
+                    maybeEmit('response.output_text.delta', {
+                        ...event,
+                        snapshot: content.text,
+                    });
+                }
+                break;
+            }
+            case 'response.function_call_arguments.delta': {
+                const output = response.output[event.output_index];
+                if (!output) {
+                    throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError(`missing output at index ${event.output_index}`);
+                }
+                if (output.type === 'function_call') {
+                    maybeEmit('response.function_call_arguments.delta', {
+                        ...event,
+                        snapshot: output.arguments,
+                    });
+                }
+                break;
+            }
+            default:
+                maybeEmit(event.type, event);
+                break;
+        }
+    }, _ResponseStream_endRequest = function _ResponseStream_endRequest() {
+        if (this.ended) {
+            throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError(`stream has ended, this shouldn't happen`);
+        }
+        const snapshot = __classPrivateFieldGet(this, _ResponseStream_currentResponseSnapshot, "f");
+        if (!snapshot) {
+            throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError(`request ended without sending any events`);
+        }
+        __classPrivateFieldSet(this, _ResponseStream_currentResponseSnapshot, undefined, "f");
+        const parsedResponse = finalizeResponse(snapshot, __classPrivateFieldGet(this, _ResponseStream_params, "f"));
+        __classPrivateFieldSet(this, _ResponseStream_finalResponse, parsedResponse, "f");
+        return parsedResponse;
+    }, _ResponseStream_accumulateResponse = function _ResponseStream_accumulateResponse(event) {
+        let snapshot = __classPrivateFieldGet(this, _ResponseStream_currentResponseSnapshot, "f");
+        if (!snapshot) {
+            if (event.type !== 'response.created') {
+                throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError(`When snapshot hasn't been set yet, expected 'response.created' event, got ${event.type}`);
+            }
+            snapshot = __classPrivateFieldSet(this, _ResponseStream_currentResponseSnapshot, event.response, "f");
+            return snapshot;
+        }
+        switch (event.type) {
+            case 'response.output_item.added': {
+                snapshot.output.push(event.item);
+                break;
+            }
+            case 'response.content_part.added': {
+                const output = snapshot.output[event.output_index];
+                if (!output) {
+                    throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError(`missing output at index ${event.output_index}`);
+                }
+                if (output.type === 'message') {
+                    output.content.push(event.part);
+                }
+                break;
+            }
+            case 'response.output_text.delta': {
+                const output = snapshot.output[event.output_index];
+                if (!output) {
+                    throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError(`missing output at index ${event.output_index}`);
+                }
+                if (output.type === 'message') {
+                    const content = output.content[event.content_index];
+                    if (!content) {
+                        throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError(`missing content at index ${event.content_index}`);
+                    }
+                    if (content.type !== 'output_text') {
+                        throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError(`expected content to be 'output_text', got ${content.type}`);
+                    }
+                    content.text += event.delta;
+                }
+                break;
+            }
+            case 'response.function_call_arguments.delta': {
+                const output = snapshot.output[event.output_index];
+                if (!output) {
+                    throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError(`missing output at index ${event.output_index}`);
+                }
+                if (output.type === 'function_call') {
+                    output.arguments += event.delta;
+                }
+                break;
+            }
+            case 'response.completed': {
+                __classPrivateFieldSet(this, _ResponseStream_currentResponseSnapshot, event.response, "f");
+                break;
+            }
+        }
+        return snapshot;
+    }, Symbol.asyncIterator)]() {
+        const pushQueue = [];
+        const readQueue = [];
+        let done = false;
+        this.on('event', (event) => {
+            const reader = readQueue.shift();
+            if (reader) {
+                reader.resolve(event);
+            }
+            else {
+                pushQueue.push(event);
+            }
+        });
+        this.on('end', () => {
+            done = true;
+            for (const reader of readQueue) {
+                reader.resolve(undefined);
+            }
+            readQueue.length = 0;
+        });
+        this.on('abort', (err) => {
+            done = true;
+            for (const reader of readQueue) {
+                reader.reject(err);
+            }
+            readQueue.length = 0;
+        });
+        this.on('error', (err) => {
+            done = true;
+            for (const reader of readQueue) {
+                reader.reject(err);
+            }
+            readQueue.length = 0;
+        });
+        return {
+            next: async () => {
+                if (!pushQueue.length) {
+                    if (done) {
+                        return { value: undefined, done: true };
+                    }
+                    return new Promise((resolve, reject) => readQueue.push({ resolve, reject })).then((event) => (event ? { value: event, done: false } : { value: undefined, done: true }));
+                }
+                const event = pushQueue.shift();
+                return { value: event, done: false };
+            },
+            return: async () => {
+                this.abort();
+                return { value: undefined, done: true };
+            },
+        };
+    }
+    /**
+     * @returns a promise that resolves with the final Response, or rejects
+     * if an error occurred or the stream ended prematurely without producing a REsponse.
+     */
+    async finalResponse() {
+        await this.done();
+        const response = __classPrivateFieldGet(this, _ResponseStream_finalResponse, "f");
+        if (!response)
+            throw new _error_mjs__WEBPACK_IMPORTED_MODULE_0__.OpenAIError('stream ended without producing a ChatCompletion');
+        return response;
+    }
+}
+function finalizeResponse(snapshot, params) {
+    return (0,_ResponsesParser_mjs__WEBPACK_IMPORTED_MODULE_2__.maybeParseResponse)(snapshot, params);
+}
+//# sourceMappingURL=ResponseStream.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/pagination.mjs":
+/*!********************************************!*\
+  !*** ./node_modules/openai/pagination.mjs ***!
+  \********************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   CursorPage: () => (/* binding */ CursorPage),
+/* harmony export */   Page: () => (/* binding */ Page)
+/* harmony export */ });
+/* harmony import */ var _core_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./core.mjs */ "./node_modules/openai/core.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+/**
+ * Note: no pagination actually occurs yet, this is for forwards-compatibility.
+ */
+class Page extends _core_mjs__WEBPACK_IMPORTED_MODULE_0__.AbstractPage {
+    constructor(client, response, body, options) {
+        super(client, response, body, options);
+        this.data = body.data || [];
+        this.object = body.object;
+    }
+    getPaginatedItems() {
+        return this.data ?? [];
+    }
+    // @deprecated Please use `nextPageInfo()` instead
+    /**
+     * This page represents a response that isn't actually paginated at the API level
+     * so there will never be any next page params.
+     */
+    nextPageParams() {
+        return null;
+    }
+    nextPageInfo() {
+        return null;
+    }
+}
+class CursorPage extends _core_mjs__WEBPACK_IMPORTED_MODULE_0__.AbstractPage {
+    constructor(client, response, body, options) {
+        super(client, response, body, options);
+        this.data = body.data || [];
+        this.has_more = body.has_more || false;
+    }
+    getPaginatedItems() {
+        return this.data ?? [];
+    }
+    hasNextPage() {
+        if (this.has_more === false) {
+            return false;
+        }
+        return super.hasNextPage();
+    }
+    // @deprecated Please use `nextPageInfo()` instead
+    nextPageParams() {
+        const info = this.nextPageInfo();
+        if (!info)
+            return null;
+        if ('params' in info)
+            return info.params;
+        const params = Object.fromEntries(info.url.searchParams);
+        if (!Object.keys(params).length)
+            return null;
+        return params;
+    }
+    nextPageInfo() {
+        const data = this.getPaginatedItems();
+        if (!data.length) {
+            return null;
+        }
+        const id = data[data.length - 1]?.id;
+        if (!id) {
+            return null;
+        }
+        return { params: { after: id } };
+    }
+}
+//# sourceMappingURL=pagination.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resource.mjs":
+/*!******************************************!*\
+  !*** ./node_modules/openai/resource.mjs ***!
+  \******************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   APIResource: () => (/* binding */ APIResource)
+/* harmony export */ });
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+class APIResource {
+    constructor(client) {
+        this._client = client;
+    }
+}
+//# sourceMappingURL=resource.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/audio/audio.mjs":
+/*!*******************************************************!*\
+  !*** ./node_modules/openai/resources/audio/audio.mjs ***!
+  \*******************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Audio: () => (/* binding */ Audio)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _speech_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./speech.mjs */ "./node_modules/openai/resources/audio/speech.mjs");
+/* harmony import */ var _transcriptions_mjs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./transcriptions.mjs */ "./node_modules/openai/resources/audio/transcriptions.mjs");
+/* harmony import */ var _translations_mjs__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./translations.mjs */ "./node_modules/openai/resources/audio/translations.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+
+
+
+
+
+class Audio extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    constructor() {
+        super(...arguments);
+        this.transcriptions = new _transcriptions_mjs__WEBPACK_IMPORTED_MODULE_2__.Transcriptions(this._client);
+        this.translations = new _translations_mjs__WEBPACK_IMPORTED_MODULE_3__.Translations(this._client);
+        this.speech = new _speech_mjs__WEBPACK_IMPORTED_MODULE_1__.Speech(this._client);
+    }
+}
+Audio.Transcriptions = _transcriptions_mjs__WEBPACK_IMPORTED_MODULE_2__.Transcriptions;
+Audio.Translations = _translations_mjs__WEBPACK_IMPORTED_MODULE_3__.Translations;
+Audio.Speech = _speech_mjs__WEBPACK_IMPORTED_MODULE_1__.Speech;
+//# sourceMappingURL=audio.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/audio/speech.mjs":
+/*!********************************************************!*\
+  !*** ./node_modules/openai/resources/audio/speech.mjs ***!
+  \********************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Speech: () => (/* binding */ Speech)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../resource.mjs */ "./node_modules/openai/resource.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+class Speech extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    /**
+     * Generates audio from the input text.
+     *
+     * @example
+     * ```ts
+     * const speech = await client.audio.speech.create({
+     *   input: 'input',
+     *   model: 'string',
+     *   voice: 'ash',
+     * });
+     *
+     * const content = await speech.blob();
+     * console.log(content);
+     * ```
+     */
+    create(body, options) {
+        return this._client.post('/audio/speech', {
+            body,
+            ...options,
+            headers: { Accept: 'application/octet-stream', ...options?.headers },
+            __binaryResponse: true,
+        });
+    }
+}
+//# sourceMappingURL=speech.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/audio/transcriptions.mjs":
+/*!****************************************************************!*\
+  !*** ./node_modules/openai/resources/audio/transcriptions.mjs ***!
+  \****************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Transcriptions: () => (/* binding */ Transcriptions)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _core_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../core.mjs */ "./node_modules/openai/uploads.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+class Transcriptions extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    create(body, options) {
+        return this._client.post('/audio/transcriptions', _core_mjs__WEBPACK_IMPORTED_MODULE_1__.multipartFormRequestOptions({
+            body,
+            ...options,
+            stream: body.stream ?? false,
+            __metadata: { model: body.model },
+        }));
+    }
+}
+//# sourceMappingURL=transcriptions.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/audio/translations.mjs":
+/*!**************************************************************!*\
+  !*** ./node_modules/openai/resources/audio/translations.mjs ***!
+  \**************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Translations: () => (/* binding */ Translations)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _core_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../core.mjs */ "./node_modules/openai/uploads.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+class Translations extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    create(body, options) {
+        return this._client.post('/audio/translations', _core_mjs__WEBPACK_IMPORTED_MODULE_1__.multipartFormRequestOptions({ body, ...options, __metadata: { model: body.model } }));
+    }
+}
+//# sourceMappingURL=translations.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/batches.mjs":
+/*!***************************************************!*\
+  !*** ./node_modules/openai/resources/batches.mjs ***!
+  \***************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Batches: () => (/* binding */ Batches),
+/* harmony export */   BatchesPage: () => (/* binding */ BatchesPage)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _core_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../core.mjs */ "./node_modules/openai/core.mjs");
+/* harmony import */ var _pagination_mjs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../pagination.mjs */ "./node_modules/openai/pagination.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+
+class Batches extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    /**
+     * Creates and executes a batch from an uploaded file of requests
+     */
+    create(body, options) {
+        return this._client.post('/batches', { body, ...options });
+    }
+    /**
+     * Retrieves a batch.
+     */
+    retrieve(batchId, options) {
+        return this._client.get(`/batches/${batchId}`, options);
+    }
+    list(query = {}, options) {
+        if ((0,_core_mjs__WEBPACK_IMPORTED_MODULE_1__.isRequestOptions)(query)) {
+            return this.list({}, query);
+        }
+        return this._client.getAPIList('/batches', BatchesPage, { query, ...options });
+    }
+    /**
+     * Cancels an in-progress batch. The batch will be in status `cancelling` for up to
+     * 10 minutes, before changing to `cancelled`, where it will have partial results
+     * (if any) available in the output file.
+     */
+    cancel(batchId, options) {
+        return this._client.post(`/batches/${batchId}/cancel`, options);
+    }
+}
+class BatchesPage extends _pagination_mjs__WEBPACK_IMPORTED_MODULE_2__.CursorPage {
+}
+Batches.BatchesPage = BatchesPage;
+//# sourceMappingURL=batches.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/beta/assistants.mjs":
+/*!***********************************************************!*\
+  !*** ./node_modules/openai/resources/beta/assistants.mjs ***!
+  \***********************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Assistants: () => (/* binding */ Assistants),
+/* harmony export */   AssistantsPage: () => (/* binding */ AssistantsPage)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _core_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../core.mjs */ "./node_modules/openai/core.mjs");
+/* harmony import */ var _pagination_mjs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../pagination.mjs */ "./node_modules/openai/pagination.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+
+
+class Assistants extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    /**
+     * Create an assistant with a model and instructions.
+     *
+     * @example
+     * ```ts
+     * const assistant = await client.beta.assistants.create({
+     *   model: 'gpt-4o',
+     * });
+     * ```
+     */
+    create(body, options) {
+        return this._client.post('/assistants', {
+            body,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    /**
+     * Retrieves an assistant.
+     *
+     * @example
+     * ```ts
+     * const assistant = await client.beta.assistants.retrieve(
+     *   'assistant_id',
+     * );
+     * ```
+     */
+    retrieve(assistantId, options) {
+        return this._client.get(`/assistants/${assistantId}`, {
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    /**
+     * Modifies an assistant.
+     *
+     * @example
+     * ```ts
+     * const assistant = await client.beta.assistants.update(
+     *   'assistant_id',
+     * );
+     * ```
+     */
+    update(assistantId, body, options) {
+        return this._client.post(`/assistants/${assistantId}`, {
+            body,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    list(query = {}, options) {
+        if ((0,_core_mjs__WEBPACK_IMPORTED_MODULE_1__.isRequestOptions)(query)) {
+            return this.list({}, query);
+        }
+        return this._client.getAPIList('/assistants', AssistantsPage, {
+            query,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    /**
+     * Delete an assistant.
+     *
+     * @example
+     * ```ts
+     * const assistantDeleted = await client.beta.assistants.del(
+     *   'assistant_id',
+     * );
+     * ```
+     */
+    del(assistantId, options) {
+        return this._client.delete(`/assistants/${assistantId}`, {
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+}
+class AssistantsPage extends _pagination_mjs__WEBPACK_IMPORTED_MODULE_2__.CursorPage {
+}
+Assistants.AssistantsPage = AssistantsPage;
+//# sourceMappingURL=assistants.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/beta/beta.mjs":
+/*!*****************************************************!*\
+  !*** ./node_modules/openai/resources/beta/beta.mjs ***!
+  \*****************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Beta: () => (/* binding */ Beta)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _assistants_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./assistants.mjs */ "./node_modules/openai/resources/beta/assistants.mjs");
+/* harmony import */ var _chat_chat_mjs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./chat/chat.mjs */ "./node_modules/openai/resources/beta/chat/chat.mjs");
+/* harmony import */ var _realtime_realtime_mjs__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./realtime/realtime.mjs */ "./node_modules/openai/resources/beta/realtime/realtime.mjs");
+/* harmony import */ var _threads_threads_mjs__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./threads/threads.mjs */ "./node_modules/openai/resources/beta/threads/threads.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+
+
+
+
+
+
+
+class Beta extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    constructor() {
+        super(...arguments);
+        this.realtime = new _realtime_realtime_mjs__WEBPACK_IMPORTED_MODULE_3__.Realtime(this._client);
+        this.chat = new _chat_chat_mjs__WEBPACK_IMPORTED_MODULE_2__.Chat(this._client);
+        this.assistants = new _assistants_mjs__WEBPACK_IMPORTED_MODULE_1__.Assistants(this._client);
+        this.threads = new _threads_threads_mjs__WEBPACK_IMPORTED_MODULE_4__.Threads(this._client);
+    }
+}
+Beta.Realtime = _realtime_realtime_mjs__WEBPACK_IMPORTED_MODULE_3__.Realtime;
+Beta.Assistants = _assistants_mjs__WEBPACK_IMPORTED_MODULE_1__.Assistants;
+Beta.AssistantsPage = _assistants_mjs__WEBPACK_IMPORTED_MODULE_1__.AssistantsPage;
+Beta.Threads = _threads_threads_mjs__WEBPACK_IMPORTED_MODULE_4__.Threads;
+//# sourceMappingURL=beta.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/beta/chat/chat.mjs":
+/*!**********************************************************!*\
+  !*** ./node_modules/openai/resources/beta/chat/chat.mjs ***!
+  \**********************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Chat: () => (/* binding */ Chat)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _completions_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./completions.mjs */ "./node_modules/openai/resources/beta/chat/completions.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+class Chat extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    constructor() {
+        super(...arguments);
+        this.completions = new _completions_mjs__WEBPACK_IMPORTED_MODULE_1__.Completions(this._client);
+    }
+}
+(function (Chat) {
+    Chat.Completions = _completions_mjs__WEBPACK_IMPORTED_MODULE_1__.Completions;
+})(Chat || (Chat = {}));
+//# sourceMappingURL=chat.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/beta/chat/completions.mjs":
+/*!*****************************************************************!*\
+  !*** ./node_modules/openai/resources/beta/chat/completions.mjs ***!
+  \*****************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   ChatCompletionRunner: () => (/* reexport safe */ _lib_ChatCompletionRunner_mjs__WEBPACK_IMPORTED_MODULE_1__.ChatCompletionRunner),
+/* harmony export */   ChatCompletionStream: () => (/* reexport safe */ _lib_ChatCompletionStream_mjs__WEBPACK_IMPORTED_MODULE_3__.ChatCompletionStream),
+/* harmony export */   ChatCompletionStreamingRunner: () => (/* reexport safe */ _lib_ChatCompletionStreamingRunner_mjs__WEBPACK_IMPORTED_MODULE_2__.ChatCompletionStreamingRunner),
+/* harmony export */   Completions: () => (/* binding */ Completions),
+/* harmony export */   ParsingFunction: () => (/* reexport safe */ _lib_RunnableFunction_mjs__WEBPACK_IMPORTED_MODULE_5__.ParsingFunction),
+/* harmony export */   ParsingToolFunction: () => (/* reexport safe */ _lib_RunnableFunction_mjs__WEBPACK_IMPORTED_MODULE_5__.ParsingToolFunction)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _lib_ChatCompletionRunner_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../../lib/ChatCompletionRunner.mjs */ "./node_modules/openai/lib/ChatCompletionRunner.mjs");
+/* harmony import */ var _lib_ChatCompletionStreamingRunner_mjs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../../lib/ChatCompletionStreamingRunner.mjs */ "./node_modules/openai/lib/ChatCompletionStreamingRunner.mjs");
+/* harmony import */ var _lib_ChatCompletionStream_mjs__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../../lib/ChatCompletionStream.mjs */ "./node_modules/openai/lib/ChatCompletionStream.mjs");
+/* harmony import */ var _lib_parser_mjs__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../../../lib/parser.mjs */ "./node_modules/openai/lib/parser.mjs");
+/* harmony import */ var _lib_RunnableFunction_mjs__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../../../lib/RunnableFunction.mjs */ "./node_modules/openai/lib/RunnableFunction.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+
+
+
+
+
+
+
+class Completions extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    parse(body, options) {
+        (0,_lib_parser_mjs__WEBPACK_IMPORTED_MODULE_4__.validateInputTools)(body.tools);
+        return this._client.chat.completions
+            .create(body, {
+            ...options,
+            headers: {
+                ...options?.headers,
+                'X-Stainless-Helper-Method': 'beta.chat.completions.parse',
+            },
+        })
+            ._thenUnwrap((completion) => (0,_lib_parser_mjs__WEBPACK_IMPORTED_MODULE_4__.parseChatCompletion)(completion, body));
+    }
+    runFunctions(body, options) {
+        if (body.stream) {
+            return _lib_ChatCompletionStreamingRunner_mjs__WEBPACK_IMPORTED_MODULE_2__.ChatCompletionStreamingRunner.runFunctions(this._client, body, options);
+        }
+        return _lib_ChatCompletionRunner_mjs__WEBPACK_IMPORTED_MODULE_1__.ChatCompletionRunner.runFunctions(this._client, body, options);
+    }
+    runTools(body, options) {
+        if (body.stream) {
+            return _lib_ChatCompletionStreamingRunner_mjs__WEBPACK_IMPORTED_MODULE_2__.ChatCompletionStreamingRunner.runTools(this._client, body, options);
+        }
+        return _lib_ChatCompletionRunner_mjs__WEBPACK_IMPORTED_MODULE_1__.ChatCompletionRunner.runTools(this._client, body, options);
+    }
+    /**
+     * Creates a chat completion stream
+     */
+    stream(body, options) {
+        return _lib_ChatCompletionStream_mjs__WEBPACK_IMPORTED_MODULE_3__.ChatCompletionStream.createChatCompletion(this._client, body, options);
+    }
+}
+//# sourceMappingURL=completions.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/beta/realtime/realtime.mjs":
+/*!******************************************************************!*\
+  !*** ./node_modules/openai/resources/beta/realtime/realtime.mjs ***!
+  \******************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Realtime: () => (/* binding */ Realtime)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _sessions_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./sessions.mjs */ "./node_modules/openai/resources/beta/realtime/sessions.mjs");
+/* harmony import */ var _transcription_sessions_mjs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./transcription-sessions.mjs */ "./node_modules/openai/resources/beta/realtime/transcription-sessions.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+
+
+
+class Realtime extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    constructor() {
+        super(...arguments);
+        this.sessions = new _sessions_mjs__WEBPACK_IMPORTED_MODULE_1__.Sessions(this._client);
+        this.transcriptionSessions = new _transcription_sessions_mjs__WEBPACK_IMPORTED_MODULE_2__.TranscriptionSessions(this._client);
+    }
+}
+Realtime.Sessions = _sessions_mjs__WEBPACK_IMPORTED_MODULE_1__.Sessions;
+Realtime.TranscriptionSessions = _transcription_sessions_mjs__WEBPACK_IMPORTED_MODULE_2__.TranscriptionSessions;
+//# sourceMappingURL=realtime.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/beta/realtime/sessions.mjs":
+/*!******************************************************************!*\
+  !*** ./node_modules/openai/resources/beta/realtime/sessions.mjs ***!
+  \******************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Sessions: () => (/* binding */ Sessions)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../resource.mjs */ "./node_modules/openai/resource.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+class Sessions extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    /**
+     * Create an ephemeral API token for use in client-side applications with the
+     * Realtime API. Can be configured with the same session parameters as the
+     * `session.update` client event.
+     *
+     * It responds with a session object, plus a `client_secret` key which contains a
+     * usable ephemeral API token that can be used to authenticate browser clients for
+     * the Realtime API.
+     *
+     * @example
+     * ```ts
+     * const session =
+     *   await client.beta.realtime.sessions.create();
+     * ```
+     */
+    create(body, options) {
+        return this._client.post('/realtime/sessions', {
+            body,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+}
+//# sourceMappingURL=sessions.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/beta/realtime/transcription-sessions.mjs":
+/*!********************************************************************************!*\
+  !*** ./node_modules/openai/resources/beta/realtime/transcription-sessions.mjs ***!
+  \********************************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   TranscriptionSessions: () => (/* binding */ TranscriptionSessions)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../resource.mjs */ "./node_modules/openai/resource.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+class TranscriptionSessions extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    /**
+     * Create an ephemeral API token for use in client-side applications with the
+     * Realtime API specifically for realtime transcriptions. Can be configured with
+     * the same session parameters as the `transcription_session.update` client event.
+     *
+     * It responds with a session object, plus a `client_secret` key which contains a
+     * usable ephemeral API token that can be used to authenticate browser clients for
+     * the Realtime API.
+     *
+     * @example
+     * ```ts
+     * const transcriptionSession =
+     *   await client.beta.realtime.transcriptionSessions.create();
+     * ```
+     */
+    create(body, options) {
+        return this._client.post('/realtime/transcription_sessions', {
+            body,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+}
+//# sourceMappingURL=transcription-sessions.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/beta/threads/messages.mjs":
+/*!*****************************************************************!*\
+  !*** ./node_modules/openai/resources/beta/threads/messages.mjs ***!
+  \*****************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Messages: () => (/* binding */ Messages),
+/* harmony export */   MessagesPage: () => (/* binding */ MessagesPage)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _core_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../../core.mjs */ "./node_modules/openai/core.mjs");
+/* harmony import */ var _pagination_mjs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../../pagination.mjs */ "./node_modules/openai/pagination.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+
+/**
+ * @deprecated The Assistants API is deprecated in favor of the Responses API
+ */
+class Messages extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    /**
+     * Create a message.
+     *
+     * @deprecated The Assistants API is deprecated in favor of the Responses API
+     */
+    create(threadId, body, options) {
+        return this._client.post(`/threads/${threadId}/messages`, {
+            body,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    /**
+     * Retrieve a message.
+     *
+     * @deprecated The Assistants API is deprecated in favor of the Responses API
+     */
+    retrieve(threadId, messageId, options) {
+        return this._client.get(`/threads/${threadId}/messages/${messageId}`, {
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    /**
+     * Modifies a message.
+     *
+     * @deprecated The Assistants API is deprecated in favor of the Responses API
+     */
+    update(threadId, messageId, body, options) {
+        return this._client.post(`/threads/${threadId}/messages/${messageId}`, {
+            body,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    list(threadId, query = {}, options) {
+        if ((0,_core_mjs__WEBPACK_IMPORTED_MODULE_1__.isRequestOptions)(query)) {
+            return this.list(threadId, {}, query);
+        }
+        return this._client.getAPIList(`/threads/${threadId}/messages`, MessagesPage, {
+            query,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    /**
+     * Deletes a message.
+     *
+     * @deprecated The Assistants API is deprecated in favor of the Responses API
+     */
+    del(threadId, messageId, options) {
+        return this._client.delete(`/threads/${threadId}/messages/${messageId}`, {
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+}
+class MessagesPage extends _pagination_mjs__WEBPACK_IMPORTED_MODULE_2__.CursorPage {
+}
+Messages.MessagesPage = MessagesPage;
+//# sourceMappingURL=messages.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/beta/threads/runs/runs.mjs":
+/*!******************************************************************!*\
+  !*** ./node_modules/openai/resources/beta/threads/runs/runs.mjs ***!
+  \******************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Runs: () => (/* binding */ Runs),
+/* harmony export */   RunsPage: () => (/* binding */ RunsPage)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _core_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../../../core.mjs */ "./node_modules/openai/core.mjs");
+/* harmony import */ var _lib_AssistantStream_mjs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../../../lib/AssistantStream.mjs */ "./node_modules/openai/lib/AssistantStream.mjs");
+/* harmony import */ var _steps_mjs__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./steps.mjs */ "./node_modules/openai/resources/beta/threads/runs/steps.mjs");
+/* harmony import */ var _pagination_mjs__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../../../../pagination.mjs */ "./node_modules/openai/pagination.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+
+
+
+
+
+/**
+ * @deprecated The Assistants API is deprecated in favor of the Responses API
+ */
+class Runs extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    constructor() {
+        super(...arguments);
+        this.steps = new _steps_mjs__WEBPACK_IMPORTED_MODULE_3__.Steps(this._client);
+    }
+    create(threadId, params, options) {
+        const { include, ...body } = params;
+        return this._client.post(`/threads/${threadId}/runs`, {
+            query: { include },
+            body,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+            stream: params.stream ?? false,
+        });
+    }
+    /**
+     * Retrieves a run.
+     *
+     * @deprecated The Assistants API is deprecated in favor of the Responses API
+     */
+    retrieve(threadId, runId, options) {
+        return this._client.get(`/threads/${threadId}/runs/${runId}`, {
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    /**
+     * Modifies a run.
+     *
+     * @deprecated The Assistants API is deprecated in favor of the Responses API
+     */
+    update(threadId, runId, body, options) {
+        return this._client.post(`/threads/${threadId}/runs/${runId}`, {
+            body,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    list(threadId, query = {}, options) {
+        if ((0,_core_mjs__WEBPACK_IMPORTED_MODULE_1__.isRequestOptions)(query)) {
+            return this.list(threadId, {}, query);
+        }
+        return this._client.getAPIList(`/threads/${threadId}/runs`, RunsPage, {
+            query,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    /**
+     * Cancels a run that is `in_progress`.
+     *
+     * @deprecated The Assistants API is deprecated in favor of the Responses API
+     */
+    cancel(threadId, runId, options) {
+        return this._client.post(`/threads/${threadId}/runs/${runId}/cancel`, {
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    /**
+     * A helper to create a run an poll for a terminal state. More information on Run
+     * lifecycles can be found here:
+     * https://platform.openai.com/docs/assistants/how-it-works/runs-and-run-steps
+     */
+    async createAndPoll(threadId, body, options) {
+        const run = await this.create(threadId, body, options);
+        return await this.poll(threadId, run.id, options);
+    }
+    /**
+     * Create a Run stream
+     *
+     * @deprecated use `stream` instead
+     */
+    createAndStream(threadId, body, options) {
+        return _lib_AssistantStream_mjs__WEBPACK_IMPORTED_MODULE_2__.AssistantStream.createAssistantStream(threadId, this._client.beta.threads.runs, body, options);
+    }
+    /**
+     * A helper to poll a run status until it reaches a terminal state. More
+     * information on Run lifecycles can be found here:
+     * https://platform.openai.com/docs/assistants/how-it-works/runs-and-run-steps
+     */
+    async poll(threadId, runId, options) {
+        const headers = { ...options?.headers, 'X-Stainless-Poll-Helper': 'true' };
+        if (options?.pollIntervalMs) {
+            headers['X-Stainless-Custom-Poll-Interval'] = options.pollIntervalMs.toString();
+        }
+        while (true) {
+            const { data: run, response } = await this.retrieve(threadId, runId, {
+                ...options,
+                headers: { ...options?.headers, ...headers },
+            }).withResponse();
+            switch (run.status) {
+                //If we are in any sort of intermediate state we poll
+                case 'queued':
+                case 'in_progress':
+                case 'cancelling':
+                    let sleepInterval = 5000;
+                    if (options?.pollIntervalMs) {
+                        sleepInterval = options.pollIntervalMs;
+                    }
+                    else {
+                        const headerInterval = response.headers.get('openai-poll-after-ms');
+                        if (headerInterval) {
+                            const headerIntervalMs = parseInt(headerInterval);
+                            if (!isNaN(headerIntervalMs)) {
+                                sleepInterval = headerIntervalMs;
+                            }
+                        }
+                    }
+                    await (0,_core_mjs__WEBPACK_IMPORTED_MODULE_1__.sleep)(sleepInterval);
+                    break;
+                //We return the run in any terminal state.
+                case 'requires_action':
+                case 'incomplete':
+                case 'cancelled':
+                case 'completed':
+                case 'failed':
+                case 'expired':
+                    return run;
+            }
+        }
+    }
+    /**
+     * Create a Run stream
+     */
+    stream(threadId, body, options) {
+        return _lib_AssistantStream_mjs__WEBPACK_IMPORTED_MODULE_2__.AssistantStream.createAssistantStream(threadId, this._client.beta.threads.runs, body, options);
+    }
+    submitToolOutputs(threadId, runId, body, options) {
+        return this._client.post(`/threads/${threadId}/runs/${runId}/submit_tool_outputs`, {
+            body,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+            stream: body.stream ?? false,
+        });
+    }
+    /**
+     * A helper to submit a tool output to a run and poll for a terminal run state.
+     * More information on Run lifecycles can be found here:
+     * https://platform.openai.com/docs/assistants/how-it-works/runs-and-run-steps
+     */
+    async submitToolOutputsAndPoll(threadId, runId, body, options) {
+        const run = await this.submitToolOutputs(threadId, runId, body, options);
+        return await this.poll(threadId, run.id, options);
+    }
+    /**
+     * Submit the tool outputs from a previous run and stream the run to a terminal
+     * state. More information on Run lifecycles can be found here:
+     * https://platform.openai.com/docs/assistants/how-it-works/runs-and-run-steps
+     */
+    submitToolOutputsStream(threadId, runId, body, options) {
+        return _lib_AssistantStream_mjs__WEBPACK_IMPORTED_MODULE_2__.AssistantStream.createToolAssistantStream(threadId, runId, this._client.beta.threads.runs, body, options);
+    }
+}
+class RunsPage extends _pagination_mjs__WEBPACK_IMPORTED_MODULE_4__.CursorPage {
+}
+Runs.RunsPage = RunsPage;
+Runs.Steps = _steps_mjs__WEBPACK_IMPORTED_MODULE_3__.Steps;
+Runs.RunStepsPage = _steps_mjs__WEBPACK_IMPORTED_MODULE_3__.RunStepsPage;
+//# sourceMappingURL=runs.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/beta/threads/runs/steps.mjs":
+/*!*******************************************************************!*\
+  !*** ./node_modules/openai/resources/beta/threads/runs/steps.mjs ***!
+  \*******************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   RunStepsPage: () => (/* binding */ RunStepsPage),
+/* harmony export */   Steps: () => (/* binding */ Steps)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _core_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../../../core.mjs */ "./node_modules/openai/core.mjs");
+/* harmony import */ var _pagination_mjs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../../../pagination.mjs */ "./node_modules/openai/pagination.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+
+/**
+ * @deprecated The Assistants API is deprecated in favor of the Responses API
+ */
+class Steps extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    retrieve(threadId, runId, stepId, query = {}, options) {
+        if ((0,_core_mjs__WEBPACK_IMPORTED_MODULE_1__.isRequestOptions)(query)) {
+            return this.retrieve(threadId, runId, stepId, {}, query);
+        }
+        return this._client.get(`/threads/${threadId}/runs/${runId}/steps/${stepId}`, {
+            query,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    list(threadId, runId, query = {}, options) {
+        if ((0,_core_mjs__WEBPACK_IMPORTED_MODULE_1__.isRequestOptions)(query)) {
+            return this.list(threadId, runId, {}, query);
+        }
+        return this._client.getAPIList(`/threads/${threadId}/runs/${runId}/steps`, RunStepsPage, {
+            query,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+}
+class RunStepsPage extends _pagination_mjs__WEBPACK_IMPORTED_MODULE_2__.CursorPage {
+}
+Steps.RunStepsPage = RunStepsPage;
+//# sourceMappingURL=steps.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/beta/threads/threads.mjs":
+/*!****************************************************************!*\
+  !*** ./node_modules/openai/resources/beta/threads/threads.mjs ***!
+  \****************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Threads: () => (/* binding */ Threads)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _core_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../../core.mjs */ "./node_modules/openai/core.mjs");
+/* harmony import */ var _lib_AssistantStream_mjs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../../lib/AssistantStream.mjs */ "./node_modules/openai/lib/AssistantStream.mjs");
+/* harmony import */ var _messages_mjs__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./messages.mjs */ "./node_modules/openai/resources/beta/threads/messages.mjs");
+/* harmony import */ var _runs_runs_mjs__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./runs/runs.mjs */ "./node_modules/openai/resources/beta/threads/runs/runs.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+
+
+
+
+
+/**
+ * @deprecated The Assistants API is deprecated in favor of the Responses API
+ */
+class Threads extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    constructor() {
+        super(...arguments);
+        this.runs = new _runs_runs_mjs__WEBPACK_IMPORTED_MODULE_4__.Runs(this._client);
+        this.messages = new _messages_mjs__WEBPACK_IMPORTED_MODULE_3__.Messages(this._client);
+    }
+    create(body = {}, options) {
+        if ((0,_core_mjs__WEBPACK_IMPORTED_MODULE_1__.isRequestOptions)(body)) {
+            return this.create({}, body);
+        }
+        return this._client.post('/threads', {
+            body,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    /**
+     * Retrieves a thread.
+     *
+     * @deprecated The Assistants API is deprecated in favor of the Responses API
+     */
+    retrieve(threadId, options) {
+        return this._client.get(`/threads/${threadId}`, {
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    /**
+     * Modifies a thread.
+     *
+     * @deprecated The Assistants API is deprecated in favor of the Responses API
+     */
+    update(threadId, body, options) {
+        return this._client.post(`/threads/${threadId}`, {
+            body,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    /**
+     * Delete a thread.
+     *
+     * @deprecated The Assistants API is deprecated in favor of the Responses API
+     */
+    del(threadId, options) {
+        return this._client.delete(`/threads/${threadId}`, {
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    createAndRun(body, options) {
+        return this._client.post('/threads/runs', {
+            body,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+            stream: body.stream ?? false,
+        });
+    }
+    /**
+     * A helper to create a thread, start a run and then poll for a terminal state.
+     * More information on Run lifecycles can be found here:
+     * https://platform.openai.com/docs/assistants/how-it-works/runs-and-run-steps
+     */
+    async createAndRunPoll(body, options) {
+        const run = await this.createAndRun(body, options);
+        return await this.runs.poll(run.thread_id, run.id, options);
+    }
+    /**
+     * Create a thread and stream the run back
+     */
+    createAndRunStream(body, options) {
+        return _lib_AssistantStream_mjs__WEBPACK_IMPORTED_MODULE_2__.AssistantStream.createThreadAssistantStream(body, this._client.beta.threads, options);
+    }
+}
+Threads.Runs = _runs_runs_mjs__WEBPACK_IMPORTED_MODULE_4__.Runs;
+Threads.RunsPage = _runs_runs_mjs__WEBPACK_IMPORTED_MODULE_4__.RunsPage;
+Threads.Messages = _messages_mjs__WEBPACK_IMPORTED_MODULE_3__.Messages;
+Threads.MessagesPage = _messages_mjs__WEBPACK_IMPORTED_MODULE_3__.MessagesPage;
+//# sourceMappingURL=threads.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/chat/chat.mjs":
+/*!*****************************************************!*\
+  !*** ./node_modules/openai/resources/chat/chat.mjs ***!
+  \*****************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Chat: () => (/* binding */ Chat)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _completions_completions_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./completions/completions.mjs */ "./node_modules/openai/resources/chat/completions/completions.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+
+class Chat extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    constructor() {
+        super(...arguments);
+        this.completions = new _completions_completions_mjs__WEBPACK_IMPORTED_MODULE_1__.Completions(this._client);
+    }
+}
+Chat.Completions = _completions_completions_mjs__WEBPACK_IMPORTED_MODULE_1__.Completions;
+Chat.ChatCompletionsPage = _completions_completions_mjs__WEBPACK_IMPORTED_MODULE_1__.ChatCompletionsPage;
+//# sourceMappingURL=chat.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/chat/completions/completions.mjs":
+/*!************************************************************************!*\
+  !*** ./node_modules/openai/resources/chat/completions/completions.mjs ***!
+  \************************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   ChatCompletionStoreMessagesPage: () => (/* binding */ ChatCompletionStoreMessagesPage),
+/* harmony export */   ChatCompletionsPage: () => (/* binding */ ChatCompletionsPage),
+/* harmony export */   Completions: () => (/* binding */ Completions)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _core_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../../core.mjs */ "./node_modules/openai/core.mjs");
+/* harmony import */ var _messages_mjs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./messages.mjs */ "./node_modules/openai/resources/chat/completions/messages.mjs");
+/* harmony import */ var _pagination_mjs__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../../pagination.mjs */ "./node_modules/openai/pagination.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+
+
+
+class Completions extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    constructor() {
+        super(...arguments);
+        this.messages = new _messages_mjs__WEBPACK_IMPORTED_MODULE_2__.Messages(this._client);
+    }
+    create(body, options) {
+        return this._client.post('/chat/completions', { body, ...options, stream: body.stream ?? false });
+    }
+    /**
+     * Get a stored chat completion. Only Chat Completions that have been created with
+     * the `store` parameter set to `true` will be returned.
+     *
+     * @example
+     * ```ts
+     * const chatCompletion =
+     *   await client.chat.completions.retrieve('completion_id');
+     * ```
+     */
+    retrieve(completionId, options) {
+        return this._client.get(`/chat/completions/${completionId}`, options);
+    }
+    /**
+     * Modify a stored chat completion. Only Chat Completions that have been created
+     * with the `store` parameter set to `true` can be modified. Currently, the only
+     * supported modification is to update the `metadata` field.
+     *
+     * @example
+     * ```ts
+     * const chatCompletion = await client.chat.completions.update(
+     *   'completion_id',
+     *   { metadata: { foo: 'string' } },
+     * );
+     * ```
+     */
+    update(completionId, body, options) {
+        return this._client.post(`/chat/completions/${completionId}`, { body, ...options });
+    }
+    list(query = {}, options) {
+        if ((0,_core_mjs__WEBPACK_IMPORTED_MODULE_1__.isRequestOptions)(query)) {
+            return this.list({}, query);
+        }
+        return this._client.getAPIList('/chat/completions', ChatCompletionsPage, { query, ...options });
+    }
+    /**
+     * Delete a stored chat completion. Only Chat Completions that have been created
+     * with the `store` parameter set to `true` can be deleted.
+     *
+     * @example
+     * ```ts
+     * const chatCompletionDeleted =
+     *   await client.chat.completions.del('completion_id');
+     * ```
+     */
+    del(completionId, options) {
+        return this._client.delete(`/chat/completions/${completionId}`, options);
+    }
+}
+class ChatCompletionsPage extends _pagination_mjs__WEBPACK_IMPORTED_MODULE_3__.CursorPage {
+}
+class ChatCompletionStoreMessagesPage extends _pagination_mjs__WEBPACK_IMPORTED_MODULE_3__.CursorPage {
+}
+Completions.ChatCompletionsPage = ChatCompletionsPage;
+Completions.Messages = _messages_mjs__WEBPACK_IMPORTED_MODULE_2__.Messages;
+//# sourceMappingURL=completions.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/chat/completions/messages.mjs":
+/*!*********************************************************************!*\
+  !*** ./node_modules/openai/resources/chat/completions/messages.mjs ***!
+  \*********************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   ChatCompletionStoreMessagesPage: () => (/* reexport safe */ _completions_mjs__WEBPACK_IMPORTED_MODULE_2__.ChatCompletionStoreMessagesPage),
+/* harmony export */   Messages: () => (/* binding */ Messages)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _core_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../../core.mjs */ "./node_modules/openai/core.mjs");
+/* harmony import */ var _completions_mjs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./completions.mjs */ "./node_modules/openai/resources/chat/completions/completions.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+
+class Messages extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    list(completionId, query = {}, options) {
+        if ((0,_core_mjs__WEBPACK_IMPORTED_MODULE_1__.isRequestOptions)(query)) {
+            return this.list(completionId, {}, query);
+        }
+        return this._client.getAPIList(`/chat/completions/${completionId}/messages`, _completions_mjs__WEBPACK_IMPORTED_MODULE_2__.ChatCompletionStoreMessagesPage, { query, ...options });
+    }
+}
+
+//# sourceMappingURL=messages.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/completions.mjs":
+/*!*******************************************************!*\
+  !*** ./node_modules/openai/resources/completions.mjs ***!
+  \*******************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Completions: () => (/* binding */ Completions)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../resource.mjs */ "./node_modules/openai/resource.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+class Completions extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    create(body, options) {
+        return this._client.post('/completions', { body, ...options, stream: body.stream ?? false });
+    }
+}
+//# sourceMappingURL=completions.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/containers/containers.mjs":
+/*!*****************************************************************!*\
+  !*** ./node_modules/openai/resources/containers/containers.mjs ***!
+  \*****************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   ContainerListResponsesPage: () => (/* binding */ ContainerListResponsesPage),
+/* harmony export */   Containers: () => (/* binding */ Containers)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _core_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../core.mjs */ "./node_modules/openai/core.mjs");
+/* harmony import */ var _files_files_mjs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./files/files.mjs */ "./node_modules/openai/resources/containers/files/files.mjs");
+/* harmony import */ var _pagination_mjs__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../pagination.mjs */ "./node_modules/openai/pagination.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+
+
+
+class Containers extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    constructor() {
+        super(...arguments);
+        this.files = new _files_files_mjs__WEBPACK_IMPORTED_MODULE_2__.Files(this._client);
+    }
+    /**
+     * Create Container
+     */
+    create(body, options) {
+        return this._client.post('/containers', { body, ...options });
+    }
+    /**
+     * Retrieve Container
+     */
+    retrieve(containerId, options) {
+        return this._client.get(`/containers/${containerId}`, options);
+    }
+    list(query = {}, options) {
+        if ((0,_core_mjs__WEBPACK_IMPORTED_MODULE_1__.isRequestOptions)(query)) {
+            return this.list({}, query);
+        }
+        return this._client.getAPIList('/containers', ContainerListResponsesPage, { query, ...options });
+    }
+    /**
+     * Delete Container
+     */
+    del(containerId, options) {
+        return this._client.delete(`/containers/${containerId}`, {
+            ...options,
+            headers: { Accept: '*/*', ...options?.headers },
+        });
+    }
+}
+class ContainerListResponsesPage extends _pagination_mjs__WEBPACK_IMPORTED_MODULE_3__.CursorPage {
+}
+Containers.ContainerListResponsesPage = ContainerListResponsesPage;
+Containers.Files = _files_files_mjs__WEBPACK_IMPORTED_MODULE_2__.Files;
+Containers.FileListResponsesPage = _files_files_mjs__WEBPACK_IMPORTED_MODULE_2__.FileListResponsesPage;
+//# sourceMappingURL=containers.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/containers/files/content.mjs":
+/*!********************************************************************!*\
+  !*** ./node_modules/openai/resources/containers/files/content.mjs ***!
+  \********************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Content: () => (/* binding */ Content)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../resource.mjs */ "./node_modules/openai/resource.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+class Content extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    /**
+     * Retrieve Container File Content
+     */
+    retrieve(containerId, fileId, options) {
+        return this._client.get(`/containers/${containerId}/files/${fileId}/content`, {
+            ...options,
+            headers: { Accept: 'application/binary', ...options?.headers },
+            __binaryResponse: true,
+        });
+    }
+}
+//# sourceMappingURL=content.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/containers/files/files.mjs":
+/*!******************************************************************!*\
+  !*** ./node_modules/openai/resources/containers/files/files.mjs ***!
+  \******************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   FileListResponsesPage: () => (/* binding */ FileListResponsesPage),
+/* harmony export */   Files: () => (/* binding */ Files)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _core_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../../core.mjs */ "./node_modules/openai/core.mjs");
+/* harmony import */ var _core_mjs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../../core.mjs */ "./node_modules/openai/uploads.mjs");
+/* harmony import */ var _content_mjs__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./content.mjs */ "./node_modules/openai/resources/containers/files/content.mjs");
+/* harmony import */ var _pagination_mjs__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../../../pagination.mjs */ "./node_modules/openai/pagination.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+
+
+
+
+class Files extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    constructor() {
+        super(...arguments);
+        this.content = new _content_mjs__WEBPACK_IMPORTED_MODULE_3__.Content(this._client);
+    }
+    /**
+     * Create a Container File
+     *
+     * You can send either a multipart/form-data request with the raw file content, or
+     * a JSON request with a file ID.
+     */
+    create(containerId, body, options) {
+        return this._client.post(`/containers/${containerId}/files`, _core_mjs__WEBPACK_IMPORTED_MODULE_2__.multipartFormRequestOptions({ body, ...options }));
+    }
+    /**
+     * Retrieve Container File
+     */
+    retrieve(containerId, fileId, options) {
+        return this._client.get(`/containers/${containerId}/files/${fileId}`, options);
+    }
+    list(containerId, query = {}, options) {
+        if ((0,_core_mjs__WEBPACK_IMPORTED_MODULE_1__.isRequestOptions)(query)) {
+            return this.list(containerId, {}, query);
+        }
+        return this._client.getAPIList(`/containers/${containerId}/files`, FileListResponsesPage, {
+            query,
+            ...options,
+        });
+    }
+    /**
+     * Delete Container File
+     */
+    del(containerId, fileId, options) {
+        return this._client.delete(`/containers/${containerId}/files/${fileId}`, {
+            ...options,
+            headers: { Accept: '*/*', ...options?.headers },
+        });
+    }
+}
+class FileListResponsesPage extends _pagination_mjs__WEBPACK_IMPORTED_MODULE_4__.CursorPage {
+}
+Files.FileListResponsesPage = FileListResponsesPage;
+Files.Content = _content_mjs__WEBPACK_IMPORTED_MODULE_3__.Content;
+//# sourceMappingURL=files.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/embeddings.mjs":
+/*!******************************************************!*\
+  !*** ./node_modules/openai/resources/embeddings.mjs ***!
+  \******************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Embeddings: () => (/* binding */ Embeddings)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _core_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../core.mjs */ "./node_modules/openai/core.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+class Embeddings extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    /**
+     * Creates an embedding vector representing the input text.
+     *
+     * @example
+     * ```ts
+     * const createEmbeddingResponse =
+     *   await client.embeddings.create({
+     *     input: 'The quick brown fox jumped over the lazy dog',
+     *     model: 'text-embedding-3-small',
+     *   });
+     * ```
+     */
+    create(body, options) {
+        const hasUserProvidedEncodingFormat = !!body.encoding_format;
+        // No encoding_format specified, defaulting to base64 for performance reasons
+        // See https://github.com/openai/openai-node/pull/1312
+        let encoding_format = hasUserProvidedEncodingFormat ? body.encoding_format : 'base64';
+        if (hasUserProvidedEncodingFormat) {
+            _core_mjs__WEBPACK_IMPORTED_MODULE_1__.debug('Request', 'User defined encoding_format:', body.encoding_format);
+        }
+        const response = this._client.post('/embeddings', {
+            body: {
+                ...body,
+                encoding_format: encoding_format,
+            },
+            ...options,
+        });
+        // if the user specified an encoding_format, return the response as-is
+        if (hasUserProvidedEncodingFormat) {
+            return response;
+        }
+        // in this stage, we are sure the user did not specify an encoding_format
+        // and we defaulted to base64 for performance reasons
+        // we are sure then that the response is base64 encoded, let's decode it
+        // the returned result will be a float32 array since this is OpenAI API's default encoding
+        _core_mjs__WEBPACK_IMPORTED_MODULE_1__.debug('response', 'Decoding base64 embeddings to float32 array');
+        return response._thenUnwrap((response) => {
+            if (response && response.data) {
+                response.data.forEach((embeddingBase64Obj) => {
+                    const embeddingBase64Str = embeddingBase64Obj.embedding;
+                    embeddingBase64Obj.embedding = _core_mjs__WEBPACK_IMPORTED_MODULE_1__.toFloat32Array(embeddingBase64Str);
+                });
+            }
+            return response;
+        });
+    }
+}
+//# sourceMappingURL=embeddings.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/evals/evals.mjs":
+/*!*******************************************************!*\
+  !*** ./node_modules/openai/resources/evals/evals.mjs ***!
+  \*******************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   EvalListResponsesPage: () => (/* binding */ EvalListResponsesPage),
+/* harmony export */   Evals: () => (/* binding */ Evals)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _core_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../core.mjs */ "./node_modules/openai/core.mjs");
+/* harmony import */ var _runs_runs_mjs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./runs/runs.mjs */ "./node_modules/openai/resources/evals/runs/runs.mjs");
+/* harmony import */ var _pagination_mjs__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../pagination.mjs */ "./node_modules/openai/pagination.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+
+
+
+class Evals extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    constructor() {
+        super(...arguments);
+        this.runs = new _runs_runs_mjs__WEBPACK_IMPORTED_MODULE_2__.Runs(this._client);
+    }
+    /**
+     * Create the structure of an evaluation that can be used to test a model's
+     * performance. An evaluation is a set of testing criteria and the config for a
+     * data source, which dictates the schema of the data used in the evaluation. After
+     * creating an evaluation, you can run it on different models and model parameters.
+     * We support several types of graders and datasources. For more information, see
+     * the [Evals guide](https://platform.openai.com/docs/guides/evals).
+     */
+    create(body, options) {
+        return this._client.post('/evals', { body, ...options });
+    }
+    /**
+     * Get an evaluation by ID.
+     */
+    retrieve(evalId, options) {
+        return this._client.get(`/evals/${evalId}`, options);
+    }
+    /**
+     * Update certain properties of an evaluation.
+     */
+    update(evalId, body, options) {
+        return this._client.post(`/evals/${evalId}`, { body, ...options });
+    }
+    list(query = {}, options) {
+        if ((0,_core_mjs__WEBPACK_IMPORTED_MODULE_1__.isRequestOptions)(query)) {
+            return this.list({}, query);
+        }
+        return this._client.getAPIList('/evals', EvalListResponsesPage, { query, ...options });
+    }
+    /**
+     * Delete an evaluation.
+     */
+    del(evalId, options) {
+        return this._client.delete(`/evals/${evalId}`, options);
+    }
+}
+class EvalListResponsesPage extends _pagination_mjs__WEBPACK_IMPORTED_MODULE_3__.CursorPage {
+}
+Evals.EvalListResponsesPage = EvalListResponsesPage;
+Evals.Runs = _runs_runs_mjs__WEBPACK_IMPORTED_MODULE_2__.Runs;
+Evals.RunListResponsesPage = _runs_runs_mjs__WEBPACK_IMPORTED_MODULE_2__.RunListResponsesPage;
+//# sourceMappingURL=evals.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/evals/runs/output-items.mjs":
+/*!*******************************************************************!*\
+  !*** ./node_modules/openai/resources/evals/runs/output-items.mjs ***!
+  \*******************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   OutputItemListResponsesPage: () => (/* binding */ OutputItemListResponsesPage),
+/* harmony export */   OutputItems: () => (/* binding */ OutputItems)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _core_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../../core.mjs */ "./node_modules/openai/core.mjs");
+/* harmony import */ var _pagination_mjs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../../pagination.mjs */ "./node_modules/openai/pagination.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+
+class OutputItems extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    /**
+     * Get an evaluation run output item by ID.
+     */
+    retrieve(evalId, runId, outputItemId, options) {
+        return this._client.get(`/evals/${evalId}/runs/${runId}/output_items/${outputItemId}`, options);
+    }
+    list(evalId, runId, query = {}, options) {
+        if ((0,_core_mjs__WEBPACK_IMPORTED_MODULE_1__.isRequestOptions)(query)) {
+            return this.list(evalId, runId, {}, query);
+        }
+        return this._client.getAPIList(`/evals/${evalId}/runs/${runId}/output_items`, OutputItemListResponsesPage, { query, ...options });
+    }
+}
+class OutputItemListResponsesPage extends _pagination_mjs__WEBPACK_IMPORTED_MODULE_2__.CursorPage {
+}
+OutputItems.OutputItemListResponsesPage = OutputItemListResponsesPage;
+//# sourceMappingURL=output-items.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/evals/runs/runs.mjs":
+/*!***********************************************************!*\
+  !*** ./node_modules/openai/resources/evals/runs/runs.mjs ***!
+  \***********************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   RunListResponsesPage: () => (/* binding */ RunListResponsesPage),
+/* harmony export */   Runs: () => (/* binding */ Runs)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _core_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../../core.mjs */ "./node_modules/openai/core.mjs");
+/* harmony import */ var _output_items_mjs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./output-items.mjs */ "./node_modules/openai/resources/evals/runs/output-items.mjs");
+/* harmony import */ var _pagination_mjs__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../../pagination.mjs */ "./node_modules/openai/pagination.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+
+
+
+class Runs extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    constructor() {
+        super(...arguments);
+        this.outputItems = new _output_items_mjs__WEBPACK_IMPORTED_MODULE_2__.OutputItems(this._client);
+    }
+    /**
+     * Kicks off a new run for a given evaluation, specifying the data source, and what
+     * model configuration to use to test. The datasource will be validated against the
+     * schema specified in the config of the evaluation.
+     */
+    create(evalId, body, options) {
+        return this._client.post(`/evals/${evalId}/runs`, { body, ...options });
+    }
+    /**
+     * Get an evaluation run by ID.
+     */
+    retrieve(evalId, runId, options) {
+        return this._client.get(`/evals/${evalId}/runs/${runId}`, options);
+    }
+    list(evalId, query = {}, options) {
+        if ((0,_core_mjs__WEBPACK_IMPORTED_MODULE_1__.isRequestOptions)(query)) {
+            return this.list(evalId, {}, query);
+        }
+        return this._client.getAPIList(`/evals/${evalId}/runs`, RunListResponsesPage, { query, ...options });
+    }
+    /**
+     * Delete an eval run.
+     */
+    del(evalId, runId, options) {
+        return this._client.delete(`/evals/${evalId}/runs/${runId}`, options);
+    }
+    /**
+     * Cancel an ongoing evaluation run.
+     */
+    cancel(evalId, runId, options) {
+        return this._client.post(`/evals/${evalId}/runs/${runId}`, options);
+    }
+}
+class RunListResponsesPage extends _pagination_mjs__WEBPACK_IMPORTED_MODULE_3__.CursorPage {
+}
+Runs.RunListResponsesPage = RunListResponsesPage;
+Runs.OutputItems = _output_items_mjs__WEBPACK_IMPORTED_MODULE_2__.OutputItems;
+Runs.OutputItemListResponsesPage = _output_items_mjs__WEBPACK_IMPORTED_MODULE_2__.OutputItemListResponsesPage;
+//# sourceMappingURL=runs.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/files.mjs":
+/*!*************************************************!*\
+  !*** ./node_modules/openai/resources/files.mjs ***!
+  \*************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   FileObjectsPage: () => (/* binding */ FileObjectsPage),
+/* harmony export */   Files: () => (/* binding */ Files)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _core_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../core.mjs */ "./node_modules/openai/core.mjs");
+/* harmony import */ var _error_mjs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../error.mjs */ "./node_modules/openai/error.mjs");
+/* harmony import */ var _core_mjs__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../core.mjs */ "./node_modules/openai/uploads.mjs");
+/* harmony import */ var _pagination_mjs__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../pagination.mjs */ "./node_modules/openai/pagination.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+
+
+
+
+class Files extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    /**
+     * Upload a file that can be used across various endpoints. Individual files can be
+     * up to 512 MB, and the size of all files uploaded by one organization can be up
+     * to 100 GB.
+     *
+     * The Assistants API supports files up to 2 million tokens and of specific file
+     * types. See the
+     * [Assistants Tools guide](https://platform.openai.com/docs/assistants/tools) for
+     * details.
+     *
+     * The Fine-tuning API only supports `.jsonl` files. The input also has certain
+     * required formats for fine-tuning
+     * [chat](https://platform.openai.com/docs/api-reference/fine-tuning/chat-input) or
+     * [completions](https://platform.openai.com/docs/api-reference/fine-tuning/completions-input)
+     * models.
+     *
+     * The Batch API only supports `.jsonl` files up to 200 MB in size. The input also
+     * has a specific required
+     * [format](https://platform.openai.com/docs/api-reference/batch/request-input).
+     *
+     * Please [contact us](https://help.openai.com/) if you need to increase these
+     * storage limits.
+     */
+    create(body, options) {
+        return this._client.post('/files', _core_mjs__WEBPACK_IMPORTED_MODULE_3__.multipartFormRequestOptions({ body, ...options }));
+    }
+    /**
+     * Returns information about a specific file.
+     */
+    retrieve(fileId, options) {
+        return this._client.get(`/files/${fileId}`, options);
+    }
+    list(query = {}, options) {
+        if ((0,_core_mjs__WEBPACK_IMPORTED_MODULE_1__.isRequestOptions)(query)) {
+            return this.list({}, query);
+        }
+        return this._client.getAPIList('/files', FileObjectsPage, { query, ...options });
+    }
+    /**
+     * Delete a file.
+     */
+    del(fileId, options) {
+        return this._client.delete(`/files/${fileId}`, options);
+    }
+    /**
+     * Returns the contents of the specified file.
+     */
+    content(fileId, options) {
+        return this._client.get(`/files/${fileId}/content`, {
+            ...options,
+            headers: { Accept: 'application/binary', ...options?.headers },
+            __binaryResponse: true,
+        });
+    }
+    /**
+     * Returns the contents of the specified file.
+     *
+     * @deprecated The `.content()` method should be used instead
+     */
+    retrieveContent(fileId, options) {
+        return this._client.get(`/files/${fileId}/content`, options);
+    }
+    /**
+     * Waits for the given file to be processed, default timeout is 30 mins.
+     */
+    async waitForProcessing(id, { pollInterval = 5000, maxWait = 30 * 60 * 1000 } = {}) {
+        const TERMINAL_STATES = new Set(['processed', 'error', 'deleted']);
+        const start = Date.now();
+        let file = await this.retrieve(id);
+        while (!file.status || !TERMINAL_STATES.has(file.status)) {
+            await (0,_core_mjs__WEBPACK_IMPORTED_MODULE_1__.sleep)(pollInterval);
+            file = await this.retrieve(id);
+            if (Date.now() - start > maxWait) {
+                throw new _error_mjs__WEBPACK_IMPORTED_MODULE_2__.APIConnectionTimeoutError({
+                    message: `Giving up on waiting for file ${id} to finish processing after ${maxWait} milliseconds.`,
+                });
+            }
+        }
+        return file;
+    }
+}
+class FileObjectsPage extends _pagination_mjs__WEBPACK_IMPORTED_MODULE_4__.CursorPage {
+}
+Files.FileObjectsPage = FileObjectsPage;
+//# sourceMappingURL=files.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/fine-tuning/alpha/alpha.mjs":
+/*!*******************************************************************!*\
+  !*** ./node_modules/openai/resources/fine-tuning/alpha/alpha.mjs ***!
+  \*******************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Alpha: () => (/* binding */ Alpha)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _graders_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./graders.mjs */ "./node_modules/openai/resources/fine-tuning/alpha/graders.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+
+class Alpha extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    constructor() {
+        super(...arguments);
+        this.graders = new _graders_mjs__WEBPACK_IMPORTED_MODULE_1__.Graders(this._client);
+    }
+}
+Alpha.Graders = _graders_mjs__WEBPACK_IMPORTED_MODULE_1__.Graders;
+//# sourceMappingURL=alpha.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/fine-tuning/alpha/graders.mjs":
+/*!*********************************************************************!*\
+  !*** ./node_modules/openai/resources/fine-tuning/alpha/graders.mjs ***!
+  \*********************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Graders: () => (/* binding */ Graders)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../resource.mjs */ "./node_modules/openai/resource.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+class Graders extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    /**
+     * Run a grader.
+     *
+     * @example
+     * ```ts
+     * const response = await client.fineTuning.alpha.graders.run({
+     *   grader: {
+     *     input: 'input',
+     *     name: 'name',
+     *     operation: 'eq',
+     *     reference: 'reference',
+     *     type: 'string_check',
+     *   },
+     *   model_sample: 'model_sample',
+     *   reference_answer: 'string',
+     * });
+     * ```
+     */
+    run(body, options) {
+        return this._client.post('/fine_tuning/alpha/graders/run', { body, ...options });
+    }
+    /**
+     * Validate a grader.
+     *
+     * @example
+     * ```ts
+     * const response =
+     *   await client.fineTuning.alpha.graders.validate({
+     *     grader: {
+     *       input: 'input',
+     *       name: 'name',
+     *       operation: 'eq',
+     *       reference: 'reference',
+     *       type: 'string_check',
+     *     },
+     *   });
+     * ```
+     */
+    validate(body, options) {
+        return this._client.post('/fine_tuning/alpha/graders/validate', { body, ...options });
+    }
+}
+//# sourceMappingURL=graders.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/fine-tuning/checkpoints/checkpoints.mjs":
+/*!*******************************************************************************!*\
+  !*** ./node_modules/openai/resources/fine-tuning/checkpoints/checkpoints.mjs ***!
+  \*******************************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Checkpoints: () => (/* binding */ Checkpoints)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _permissions_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./permissions.mjs */ "./node_modules/openai/resources/fine-tuning/checkpoints/permissions.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+
+class Checkpoints extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    constructor() {
+        super(...arguments);
+        this.permissions = new _permissions_mjs__WEBPACK_IMPORTED_MODULE_1__.Permissions(this._client);
+    }
+}
+Checkpoints.Permissions = _permissions_mjs__WEBPACK_IMPORTED_MODULE_1__.Permissions;
+Checkpoints.PermissionCreateResponsesPage = _permissions_mjs__WEBPACK_IMPORTED_MODULE_1__.PermissionCreateResponsesPage;
+//# sourceMappingURL=checkpoints.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/fine-tuning/checkpoints/permissions.mjs":
+/*!*******************************************************************************!*\
+  !*** ./node_modules/openai/resources/fine-tuning/checkpoints/permissions.mjs ***!
+  \*******************************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   PermissionCreateResponsesPage: () => (/* binding */ PermissionCreateResponsesPage),
+/* harmony export */   Permissions: () => (/* binding */ Permissions)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _core_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../../core.mjs */ "./node_modules/openai/core.mjs");
+/* harmony import */ var _pagination_mjs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../../pagination.mjs */ "./node_modules/openai/pagination.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+
+class Permissions extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    /**
+     * **NOTE:** Calling this endpoint requires an [admin API key](../admin-api-keys).
+     *
+     * This enables organization owners to share fine-tuned models with other projects
+     * in their organization.
+     *
+     * @example
+     * ```ts
+     * // Automatically fetches more pages as needed.
+     * for await (const permissionCreateResponse of client.fineTuning.checkpoints.permissions.create(
+     *   'ft:gpt-4o-mini-2024-07-18:org:weather:B7R9VjQd',
+     *   { project_ids: ['string'] },
+     * )) {
+     *   // ...
+     * }
+     * ```
+     */
+    create(fineTunedModelCheckpoint, body, options) {
+        return this._client.getAPIList(`/fine_tuning/checkpoints/${fineTunedModelCheckpoint}/permissions`, PermissionCreateResponsesPage, { body, method: 'post', ...options });
+    }
+    retrieve(fineTunedModelCheckpoint, query = {}, options) {
+        if ((0,_core_mjs__WEBPACK_IMPORTED_MODULE_1__.isRequestOptions)(query)) {
+            return this.retrieve(fineTunedModelCheckpoint, {}, query);
+        }
+        return this._client.get(`/fine_tuning/checkpoints/${fineTunedModelCheckpoint}/permissions`, {
+            query,
+            ...options,
+        });
+    }
+    /**
+     * **NOTE:** This endpoint requires an [admin API key](../admin-api-keys).
+     *
+     * Organization owners can use this endpoint to delete a permission for a
+     * fine-tuned model checkpoint.
+     *
+     * @example
+     * ```ts
+     * const permission =
+     *   await client.fineTuning.checkpoints.permissions.del(
+     *     'ft:gpt-4o-mini-2024-07-18:org:weather:B7R9VjQd',
+     *     'cp_zc4Q7MP6XxulcVzj4MZdwsAB',
+     *   );
+     * ```
+     */
+    del(fineTunedModelCheckpoint, permissionId, options) {
+        return this._client.delete(`/fine_tuning/checkpoints/${fineTunedModelCheckpoint}/permissions/${permissionId}`, options);
+    }
+}
+/**
+ * Note: no pagination actually occurs yet, this is for forwards-compatibility.
+ */
+class PermissionCreateResponsesPage extends _pagination_mjs__WEBPACK_IMPORTED_MODULE_2__.Page {
+}
+Permissions.PermissionCreateResponsesPage = PermissionCreateResponsesPage;
+//# sourceMappingURL=permissions.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/fine-tuning/fine-tuning.mjs":
+/*!*******************************************************************!*\
+  !*** ./node_modules/openai/resources/fine-tuning/fine-tuning.mjs ***!
+  \*******************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   FineTuning: () => (/* binding */ FineTuning)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _methods_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./methods.mjs */ "./node_modules/openai/resources/fine-tuning/methods.mjs");
+/* harmony import */ var _alpha_alpha_mjs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./alpha/alpha.mjs */ "./node_modules/openai/resources/fine-tuning/alpha/alpha.mjs");
+/* harmony import */ var _checkpoints_checkpoints_mjs__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./checkpoints/checkpoints.mjs */ "./node_modules/openai/resources/fine-tuning/checkpoints/checkpoints.mjs");
+/* harmony import */ var _jobs_jobs_mjs__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./jobs/jobs.mjs */ "./node_modules/openai/resources/fine-tuning/jobs/jobs.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+
+
+
+
+
+
+
+class FineTuning extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    constructor() {
+        super(...arguments);
+        this.methods = new _methods_mjs__WEBPACK_IMPORTED_MODULE_1__.Methods(this._client);
+        this.jobs = new _jobs_jobs_mjs__WEBPACK_IMPORTED_MODULE_4__.Jobs(this._client);
+        this.checkpoints = new _checkpoints_checkpoints_mjs__WEBPACK_IMPORTED_MODULE_3__.Checkpoints(this._client);
+        this.alpha = new _alpha_alpha_mjs__WEBPACK_IMPORTED_MODULE_2__.Alpha(this._client);
+    }
+}
+FineTuning.Methods = _methods_mjs__WEBPACK_IMPORTED_MODULE_1__.Methods;
+FineTuning.Jobs = _jobs_jobs_mjs__WEBPACK_IMPORTED_MODULE_4__.Jobs;
+FineTuning.FineTuningJobsPage = _jobs_jobs_mjs__WEBPACK_IMPORTED_MODULE_4__.FineTuningJobsPage;
+FineTuning.FineTuningJobEventsPage = _jobs_jobs_mjs__WEBPACK_IMPORTED_MODULE_4__.FineTuningJobEventsPage;
+FineTuning.Checkpoints = _checkpoints_checkpoints_mjs__WEBPACK_IMPORTED_MODULE_3__.Checkpoints;
+FineTuning.Alpha = _alpha_alpha_mjs__WEBPACK_IMPORTED_MODULE_2__.Alpha;
+//# sourceMappingURL=fine-tuning.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/fine-tuning/jobs/checkpoints.mjs":
+/*!************************************************************************!*\
+  !*** ./node_modules/openai/resources/fine-tuning/jobs/checkpoints.mjs ***!
+  \************************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Checkpoints: () => (/* binding */ Checkpoints),
+/* harmony export */   FineTuningJobCheckpointsPage: () => (/* binding */ FineTuningJobCheckpointsPage)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _core_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../../core.mjs */ "./node_modules/openai/core.mjs");
+/* harmony import */ var _pagination_mjs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../../pagination.mjs */ "./node_modules/openai/pagination.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+
+class Checkpoints extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    list(fineTuningJobId, query = {}, options) {
+        if ((0,_core_mjs__WEBPACK_IMPORTED_MODULE_1__.isRequestOptions)(query)) {
+            return this.list(fineTuningJobId, {}, query);
+        }
+        return this._client.getAPIList(`/fine_tuning/jobs/${fineTuningJobId}/checkpoints`, FineTuningJobCheckpointsPage, { query, ...options });
+    }
+}
+class FineTuningJobCheckpointsPage extends _pagination_mjs__WEBPACK_IMPORTED_MODULE_2__.CursorPage {
+}
+Checkpoints.FineTuningJobCheckpointsPage = FineTuningJobCheckpointsPage;
+//# sourceMappingURL=checkpoints.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/fine-tuning/jobs/jobs.mjs":
+/*!*****************************************************************!*\
+  !*** ./node_modules/openai/resources/fine-tuning/jobs/jobs.mjs ***!
+  \*****************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   FineTuningJobEventsPage: () => (/* binding */ FineTuningJobEventsPage),
+/* harmony export */   FineTuningJobsPage: () => (/* binding */ FineTuningJobsPage),
+/* harmony export */   Jobs: () => (/* binding */ Jobs)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _core_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../../core.mjs */ "./node_modules/openai/core.mjs");
+/* harmony import */ var _checkpoints_mjs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./checkpoints.mjs */ "./node_modules/openai/resources/fine-tuning/jobs/checkpoints.mjs");
+/* harmony import */ var _pagination_mjs__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../../pagination.mjs */ "./node_modules/openai/pagination.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+
+
+
+class Jobs extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    constructor() {
+        super(...arguments);
+        this.checkpoints = new _checkpoints_mjs__WEBPACK_IMPORTED_MODULE_2__.Checkpoints(this._client);
+    }
+    /**
+     * Creates a fine-tuning job which begins the process of creating a new model from
+     * a given dataset.
+     *
+     * Response includes details of the enqueued job including job status and the name
+     * of the fine-tuned models once complete.
+     *
+     * [Learn more about fine-tuning](https://platform.openai.com/docs/guides/fine-tuning)
+     *
+     * @example
+     * ```ts
+     * const fineTuningJob = await client.fineTuning.jobs.create({
+     *   model: 'gpt-4o-mini',
+     *   training_file: 'file-abc123',
+     * });
+     * ```
+     */
+    create(body, options) {
+        return this._client.post('/fine_tuning/jobs', { body, ...options });
+    }
+    /**
+     * Get info about a fine-tuning job.
+     *
+     * [Learn more about fine-tuning](https://platform.openai.com/docs/guides/fine-tuning)
+     *
+     * @example
+     * ```ts
+     * const fineTuningJob = await client.fineTuning.jobs.retrieve(
+     *   'ft-AF1WoRqd3aJAHsqc9NY7iL8F',
+     * );
+     * ```
+     */
+    retrieve(fineTuningJobId, options) {
+        return this._client.get(`/fine_tuning/jobs/${fineTuningJobId}`, options);
+    }
+    list(query = {}, options) {
+        if ((0,_core_mjs__WEBPACK_IMPORTED_MODULE_1__.isRequestOptions)(query)) {
+            return this.list({}, query);
+        }
+        return this._client.getAPIList('/fine_tuning/jobs', FineTuningJobsPage, { query, ...options });
+    }
+    /**
+     * Immediately cancel a fine-tune job.
+     *
+     * @example
+     * ```ts
+     * const fineTuningJob = await client.fineTuning.jobs.cancel(
+     *   'ft-AF1WoRqd3aJAHsqc9NY7iL8F',
+     * );
+     * ```
+     */
+    cancel(fineTuningJobId, options) {
+        return this._client.post(`/fine_tuning/jobs/${fineTuningJobId}/cancel`, options);
+    }
+    listEvents(fineTuningJobId, query = {}, options) {
+        if ((0,_core_mjs__WEBPACK_IMPORTED_MODULE_1__.isRequestOptions)(query)) {
+            return this.listEvents(fineTuningJobId, {}, query);
+        }
+        return this._client.getAPIList(`/fine_tuning/jobs/${fineTuningJobId}/events`, FineTuningJobEventsPage, {
+            query,
+            ...options,
+        });
+    }
+    /**
+     * Pause a fine-tune job.
+     *
+     * @example
+     * ```ts
+     * const fineTuningJob = await client.fineTuning.jobs.pause(
+     *   'ft-AF1WoRqd3aJAHsqc9NY7iL8F',
+     * );
+     * ```
+     */
+    pause(fineTuningJobId, options) {
+        return this._client.post(`/fine_tuning/jobs/${fineTuningJobId}/pause`, options);
+    }
+    /**
+     * Resume a fine-tune job.
+     *
+     * @example
+     * ```ts
+     * const fineTuningJob = await client.fineTuning.jobs.resume(
+     *   'ft-AF1WoRqd3aJAHsqc9NY7iL8F',
+     * );
+     * ```
+     */
+    resume(fineTuningJobId, options) {
+        return this._client.post(`/fine_tuning/jobs/${fineTuningJobId}/resume`, options);
+    }
+}
+class FineTuningJobsPage extends _pagination_mjs__WEBPACK_IMPORTED_MODULE_3__.CursorPage {
+}
+class FineTuningJobEventsPage extends _pagination_mjs__WEBPACK_IMPORTED_MODULE_3__.CursorPage {
+}
+Jobs.FineTuningJobsPage = FineTuningJobsPage;
+Jobs.FineTuningJobEventsPage = FineTuningJobEventsPage;
+Jobs.Checkpoints = _checkpoints_mjs__WEBPACK_IMPORTED_MODULE_2__.Checkpoints;
+Jobs.FineTuningJobCheckpointsPage = _checkpoints_mjs__WEBPACK_IMPORTED_MODULE_2__.FineTuningJobCheckpointsPage;
+//# sourceMappingURL=jobs.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/fine-tuning/methods.mjs":
+/*!***************************************************************!*\
+  !*** ./node_modules/openai/resources/fine-tuning/methods.mjs ***!
+  \***************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Methods: () => (/* binding */ Methods)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../resource.mjs */ "./node_modules/openai/resource.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+class Methods extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+}
+//# sourceMappingURL=methods.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/graders/grader-models.mjs":
+/*!*****************************************************************!*\
+  !*** ./node_modules/openai/resources/graders/grader-models.mjs ***!
+  \*****************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   GraderModels: () => (/* binding */ GraderModels)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../resource.mjs */ "./node_modules/openai/resource.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+class GraderModels extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+}
+//# sourceMappingURL=grader-models.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/graders/graders.mjs":
+/*!***********************************************************!*\
+  !*** ./node_modules/openai/resources/graders/graders.mjs ***!
+  \***********************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Graders: () => (/* binding */ Graders)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _grader_models_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./grader-models.mjs */ "./node_modules/openai/resources/graders/grader-models.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+
+class Graders extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    constructor() {
+        super(...arguments);
+        this.graderModels = new _grader_models_mjs__WEBPACK_IMPORTED_MODULE_1__.GraderModels(this._client);
+    }
+}
+Graders.GraderModels = _grader_models_mjs__WEBPACK_IMPORTED_MODULE_1__.GraderModels;
+//# sourceMappingURL=graders.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/images.mjs":
+/*!**************************************************!*\
+  !*** ./node_modules/openai/resources/images.mjs ***!
+  \**************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Images: () => (/* binding */ Images)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _core_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../core.mjs */ "./node_modules/openai/uploads.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+class Images extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    /**
+     * Creates a variation of a given image. This endpoint only supports `dall-e-2`.
+     *
+     * @example
+     * ```ts
+     * const imagesResponse = await client.images.createVariation({
+     *   image: fs.createReadStream('otter.png'),
+     * });
+     * ```
+     */
+    createVariation(body, options) {
+        return this._client.post('/images/variations', _core_mjs__WEBPACK_IMPORTED_MODULE_1__.multipartFormRequestOptions({ body, ...options }));
+    }
+    /**
+     * Creates an edited or extended image given one or more source images and a
+     * prompt. This endpoint only supports `gpt-image-1` and `dall-e-2`.
+     *
+     * @example
+     * ```ts
+     * const imagesResponse = await client.images.edit({
+     *   image: fs.createReadStream('path/to/file'),
+     *   prompt: 'A cute baby sea otter wearing a beret',
+     * });
+     * ```
+     */
+    edit(body, options) {
+        return this._client.post('/images/edits', _core_mjs__WEBPACK_IMPORTED_MODULE_1__.multipartFormRequestOptions({ body, ...options }));
+    }
+    /**
+     * Creates an image given a prompt.
+     * [Learn more](https://platform.openai.com/docs/guides/images).
+     *
+     * @example
+     * ```ts
+     * const imagesResponse = await client.images.generate({
+     *   prompt: 'A cute baby sea otter',
+     * });
+     * ```
+     */
+    generate(body, options) {
+        return this._client.post('/images/generations', { body, ...options });
+    }
+}
+//# sourceMappingURL=images.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/models.mjs":
+/*!**************************************************!*\
+  !*** ./node_modules/openai/resources/models.mjs ***!
+  \**************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Models: () => (/* binding */ Models),
+/* harmony export */   ModelsPage: () => (/* binding */ ModelsPage)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _pagination_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../pagination.mjs */ "./node_modules/openai/pagination.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+class Models extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    /**
+     * Retrieves a model instance, providing basic information about the model such as
+     * the owner and permissioning.
+     */
+    retrieve(model, options) {
+        return this._client.get(`/models/${model}`, options);
+    }
+    /**
+     * Lists the currently available models, and provides basic information about each
+     * one such as the owner and availability.
+     */
+    list(options) {
+        return this._client.getAPIList('/models', ModelsPage, options);
+    }
+    /**
+     * Delete a fine-tuned model. You must have the Owner role in your organization to
+     * delete a model.
+     */
+    del(model, options) {
+        return this._client.delete(`/models/${model}`, options);
+    }
+}
+/**
+ * Note: no pagination actually occurs yet, this is for forwards-compatibility.
+ */
+class ModelsPage extends _pagination_mjs__WEBPACK_IMPORTED_MODULE_1__.Page {
+}
+Models.ModelsPage = ModelsPage;
+//# sourceMappingURL=models.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/moderations.mjs":
+/*!*******************************************************!*\
+  !*** ./node_modules/openai/resources/moderations.mjs ***!
+  \*******************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Moderations: () => (/* binding */ Moderations)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../resource.mjs */ "./node_modules/openai/resource.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+class Moderations extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    /**
+     * Classifies if text and/or image inputs are potentially harmful. Learn more in
+     * the [moderation guide](https://platform.openai.com/docs/guides/moderation).
+     */
+    create(body, options) {
+        return this._client.post('/moderations', { body, ...options });
+    }
+}
+//# sourceMappingURL=moderations.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/responses/input-items.mjs":
+/*!*****************************************************************!*\
+  !*** ./node_modules/openai/resources/responses/input-items.mjs ***!
+  \*****************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   InputItems: () => (/* binding */ InputItems),
+/* harmony export */   ResponseItemsPage: () => (/* reexport safe */ _responses_mjs__WEBPACK_IMPORTED_MODULE_2__.ResponseItemsPage)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _core_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../core.mjs */ "./node_modules/openai/core.mjs");
+/* harmony import */ var _responses_mjs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./responses.mjs */ "./node_modules/openai/resources/responses/responses.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+
+class InputItems extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    list(responseId, query = {}, options) {
+        if ((0,_core_mjs__WEBPACK_IMPORTED_MODULE_1__.isRequestOptions)(query)) {
+            return this.list(responseId, {}, query);
+        }
+        return this._client.getAPIList(`/responses/${responseId}/input_items`, _responses_mjs__WEBPACK_IMPORTED_MODULE_2__.ResponseItemsPage, {
+            query,
+            ...options,
+        });
+    }
+}
+
+//# sourceMappingURL=input-items.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/responses/responses.mjs":
+/*!***************************************************************!*\
+  !*** ./node_modules/openai/resources/responses/responses.mjs ***!
+  \***************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   ResponseItemsPage: () => (/* binding */ ResponseItemsPage),
+/* harmony export */   Responses: () => (/* binding */ Responses)
+/* harmony export */ });
+/* harmony import */ var _lib_ResponsesParser_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../lib/ResponsesParser.mjs */ "./node_modules/openai/lib/ResponsesParser.mjs");
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _input_items_mjs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./input-items.mjs */ "./node_modules/openai/resources/responses/input-items.mjs");
+/* harmony import */ var _lib_responses_ResponseStream_mjs__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../lib/responses/ResponseStream.mjs */ "./node_modules/openai/lib/responses/ResponseStream.mjs");
+/* harmony import */ var _pagination_mjs__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../../pagination.mjs */ "./node_modules/openai/pagination.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+
+
+
+
+class Responses extends _resource_mjs__WEBPACK_IMPORTED_MODULE_1__.APIResource {
+    constructor() {
+        super(...arguments);
+        this.inputItems = new _input_items_mjs__WEBPACK_IMPORTED_MODULE_2__.InputItems(this._client);
+    }
+    create(body, options) {
+        return this._client.post('/responses', { body, ...options, stream: body.stream ?? false })._thenUnwrap((rsp) => {
+            if ('object' in rsp && rsp.object === 'response') {
+                (0,_lib_ResponsesParser_mjs__WEBPACK_IMPORTED_MODULE_0__.addOutputText)(rsp);
+            }
+            return rsp;
+        });
+    }
+    retrieve(responseId, query = {}, options) {
+        return this._client.get(`/responses/${responseId}`, {
+            query,
+            ...options,
+            stream: query?.stream ?? false,
+        });
+    }
+    /**
+     * Deletes a model response with the given ID.
+     *
+     * @example
+     * ```ts
+     * await client.responses.del(
+     *   'resp_677efb5139a88190b512bc3fef8e535d',
+     * );
+     * ```
+     */
+    del(responseId, options) {
+        return this._client.delete(`/responses/${responseId}`, {
+            ...options,
+            headers: { Accept: '*/*', ...options?.headers },
+        });
+    }
+    parse(body, options) {
+        return this._client.responses
+            .create(body, options)
+            ._thenUnwrap((response) => (0,_lib_ResponsesParser_mjs__WEBPACK_IMPORTED_MODULE_0__.parseResponse)(response, body));
+    }
+    /**
+     * Creates a model response stream
+     */
+    stream(body, options) {
+        return _lib_responses_ResponseStream_mjs__WEBPACK_IMPORTED_MODULE_3__.ResponseStream.createResponse(this._client, body, options);
+    }
+    /**
+     * Cancels a model response with the given ID. Only responses created with the
+     * `background` parameter set to `true` can be cancelled.
+     * [Learn more](https://platform.openai.com/docs/guides/background).
+     *
+     * @example
+     * ```ts
+     * await client.responses.cancel(
+     *   'resp_677efb5139a88190b512bc3fef8e535d',
+     * );
+     * ```
+     */
+    cancel(responseId, options) {
+        return this._client.post(`/responses/${responseId}/cancel`, {
+            ...options,
+            headers: { Accept: '*/*', ...options?.headers },
+        });
+    }
+}
+class ResponseItemsPage extends _pagination_mjs__WEBPACK_IMPORTED_MODULE_4__.CursorPage {
+}
+Responses.InputItems = _input_items_mjs__WEBPACK_IMPORTED_MODULE_2__.InputItems;
+//# sourceMappingURL=responses.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/uploads/parts.mjs":
+/*!*********************************************************!*\
+  !*** ./node_modules/openai/resources/uploads/parts.mjs ***!
+  \*********************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Parts: () => (/* binding */ Parts)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _core_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../core.mjs */ "./node_modules/openai/uploads.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+class Parts extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    /**
+     * Adds a
+     * [Part](https://platform.openai.com/docs/api-reference/uploads/part-object) to an
+     * [Upload](https://platform.openai.com/docs/api-reference/uploads/object) object.
+     * A Part represents a chunk of bytes from the file you are trying to upload.
+     *
+     * Each Part can be at most 64 MB, and you can add Parts until you hit the Upload
+     * maximum of 8 GB.
+     *
+     * It is possible to add multiple Parts in parallel. You can decide the intended
+     * order of the Parts when you
+     * [complete the Upload](https://platform.openai.com/docs/api-reference/uploads/complete).
+     */
+    create(uploadId, body, options) {
+        return this._client.post(`/uploads/${uploadId}/parts`, _core_mjs__WEBPACK_IMPORTED_MODULE_1__.multipartFormRequestOptions({ body, ...options }));
+    }
+}
+//# sourceMappingURL=parts.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/uploads/uploads.mjs":
+/*!***********************************************************!*\
+  !*** ./node_modules/openai/resources/uploads/uploads.mjs ***!
+  \***********************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Uploads: () => (/* binding */ Uploads)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _parts_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./parts.mjs */ "./node_modules/openai/resources/uploads/parts.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+
+class Uploads extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    constructor() {
+        super(...arguments);
+        this.parts = new _parts_mjs__WEBPACK_IMPORTED_MODULE_1__.Parts(this._client);
+    }
+    /**
+     * Creates an intermediate
+     * [Upload](https://platform.openai.com/docs/api-reference/uploads/object) object
+     * that you can add
+     * [Parts](https://platform.openai.com/docs/api-reference/uploads/part-object) to.
+     * Currently, an Upload can accept at most 8 GB in total and expires after an hour
+     * after you create it.
+     *
+     * Once you complete the Upload, we will create a
+     * [File](https://platform.openai.com/docs/api-reference/files/object) object that
+     * contains all the parts you uploaded. This File is usable in the rest of our
+     * platform as a regular File object.
+     *
+     * For certain `purpose` values, the correct `mime_type` must be specified. Please
+     * refer to documentation for the
+     * [supported MIME types for your use case](https://platform.openai.com/docs/assistants/tools/file-search#supported-files).
+     *
+     * For guidance on the proper filename extensions for each purpose, please follow
+     * the documentation on
+     * [creating a File](https://platform.openai.com/docs/api-reference/files/create).
+     */
+    create(body, options) {
+        return this._client.post('/uploads', { body, ...options });
+    }
+    /**
+     * Cancels the Upload. No Parts may be added after an Upload is cancelled.
+     */
+    cancel(uploadId, options) {
+        return this._client.post(`/uploads/${uploadId}/cancel`, options);
+    }
+    /**
+     * Completes the
+     * [Upload](https://platform.openai.com/docs/api-reference/uploads/object).
+     *
+     * Within the returned Upload object, there is a nested
+     * [File](https://platform.openai.com/docs/api-reference/files/object) object that
+     * is ready to use in the rest of the platform.
+     *
+     * You can specify the order of the Parts by passing in an ordered list of the Part
+     * IDs.
+     *
+     * The number of bytes uploaded upon completion must match the number of bytes
+     * initially specified when creating the Upload object. No Parts may be added after
+     * an Upload is completed.
+     */
+    complete(uploadId, body, options) {
+        return this._client.post(`/uploads/${uploadId}/complete`, { body, ...options });
+    }
+}
+Uploads.Parts = _parts_mjs__WEBPACK_IMPORTED_MODULE_1__.Parts;
+//# sourceMappingURL=uploads.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/vector-stores/file-batches.mjs":
+/*!**********************************************************************!*\
+  !*** ./node_modules/openai/resources/vector-stores/file-batches.mjs ***!
+  \**********************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   FileBatches: () => (/* binding */ FileBatches),
+/* harmony export */   VectorStoreFilesPage: () => (/* reexport safe */ _files_mjs__WEBPACK_IMPORTED_MODULE_3__.VectorStoreFilesPage)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _core_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../core.mjs */ "./node_modules/openai/core.mjs");
+/* harmony import */ var _lib_Util_mjs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../lib/Util.mjs */ "./node_modules/openai/lib/Util.mjs");
+/* harmony import */ var _files_mjs__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./files.mjs */ "./node_modules/openai/resources/vector-stores/files.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+
+
+
+class FileBatches extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    /**
+     * Create a vector store file batch.
+     */
+    create(vectorStoreId, body, options) {
+        return this._client.post(`/vector_stores/${vectorStoreId}/file_batches`, {
+            body,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    /**
+     * Retrieves a vector store file batch.
+     */
+    retrieve(vectorStoreId, batchId, options) {
+        return this._client.get(`/vector_stores/${vectorStoreId}/file_batches/${batchId}`, {
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    /**
+     * Cancel a vector store file batch. This attempts to cancel the processing of
+     * files in this batch as soon as possible.
+     */
+    cancel(vectorStoreId, batchId, options) {
+        return this._client.post(`/vector_stores/${vectorStoreId}/file_batches/${batchId}/cancel`, {
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    /**
+     * Create a vector store batch and poll until all files have been processed.
+     */
+    async createAndPoll(vectorStoreId, body, options) {
+        const batch = await this.create(vectorStoreId, body);
+        return await this.poll(vectorStoreId, batch.id, options);
+    }
+    listFiles(vectorStoreId, batchId, query = {}, options) {
+        if ((0,_core_mjs__WEBPACK_IMPORTED_MODULE_1__.isRequestOptions)(query)) {
+            return this.listFiles(vectorStoreId, batchId, {}, query);
+        }
+        return this._client.getAPIList(`/vector_stores/${vectorStoreId}/file_batches/${batchId}/files`, _files_mjs__WEBPACK_IMPORTED_MODULE_3__.VectorStoreFilesPage, { query, ...options, headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers } });
+    }
+    /**
+     * Wait for the given file batch to be processed.
+     *
+     * Note: this will return even if one of the files failed to process, you need to
+     * check batch.file_counts.failed_count to handle this case.
+     */
+    async poll(vectorStoreId, batchId, options) {
+        const headers = { ...options?.headers, 'X-Stainless-Poll-Helper': 'true' };
+        if (options?.pollIntervalMs) {
+            headers['X-Stainless-Custom-Poll-Interval'] = options.pollIntervalMs.toString();
+        }
+        while (true) {
+            const { data: batch, response } = await this.retrieve(vectorStoreId, batchId, {
+                ...options,
+                headers,
+            }).withResponse();
+            switch (batch.status) {
+                case 'in_progress':
+                    let sleepInterval = 5000;
+                    if (options?.pollIntervalMs) {
+                        sleepInterval = options.pollIntervalMs;
+                    }
+                    else {
+                        const headerInterval = response.headers.get('openai-poll-after-ms');
+                        if (headerInterval) {
+                            const headerIntervalMs = parseInt(headerInterval);
+                            if (!isNaN(headerIntervalMs)) {
+                                sleepInterval = headerIntervalMs;
+                            }
+                        }
+                    }
+                    await (0,_core_mjs__WEBPACK_IMPORTED_MODULE_1__.sleep)(sleepInterval);
+                    break;
+                case 'failed':
+                case 'cancelled':
+                case 'completed':
+                    return batch;
+            }
+        }
+    }
+    /**
+     * Uploads the given files concurrently and then creates a vector store file batch.
+     *
+     * The concurrency limit is configurable using the `maxConcurrency` parameter.
+     */
+    async uploadAndPoll(vectorStoreId, { files, fileIds = [] }, options) {
+        if (files == null || files.length == 0) {
+            throw new Error(`No \`files\` provided to process. If you've already uploaded files you should use \`.createAndPoll()\` instead`);
+        }
+        const configuredConcurrency = options?.maxConcurrency ?? 5;
+        // We cap the number of workers at the number of files (so we don't start any unnecessary workers)
+        const concurrencyLimit = Math.min(configuredConcurrency, files.length);
+        const client = this._client;
+        const fileIterator = files.values();
+        const allFileIds = [...fileIds];
+        // This code is based on this design. The libraries don't accommodate our environment limits.
+        // https://stackoverflow.com/questions/40639432/what-is-the-best-way-to-limit-concurrency-when-using-es6s-promise-all
+        async function processFiles(iterator) {
+            for (let item of iterator) {
+                const fileObj = await client.files.create({ file: item, purpose: 'assistants' }, options);
+                allFileIds.push(fileObj.id);
+            }
+        }
+        // Start workers to process results
+        const workers = Array(concurrencyLimit).fill(fileIterator).map(processFiles);
+        // Wait for all processing to complete.
+        await (0,_lib_Util_mjs__WEBPACK_IMPORTED_MODULE_2__.allSettledWithThrow)(workers);
+        return await this.createAndPoll(vectorStoreId, {
+            file_ids: allFileIds,
+        });
+    }
+}
+
+//# sourceMappingURL=file-batches.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/vector-stores/files.mjs":
+/*!***************************************************************!*\
+  !*** ./node_modules/openai/resources/vector-stores/files.mjs ***!
+  \***************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   FileContentResponsesPage: () => (/* binding */ FileContentResponsesPage),
+/* harmony export */   Files: () => (/* binding */ Files),
+/* harmony export */   VectorStoreFilesPage: () => (/* binding */ VectorStoreFilesPage)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _core_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../core.mjs */ "./node_modules/openai/core.mjs");
+/* harmony import */ var _pagination_mjs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../pagination.mjs */ "./node_modules/openai/pagination.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+
+class Files extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    /**
+     * Create a vector store file by attaching a
+     * [File](https://platform.openai.com/docs/api-reference/files) to a
+     * [vector store](https://platform.openai.com/docs/api-reference/vector-stores/object).
+     */
+    create(vectorStoreId, body, options) {
+        return this._client.post(`/vector_stores/${vectorStoreId}/files`, {
+            body,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    /**
+     * Retrieves a vector store file.
+     */
+    retrieve(vectorStoreId, fileId, options) {
+        return this._client.get(`/vector_stores/${vectorStoreId}/files/${fileId}`, {
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    /**
+     * Update attributes on a vector store file.
+     */
+    update(vectorStoreId, fileId, body, options) {
+        return this._client.post(`/vector_stores/${vectorStoreId}/files/${fileId}`, {
+            body,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    list(vectorStoreId, query = {}, options) {
+        if ((0,_core_mjs__WEBPACK_IMPORTED_MODULE_1__.isRequestOptions)(query)) {
+            return this.list(vectorStoreId, {}, query);
+        }
+        return this._client.getAPIList(`/vector_stores/${vectorStoreId}/files`, VectorStoreFilesPage, {
+            query,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    /**
+     * Delete a vector store file. This will remove the file from the vector store but
+     * the file itself will not be deleted. To delete the file, use the
+     * [delete file](https://platform.openai.com/docs/api-reference/files/delete)
+     * endpoint.
+     */
+    del(vectorStoreId, fileId, options) {
+        return this._client.delete(`/vector_stores/${vectorStoreId}/files/${fileId}`, {
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    /**
+     * Attach a file to the given vector store and wait for it to be processed.
+     */
+    async createAndPoll(vectorStoreId, body, options) {
+        const file = await this.create(vectorStoreId, body, options);
+        return await this.poll(vectorStoreId, file.id, options);
+    }
+    /**
+     * Wait for the vector store file to finish processing.
+     *
+     * Note: this will return even if the file failed to process, you need to check
+     * file.last_error and file.status to handle these cases
+     */
+    async poll(vectorStoreId, fileId, options) {
+        const headers = { ...options?.headers, 'X-Stainless-Poll-Helper': 'true' };
+        if (options?.pollIntervalMs) {
+            headers['X-Stainless-Custom-Poll-Interval'] = options.pollIntervalMs.toString();
+        }
+        while (true) {
+            const fileResponse = await this.retrieve(vectorStoreId, fileId, {
+                ...options,
+                headers,
+            }).withResponse();
+            const file = fileResponse.data;
+            switch (file.status) {
+                case 'in_progress':
+                    let sleepInterval = 5000;
+                    if (options?.pollIntervalMs) {
+                        sleepInterval = options.pollIntervalMs;
+                    }
+                    else {
+                        const headerInterval = fileResponse.response.headers.get('openai-poll-after-ms');
+                        if (headerInterval) {
+                            const headerIntervalMs = parseInt(headerInterval);
+                            if (!isNaN(headerIntervalMs)) {
+                                sleepInterval = headerIntervalMs;
+                            }
+                        }
+                    }
+                    await (0,_core_mjs__WEBPACK_IMPORTED_MODULE_1__.sleep)(sleepInterval);
+                    break;
+                case 'failed':
+                case 'completed':
+                    return file;
+            }
+        }
+    }
+    /**
+     * Upload a file to the `files` API and then attach it to the given vector store.
+     *
+     * Note the file will be asynchronously processed (you can use the alternative
+     * polling helper method to wait for processing to complete).
+     */
+    async upload(vectorStoreId, file, options) {
+        const fileInfo = await this._client.files.create({ file: file, purpose: 'assistants' }, options);
+        return this.create(vectorStoreId, { file_id: fileInfo.id }, options);
+    }
+    /**
+     * Add a file to a vector store and poll until processing is complete.
+     */
+    async uploadAndPoll(vectorStoreId, file, options) {
+        const fileInfo = await this.upload(vectorStoreId, file, options);
+        return await this.poll(vectorStoreId, fileInfo.id, options);
+    }
+    /**
+     * Retrieve the parsed contents of a vector store file.
+     */
+    content(vectorStoreId, fileId, options) {
+        return this._client.getAPIList(`/vector_stores/${vectorStoreId}/files/${fileId}/content`, FileContentResponsesPage, { ...options, headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers } });
+    }
+}
+class VectorStoreFilesPage extends _pagination_mjs__WEBPACK_IMPORTED_MODULE_2__.CursorPage {
+}
+/**
+ * Note: no pagination actually occurs yet, this is for forwards-compatibility.
+ */
+class FileContentResponsesPage extends _pagination_mjs__WEBPACK_IMPORTED_MODULE_2__.Page {
+}
+Files.VectorStoreFilesPage = VectorStoreFilesPage;
+Files.FileContentResponsesPage = FileContentResponsesPage;
+//# sourceMappingURL=files.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/resources/vector-stores/vector-stores.mjs":
+/*!***********************************************************************!*\
+  !*** ./node_modules/openai/resources/vector-stores/vector-stores.mjs ***!
+  \***********************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   VectorStoreSearchResponsesPage: () => (/* binding */ VectorStoreSearchResponsesPage),
+/* harmony export */   VectorStores: () => (/* binding */ VectorStores),
+/* harmony export */   VectorStoresPage: () => (/* binding */ VectorStoresPage)
+/* harmony export */ });
+/* harmony import */ var _resource_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../resource.mjs */ "./node_modules/openai/resource.mjs");
+/* harmony import */ var _core_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../core.mjs */ "./node_modules/openai/core.mjs");
+/* harmony import */ var _file_batches_mjs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./file-batches.mjs */ "./node_modules/openai/resources/vector-stores/file-batches.mjs");
+/* harmony import */ var _files_mjs__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./files.mjs */ "./node_modules/openai/resources/vector-stores/files.mjs");
+/* harmony import */ var _pagination_mjs__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../../pagination.mjs */ "./node_modules/openai/pagination.mjs");
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+
+
+
+
+
+
+
+class VectorStores extends _resource_mjs__WEBPACK_IMPORTED_MODULE_0__.APIResource {
+    constructor() {
+        super(...arguments);
+        this.files = new _files_mjs__WEBPACK_IMPORTED_MODULE_3__.Files(this._client);
+        this.fileBatches = new _file_batches_mjs__WEBPACK_IMPORTED_MODULE_2__.FileBatches(this._client);
+    }
+    /**
+     * Create a vector store.
+     */
+    create(body, options) {
+        return this._client.post('/vector_stores', {
+            body,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    /**
+     * Retrieves a vector store.
+     */
+    retrieve(vectorStoreId, options) {
+        return this._client.get(`/vector_stores/${vectorStoreId}`, {
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    /**
+     * Modifies a vector store.
+     */
+    update(vectorStoreId, body, options) {
+        return this._client.post(`/vector_stores/${vectorStoreId}`, {
+            body,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    list(query = {}, options) {
+        if ((0,_core_mjs__WEBPACK_IMPORTED_MODULE_1__.isRequestOptions)(query)) {
+            return this.list({}, query);
+        }
+        return this._client.getAPIList('/vector_stores', VectorStoresPage, {
+            query,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    /**
+     * Delete a vector store.
+     */
+    del(vectorStoreId, options) {
+        return this._client.delete(`/vector_stores/${vectorStoreId}`, {
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    /**
+     * Search a vector store for relevant chunks based on a query and file attributes
+     * filter.
+     */
+    search(vectorStoreId, body, options) {
+        return this._client.getAPIList(`/vector_stores/${vectorStoreId}/search`, VectorStoreSearchResponsesPage, {
+            body,
+            method: 'post',
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+}
+class VectorStoresPage extends _pagination_mjs__WEBPACK_IMPORTED_MODULE_4__.CursorPage {
+}
+/**
+ * Note: no pagination actually occurs yet, this is for forwards-compatibility.
+ */
+class VectorStoreSearchResponsesPage extends _pagination_mjs__WEBPACK_IMPORTED_MODULE_4__.Page {
+}
+VectorStores.VectorStoresPage = VectorStoresPage;
+VectorStores.VectorStoreSearchResponsesPage = VectorStoreSearchResponsesPage;
+VectorStores.Files = _files_mjs__WEBPACK_IMPORTED_MODULE_3__.Files;
+VectorStores.VectorStoreFilesPage = _files_mjs__WEBPACK_IMPORTED_MODULE_3__.VectorStoreFilesPage;
+VectorStores.FileContentResponsesPage = _files_mjs__WEBPACK_IMPORTED_MODULE_3__.FileContentResponsesPage;
+VectorStores.FileBatches = _file_batches_mjs__WEBPACK_IMPORTED_MODULE_2__.FileBatches;
+//# sourceMappingURL=vector-stores.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/streaming.mjs":
+/*!*******************************************!*\
+  !*** ./node_modules/openai/streaming.mjs ***!
+  \*******************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Stream: () => (/* binding */ Stream),
+/* harmony export */   _iterSSEMessages: () => (/* binding */ _iterSSEMessages)
+/* harmony export */ });
+/* harmony import */ var _shims_index_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./_shims/index.mjs */ "./node_modules/openai/_shims/index.mjs");
+/* harmony import */ var _error_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./error.mjs */ "./node_modules/openai/error.mjs");
+/* harmony import */ var _internal_decoders_line_mjs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./internal/decoders/line.mjs */ "./node_modules/openai/internal/decoders/line.mjs");
+/* harmony import */ var _internal_stream_utils_mjs__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./internal/stream-utils.mjs */ "./node_modules/openai/internal/stream-utils.mjs");
+/* harmony import */ var _core_mjs__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./core.mjs */ "./node_modules/openai/core.mjs");
+
+
+
+
+
+
+class Stream {
+    constructor(iterator, controller) {
+        this.iterator = iterator;
+        this.controller = controller;
+    }
+    static fromSSEResponse(response, controller) {
+        let consumed = false;
+        async function* iterator() {
+            if (consumed) {
+                throw new Error('Cannot iterate over a consumed stream, use `.tee()` to split the stream.');
+            }
+            consumed = true;
+            let done = false;
+            try {
+                for await (const sse of _iterSSEMessages(response, controller)) {
+                    if (done)
+                        continue;
+                    if (sse.data.startsWith('[DONE]')) {
+                        done = true;
+                        continue;
+                    }
+                    if (sse.event === null ||
+                        sse.event.startsWith('response.') ||
+                        sse.event.startsWith('transcript.')) {
+                        let data;
+                        try {
+                            data = JSON.parse(sse.data);
+                        }
+                        catch (e) {
+                            console.error(`Could not parse message into JSON:`, sse.data);
+                            console.error(`From chunk:`, sse.raw);
+                            throw e;
+                        }
+                        if (data && data.error) {
+                            throw new _error_mjs__WEBPACK_IMPORTED_MODULE_1__.APIError(undefined, data.error, undefined, (0,_core_mjs__WEBPACK_IMPORTED_MODULE_4__.createResponseHeaders)(response.headers));
+                        }
+                        yield data;
+                    }
+                    else {
+                        let data;
+                        try {
+                            data = JSON.parse(sse.data);
+                        }
+                        catch (e) {
+                            console.error(`Could not parse message into JSON:`, sse.data);
+                            console.error(`From chunk:`, sse.raw);
+                            throw e;
+                        }
+                        // TODO: Is this where the error should be thrown?
+                        if (sse.event == 'error') {
+                            throw new _error_mjs__WEBPACK_IMPORTED_MODULE_1__.APIError(undefined, data.error, data.message, undefined);
+                        }
+                        yield { event: sse.event, data: data };
+                    }
+                }
+                done = true;
+            }
+            catch (e) {
+                // If the user calls `stream.controller.abort()`, we should exit without throwing.
+                if (e instanceof Error && e.name === 'AbortError')
+                    return;
+                throw e;
+            }
+            finally {
+                // If the user `break`s, abort the ongoing request.
+                if (!done)
+                    controller.abort();
+            }
+        }
+        return new Stream(iterator, controller);
+    }
+    /**
+     * Generates a Stream from a newline-separated ReadableStream
+     * where each item is a JSON value.
+     */
+    static fromReadableStream(readableStream, controller) {
+        let consumed = false;
+        async function* iterLines() {
+            const lineDecoder = new _internal_decoders_line_mjs__WEBPACK_IMPORTED_MODULE_2__.LineDecoder();
+            const iter = (0,_internal_stream_utils_mjs__WEBPACK_IMPORTED_MODULE_3__.ReadableStreamToAsyncIterable)(readableStream);
+            for await (const chunk of iter) {
+                for (const line of lineDecoder.decode(chunk)) {
+                    yield line;
+                }
+            }
+            for (const line of lineDecoder.flush()) {
+                yield line;
+            }
+        }
+        async function* iterator() {
+            if (consumed) {
+                throw new Error('Cannot iterate over a consumed stream, use `.tee()` to split the stream.');
+            }
+            consumed = true;
+            let done = false;
+            try {
+                for await (const line of iterLines()) {
+                    if (done)
+                        continue;
+                    if (line)
+                        yield JSON.parse(line);
+                }
+                done = true;
+            }
+            catch (e) {
+                // If the user calls `stream.controller.abort()`, we should exit without throwing.
+                if (e instanceof Error && e.name === 'AbortError')
+                    return;
+                throw e;
+            }
+            finally {
+                // If the user `break`s, abort the ongoing request.
+                if (!done)
+                    controller.abort();
+            }
+        }
+        return new Stream(iterator, controller);
+    }
+    [Symbol.asyncIterator]() {
+        return this.iterator();
+    }
+    /**
+     * Splits the stream into two streams which can be
+     * independently read from at different speeds.
+     */
+    tee() {
+        const left = [];
+        const right = [];
+        const iterator = this.iterator();
+        const teeIterator = (queue) => {
+            return {
+                next: () => {
+                    if (queue.length === 0) {
+                        const result = iterator.next();
+                        left.push(result);
+                        right.push(result);
+                    }
+                    return queue.shift();
+                },
+            };
+        };
+        return [
+            new Stream(() => teeIterator(left), this.controller),
+            new Stream(() => teeIterator(right), this.controller),
+        ];
+    }
+    /**
+     * Converts this stream to a newline-separated ReadableStream of
+     * JSON stringified values in the stream
+     * which can be turned back into a Stream with `Stream.fromReadableStream()`.
+     */
+    toReadableStream() {
+        const self = this;
+        let iter;
+        const encoder = new TextEncoder();
+        return new _shims_index_mjs__WEBPACK_IMPORTED_MODULE_0__.ReadableStream({
+            async start() {
+                iter = self[Symbol.asyncIterator]();
+            },
+            async pull(ctrl) {
+                try {
+                    const { value, done } = await iter.next();
+                    if (done)
+                        return ctrl.close();
+                    const bytes = encoder.encode(JSON.stringify(value) + '\n');
+                    ctrl.enqueue(bytes);
+                }
+                catch (err) {
+                    ctrl.error(err);
+                }
+            },
+            async cancel() {
+                await iter.return?.();
+            },
+        });
+    }
+}
+async function* _iterSSEMessages(response, controller) {
+    if (!response.body) {
+        controller.abort();
+        throw new _error_mjs__WEBPACK_IMPORTED_MODULE_1__.OpenAIError(`Attempted to iterate over a response with no body`);
+    }
+    const sseDecoder = new SSEDecoder();
+    const lineDecoder = new _internal_decoders_line_mjs__WEBPACK_IMPORTED_MODULE_2__.LineDecoder();
+    const iter = (0,_internal_stream_utils_mjs__WEBPACK_IMPORTED_MODULE_3__.ReadableStreamToAsyncIterable)(response.body);
+    for await (const sseChunk of iterSSEChunks(iter)) {
+        for (const line of lineDecoder.decode(sseChunk)) {
+            const sse = sseDecoder.decode(line);
+            if (sse)
+                yield sse;
+        }
+    }
+    for (const line of lineDecoder.flush()) {
+        const sse = sseDecoder.decode(line);
+        if (sse)
+            yield sse;
+    }
+}
+/**
+ * Given an async iterable iterator, iterates over it and yields full
+ * SSE chunks, i.e. yields when a double new-line is encountered.
+ */
+async function* iterSSEChunks(iterator) {
+    let data = new Uint8Array();
+    for await (const chunk of iterator) {
+        if (chunk == null) {
+            continue;
+        }
+        const binaryChunk = chunk instanceof ArrayBuffer ? new Uint8Array(chunk)
+            : typeof chunk === 'string' ? new TextEncoder().encode(chunk)
+                : chunk;
+        let newData = new Uint8Array(data.length + binaryChunk.length);
+        newData.set(data);
+        newData.set(binaryChunk, data.length);
+        data = newData;
+        let patternIndex;
+        while ((patternIndex = (0,_internal_decoders_line_mjs__WEBPACK_IMPORTED_MODULE_2__.findDoubleNewlineIndex)(data)) !== -1) {
+            yield data.slice(0, patternIndex);
+            data = data.slice(patternIndex);
+        }
+    }
+    if (data.length > 0) {
+        yield data;
+    }
+}
+class SSEDecoder {
+    constructor() {
+        this.event = null;
+        this.data = [];
+        this.chunks = [];
+    }
+    decode(line) {
+        if (line.endsWith('\r')) {
+            line = line.substring(0, line.length - 1);
+        }
+        if (!line) {
+            // empty line and we didn't previously encounter any messages
+            if (!this.event && !this.data.length)
+                return null;
+            const sse = {
+                event: this.event,
+                data: this.data.join('\n'),
+                raw: this.chunks,
+            };
+            this.event = null;
+            this.data = [];
+            this.chunks = [];
+            return sse;
+        }
+        this.chunks.push(line);
+        if (line.startsWith(':')) {
+            return null;
+        }
+        let [fieldname, _, value] = partition(line, ':');
+        if (value.startsWith(' ')) {
+            value = value.substring(1);
+        }
+        if (fieldname === 'event') {
+            this.event = value;
+        }
+        else if (fieldname === 'data') {
+            this.data.push(value);
+        }
+        return null;
+    }
+}
+function partition(str, delimiter) {
+    const index = str.indexOf(delimiter);
+    if (index !== -1) {
+        return [str.substring(0, index), delimiter, str.substring(index + delimiter.length)];
+    }
+    return [str, '', ''];
+}
+//# sourceMappingURL=streaming.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/uploads.mjs":
+/*!*****************************************!*\
+  !*** ./node_modules/openai/uploads.mjs ***!
+  \*****************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   createForm: () => (/* binding */ createForm),
+/* harmony export */   fileFromPath: () => (/* reexport safe */ _shims_index_mjs__WEBPACK_IMPORTED_MODULE_0__.fileFromPath),
+/* harmony export */   isBlobLike: () => (/* binding */ isBlobLike),
+/* harmony export */   isFileLike: () => (/* binding */ isFileLike),
+/* harmony export */   isMultipartBody: () => (/* binding */ isMultipartBody),
+/* harmony export */   isResponseLike: () => (/* binding */ isResponseLike),
+/* harmony export */   isUploadable: () => (/* binding */ isUploadable),
+/* harmony export */   maybeMultipartFormRequestOptions: () => (/* binding */ maybeMultipartFormRequestOptions),
+/* harmony export */   multipartFormRequestOptions: () => (/* binding */ multipartFormRequestOptions),
+/* harmony export */   toFile: () => (/* binding */ toFile)
+/* harmony export */ });
+/* harmony import */ var _shims_index_mjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./_shims/index.mjs */ "./node_modules/openai/_shims/index.mjs");
+
+
+const isResponseLike = (value) => value != null &&
+    typeof value === 'object' &&
+    typeof value.url === 'string' &&
+    typeof value.blob === 'function';
+const isFileLike = (value) => value != null &&
+    typeof value === 'object' &&
+    typeof value.name === 'string' &&
+    typeof value.lastModified === 'number' &&
+    isBlobLike(value);
+/**
+ * The BlobLike type omits arrayBuffer() because @types/node-fetch@^2.6.4 lacks it; but this check
+ * adds the arrayBuffer() method type because it is available and used at runtime
+ */
+const isBlobLike = (value) => value != null &&
+    typeof value === 'object' &&
+    typeof value.size === 'number' &&
+    typeof value.type === 'string' &&
+    typeof value.text === 'function' &&
+    typeof value.slice === 'function' &&
+    typeof value.arrayBuffer === 'function';
+const isUploadable = (value) => {
+    return isFileLike(value) || isResponseLike(value) || (0,_shims_index_mjs__WEBPACK_IMPORTED_MODULE_0__.isFsReadStream)(value);
+};
+/**
+ * Helper for creating a {@link File} to pass to an SDK upload method from a variety of different data formats
+ * @param value the raw content of the file.  Can be an {@link Uploadable}, {@link BlobLikePart}, or {@link AsyncIterable} of {@link BlobLikePart}s
+ * @param {string=} name the name of the file. If omitted, toFile will try to determine a file name from bits if possible
+ * @param {Object=} options additional properties
+ * @param {string=} options.type the MIME type of the content
+ * @param {number=} options.lastModified the last modified timestamp
+ * @returns a {@link File} with the given properties
+ */
+async function toFile(value, name, options) {
+    // If it's a promise, resolve it.
+    value = await value;
+    // If we've been given a `File` we don't need to do anything
+    if (isFileLike(value)) {
+        return value;
+    }
+    if (isResponseLike(value)) {
+        const blob = await value.blob();
+        name || (name = new URL(value.url).pathname.split(/[\\/]/).pop() ?? 'unknown_file');
+        // we need to convert the `Blob` into an array buffer because the `Blob` class
+        // that `node-fetch` defines is incompatible with the web standard which results
+        // in `new File` interpreting it as a string instead of binary data.
+        const data = isBlobLike(blob) ? [(await blob.arrayBuffer())] : [blob];
+        return new _shims_index_mjs__WEBPACK_IMPORTED_MODULE_0__.File(data, name, options);
+    }
+    const bits = await getBytes(value);
+    name || (name = getName(value) ?? 'unknown_file');
+    if (!options?.type) {
+        const type = bits[0]?.type;
+        if (typeof type === 'string') {
+            options = { ...options, type };
+        }
+    }
+    return new _shims_index_mjs__WEBPACK_IMPORTED_MODULE_0__.File(bits, name, options);
+}
+async function getBytes(value) {
+    let parts = [];
+    if (typeof value === 'string' ||
+        ArrayBuffer.isView(value) || // includes Uint8Array, Buffer, etc.
+        value instanceof ArrayBuffer) {
+        parts.push(value);
+    }
+    else if (isBlobLike(value)) {
+        parts.push(await value.arrayBuffer());
+    }
+    else if (isAsyncIterableIterator(value) // includes Readable, ReadableStream, etc.
+    ) {
+        for await (const chunk of value) {
+            parts.push(chunk); // TODO, consider validating?
+        }
+    }
+    else {
+        throw new Error(`Unexpected data type: ${typeof value}; constructor: ${value?.constructor
+            ?.name}; props: ${propsForError(value)}`);
+    }
+    return parts;
+}
+function propsForError(value) {
+    const props = Object.getOwnPropertyNames(value);
+    return `[${props.map((p) => `"${p}"`).join(', ')}]`;
+}
+function getName(value) {
+    return (getStringFromMaybeBuffer(value.name) ||
+        getStringFromMaybeBuffer(value.filename) ||
+        // For fs.ReadStream
+        getStringFromMaybeBuffer(value.path)?.split(/[\\/]/).pop());
+}
+const getStringFromMaybeBuffer = (x) => {
+    if (typeof x === 'string')
+        return x;
+    if (typeof Buffer !== 'undefined' && x instanceof Buffer)
+        return String(x);
+    return undefined;
+};
+const isAsyncIterableIterator = (value) => value != null && typeof value === 'object' && typeof value[Symbol.asyncIterator] === 'function';
+const isMultipartBody = (body) => body && typeof body === 'object' && body.body && body[Symbol.toStringTag] === 'MultipartBody';
+/**
+ * Returns a multipart/form-data request if any part of the given request body contains a File / Blob value.
+ * Otherwise returns the request as is.
+ */
+const maybeMultipartFormRequestOptions = async (opts) => {
+    if (!hasUploadableValue(opts.body))
+        return opts;
+    const form = await createForm(opts.body);
+    return (0,_shims_index_mjs__WEBPACK_IMPORTED_MODULE_0__.getMultipartRequestOptions)(form, opts);
+};
+const multipartFormRequestOptions = async (opts) => {
+    const form = await createForm(opts.body);
+    return (0,_shims_index_mjs__WEBPACK_IMPORTED_MODULE_0__.getMultipartRequestOptions)(form, opts);
+};
+const createForm = async (body) => {
+    const form = new _shims_index_mjs__WEBPACK_IMPORTED_MODULE_0__.FormData();
+    await Promise.all(Object.entries(body || {}).map(([key, value]) => addFormValue(form, key, value)));
+    return form;
+};
+const hasUploadableValue = (value) => {
+    if (isUploadable(value))
+        return true;
+    if (Array.isArray(value))
+        return value.some(hasUploadableValue);
+    if (value && typeof value === 'object') {
+        for (const k in value) {
+            if (hasUploadableValue(value[k]))
+                return true;
+        }
+    }
+    return false;
+};
+const addFormValue = async (form, key, value) => {
+    if (value === undefined)
+        return;
+    if (value == null) {
+        throw new TypeError(`Received null for "${key}"; to pass null in FormData, you must use the string 'null'`);
+    }
+    // TODO: make nested formats configurable
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+        form.append(key, String(value));
+    }
+    else if (isUploadable(value)) {
+        const file = await toFile(value);
+        form.append(key, file);
+    }
+    else if (Array.isArray(value)) {
+        await Promise.all(value.map((entry) => addFormValue(form, key + '[]', entry)));
+    }
+    else if (typeof value === 'object') {
+        await Promise.all(Object.entries(value).map(([name, prop]) => addFormValue(form, `${key}[${name}]`, prop)));
+    }
+    else {
+        throw new TypeError(`Invalid value given to form, expected a string, number, boolean, object, Array, File or Blob but got ${value} instead`);
+    }
+};
+//# sourceMappingURL=uploads.mjs.map
+
+/***/ }),
+
+/***/ "./node_modules/openai/version.mjs":
+/*!*****************************************!*\
+  !*** ./node_modules/openai/version.mjs ***!
+  \*****************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   VERSION: () => (/* binding */ VERSION)
+/* harmony export */ });
+const VERSION = '4.104.0'; // x-release-please-version
+//# sourceMappingURL=version.mjs.map
+
+/***/ }),
+
 /***/ "./node_modules/pkce-challenge/dist/index.browser.js":
 /*!***********************************************************!*\
   !*** ./node_modules/pkce-challenge/dist/index.browser.js ***!
   \***********************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ pkceChallenge),
@@ -43809,7 +51971,6 @@ async function verifyChallenge(code_verifier, expectedChallenge) {
   \***************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
@@ -43864,15 +52025,12 @@ const ChatEditor = () => {
     error,
     status,
     isSaving,
-    pendingToolPermission,
-    mcpConnectionStatus,
+    activeToolCall,
     handleSendMessage,
     handleNewChat,
     handleAcceptChanges,
     handleDeclineChanges,
-    handleStopRequest,
-    handleApproveToolPermission,
-    handleDenyToolPermission
+    handleStopRequest
   } = (0,_hooks_useChat__WEBPACK_IMPORTED_MODULE_5__["default"])();
   (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_2__.useEffect)(() => {
     enableComplementaryArea(SIDEBAR_SCOPE, SIDEBAR_NAME);
@@ -43884,9 +52042,6 @@ const ChatEditor = () => {
 
   // Disable new chat button when there are no messages (brand new chat)
   const isNewChatDisabled = messages.length === 0;
-
-  // Disable input when awaiting permission
-  const isInputDisabled = isLoading || status === "awaiting_permission";
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.Fragment, {
     children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)(_wordpress_editor__WEBPACK_IMPORTED_MODULE_1__.PluginSidebarMoreMenuItem, {
       scope: SIDEBAR_SCOPE,
@@ -43920,9 +52075,7 @@ const ChatEditor = () => {
           isLoading: isLoading,
           error: error,
           status: status,
-          pendingToolPermission: pendingToolPermission,
-          onApprovePermission: handleApproveToolPermission,
-          onDenyPermission: handleDenyToolPermission
+          activeToolCall: activeToolCall
         }), hasPendingActions && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)(_chat_ActionButtons__WEBPACK_IMPORTED_MODULE_6__["default"], {
           pendingCount: pendingActionsCount,
           onAccept: handleAcceptChanges,
@@ -43931,7 +52084,7 @@ const ChatEditor = () => {
         }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)(_chat_ChatInput__WEBPACK_IMPORTED_MODULE_7__["default"], {
           onSendMessage: handleSendMessage,
           onStopRequest: handleStopRequest,
-          disabled: isInputDisabled
+          disabled: isLoading
         })]
       })
     })]
@@ -43947,7 +52100,6 @@ const ChatEditor = () => {
   \***********************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
@@ -44025,7 +52177,6 @@ const ActionButtons = ({
   \*******************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
@@ -44175,29 +52326,19 @@ const ChatInput = ({
   \*********************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
 /* harmony import */ var _wordpress_element__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @wordpress/element */ "@wordpress/element");
 /* harmony import */ var _wordpress_element__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_wordpress_element__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/loader-circle.js");
-/* harmony import */ var classnames__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! classnames */ "./node_modules/classnames/index.js");
-/* harmony import */ var classnames__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(classnames__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var _utils_sanitizeHtml__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../utils/sanitizeHtml */ "./src/utils/sanitizeHtml.js");
-/* harmony import */ var _ToolCallDisplay__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./ToolCallDisplay */ "./src/components/chat/ToolCallDisplay.jsx");
-/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! react/jsx-runtime */ "react/jsx-runtime");
-/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__);
+/* harmony import */ var _utils_sanitizeHtml__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../utils/sanitizeHtml */ "./src/utils/sanitizeHtml.js");
+/* harmony import */ var _utils_markdownParser__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../utils/markdownParser */ "./src/utils/markdownParser.js");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! react/jsx-runtime */ "react/jsx-runtime");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__);
 /**
  * WordPress dependencies
  */
-
-
-/**
- * External dependencies
- */
-
 
 
 /**
@@ -44209,80 +52350,75 @@ __webpack_require__.r(__webpack_exports__);
 /**
  * ChatMessage Component
  *
- * Displays a single message in the chat with appropriate styling,
- * tool calls, and streaming indicator.
+ * Displays a single message in the chat with appropriate styling and avatar.
+ * Supports HTML and Markdown rendering for assistant messages.
  *
- * @param {Object}  props                    - The component props.
- * @param {string}  props.message            - The message content to display.
- * @param {string}  [props.type="assistant"] - The message type ("user" or "assistant").
- * @param {Array}   [props.toolCalls]        - Array of tool calls (optional).
- * @param {Array}   [props.toolResults]      - Array of tool results (optional).
- * @param {boolean} [props.isStreaming]      - Whether this message is currently streaming.
- * @param {boolean} [props.isExecutingTools] - Whether tools are currently being executed.
+ * @param {Object} props                    - The component props.
+ * @param {string} props.message            - The message content to display.
+ * @param {string} [props.type="assistant"] - The message type ("user" or "assistant").
  * @return {JSX.Element} The ChatMessage component.
  */
 
 const ChatMessage = ({
   message,
-  type = "assistant",
-  toolCalls,
-  toolResults,
-  isStreaming = false,
-  isExecutingTools = false
+  type = "assistant"
 }) => {
   const isUser = type === "user";
 
   // Sanitize and prepare content for rendering
-  const sanitizedContent = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useMemo)(() => {
+  const {
+    content,
+    isRichContent
+  } = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useMemo)(() => {
     if (!message) {
-      return "";
+      return {
+        content: "",
+        isRichContent: false
+      };
     }
 
     // For user messages, always render as plain text
     if (isUser) {
-      return message;
+      return {
+        content: message,
+        isRichContent: false
+      };
     }
 
-    // For AI messages, check if it contains HTML
-    if ((0,_utils_sanitizeHtml__WEBPACK_IMPORTED_MODULE_3__.containsHtml)(message)) {
-      return (0,_utils_sanitizeHtml__WEBPACK_IMPORTED_MODULE_3__.sanitizeHtml)(message);
+    // For AI messages, check if it contains HTML first
+    if ((0,_utils_sanitizeHtml__WEBPACK_IMPORTED_MODULE_1__.containsHtml)(message)) {
+      return {
+        content: (0,_utils_sanitizeHtml__WEBPACK_IMPORTED_MODULE_1__.sanitizeHtml)(message),
+        isRichContent: true
+      };
+    }
+
+    // Check if it contains Markdown
+    if ((0,_utils_markdownParser__WEBPACK_IMPORTED_MODULE_2__.containsMarkdown)(message)) {
+      const parsed = (0,_utils_markdownParser__WEBPACK_IMPORTED_MODULE_2__.parseMarkdown)(message);
+      return {
+        content: (0,_utils_sanitizeHtml__WEBPACK_IMPORTED_MODULE_1__.sanitizeHtml)(parsed),
+        isRichContent: true
+      };
     }
 
     // Plain text messages
-    return message;
+    return {
+      content: message,
+      isRichContent: false
+    };
   }, [message, isUser]);
-
-  // Determine if we should render as HTML
-  const shouldRenderAsHtml = !isUser && (0,_utils_sanitizeHtml__WEBPACK_IMPORTED_MODULE_3__.containsHtml)(message);
-  const hasToolCalls = toolCalls && toolCalls.length > 0;
-  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("div", {
-    className: classnames__WEBPACK_IMPORTED_MODULE_2___default()("nfd-editor-chat-message", `nfd-editor-chat-message--${type}`, {
-      "nfd-editor-chat-message--streaming": isStreaming,
-      "nfd-editor-chat-message--has-tools": hasToolCalls
-    }),
-    children: [shouldRenderAsHtml ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("div", {
-      className: "nfd-editor-chat-message__content",
+  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("div", {
+    className: `nfd-editor-chat-message nfd-editor-chat-message--${type}`,
+    children: isRichContent ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("div", {
+      className: "nfd-editor-chat-message__content nfd-editor-chat-message__content--rich",
       dangerouslySetInnerHTML: {
-        __html: sanitizedContent
+        __html: content
       }
-    }) : /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("div", {
+    }) : /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("div", {
       className: "nfd-editor-chat-message__content",
-      children: [sanitizedContent, isStreaming && !sanitizedContent && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("span", {
-        className: "nfd-editor-chat-message__typing",
-        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(lucide_react__WEBPACK_IMPORTED_MODULE_1__["default"], {
-          className: "nfd-editor-chat-message__typing-icon"
-        })
-      })]
-    }), isStreaming && sanitizedContent && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("span", {
-      className: "nfd-editor-chat-message__cursor"
-    }), hasToolCalls && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("div", {
-      className: "nfd-editor-chat-message__tools",
-      children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_ToolCallDisplay__WEBPACK_IMPORTED_MODULE_4__.ToolCallsList, {
-        toolCalls: toolCalls,
-        toolResults: toolResults,
-        isExecuting: isExecutingTools
-      })
-    })]
+      children: content
+    })
   });
 };
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (ChatMessage);
@@ -44295,7 +52431,6 @@ const ChatMessage = ({
   \**********************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
@@ -44305,9 +52440,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _ui_ErrorAlert__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../ui/ErrorAlert */ "./src/components/ui/ErrorAlert.jsx");
 /* harmony import */ var _ui_TypingIndicator__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../ui/TypingIndicator */ "./src/components/ui/TypingIndicator.jsx");
 /* harmony import */ var _ChatMessage__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./ChatMessage */ "./src/components/chat/ChatMessage.jsx");
-/* harmony import */ var _PermissionDialog__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./PermissionDialog */ "./src/components/chat/PermissionDialog.jsx");
-/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! react/jsx-runtime */ "react/jsx-runtime");
-/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__);
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! react/jsx-runtime */ "react/jsx-runtime");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__);
 /**
  * WordPress dependencies
  */
@@ -44320,21 +52454,18 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-
 /**
  * ChatMessages Component
  *
- * Scrollable container for all chat messages with tool call and permission support.
- * Auto-scrolls to bottom when new messages arrive.
+ * Scrollable container for all chat messages
+ * Auto-scrolls to bottom when new messages arrive
  *
- * @param {Object}   props                         - The component props.
- * @param {Array}    props.messages                - The messages to display.
- * @param {boolean}  props.isLoading               - Whether the AI is currently generating a response.
- * @param {string}   props.error                   - Error message to display (optional).
- * @param {string}   props.status                  - The current status ('streaming', 'tool_calling', etc.).
- * @param {Object}   props.pendingToolPermission   - Pending tool permission request (optional).
- * @param {Function} props.onApprovePermission     - Callback when user approves permission.
- * @param {Function} props.onDenyPermission        - Callback when user denies permission.
+ * @param {Object}  props                - The component props.
+ * @param {Array}   props.messages       - The messages to display.
+ * @param {boolean} props.isLoading      - Whether the AI is currently generating a response.
+ * @param {string}  props.error          - Error message to display (optional).
+ * @param {string}  props.status         - The current status ('received', 'generating', 'tool_call', etc.).
+ * @param {Object}  props.activeToolCall - The currently executing tool call (optional).
  * @return {JSX.Element} The ChatMessages component.
  */
 
@@ -44343,9 +52474,7 @@ const ChatMessages = ({
   isLoading = false,
   error = null,
   status = null,
-  pendingToolPermission = null,
-  onApprovePermission,
-  onDenyPermission
+  activeToolCall = null
 }) => {
   const messagesEndRef = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useRef)(null);
 
@@ -44354,425 +52483,23 @@ const ChatMessages = ({
     messagesEndRef.current?.scrollIntoView({
       behavior: "smooth"
     });
-  }, [messages, isLoading, pendingToolPermission]);
-  const isExecutingTools = status === "tool_calling";
-  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("div", {
+  }, [messages, isLoading]);
+  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("div", {
     className: "nfd-editor-chat-messages",
-    children: [messages.length > 0 && messages.map((msg, index) => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_ChatMessage__WEBPACK_IMPORTED_MODULE_3__["default"], {
+    children: [messages.length && messages.map((msg, index) => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(_ChatMessage__WEBPACK_IMPORTED_MODULE_3__["default"], {
       message: msg.content,
-      type: msg.type,
-      toolCalls: msg.toolCalls,
-      toolResults: msg.toolResults,
-      isStreaming: msg.isStreaming,
-      isExecutingTools: isExecutingTools && index === messages.length - 1
-    }, msg.id || index)), pendingToolPermission && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_PermissionDialog__WEBPACK_IMPORTED_MODULE_4__["default"], {
-      toolCalls: pendingToolPermission.toolCalls,
-      onApprove: onApprovePermission,
-      onDeny: onDenyPermission
-    }), error && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_ui_ErrorAlert__WEBPACK_IMPORTED_MODULE_1__["default"], {
+      type: msg.type
+    }, index)), error && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(_ui_ErrorAlert__WEBPACK_IMPORTED_MODULE_1__["default"], {
       message: error
-    }), isLoading && !messages.some(m => m.isStreaming) && status !== "awaiting_permission" && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_ui_TypingIndicator__WEBPACK_IMPORTED_MODULE_2__["default"], {
-      status: status
-    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("div", {
+    }), isLoading && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(_ui_TypingIndicator__WEBPACK_IMPORTED_MODULE_2__["default"], {
+      status: status,
+      activeToolCall: activeToolCall
+    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("div", {
       ref: messagesEndRef
     })]
   });
 };
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (ChatMessages);
-
-/***/ }),
-
-/***/ "./src/components/chat/PermissionDialog.jsx":
-/*!**************************************************!*\
-  !*** ./src/components/chat/PermissionDialog.jsx ***!
-  \**************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
-/* harmony export */ });
-/* harmony import */ var _wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @wordpress/i18n */ "@wordpress/i18n");
-/* harmony import */ var _wordpress_i18n__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/check.js");
-/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/shield-alert.js");
-/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/x.js");
-/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! react/jsx-runtime */ "react/jsx-runtime");
-/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__);
-/**
- * WordPress dependencies
- */
-
-
-/**
- * External dependencies
- */
-
-
-/**
- * PermissionDialog Component
- *
- * Displays a permission prompt for destructive/non-read-only tool calls.
- * Shows the tools that will be executed and allows the user to approve or deny.
- *
- * @param {Object}   props           Component props
- * @param {Array}    props.toolCalls Array of tool calls that need permission
- * @param {Function} props.onApprove Callback when user approves
- * @param {Function} props.onDeny    Callback when user denies
- * @return {JSX.Element} The PermissionDialog component
- */
-
-const PermissionDialog = ({
-  toolCalls = [],
-  onApprove,
-  onDeny
-}) => {
-  if (!toolCalls || toolCalls.length === 0) {
-    return null;
-  }
-
-  /**
-   * Format tool name for display
-   */
-  const formatToolName = name => {
-    return name.replace(/^wp-mcp\//, "").replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase());
-  };
-
-  /**
-   * Get a human-readable description of what the tool will do
-   */
-  const getToolDescription = toolCall => {
-    const {
-      name,
-      arguments: args
-    } = toolCall;
-    switch (name) {
-      case "wp-mcp/create-post":
-        return (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)(`Create a new post: "${args.title || "Untitled"}"`, "wp-module-editor-chat");
-      case "wp-mcp/update-post":
-        return (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)(`Update post ID: ${args.post_id}`, "wp-module-editor-chat");
-      case "wp-mcp/delete-post":
-        return (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)(`Delete post ID: ${args.post_id}`, "wp-module-editor-chat");
-      default:
-        return formatToolName(name);
-    }
-  };
-  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("div", {
-    className: "nfd-permission-dialog",
-    children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("div", {
-      className: "nfd-permission-dialog__header",
-      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(lucide_react__WEBPACK_IMPORTED_MODULE_2__["default"], {
-        className: "nfd-permission-dialog__icon"
-      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("h4", {
-        className: "nfd-permission-dialog__title",
-        children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Permission Required", "wp-module-editor-chat")
-      })]
-    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("div", {
-      className: "nfd-permission-dialog__body",
-      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("p", {
-        className: "nfd-permission-dialog__description",
-        children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("The AI assistant wants to perform the following action(s) that will modify your site:", "wp-module-editor-chat")
-      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("ul", {
-        className: "nfd-permission-dialog__tool-list",
-        children: toolCalls.map((toolCall, index) => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("li", {
-          className: "nfd-permission-dialog__tool-item",
-          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("span", {
-            className: "nfd-permission-dialog__tool-name",
-            children: getToolDescription(toolCall)
-          }), toolCall.arguments && Object.keys(toolCall.arguments).length > 0 && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("details", {
-            className: "nfd-permission-dialog__tool-details",
-            children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("summary", {
-              children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("View details", "wp-module-editor-chat")
-            }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("pre", {
-              className: "nfd-permission-dialog__tool-args",
-              children: JSON.stringify(toolCall.arguments, null, 2)
-            })]
-          })]
-        }, toolCall.id || index))
-      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("p", {
-        className: "nfd-permission-dialog__warning",
-        children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Do you want to allow this?", "wp-module-editor-chat")
-      })]
-    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("div", {
-      className: "nfd-permission-dialog__actions",
-      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("button", {
-        type: "button",
-        className: "nfd-permission-dialog__button nfd-permission-dialog__button--deny",
-        onClick: onDeny,
-        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(lucide_react__WEBPACK_IMPORTED_MODULE_3__["default"], {
-          size: 16
-        }), (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Deny", "wp-module-editor-chat")]
-      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("button", {
-        type: "button",
-        className: "nfd-permission-dialog__button nfd-permission-dialog__button--approve",
-        onClick: onApprove,
-        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(lucide_react__WEBPACK_IMPORTED_MODULE_1__["default"], {
-          size: 16
-        }), (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Allow", "wp-module-editor-chat")]
-      })]
-    })]
-  });
-};
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (PermissionDialog);
-
-/***/ }),
-
-/***/ "./src/components/chat/ToolCallDisplay.jsx":
-/*!*************************************************!*\
-  !*** ./src/components/chat/ToolCallDisplay.jsx ***!
-  \*************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   ToolCallsList: () => (/* binding */ ToolCallsList),
-/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
-/* harmony export */ });
-/* harmony import */ var _wordpress_element__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @wordpress/element */ "@wordpress/element");
-/* harmony import */ var _wordpress_element__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_wordpress_element__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @wordpress/i18n */ "@wordpress/i18n");
-/* harmony import */ var _wordpress_i18n__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/circle-check-big.js");
-/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/circle-x.js");
-/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/loader-circle.js");
-/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/chevron-down.js");
-/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/chevron-right.js");
-/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/wrench.js");
-/* harmony import */ var classnames__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! classnames */ "./node_modules/classnames/index.js");
-/* harmony import */ var classnames__WEBPACK_IMPORTED_MODULE_8___default = /*#__PURE__*/__webpack_require__.n(classnames__WEBPACK_IMPORTED_MODULE_8__);
-/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! react/jsx-runtime */ "react/jsx-runtime");
-/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9___default = /*#__PURE__*/__webpack_require__.n(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__);
-/**
- * WordPress dependencies
- */
-
-
-
-/**
- * External dependencies
- */
-
-
-
-/**
- * ToolCallDisplay Component
- *
- * Displays a single tool call with expandable request/response details.
- * Shows status indicators and formatted JSON data.
- *
- * @param {Object}  props              Component props
- * @param {Object}  props.toolCall     The tool call object
- * @param {Object}  props.toolResult   The tool result object (optional)
- * @param {boolean} props.isExecuting  Whether the tool is currently executing
- * @return {JSX.Element} The ToolCallDisplay component
- */
-
-const ToolCallDisplay = ({
-  toolCall,
-  toolResult,
-  isExecuting = false
-}) => {
-  const [isExpanded, setIsExpanded] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useState)(false);
-  const {
-    name,
-    arguments: args
-  } = toolCall;
-  const hasResult = !!toolResult;
-  const isError = toolResult?.isError || toolResult?.error;
-
-  /**
-   * Get status icon based on tool execution state
-   */
-  const getStatusIcon = () => {
-    if (isExecuting) {
-      return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)(lucide_react__WEBPACK_IMPORTED_MODULE_4__["default"], {
-        className: "nfd-tool-call__status-icon nfd-tool-call__status-icon--loading"
-      });
-    }
-    if (hasResult) {
-      if (isError) {
-        return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)(lucide_react__WEBPACK_IMPORTED_MODULE_3__["default"], {
-          className: "nfd-tool-call__status-icon nfd-tool-call__status-icon--error"
-        });
-      }
-      return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)(lucide_react__WEBPACK_IMPORTED_MODULE_2__["default"], {
-        className: "nfd-tool-call__status-icon nfd-tool-call__status-icon--success"
-      });
-    }
-    return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)(lucide_react__WEBPACK_IMPORTED_MODULE_7__["default"], {
-      className: "nfd-tool-call__status-icon nfd-tool-call__status-icon--pending"
-    });
-  };
-
-  /**
-   * Get status text
-   */
-  const getStatusText = () => {
-    if (isExecuting) {
-      return (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("Executing...", "wp-module-editor-chat");
-    }
-    if (hasResult) {
-      if (isError) {
-        return (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("Failed", "wp-module-editor-chat");
-      }
-      return (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("Completed", "wp-module-editor-chat");
-    }
-    return (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("Pending", "wp-module-editor-chat");
-  };
-
-  /**
-   * Format tool name for display
-   */
-  const formatToolName = toolName => {
-    // Remove common prefixes and format nicely
-    return toolName.replace(/^wp-mcp\//, "").replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase());
-  };
-
-  /**
-   * Format JSON for display
-   */
-  const formatJSON = data => {
-    try {
-      if (typeof data === "string") {
-        return data;
-      }
-      return JSON.stringify(data, null, 2);
-    } catch {
-      return String(data);
-    }
-  };
-
-  /**
-   * Extract text content from tool result
-   */
-  const extractResultText = result => {
-    if (!result) {
-      return null;
-    }
-
-    // Handle MCP content array format
-    if (Array.isArray(result)) {
-      return result.map(item => {
-        if (item.text) {
-          return item.text;
-        }
-        if (typeof item === "string") {
-          return item;
-        }
-        return JSON.stringify(item, null, 2);
-      }).join("\n\n");
-    }
-
-    // Handle error string
-    if (typeof result === "string") {
-      return result;
-    }
-
-    // Handle object
-    return JSON.stringify(result, null, 2);
-  };
-  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxs)("div", {
-    className: classnames__WEBPACK_IMPORTED_MODULE_8___default()("nfd-tool-call", {
-      "nfd-tool-call--executing": isExecuting,
-      "nfd-tool-call--success": hasResult && !isError,
-      "nfd-tool-call--error": hasResult && isError,
-      "nfd-tool-call--expanded": isExpanded
-    }),
-    children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxs)("button", {
-      type: "button",
-      className: "nfd-tool-call__header",
-      onClick: () => setIsExpanded(!isExpanded),
-      "aria-expanded": isExpanded,
-      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)("span", {
-        className: "nfd-tool-call__expand-icon",
-        children: isExpanded ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)(lucide_react__WEBPACK_IMPORTED_MODULE_5__["default"], {
-          size: 14
-        }) : /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)(lucide_react__WEBPACK_IMPORTED_MODULE_6__["default"], {
-          size: 14
-        })
-      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)("span", {
-        className: "nfd-tool-call__icon",
-        children: getStatusIcon()
-      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)("span", {
-        className: "nfd-tool-call__name",
-        children: formatToolName(name)
-      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)("span", {
-        className: classnames__WEBPACK_IMPORTED_MODULE_8___default()("nfd-tool-call__status", {
-          "nfd-tool-call__status--executing": isExecuting,
-          "nfd-tool-call__status--success": hasResult && !isError,
-          "nfd-tool-call__status--error": hasResult && isError
-        }),
-        children: getStatusText()
-      })]
-    }), isExpanded && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxs)("div", {
-      className: "nfd-tool-call__content",
-      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxs)("div", {
-        className: "nfd-tool-call__section",
-        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)("div", {
-          className: "nfd-tool-call__section-header",
-          children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("Request", "wp-module-editor-chat")
-        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)("pre", {
-          className: "nfd-tool-call__code",
-          children: formatJSON(args)
-        })]
-      }), hasResult && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxs)("div", {
-        className: "nfd-tool-call__section",
-        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)("div", {
-          className: "nfd-tool-call__section-header",
-          children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("Response", "wp-module-editor-chat")
-        }), isError ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)("div", {
-          className: "nfd-tool-call__error-message",
-          children: toolResult.error || (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("Tool execution failed", "wp-module-editor-chat")
-        }) : /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)("pre", {
-          className: "nfd-tool-call__code",
-          children: extractResultText(toolResult.result)
-        })]
-      })]
-    })]
-  });
-};
-
-/**
- * ToolCallsList Component
- *
- * Displays a list of tool calls with their results.
- *
- * @param {Object}  props             Component props
- * @param {Array}   props.toolCalls   Array of tool call objects
- * @param {Array}   props.toolResults Array of tool result objects (optional)
- * @param {boolean} props.isExecuting Whether tools are currently executing
- * @return {JSX.Element} The ToolCallsList component
- */
-const ToolCallsList = ({
-  toolCalls = [],
-  toolResults = [],
-  isExecuting = false
-}) => {
-  if (!toolCalls || toolCalls.length === 0) {
-    return null;
-  }
-  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxs)("div", {
-    className: "nfd-tool-calls-list",
-    children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxs)("div", {
-      className: "nfd-tool-calls-list__header",
-      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)(lucide_react__WEBPACK_IMPORTED_MODULE_7__["default"], {
-        size: 14
-      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)("span", {
-        children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("Tool Calls", "wp-module-editor-chat")
-      })]
-    }), toolCalls.map((toolCall, index) => {
-      const result = toolResults?.find(r => r.id === toolCall.id) || toolResults?.[index];
-      return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)(ToolCallDisplay, {
-        toolCall: toolCall,
-        toolResult: result,
-        isExecuting: isExecuting && !result
-      }, toolCall.id || index);
-    })]
-  });
-};
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (ToolCallDisplay);
 
 /***/ }),
 
@@ -44782,7 +52509,6 @@ const ToolCallsList = ({
   \***********************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
@@ -44894,7 +52620,6 @@ const WelcomeScreen = ({
   \**************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
@@ -44971,7 +52696,6 @@ const SidebarHeader = ({
   \**************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
@@ -45020,7 +52744,6 @@ const AILogo = ({
   \******************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
@@ -45154,7 +52877,6 @@ const ContextTag = ({
   \******************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
@@ -45210,7 +52932,6 @@ const ErrorAlert = ({
   \************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
@@ -45266,7 +52987,6 @@ const SuggestionButton = ({
   \***********************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
@@ -45281,42 +53001,155 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /**
- * TypingIndicator Component
- *
- * Displays an animated typing indicator with dots and a loading message.
- * Shows the current status if provided.
- *
- * @param {Object} props        - The component props.
- * @param {string} props.status - The current status ('streaming', 'tool_calling', etc.).
- * @return {JSX.Element} The TypingIndicator component.
+ * Get ability details for display
+ * @param {string} abilityName The ability name
+ * @return {Object} { title, description, icon }
  */
 
-const TypingIndicator = ({
-  status = null
-}) => {
-  // Get status text based on status value
-  const getStatusText = () => {
-    switch (status) {
-      case "connecting":
-        return (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Connecting…", "wp-module-editor-chat");
-      case "streaming":
-        return (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Generating response…", "wp-module-editor-chat");
-      case "tool_calling":
-        return (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Executing actions…", "wp-module-editor-chat");
-      case "awaiting_permission":
-        return (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Waiting for permission…", "wp-module-editor-chat");
-      case "received":
-        return (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Message received…", "wp-module-editor-chat");
-      case "generating":
-        return (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Generating response…", "wp-module-editor-chat");
-      case "completed":
-        return (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Processing…", "wp-module-editor-chat");
-      case "failed":
-        return (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Error occurred", "wp-module-editor-chat");
-      default:
-        return (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Thinking…", "wp-module-editor-chat");
+const getAbilityDetails = abilityName => {
+  const abilityMap = {
+    "nfd-editor-chat/get-global-styles": {
+      title: "Reading Site Colors",
+      description: "Fetching current color palette and typography settings"
+    },
+    "nfd-editor-chat/update-global-palette": {
+      title: "Updating Site Colors",
+      description: "Applying new colors to global styles"
     }
   };
+  return abilityMap[abilityName] || {
+    title: abilityName,
+    description: "Executing action",
+    icon: "⚙️"
+  };
+};
+
+/**
+ * Get tool details for display
+ * @param {string} toolName The tool name
+ * @param {Object} args     The tool arguments
+ * @return {Object} { title, description, icon, params }
+ */
+const getToolDetails = (toolName, args = {}) => {
+  if (toolName === "mcp-adapter-execute-ability") {
+    const abilityName = args?.ability_name || "unknown";
+    const details = getAbilityDetails(abilityName);
+
+    // Add specific parameter info
+    let params = null;
+    if (abilityName === "nfd-editor-chat/update-global-palette" && args?.parameters?.colors) {
+      const colorCount = args.parameters.colors.length;
+      params = `${colorCount} color${colorCount !== 1 ? "s" : ""}`;
+    }
+    return {
+      ...details,
+      params
+    };
+  }
+  if (toolName === "mcp-adapter-discover-abilities") {
+    return {
+      title: "Discovering Actions",
+      description: "Finding available WordPress abilities",
+      icon: "🔍",
+      params: null
+    };
+  }
+  if (toolName === "mcp-adapter-get-ability-info") {
+    return {
+      title: "Getting Ability Info",
+      description: `Fetching details for ${args?.ability_name || "ability"}`,
+      icon: "📋",
+      params: null
+    };
+  }
+  return {
+    title: toolName,
+    description: "Executing tool",
+    icon: "🔧",
+    params: null
+  };
+};
+
+/**
+ * TypingIndicator Component
+ *
+ * Displays an animated typing indicator with detailed tool call information.
+ *
+ * @param {Object} props                - The component props.
+ * @param {string} props.status         - The current status ('received', 'generating', 'tool_call', 'summarizing', etc.).
+ * @param {Object} props.activeToolCall - The currently executing tool call (optional).
+ * @return {JSX.Element} The TypingIndicator component.
+ */
+const TypingIndicator = ({
+  status = null,
+  activeToolCall = null
+}) => {
+  // If we have an active tool call, show detailed view
+  if (activeToolCall) {
+    const details = getToolDetails(activeToolCall.name, activeToolCall.arguments);
+    return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("div", {
+      className: "nfd-editor-chat-message nfd-editor-chat-message--assistant",
+      children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("div", {
+        className: "nfd-editor-chat-message__content",
+        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxs)("div", {
+          className: "nfd-editor-chat-tool-status",
+          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxs)("div", {
+            className: "nfd-editor-chat-tool-status__header",
+            children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("span", {
+              className: "nfd-editor-chat-tool-status__icon",
+              children: details.icon
+            }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("span", {
+              className: "nfd-editor-chat-tool-status__title",
+              children: details.title
+            }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("div", {
+              className: "nfd-editor-chat-tool-status__spinner"
+            })]
+          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxs)("div", {
+            className: "nfd-editor-chat-tool-status__description",
+            children: [details.description, details.params && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxs)("span", {
+              className: "nfd-editor-chat-tool-status__params",
+              children: [" \u2022 ", details.params]
+            })]
+          })]
+        })
+      })
+    });
+  }
+
+  // Default status text
+  const getStatusText = () => {
+    switch (status) {
+      case "received":
+        return {
+          text: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Message received", "wp-module-editor-chat")
+        };
+      case "generating":
+        return {
+          text: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Thinking", "wp-module-editor-chat")
+        };
+      case "tool_call":
+        return {
+          text: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Executing action", "wp-module-editor-chat")
+        };
+      case "summarizing":
+        return {
+          text: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Summarizing results", "wp-module-editor-chat")
+        };
+      case "completed":
+        return {
+          text: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Processing", "wp-module-editor-chat")
+        };
+      case "failed":
+        return {
+          text: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Error occurred", "wp-module-editor-chat")
+        };
+      default:
+        return {
+          text: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Thinking", "wp-module-editor-chat")
+        };
+    }
+  };
+  const statusInfo = getStatusText();
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("div", {
     className: "nfd-editor-chat-message nfd-editor-chat-message--assistant",
     children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("div", {
@@ -45324,10 +53157,14 @@ const TypingIndicator = ({
       children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxs)("div", {
         className: "nfd-editor-chat-typing-indicator",
         children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("div", {
-          className: "nfd-editor-chat-typing-indicator__loader"
+          className: "nfd-editor-chat-typing-indicator__icon",
+          children: statusInfo.icon
         }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("div", {
           className: "nfd-editor-chat-typing-indicator__status",
-          children: getStatusText()
+          children: statusInfo.text
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxs)("div", {
+          className: "nfd-editor-chat-typing-indicator__dots",
+          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("span", {}), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("span", {}), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("span", {})]
         })]
       })
     })
@@ -45343,7 +53180,6 @@ const TypingIndicator = ({
   \******************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
@@ -45356,11 +53192,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _wordpress_data__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_wordpress_data__WEBPACK_IMPORTED_MODULE_2__);
 /* harmony import */ var _wordpress_core_data__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @wordpress/core-data */ "@wordpress/core-data");
 /* harmony import */ var _wordpress_core_data__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_wordpress_core_data__WEBPACK_IMPORTED_MODULE_3__);
-/* harmony import */ var _services_actionExecutor__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../services/actionExecutor */ "./src/services/actionExecutor.js");
-/* harmony import */ var _utils_helpers__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../utils/helpers */ "./src/utils/helpers.js");
-/* harmony import */ var _services_mcpClient__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../services/mcpClient */ "./src/services/mcpClient.js");
-/* harmony import */ var _services_openaiClient__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../services/openaiClient */ "./src/services/openaiClient.js");
-/* eslint-disable no-undef */
+/* harmony import */ var _services_mcpClient__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../services/mcpClient */ "./src/services/mcpClient.js");
+/* harmony import */ var _services_openaiClient__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../services/openaiClient */ "./src/services/openaiClient.js");
+/* harmony import */ var _services_actionExecutor__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../services/actionExecutor */ "./src/services/actionExecutor.js");
+/* harmony import */ var _utils_helpers__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../utils/helpers */ "./src/utils/helpers.js");
+/* harmony import */ var _services_globalStylesService__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../services/globalStylesService */ "./src/services/globalStylesService.js");
+/* eslint-disable no-undef, no-console */
 /**
  * WordPress dependencies
  */
@@ -45377,6 +53214,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
+
 /**
  * Get site-specific localStorage keys for chat persistence
  * Uses the site URL to ensure each site has its own isolated chat history
@@ -45385,10 +53223,44 @@ __webpack_require__.r(__webpack_exports__);
  */
 const getStorageKeys = () => {
   // Hash the site home URL to create a unique, compact identifier
-  const siteId = (0,_utils_helpers__WEBPACK_IMPORTED_MODULE_5__.simpleHash)(window.nfdEditorChat.homeUrl);
+  const siteId = (0,_utils_helpers__WEBPACK_IMPORTED_MODULE_7__.simpleHash)(window.nfdEditorChat?.homeUrl || "default");
   return {
+    SESSION_ID: `nfd-editor-chat-session-id-${siteId}`,
     MESSAGES: `nfd-editor-chat-messages-${siteId}`
   };
+};
+
+/**
+ * Load session ID from localStorage
+ *
+ * @return {string|null} The session ID or null
+ */
+const loadSessionId = () => {
+  try {
+    const STORAGE_KEYS = getStorageKeys();
+    return localStorage.getItem(STORAGE_KEYS.SESSION_ID);
+  } catch (error) {
+    console.warn("Failed to load session ID from localStorage:", error);
+    return null;
+  }
+};
+
+/**
+ * Save session ID to localStorage
+ *
+ * @param {string} sessionId The session ID to save
+ */
+const saveSessionId = sessionId => {
+  try {
+    const STORAGE_KEYS = getStorageKeys();
+    if (sessionId) {
+      localStorage.setItem(STORAGE_KEYS.SESSION_ID, sessionId);
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.SESSION_ID);
+    }
+  } catch (error) {
+    console.warn("Failed to save session ID to localStorage:", error);
+  }
 };
 
 /**
@@ -45402,7 +53274,7 @@ const loadMessages = () => {
     const stored = localStorage.getItem(STORAGE_KEYS.MESSAGES);
     if (stored) {
       const messages = JSON.parse(stored);
-      // Remove hasActions, undoData, and streaming state from loaded messages
+      // Remove hasActions and undoData from loaded messages (actions should only show once)
       return messages.map(msg => {
         const {
           hasActions,
@@ -45415,7 +53287,6 @@ const loadMessages = () => {
     }
     return [];
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.warn("Failed to load messages from localStorage:", error);
     return [];
   }
@@ -45430,16 +53301,12 @@ const saveMessages = messages => {
   try {
     const STORAGE_KEYS = getStorageKeys();
     // Filter out streaming state before saving
-    const messagesToSave = messages.map(msg => {
-      const {
-        isStreaming,
-        ...rest
-      } = msg;
-      return rest;
-    });
-    localStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify(messagesToSave));
+    const cleanMessages = messages.map(({
+      isStreaming,
+      ...rest
+    }) => rest);
+    localStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify(cleanMessages));
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.warn("Failed to save messages to localStorage:", error);
   }
 };
@@ -45450,35 +53317,43 @@ const saveMessages = messages => {
 const clearChatData = () => {
   try {
     const STORAGE_KEYS = getStorageKeys();
+    localStorage.removeItem(STORAGE_KEYS.SESSION_ID);
     localStorage.removeItem(STORAGE_KEYS.MESSAGES);
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.warn("Failed to clear chat data from localStorage:", error);
   }
 };
 
 /**
- * Custom hook for managing chat functionality with streaming and MCP integration
+ * Generate a new session ID
+ *
+ * @return {string} New session ID
+ */
+const generateSessionId = () => {
+  return crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+};
+
+/**
+ * Custom hook for managing chat functionality with MCP and streaming support
  *
  * @return {Object} Chat state and handlers
  */
 const useChat = () => {
-  // Initialize state from localStorage immediately
+  // Initialize state from localStorage
+  const savedSessionId = loadSessionId();
   const savedMessages = loadMessages();
   const [messages, setMessages] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useState)(savedMessages || []);
   const [isLoading, setIsLoading] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useState)(false);
+  const [sessionId, setSessionId] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useState)(savedSessionId || generateSessionId());
   const [error, setError] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useState)(null);
-  const [status, setStatus] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useState)(null); // 'connecting', 'streaming', 'tool_calling', 'completed'
+  const [status, setStatus] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useState)(null);
   const [isSaving, setIsSaving] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useState)(false);
   const [hasGlobalStylesChanges, setHasGlobalStylesChanges] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useState)(false);
-  const [streamingContent, setStreamingContent] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useState)("");
-  const [currentToolCalls, setCurrentToolCalls] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useState)([]);
-  const [pendingToolPermission, setPendingToolPermission] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useState)(null);
-  const [mcpTools, setMcpTools] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useState)([]);
-  const [mcpConnectionStatus, setMcpConnectionStatus] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useState)("disconnected"); // 'disconnected', 'connecting', 'connected'
-
+  const [mcpConnectionStatus, setMcpConnectionStatus] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useState)("disconnected");
+  const [tools, setTools] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useState)([]);
+  const [activeToolCall, setActiveToolCall] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useState)(null);
   const hasInitializedRef = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useRef)(false);
-  const messageIdRef = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useRef)(0);
+  const abortControllerRef = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useRef)(null);
 
   // Get WordPress editor dispatch functions
   const {
@@ -45499,8 +53374,7 @@ const useChat = () => {
   // Watch for save completion
   (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useEffect)(() => {
     if (isSaving && !isSavingPost) {
-      // Save just completed
-      // Remove hasActions and undoData from ALL messages
+      // Save just completed - remove hasActions and undoData from ALL messages
       setMessages(prev => prev.map(msg => {
         if (msg.hasActions) {
           const {
@@ -45528,30 +53402,38 @@ const useChat = () => {
     }
     try {
       setMcpConnectionStatus("connecting");
-      await _services_mcpClient__WEBPACK_IMPORTED_MODULE_6__.mcpClient.connect();
-      await _services_mcpClient__WEBPACK_IMPORTED_MODULE_6__.mcpClient.initialize();
-      const tools = _services_mcpClient__WEBPACK_IMPORTED_MODULE_6__.mcpClient.getTools();
-      setMcpTools(tools);
+      await _services_mcpClient__WEBPACK_IMPORTED_MODULE_4__.mcpClient.connect();
+      await _services_mcpClient__WEBPACK_IMPORTED_MODULE_4__.mcpClient.initialize();
+      const availableTools = await _services_mcpClient__WEBPACK_IMPORTED_MODULE_4__.mcpClient.listTools();
+      setTools(availableTools);
       setMcpConnectionStatus("connected");
-
-      // eslint-disable-next-line no-console
-      console.log(`MCP connected with ${tools.length} tools available`);
     } catch (err) {
-      // eslint-disable-next-line no-console
       console.error("Failed to initialize MCP:", err);
       setMcpConnectionStatus("disconnected");
-      // Don't block chat if MCP fails - just continue without tools
+      // Don't set error here - MCP is optional, chat can work without it
     }
   }, [mcpConnectionStatus]);
 
-  // Initialize MCP on mount
+  // Initialize on mount
   (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useEffect)(() => {
     if (hasInitializedRef.current) {
       return;
     }
     hasInitializedRef.current = true;
+
+    // Save session ID if it's new
+    if (!savedSessionId) {
+      saveSessionId(sessionId);
+    }
+
+    // Initialize MCP connection
     initializeMCP();
-  }, [initializeMCP]);
+  }, [sessionId, initializeMCP]);
+
+  // Save session ID when it changes
+  (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useEffect)(() => {
+    saveSessionId(sessionId);
+  }, [sessionId]);
 
   // Save messages when they change
   (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useEffect)(() => {
@@ -45563,279 +53445,117 @@ const useChat = () => {
   // Cleanup on unmount
   (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useEffect)(() => {
     return () => {
-      _services_openaiClient__WEBPACK_IMPORTED_MODULE_7__.openaiClient.stop();
-      if (_services_mcpClient__WEBPACK_IMPORTED_MODULE_6__.mcpClient.isConnected()) {
-        _services_mcpClient__WEBPACK_IMPORTED_MODULE_6__.mcpClient.disconnect();
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
       }
     };
   }, []);
 
   /**
-   * Generate a unique message ID
+   * Handle sending a message with streaming support
    *
-   * @return {string} Unique message ID
-   */
-  const generateMessageId = () => {
-    messageIdRef.current += 1;
-    return `msg-${Date.now()}-${messageIdRef.current}`;
-  };
-
-  /**
-   * Execute a tool call with permission checking
-   *
-   * @param {Object} toolCall Tool call object with name and arguments
-   * @return {Promise<Object>} Tool result
-   */
-  const executeToolCall = async toolCall => {
-    const {
-      name,
-      arguments: args
-    } = toolCall;
-    try {
-      const result = await _services_mcpClient__WEBPACK_IMPORTED_MODULE_6__.mcpClient.callTool(name, args);
-      return {
-        id: toolCall.id,
-        name,
-        result: result.content,
-        isError: result.isError
-      };
-    } catch (err) {
-      return {
-        id: toolCall.id,
-        name,
-        result: null,
-        error: err.message || "Tool execution failed",
-        isError: true
-      };
-    }
-  };
-
-  /**
-   * Check if any tools require permission (are destructive)
-   *
-   * @param {Array} toolCalls Array of tool calls
-   * @return {Array} Array of destructive tool calls
-   */
-  const getDestructiveToolCalls = toolCalls => {
-    return toolCalls.filter(tc => !_services_mcpClient__WEBPACK_IMPORTED_MODULE_6__.mcpClient.isToolReadOnly(tc.name));
-  };
-
-  /**
-   * Continue chat after tool results
-   *
-   * @param {Array}  chatHistory   Current chat history
-   * @param {Array}  toolResults   Results from tool execution
-   * @param {Object} assistantMsg  Original assistant message with tool calls
-   * @return {Promise<void>}
-   */
-  const continueWithToolResults = async (chatHistory, toolResults, assistantMsg) => {
-    const tools = _services_mcpClient__WEBPACK_IMPORTED_MODULE_6__.mcpClient.getToolsForOpenAI();
-
-    // Build messages including the tool results
-    const messagesForAPI = _services_openaiClient__WEBPACK_IMPORTED_MODULE_7__.openaiClient.convertMessagesToOpenAI([{
-      role: "system",
-      content: _services_openaiClient__WEBPACK_IMPORTED_MODULE_7__.openaiClient.createSystemMessage().content
-    }, ...chatHistory, {
-      role: "assistant",
-      content: assistantMsg.content || "",
-      toolCalls: assistantMsg.toolCalls,
-      toolResults
-    }]);
-
-    // Create a new streaming message for the follow-up response
-    const followUpMsgId = generateMessageId();
-    setStreamingContent("");
-    setStatus("streaming");
-    setMessages(prev => [...prev, {
-      id: followUpMsgId,
-      type: "assistant",
-      content: "",
-      isStreaming: true
-    }]);
-    await _services_openaiClient__WEBPACK_IMPORTED_MODULE_7__.openaiClient.createStreamingCompletion({
-      messages: messagesForAPI,
-      tools: tools.length > 0 ? tools : undefined
-    },
-    // onChunk
-    chunk => {
-      if (chunk.type === "content") {
-        setStreamingContent(prev => prev + chunk.content);
-        setMessages(prev => prev.map(msg => msg.id === followUpMsgId ? {
-          ...msg,
-          content: chunk.fullContent
-        } : msg));
-      }
-    },
-    // onToolCall - handle nested tool calls
-    async newToolCalls => {
-      setStatus("tool_calling");
-      // Execute new tool calls
-      const newResults = await Promise.all(newToolCalls.map(executeToolCall));
-      setMessages(prev => prev.map(msg => msg.id === followUpMsgId ? {
-        ...msg,
-        toolCalls: newToolCalls,
-        toolResults: newResults
-      } : msg));
-
-      // Continue with new tool results if needed
-      const currentMessages = messages.filter(m => m.id !== followUpMsgId);
-      await continueWithToolResults(currentMessages, newResults, {
-        content: streamingContent,
-        toolCalls: newToolCalls
-      });
-    },
-    // onComplete
-    result => {
-      setMessages(prev => prev.map(msg => msg.id === followUpMsgId ? {
-        ...msg,
-        content: result.content,
-        isStreaming: false
-      } : msg));
-      setStreamingContent("");
-      setStatus(null);
-      setIsLoading(false);
-    },
-    // onError
-    err => {
-      setError(err.message || "Failed to get AI response");
-      setIsLoading(false);
-      setStatus(null);
-    });
-  };
-
-  /**
-   * Handle sending a message with streaming
-   *
-   * @param {string} messageContent User message content
+   * @param {string} messageContent The message to send
    */
   const handleSendMessage = async messageContent => {
-    // Clear any previous errors and status
+    // Clear any previous errors
     setError(null);
     setStatus(null);
-    setStreamingContent("");
-    setCurrentToolCalls([]);
 
     // Add user message
-    const userMsgId = generateMessageId();
     const userMessage = {
-      id: userMsgId,
+      id: `user-${Date.now()}`,
       type: "user",
+      role: "user",
       content: messageContent
     };
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
-    setStatus("streaming");
+    setStatus("generating");
+
+    // Create abort controller for this request
+    abortControllerRef.current = new AbortController();
     try {
-      // Build chat history for context
-      const chatHistory = [...messages, userMessage].slice(-20); // Keep last 20 messages for context
-
-      // Get MCP tools in OpenAI format
-      const tools = _services_mcpClient__WEBPACK_IMPORTED_MODULE_6__.mcpClient.isConnected() ? _services_mcpClient__WEBPACK_IMPORTED_MODULE_6__.mcpClient.getToolsForOpenAI() : [];
-
-      // Build messages for OpenAI API
-      const messagesForAPI = _services_openaiClient__WEBPACK_IMPORTED_MODULE_7__.openaiClient.convertMessagesToOpenAI([{
-        role: "system",
-        content: _services_openaiClient__WEBPACK_IMPORTED_MODULE_7__.openaiClient.createSystemMessage().content
-      }, ...chatHistory.map(msg => ({
+      // Build message context for OpenAI
+      const systemMessage = _services_openaiClient__WEBPACK_IMPORTED_MODULE_5__.openaiClient.createWordPressSystemMessage();
+      const recentMessages = [...messages, userMessage].slice(-10);
+      const openaiMessages = [systemMessage, ..._services_openaiClient__WEBPACK_IMPORTED_MODULE_5__.openaiClient.convertMessagesToOpenAI(recentMessages.map(msg => ({
         role: msg.type === "user" ? "user" : "assistant",
         content: msg.content,
         toolCalls: msg.toolCalls,
         toolResults: msg.toolResults
-      }))]);
+      })))];
 
-      // Create assistant message placeholder for streaming
-      const assistantMsgId = generateMessageId();
+      // Get MCP tools in OpenAI format
+      const openaiTools = _services_mcpClient__WEBPACK_IMPORTED_MODULE_4__.mcpClient.isConnected() ? _services_mcpClient__WEBPACK_IMPORTED_MODULE_4__.mcpClient.getToolsForOpenAI() : [];
+
+      // Create streaming assistant message
+      const assistantMessageId = `assistant-${Date.now()}`;
+      let currentContent = "";
       setMessages(prev => [...prev, {
-        id: assistantMsgId,
+        id: assistantMessageId,
         type: "assistant",
+        role: "assistant",
         content: "",
         isStreaming: true
       }]);
-      let finalToolCalls = null;
-      await _services_openaiClient__WEBPACK_IMPORTED_MODULE_7__.openaiClient.createStreamingCompletion({
-        messages: messagesForAPI,
-        tools: tools.length > 0 ? tools : undefined
+
+      // Make streaming request
+      await _services_openaiClient__WEBPACK_IMPORTED_MODULE_5__.openaiClient.createStreamingCompletion({
+        model: "gpt-4o-mini",
+        messages: openaiMessages,
+        tools: openaiTools.length > 0 ? openaiTools : undefined,
+        tool_choice: openaiTools.length > 0 ? "auto" : undefined,
+        temperature: 0.7,
+        max_tokens: 2000
       },
-      // onChunk - handle streaming content
+      // onChunk callback
       chunk => {
         if (chunk.type === "content") {
-          setStreamingContent(chunk.fullContent);
-          setMessages(prev => prev.map(msg => msg.id === assistantMsgId ? {
+          currentContent += chunk.content;
+          setMessages(prev => prev.map(msg => msg.id === assistantMessageId ? {
             ...msg,
-            content: chunk.fullContent
+            content: currentContent
           } : msg));
         }
       },
-      // onToolCall - handle tool calls
-      toolCalls => {
-        finalToolCalls = toolCalls;
-        setCurrentToolCalls(toolCalls);
-        setStatus("tool_calling");
-
-        // Update message with tool calls
-        setMessages(prev => prev.map(msg => msg.id === assistantMsgId ? {
+      // onComplete callback
+      async (fullMessage, toolCallsResult) => {
+        // Mark streaming as complete
+        setMessages(prev => prev.map(msg => msg.id === assistantMessageId ? {
           ...msg,
-          toolCalls,
-          isStreaming: false
-        } : msg));
-      },
-      // onComplete - handle completion
-      async result => {
-        // Update message with final content
-        setMessages(prev => prev.map(msg => msg.id === assistantMsgId ? {
-          ...msg,
-          content: result.content,
-          isStreaming: false
+          content: fullMessage,
+          isStreaming: false,
+          toolCalls: toolCallsResult
         } : msg));
 
-        // If there were tool calls, execute them
-        if (finalToolCalls && finalToolCalls.length > 0) {
-          // Check for destructive tools that need permission
-          const destructiveTools = getDestructiveToolCalls(finalToolCalls);
-          if (destructiveTools.length > 0) {
-            // Set pending permission state
-            setPendingToolPermission({
-              toolCalls: finalToolCalls,
-              assistantMsgId,
-              chatHistory
-            });
-            setStatus("awaiting_permission");
-            return;
-          }
-
-          // Execute all tool calls
-          const toolResults = await Promise.all(finalToolCalls.map(executeToolCall));
-
-          // Update message with tool results
-          setMessages(prev => prev.map(msg => msg.id === assistantMsgId ? {
-            ...msg,
-            toolResults
-          } : msg));
-
-          // Continue conversation with tool results
-          await continueWithToolResults(chatHistory, toolResults, {
-            content: result.content,
-            toolCalls: finalToolCalls
-          });
-        } else {
-          setStreamingContent("");
-          setStatus(null);
-          setIsLoading(false);
+        // Handle tool calls if present
+        if (toolCallsResult && toolCallsResult.length > 0 && _services_mcpClient__WEBPACK_IMPORTED_MODULE_4__.mcpClient.isConnected()) {
+          // handleToolCalls will manage isLoading and status
+          await handleToolCalls(toolCallsResult, assistantMessageId, openaiMessages);
+          // Don't reset here - handleToolCalls manages the state
+          return;
         }
-      },
-      // onError
-      err => {
-        // eslint-disable-next-line no-console
-        console.error("Streaming error:", err);
-        setError((0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("Sorry, I encountered an error processing your request. Please try again.", "wp-module-editor-chat"));
+
+        // Only reset if no tool calls
         setIsLoading(false);
         setStatus(null);
-
-        // Remove the streaming message on error
-        setMessages(prev => prev.filter(msg => msg.id !== assistantMsgId));
+      },
+      // onError callback
+      err => {
+        console.error("Streaming error:", err);
+        setMessages(prev => prev.map(msg => msg.id === assistantMessageId ? {
+          ...msg,
+          content: currentContent || (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("Sorry, an error occurred.", "wp-module-editor-chat"),
+          isStreaming: false
+        } : msg));
+        setError(err.message || (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("An error occurred while processing your request.", "wp-module-editor-chat"));
+        setIsLoading(false);
+        setStatus(null);
       });
     } catch (err) {
-      // eslint-disable-next-line no-console
+      if (err.name === "AbortError") {
+        return;
+      }
       console.error("Error sending message:", err);
       setError((0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("Sorry, I encountered an error processing your request. Please try again.", "wp-module-editor-chat"));
       setIsLoading(false);
@@ -45844,83 +53564,244 @@ const useChat = () => {
   };
 
   /**
-   * Approve pending tool permission and execute tools
+   * Handle tool calls from OpenAI response
+   *
+   * @param {Array}  toolCalls          Tool calls from OpenAI
+   * @param {string} assistantMessageId ID of the assistant message
+   * @param {Array}  previousMessages   Previous messages for context
    */
-  const handleApproveToolPermission = async () => {
-    if (!pendingToolPermission) {
-      return;
-    }
-    const {
-      toolCalls,
-      assistantMsgId,
-      chatHistory
-    } = pendingToolPermission;
-    setPendingToolPermission(null);
-    setStatus("tool_calling");
+  const handleToolCalls = async (toolCalls, assistantMessageId, previousMessages) => {
+    const toolResults = [];
 
-    // Execute all tool calls
-    const toolResults = await Promise.all(toolCalls.map(executeToolCall));
+    // Set status to tool_call mode
+    setStatus("tool_call");
+    for (const toolCall of toolCalls) {
+      // Set the active tool call for UI display
+      setActiveToolCall({
+        name: toolCall.name,
+        arguments: toolCall.arguments
+      });
+      try {
+        // Check if this is a global styles update - handle it via JS for real-time updates
+        if (toolCall.name === "mcp-adapter-execute-ability") {
+          const args = toolCall.arguments || {};
+          const abilityName = args.ability_name;
+          const params = args.parameters || {};
+          console.log("Tool call intercepted:", toolCall.name, "ability:", abilityName, "params:", params);
+
+          // Handle global palette update via JS service for real-time updates
+          if (abilityName === "nfd-editor-chat/update-global-palette") {
+            console.log("=== Intercepting global palette update for real-time changes ===");
+            console.log("Colors:", params.colors);
+            console.log("Replace all:", params.replace_all);
+            try {
+              const jsResult = await (0,_services_globalStylesService__WEBPACK_IMPORTED_MODULE_8__.updateGlobalPalette)(params.colors, params.replace_all);
+              console.log("JS update result:", jsResult);
+              if (jsResult.success) {
+                setHasGlobalStylesChanges(true);
+                toolResults.push({
+                  id: toolCall.id,
+                  result: [{
+                    type: "text",
+                    text: JSON.stringify(jsResult)
+                  }],
+                  isError: false
+                });
+                continue;
+              } else {
+                // Fall back to MCP if JS fails
+                console.warn("JS update failed, falling back to MCP:", jsResult.error);
+              }
+            } catch (jsError) {
+              console.error("JS update threw error:", jsError);
+            }
+
+            // Fallback to MCP
+            const result = await _services_mcpClient__WEBPACK_IMPORTED_MODULE_4__.mcpClient.callTool(toolCall.name, toolCall.arguments);
+            toolResults.push({
+              id: toolCall.id,
+              result: result.content,
+              isError: result.isError
+            });
+            continue;
+          }
+
+          // Handle get global styles via JS service for more accurate data
+          if (abilityName === "nfd-editor-chat/get-global-styles") {
+            console.log("=== Intercepting get global styles for real-time data ===");
+            try {
+              const jsResult = (0,_services_globalStylesService__WEBPACK_IMPORTED_MODULE_8__.getCurrentGlobalStyles)();
+              console.log("JS get styles result:", jsResult);
+
+              // Check if we got valid data (palette has items or we have rawSettings)
+              if (jsResult.palette?.length > 0 || jsResult.rawSettings) {
+                toolResults.push({
+                  id: toolCall.id,
+                  result: [{
+                    type: "text",
+                    text: JSON.stringify({
+                      styles: jsResult,
+                      message: "Retrieved global styles from editor"
+                    })
+                  }],
+                  isError: false
+                });
+                continue;
+              } else {
+                console.warn("JS get styles returned empty, falling back to MCP");
+              }
+            } catch (jsError) {
+              console.error("JS get styles threw error:", jsError);
+            }
+            // Fall through to MCP if JS fails
+          }
+        }
+
+        // Default: use MCP for all other tool calls
+        const result = await _services_mcpClient__WEBPACK_IMPORTED_MODULE_4__.mcpClient.callTool(toolCall.name, toolCall.arguments);
+        toolResults.push({
+          id: toolCall.id,
+          result: result.content,
+          isError: result.isError
+        });
+      } catch (err) {
+        console.error(`Tool call ${toolCall.name} failed:`, err);
+        toolResults.push({
+          id: toolCall.id,
+          result: null,
+          error: err.message
+        });
+      }
+    }
 
     // Update message with tool results
-    setMessages(prev => prev.map(msg => msg.id === assistantMsgId ? {
+    setMessages(prev => prev.map(msg => msg.id === assistantMessageId ? {
       ...msg,
       toolResults
     } : msg));
 
-    // Get the current message content
-    const currentMsg = messages.find(m => m.id === assistantMsgId);
-    const content = currentMsg?.content || "";
+    // Clear active tool call
+    setActiveToolCall(null);
 
-    // Continue conversation with tool results
-    await continueWithToolResults(chatHistory, toolResults, {
-      content,
-      toolCalls
-    });
+    // If we have successful results, get a streaming follow-up response
+    if (toolResults.some(r => !r.error)) {
+      // Set status to summarizing
+      setStatus("summarizing");
+      try {
+        // Format tool results for AI
+        const toolResultsSummary = toolResults.map(r => {
+          if (r.error) {
+            return `Tool failed: ${r.error}`;
+          }
+          const resultText = Array.isArray(r.result) ? r.result.map(item => item.text || JSON.stringify(item)).join("\n") : JSON.stringify(r.result);
+          return resultText;
+        }).join("\n\n");
+
+        // Create a streaming follow-up message
+        const followUpMessageId = `assistant-followup-${Date.now()}`;
+        let followUpContent = "";
+
+        // Add placeholder message for streaming
+        setMessages(prev => [...prev, {
+          id: followUpMessageId,
+          type: "assistant",
+          role: "assistant",
+          content: "",
+          isStreaming: true
+        }]);
+
+        // Build messages for follow-up
+        const systemMessage = _services_openaiClient__WEBPACK_IMPORTED_MODULE_5__.openaiClient.createWordPressSystemMessage();
+        const followUpMessages = [systemMessage, ..._services_openaiClient__WEBPACK_IMPORTED_MODULE_5__.openaiClient.convertMessagesToOpenAI(previousMessages.slice(0, -1)), {
+          role: "user",
+          content: `Here are the results from the tool execution:\n\n${toolResultsSummary}\n\nPlease provide a brief, helpful summary of what was done for the user. Be concise.`
+        }];
+
+        // Stream the follow-up response (no tools for summary)
+        await _services_openaiClient__WEBPACK_IMPORTED_MODULE_5__.openaiClient.createStreamingCompletion({
+          model: "gpt-4o-mini",
+          messages: followUpMessages,
+          tools: [],
+          // Explicitly no tools for follow-up
+          temperature: 0.7,
+          max_tokens: 500
+        },
+        // onChunk
+        chunk => {
+          if (chunk.type === "content") {
+            followUpContent += chunk.content;
+            setMessages(prev => prev.map(msg => msg.id === followUpMessageId ? {
+              ...msg,
+              content: followUpContent
+            } : msg));
+          }
+        },
+        // onComplete
+        async fullMessage => {
+          setMessages(prev => prev.map(msg => msg.id === followUpMessageId ? {
+            ...msg,
+            content: fullMessage,
+            isStreaming: false
+          } : msg));
+          setStatus(null);
+          setIsLoading(false);
+        },
+        // onError
+        err => {
+          console.error("Follow-up streaming error:", err);
+          setMessages(prev => prev.map(msg => msg.id === followUpMessageId ? {
+            ...msg,
+            content: followUpContent || "Done.",
+            isStreaming: false
+          } : msg));
+          setStatus(null);
+          setIsLoading(false);
+        });
+      } catch (followUpError) {
+        console.error("Follow-up response failed:", followUpError);
+        setStatus(null);
+        setIsLoading(false);
+      }
+    } else {
+      // No successful results, reset state
+      setStatus(null);
+      setIsLoading(false);
+    }
   };
 
   /**
-   * Deny pending tool permission
-   */
-  const handleDenyToolPermission = () => {
-    setPendingToolPermission(null);
-    setStatus(null);
-    setIsLoading(false);
-
-    // Add a message indicating tools were not executed
-    setMessages(prev => [...prev, {
-      id: generateMessageId(),
-      type: "assistant",
-      content: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("I understand. The requested actions were not performed. How else can I help you?", "wp-module-editor-chat")
-    }]);
-  };
-
-  /**
-   * Handle starting a new chat
+   * Start a new chat session
    */
   const handleNewChat = async () => {
-    // Stop any active requests
-    _services_openaiClient__WEBPACK_IMPORTED_MODULE_7__.openaiClient.stop();
+    // Abort any ongoing requests
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
 
-    // Clear loading and status states
+    // Clear state
     setIsLoading(false);
     setStatus(null);
-    setStreamingContent("");
-    setCurrentToolCalls([]);
-    setPendingToolPermission(null);
-
-    // Reset messages
-    setMessages([]);
     setError(null);
+    setMessages([]);
 
-    // Clear localStorage data
+    // Generate new session ID
+    const newSessionId = generateSessionId();
+    setSessionId(newSessionId);
+
+    // Clear localStorage
     clearChatData();
+    saveSessionId(newSessionId);
+
+    // Reconnect MCP if needed
+    if (mcpConnectionStatus !== "connected") {
+      await initializeMCP();
+    }
   };
 
   /**
-   * Accept changes - trigger WordPress save and keep buttons visible until save completes
+   * Accept changes - trigger WordPress save
    */
   const handleAcceptChanges = async () => {
-    // Set saving state to true - this will disable the buttons
     setIsSaving(true);
 
     // Save global styles if they were changed
@@ -45931,7 +53812,6 @@ const useChat = () => {
           await saveEditedEntityRecord("root", "globalStyles", globalStylesId);
         }
       } catch (saveError) {
-        // eslint-disable-next-line no-console
         console.error("Error saving global styles:", saveError);
       }
     }
@@ -45943,13 +53823,12 @@ const useChat = () => {
   };
 
   /**
-   * Decline changes - restore to initial state before first action and hide buttons
+   * Decline changes - restore to initial state
    */
   const handleDeclineChanges = async () => {
-    // Find the first message with undo data (the initial state)
+    // Find the first message with undo data
     const firstActionMessage = messages.find(msg => msg.hasActions && msg.undoData);
     if (!firstActionMessage || !firstActionMessage.undoData) {
-      // eslint-disable-next-line no-console
       console.error("No undo data available");
       return;
     }
@@ -45960,16 +53839,16 @@ const useChat = () => {
       if (undoData && typeof undoData === "object" && !Array.isArray(undoData)) {
         // Restore blocks if they exist
         if (undoData.blocks && Array.isArray(undoData.blocks) && undoData.blocks.length > 0) {
-          await _services_actionExecutor__WEBPACK_IMPORTED_MODULE_4__["default"].restoreBlocks(undoData.blocks);
+          await _services_actionExecutor__WEBPACK_IMPORTED_MODULE_6__["default"].restoreBlocks(undoData.blocks);
         }
 
         // Restore global styles if they exist
         if (undoData.globalStyles && undoData.globalStyles.originalStyles && undoData.globalStyles.globalStylesId) {
-          await _services_actionExecutor__WEBPACK_IMPORTED_MODULE_4__["default"].restoreGlobalStyles(undoData.globalStyles);
+          await _services_actionExecutor__WEBPACK_IMPORTED_MODULE_6__["default"].restoreGlobalStyles(undoData.globalStyles);
         }
       } else if (Array.isArray(undoData)) {
         // Handle old structure: array of blocks (backward compatibility)
-        await _services_actionExecutor__WEBPACK_IMPORTED_MODULE_4__["default"].restoreBlocks(undoData);
+        await _services_actionExecutor__WEBPACK_IMPORTED_MODULE_6__["default"].restoreBlocks(undoData);
       }
 
       // Remove hasActions and undoData from ALL messages
@@ -45988,7 +53867,6 @@ const useChat = () => {
       // Reset global styles changes flag
       setHasGlobalStylesChanges(false);
     } catch (restoreError) {
-      // eslint-disable-next-line no-console
       console.error("Error restoring changes:", restoreError);
     }
   };
@@ -45997,19 +53875,26 @@ const useChat = () => {
    * Stop the current request
    */
   const handleStopRequest = () => {
-    _services_openaiClient__WEBPACK_IMPORTED_MODULE_7__.openaiClient.stop();
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Update any streaming messages to complete
+    setMessages(prev => prev.map(msg => msg.isStreaming ? {
+      ...msg,
+      isStreaming: false
+    } : msg));
     setIsLoading(false);
     setStatus(null);
     setError(null);
-    setStreamingContent("");
   };
 
   /**
-   * Reconnect MCP client
+   * Refresh MCP connection
    */
-  const handleReconnectMCP = async () => {
-    if (_services_mcpClient__WEBPACK_IMPORTED_MODULE_6__.mcpClient.isConnected()) {
-      await _services_mcpClient__WEBPACK_IMPORTED_MODULE_6__.mcpClient.disconnect();
+  const refreshMCPConnection = async () => {
+    if (_services_mcpClient__WEBPACK_IMPORTED_MODULE_4__.mcpClient.isConnected()) {
+      await _services_mcpClient__WEBPACK_IMPORTED_MODULE_4__.mcpClient.disconnect();
     }
     setMcpConnectionStatus("disconnected");
     await initializeMCP();
@@ -46017,22 +53902,21 @@ const useChat = () => {
   return {
     messages,
     isLoading,
+    conversationId: sessionId,
+    // Alias for backward compatibility
+    sessionId,
     error,
     status,
     isSaving,
-    streamingContent,
-    currentToolCalls,
-    pendingToolPermission,
-    mcpTools,
     mcpConnectionStatus,
+    tools,
+    activeToolCall,
     handleSendMessage,
     handleNewChat,
     handleAcceptChanges,
     handleDeclineChanges,
     handleStopRequest,
-    handleApproveToolPermission,
-    handleDenyToolPermission,
-    handleReconnectMCP
+    refreshMCPConnection
   };
 };
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (useChat);
@@ -46045,7 +53929,6 @@ const useChat = () => {
   \***************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
@@ -46085,7 +53968,6 @@ const useSelectedBlock = () => {
   \****************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
@@ -47114,51 +54996,381 @@ const actionExecutor = new ActionExecutor();
 
 /***/ }),
 
+/***/ "./src/services/globalStylesService.js":
+/*!*********************************************!*\
+  !*** ./src/services/globalStylesService.js ***!
+  \*********************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__),
+/* harmony export */   getCurrentGlobalStyles: () => (/* binding */ getCurrentGlobalStyles),
+/* harmony export */   getFormattedPalette: () => (/* binding */ getFormattedPalette),
+/* harmony export */   getGlobalStylesId: () => (/* binding */ getGlobalStylesId),
+/* harmony export */   isGlobalStylesAvailable: () => (/* binding */ isGlobalStylesAvailable),
+/* harmony export */   updateGlobalPalette: () => (/* binding */ updateGlobalPalette)
+/* harmony export */ });
+/* eslint-disable no-console */
+/**
+ * Global Styles Service
+ *
+ * Provides real-time updates to WordPress global styles using the Gutenberg data store.
+ * Changes made through this service are immediately reflected in the Site Editor.
+ */
+
+/**
+ * Get the WordPress data module
+ * @returns {Object|null} WordPress data object or null if not available
+ */
+function getWPData() {
+  if (typeof window !== "undefined" && window.wp && window.wp.data) {
+    return window.wp.data;
+  }
+  return null;
+}
+
+/**
+ * Get the global styles ID from the current site editor context
+ * @returns {number|null} Global styles post ID or null
+ */
+function getGlobalStylesId() {
+  const data = getWPData();
+  if (!data) {
+    console.warn("WordPress data store not available");
+    return null;
+  }
+  try {
+    const coreStore = data.select("core");
+
+    // Method 1: Use __experimentalGetCurrentGlobalStylesId if available
+    if (typeof coreStore.__experimentalGetCurrentGlobalStylesId === "function") {
+      const id = coreStore.__experimentalGetCurrentGlobalStylesId();
+      if (id) {
+        console.log("Found global styles ID via __experimentalGetCurrentGlobalStylesId:", id);
+        return id;
+      }
+    }
+
+    // Method 2: Try to get from edit-site store
+    const editSiteStore = data.select("core/edit-site");
+    if (editSiteStore) {
+      // Try getSettings
+      if (typeof editSiteStore.getSettings === "function") {
+        const settings = editSiteStore.getSettings();
+        if (settings?.__experimentalGlobalStylesUserEntityId) {
+          console.log("Found global styles ID via edit-site settings:", settings.__experimentalGlobalStylesUserEntityId);
+          return settings.__experimentalGlobalStylesUserEntityId;
+        }
+      }
+      // Try getEditedPostId for global styles
+      if (typeof editSiteStore.getEditedPostId === "function") {
+        const postId = editSiteStore.getEditedPostId();
+        const postType = editSiteStore.getEditedPostType?.();
+        if (postType === "wp_global_styles" && postId) {
+          console.log("Found global styles ID via edit-site post:", postId);
+          return postId;
+        }
+      }
+    }
+
+    // Method 3: Get from entity records
+    const records = coreStore.getEntityRecords("root", "globalStyles", {
+      per_page: 1
+    });
+    if (records && records.length > 0) {
+      console.log("Found global styles ID via entity records:", records[0].id);
+      return records[0].id;
+    }
+    console.warn("Could not find global styles ID");
+  } catch (error) {
+    console.error("Error getting global styles ID:", error);
+  }
+  return null;
+}
+
+/**
+ * Get current global styles from the data store
+ * @returns {Object} Current global styles object
+ */
+function getCurrentGlobalStyles() {
+  const data = getWPData();
+  if (!data) {
+    return {
+      palette: [],
+      error: "WordPress data store not available"
+    };
+  }
+  try {
+    const coreStore = data.select("core");
+    let palette = [];
+    let themePalette = [];
+    let customPalette = [];
+    let rawSettings = null;
+
+    // Method 1: Get from global styles entity record
+    const globalStylesId = getGlobalStylesId();
+    if (globalStylesId) {
+      const record = coreStore.getEditedEntityRecord("root", "globalStyles", globalStylesId);
+      console.log("Global styles record:", record);
+      if (record && record.settings) {
+        rawSettings = record.settings;
+        const paletteData = record.settings?.color?.palette;
+        if (paletteData) {
+          // Handle nested structure (theme/custom)
+          if (paletteData.theme) {
+            themePalette = paletteData.theme;
+          }
+          if (paletteData.custom) {
+            customPalette = paletteData.custom;
+          }
+          // Handle flat array structure
+          if (Array.isArray(paletteData)) {
+            themePalette = paletteData;
+          }
+        }
+      }
+    }
+
+    // Method 2: Fallback to base styles / theme.json data
+    if (themePalette.length === 0) {
+      // Try to get theme.json settings via the block editor
+      const blockEditorStore = data.select("core/block-editor");
+      if (blockEditorStore && typeof blockEditorStore.getSettings === "function") {
+        const editorSettings = blockEditorStore.getSettings();
+        console.log("Block editor settings:", editorSettings);
+        if (editorSettings?.colors) {
+          themePalette = editorSettings.colors;
+        }
+        if (editorSettings?.__experimentalFeatures?.color?.palette) {
+          const featurePalette = editorSettings.__experimentalFeatures.color.palette;
+          if (featurePalette.theme) {
+            themePalette = featurePalette.theme;
+          }
+          if (featurePalette.custom) {
+            customPalette = featurePalette.custom;
+          }
+          if (Array.isArray(featurePalette)) {
+            themePalette = featurePalette;
+          }
+        }
+      }
+    }
+    palette = [...themePalette, ...customPalette];
+    console.log("Final palette:", palette);
+    return {
+      palette,
+      themePalette,
+      customPalette,
+      rawSettings
+    };
+  } catch (error) {
+    console.error("Error getting current global styles:", error);
+    return {
+      palette: [],
+      error: error.message
+    };
+  }
+}
+
+/**
+ * Update the global color palette in real-time
+ *
+ * @param {Array} colors Array of color objects: [{ slug: string, color: string, name: string }]
+ * @param {boolean} replaceAll If true, replace entire custom palette. If false, merge with existing.
+ * @returns {Promise<Object>} Result object with success status and updated palette
+ */
+async function updateGlobalPalette(colors, replaceAll = false) {
+  const data = getWPData();
+  if (!data) {
+    return {
+      success: false,
+      error: "WordPress data store not available. Make sure you're in the Site Editor."
+    };
+  }
+  try {
+    const coreStore = data.select("core");
+    const coreDispatch = data.dispatch("core");
+    const globalStylesId = getGlobalStylesId();
+    console.log("Updating global palette with ID:", globalStylesId);
+    console.log("Colors to update:", colors);
+    if (!globalStylesId) {
+      return {
+        success: false,
+        error: "Could not find global styles. Make sure you're in the Site Editor."
+      };
+    }
+
+    // Get current record
+    const currentRecord = coreStore.getEditedEntityRecord("root", "globalStyles", globalStylesId);
+    console.log("Current record:", currentRecord);
+    if (!currentRecord) {
+      return {
+        success: false,
+        error: "Could not load current global styles."
+      };
+    }
+
+    // Build the new settings
+    const currentSettings = currentRecord.settings || {};
+    const currentColorSettings = currentSettings.color || {};
+    const currentPalette = currentColorSettings.palette || {};
+
+    // Get existing custom palette - handle different structures
+    let existingCustomPalette = [];
+    if (Array.isArray(currentPalette.custom)) {
+      existingCustomPalette = currentPalette.custom;
+    } else if (Array.isArray(currentPalette)) {
+      // Some themes use flat palette structure
+      existingCustomPalette = [];
+    }
+
+    // Also get theme palette for reference
+    const themePalette = currentPalette.theme || [];
+    console.log("Existing custom palette:", existingCustomPalette);
+    console.log("Theme palette:", themePalette);
+
+    // Validate and prepare new colors
+    const validatedColors = colors.filter(c => c.slug && c.color).map(c => ({
+      slug: c.slug,
+      color: c.color,
+      name: c.name || c.slug.charAt(0).toUpperCase() + c.slug.slice(1).replace(/-/g, " ")
+    }));
+    if (validatedColors.length === 0) {
+      return {
+        success: false,
+        error: "No valid colors provided. Each color needs a slug and color value."
+      };
+    }
+    let newCustomPalette;
+    if (replaceAll) {
+      newCustomPalette = validatedColors;
+    } else {
+      // Merge: update existing by slug, add new ones
+      // Start with existing custom palette
+      const paletteBySlug = new Map(existingCustomPalette.map(c => [c.slug, c]));
+
+      // Update/add new colors
+      for (const newColor of validatedColors) {
+        paletteBySlug.set(newColor.slug, newColor);
+      }
+      newCustomPalette = Array.from(paletteBySlug.values());
+    }
+    console.log("New custom palette:", newCustomPalette);
+
+    // Build new settings object - preserve theme palette structure
+    const newSettings = {
+      ...currentSettings,
+      color: {
+        ...currentColorSettings,
+        palette: {
+          theme: themePalette,
+          // Preserve theme palette
+          custom: newCustomPalette
+        }
+      }
+    };
+    console.log("New settings:", newSettings);
+
+    // Update the entity record (this makes it appear immediately in the editor)
+    await coreDispatch.editEntityRecord("root", "globalStyles", globalStylesId, {
+      settings: newSettings
+    });
+    console.log("Entity record updated, now saving...");
+
+    // Save the changes to persist them
+    await coreDispatch.saveEditedEntityRecord("root", "globalStyles", globalStylesId);
+    console.log("Global styles saved successfully!");
+    return {
+      success: true,
+      updatedColors: validatedColors,
+      currentPalette: newCustomPalette,
+      message: `Successfully updated ${validatedColors.length} color(s) in the global palette. The changes should be visible immediately.`
+    };
+  } catch (error) {
+    console.error("Error updating global palette:", error);
+    return {
+      success: false,
+      error: `Failed to update palette: ${error.message}`
+    };
+  }
+}
+
+/**
+ * Check if we're in an environment where global styles can be edited
+ * @returns {boolean} True if global styles editing is available
+ */
+function isGlobalStylesAvailable() {
+  const data = getWPData();
+  if (!data) {
+    return false;
+  }
+  try {
+    // Check if we have access to the core store and global styles
+    const coreStore = data.select("core");
+    return typeof coreStore.getEditedEntityRecord === "function";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Get a formatted list of current palette colors for display
+ * @returns {Array} Array of formatted color strings
+ */
+function getFormattedPalette() {
+  const {
+    palette
+  } = getCurrentGlobalStyles();
+  return palette.map(c => `${c.name || c.slug}: ${c.color}`);
+}
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  getGlobalStylesId,
+  getCurrentGlobalStyles,
+  updateGlobalPalette,
+  isGlobalStylesAvailable,
+  getFormattedPalette
+});
+
+/***/ }),
+
 /***/ "./src/services/mcpClient.js":
 /*!***********************************!*\
   !*** ./src/services/mcpClient.js ***!
   \***********************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   MCPError: () => (/* binding */ MCPError),
-/* harmony export */   WordPressMCPClient: () => (/* binding */ WordPressMCPClient),
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__),
 /* harmony export */   mcpClient: () => (/* binding */ mcpClient)
 /* harmony export */ });
 /* harmony import */ var _modelcontextprotocol_sdk_client_index_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @modelcontextprotocol/sdk/client/index.js */ "./node_modules/@modelcontextprotocol/sdk/dist/esm/client/index.js");
 /* harmony import */ var _modelcontextprotocol_sdk_client_streamableHttp_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @modelcontextprotocol/sdk/client/streamableHttp.js */ "./node_modules/@modelcontextprotocol/sdk/dist/esm/client/streamableHttp.js");
+/* eslint-disable no-console */
 /**
- * WordPress MCP Client
+ * WordPress MCP Client using the official TypeScript SDK
  *
- * MCP client implementation using the official TypeScript SDK
- * for WordPress integration with nonce-based authentication.
+ * This client uses StreamableHTTPClientTransport to communicate with
+ * the WordPress MCP adapter endpoint.
  */
 
-/* eslint-disable no-undef */
-
-// Note: These imports require the @modelcontextprotocol/sdk package to be installed
-// eslint-disable-next-line import/no-unresolved
-
-// eslint-disable-next-line import/no-unresolved
 
 
 /**
- * Custom error class for MCP operations
+ * Custom error class for MCP errors
  */
 class MCPError extends Error {
-  constructor(message, code = null, details = null) {
+  constructor(message, code = null) {
     super(message);
     this.name = "MCPError";
     this.code = code;
-    this.details = details;
   }
 }
 
 /**
- * WordPress MCP Client class
+ * WordPress MCP Client implementation using the official TypeScript SDK
  */
 class WordPressMCPClient {
   constructor() {
@@ -47168,20 +55380,36 @@ class WordPressMCPClient {
     this.tools = [];
     this.resources = [];
     this.eventListeners = new Map();
+    this.config = null;
   }
 
   /**
-   * Get WordPress configuration from global variable
+   * Get configuration from WordPress
    *
-   * @return {Object} WordPress config
+   * @return {Object} Configuration object
    */
   getConfig() {
-    const config = window.nfdEditorChat || {};
-    return {
-      nonce: config.nonce || "",
-      restUrl: config.restUrl || "/wp-json/",
-      mcpUrl: config.mcpUrl || `${config.restUrl || "/wp-json/"}mcp/mcp-adapter-default-server`
-    };
+    if (this.config) {
+      return this.config;
+    }
+
+    // Get config from WordPress localized script
+    if (typeof window !== "undefined" && window.nfdEditorChat) {
+      this.config = {
+        nonce: window.nfdEditorChat.nonce,
+        mcpUrl: window.nfdEditorChat.mcpUrl,
+        restUrl: window.nfdEditorChat.restUrl,
+        homeUrl: window.nfdEditorChat.homeUrl
+      };
+    } else {
+      this.config = {
+        nonce: "",
+        mcpUrl: "",
+        restUrl: "",
+        homeUrl: ""
+      };
+    }
+    return this.config;
   }
 
   /**
@@ -47222,7 +55450,6 @@ class WordPressMCPClient {
         try {
           listener(event);
         } catch (error) {
-          // eslint-disable-next-line no-console
           console.error("Error in MCP event listener:", error);
         }
       });
@@ -47230,15 +55457,20 @@ class WordPressMCPClient {
   }
 
   /**
-   * Connect to the MCP server
+   * Connect to the MCP server using official SDK StreamableHTTPClientTransport
    *
+   * @param {string} serverUrl Optional server URL (uses config if not provided)
    * @return {Promise<void>}
    */
-  async connect() {
+  async connect(serverUrl = null) {
     try {
       const config = this.getConfig();
+      const mcpEndpoint = serverUrl || config.mcpUrl;
+      if (!mcpEndpoint) {
+        throw new MCPError("MCP endpoint URL not configured");
+      }
 
-      // Initialize the MCP Client
+      // Initialize the MCP Client using the official SDK
       this.client = new _modelcontextprotocol_sdk_client_index_js__WEBPACK_IMPORTED_MODULE_0__.Client({
         name: "nfd-editor-chat-client",
         version: "1.0.0"
@@ -47247,7 +55479,7 @@ class WordPressMCPClient {
       });
 
       // Create HTTP transport with WordPress authentication headers
-      this.transport = new _modelcontextprotocol_sdk_client_streamableHttp_js__WEBPACK_IMPORTED_MODULE_1__.StreamableHTTPClientTransport(new URL(config.mcpUrl), {
+      this.transport = new _modelcontextprotocol_sdk_client_streamableHttp_js__WEBPACK_IMPORTED_MODULE_1__.StreamableHTTPClientTransport(new URL(mcpEndpoint), {
         requestInit: {
           headers: {
             "X-WP-Nonce": config.nonce,
@@ -47256,14 +55488,14 @@ class WordPressMCPClient {
         }
       });
 
-      // Connect using the SDK
+      // Connect using the official SDK
       await this.client.connect(this.transport);
       this.connected = true;
       this.emit({
         type: "connected"
       });
     } catch (error) {
-      const mcpError = error instanceof MCPError ? error : new MCPError(`Connection failed: ${error.message}`);
+      const mcpError = error instanceof MCPError ? error : new MCPError(`Connection failed: ${error}`);
       this.emit({
         type: "error",
         data: mcpError
@@ -47273,7 +55505,7 @@ class WordPressMCPClient {
   }
 
   /**
-   * Initialize the MCP session and load tools/resources
+   * Initialize the MCP session - SDK handles this automatically after connect
    *
    * @return {Promise<Object>} Initialization result
    */
@@ -47282,8 +55514,11 @@ class WordPressMCPClient {
       throw new MCPError("Not connected to MCP server");
     }
     try {
-      // Load tools and resources
+      // The SDK has already handled initialization during connect()
+      // Load initial tools and resources using SDK methods
       await Promise.all([this.loadTools(), this.loadResources()]);
+
+      // Create a compatible result object
       const initResult = {
         protocolVersion: "2025-06-18",
         capabilities: {
@@ -47302,7 +55537,7 @@ class WordPressMCPClient {
       });
       return initResult;
     } catch (error) {
-      const mcpError = error instanceof MCPError ? error : new MCPError(`Initialization failed: ${error.message}`);
+      const mcpError = error instanceof MCPError ? error : new MCPError(`Initialization failed: ${error}`);
       this.emit({
         type: "error",
         data: mcpError
@@ -47328,7 +55563,7 @@ class WordPressMCPClient {
       };
     }
 
-    // Ensure type is set to object
+    // Ensure type is set to object and properties/required exist
     return {
       type: schema.type || "object",
       properties: schema.properties || {},
@@ -47337,20 +55572,20 @@ class WordPressMCPClient {
   }
 
   /**
-   * Load available tools from the MCP server
+   * Load tools using the official MCP SDK
    *
    * @return {Promise<void>}
    */
   async loadTools() {
     try {
+      // Use the SDK's listTools method - it handles all the protocol details
       const result = await this.client.listTools();
 
-      // Convert SDK tools format to our internal format
+      // Convert SDK tools format to our internal format with normalized schemas
       this.tools = result.tools.map(tool => ({
         name: tool.name,
         description: tool.description || "",
         inputSchema: this.normalizeInputSchema(tool.inputSchema),
-        // Extract annotations for permission checking
         annotations: tool.annotations || {}
       }));
       this.emit({
@@ -47358,20 +55593,22 @@ class WordPressMCPClient {
         data: this.tools
       });
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error("Failed to load tools via SDK:", error);
       this.tools = [];
     }
   }
 
   /**
-   * Load available resources from the MCP server
+   * Load resources using the official MCP SDK
    *
    * @return {Promise<void>}
    */
   async loadResources() {
     try {
+      // Use the SDK's listResources method - it handles all the protocol details
       const result = await this.client.listResources();
+
+      // Convert SDK resources format to our internal format
       this.resources = result.resources.map(resource => ({
         uri: resource.uri,
         name: resource.name || "",
@@ -47383,7 +55620,6 @@ class WordPressMCPClient {
         data: this.resources
       });
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error("Failed to load resources via SDK:", error);
       this.resources = [];
     }
@@ -47402,7 +55638,7 @@ class WordPressMCPClient {
   }
 
   /**
-   * Call a tool on the MCP server
+   * Call a tool using the official MCP SDK
    *
    * @param {string} name Tool name
    * @param {Object} args Tool arguments
@@ -47413,19 +55649,22 @@ class WordPressMCPClient {
       throw new MCPError("Not connected to MCP server");
     }
     try {
+      // Use the SDK's callTool method - it handles all the protocol details
       const result = await this.client.callTool({
         name,
         arguments: args
       });
-      return {
+
+      // Convert SDK result format to our internal format
+      const toolResult = {
         content: Array.isArray(result.content) ? result.content : [],
         isError: Boolean(result.isError),
         meta: result.meta || {}
       };
+      return toolResult;
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error(`Tool "${name}" call failed:`, error);
-      const mcpError = error instanceof MCPError ? error : new MCPError(`Tool call failed: ${error.message}`);
+      const mcpError = error instanceof MCPError ? error : new MCPError(`Tool call failed: ${error}`);
       this.emit({
         type: "error",
         data: mcpError
@@ -47447,7 +55686,7 @@ class WordPressMCPClient {
   }
 
   /**
-   * Read a resource from the MCP server
+   * Read a resource using the official MCP SDK
    *
    * @param {string} uri Resource URI
    * @return {Promise<Object>} Resource content
@@ -47457,13 +55696,14 @@ class WordPressMCPClient {
       throw new MCPError("Not connected to MCP server");
     }
     try {
-      return await this.client.readResource({
+      // Use the SDK's readResource method - it handles all the protocol details
+      const result = await this.client.readResource({
         uri
       });
+      return result;
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error(`Resource "${uri}" read failed:`, error);
-      const mcpError = error instanceof MCPError ? error : new MCPError(`Resource read failed: ${error.message}`);
+      const mcpError = error instanceof MCPError ? error : new MCPError(`Resource read failed: ${error}`);
       this.emit({
         type: "error",
         data: mcpError
@@ -47473,12 +55713,13 @@ class WordPressMCPClient {
   }
 
   /**
-   * Disconnect from the MCP server
+   * Disconnect from the MCP server using the official SDK
    *
    * @return {Promise<void>}
    */
   async disconnect() {
     try {
+      // Use the SDK's disconnect method
       if (this.transport) {
         await this.client.close();
         this.transport = null;
@@ -47490,22 +55731,21 @@ class WordPressMCPClient {
         type: "disconnected"
       });
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error("Error during SDK disconnect:", error);
     }
   }
 
   /**
-   * Check if connected to MCP server
+   * Get connection status
    *
-   * @return {boolean} Connection status
+   * @return {boolean} True if connected
    */
   isConnected() {
     return this.connected;
   }
 
   /**
-   * Get cached tools
+   * Get available tools (cached)
    *
    * @return {Array} List of tools
    */
@@ -47514,7 +55754,7 @@ class WordPressMCPClient {
   }
 
   /**
-   * Get cached resources
+   * Get available resources (cached)
    *
    * @return {Array} List of resources
    */
@@ -47523,35 +55763,18 @@ class WordPressMCPClient {
   }
 
   /**
-   * Check if a tool is destructive (requires permission)
+   * Check if a tool is read-only based on annotations
    *
    * @param {string} toolName Tool name to check
-   * @return {boolean} True if destructive
-   */
-  isToolDestructive(toolName) {
-    const tool = this.tools.find(t => t.name === toolName);
-    if (!tool) {
-      return false;
-    }
-
-    // Check annotations for destructive flag
-    return tool.annotations?.destructive === true || tool.annotations?.readOnly === false;
-  }
-
-  /**
-   * Check if a tool is read-only
-   *
-   * @param {string} toolName Tool name to check
-   * @return {boolean} True if read-only
+   * @return {boolean} True if tool is read-only
    */
   isToolReadOnly(toolName) {
     const tool = this.tools.find(t => t.name === toolName);
     if (!tool) {
-      return true; // Default to requiring permission if unknown
+      return false;
     }
-
     // Check annotations for readonly flag
-    return tool.annotations?.readonly === true || tool.annotations?.readOnly === true;
+    return tool.annotations?.readonly === true || tool.annotations?.readOnlyHint === true;
   }
 
   /**
@@ -47578,7 +55801,7 @@ class WordPressMCPClient {
    */
   getToolsForOpenAI() {
     return this.tools.map(tool => {
-      // Use normalizeInputSchema for extra safety in case tools were added without normalization
+      // Use normalizeInputSchema for extra safety
       const parameters = this.normalizeInputSchema(tool.inputSchema);
       return {
         type: "function",
@@ -47604,27 +55827,26 @@ const mcpClient = new WordPressMCPClient();
   \**************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   OpenAIError: () => (/* binding */ OpenAIError),
-/* harmony export */   WordPressOpenAIClient: () => (/* binding */ WordPressOpenAIClient),
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__),
 /* harmony export */   openaiClient: () => (/* binding */ openaiClient)
 /* harmony export */ });
+/* harmony import */ var openai__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! openai */ "./node_modules/openai/index.mjs");
+/* eslint-disable no-console */
 /**
- * OpenAI Client for WordPress
+ * OpenAI Client that proxies requests through WordPress REST API
  *
- * Handles streaming chat completions through WordPress REST API proxy.
- * Supports tool calls and MCP integration.
+ * This client uses the OpenAI SDK configured to route requests through
+ * the WordPress proxy endpoint, which then forwards to Cloudflare AI Gateway
+ * or direct OpenAI API.
  */
-
-/* global window, fetch, TextDecoder */
 
 const DEFAULT_MODEL = "gpt-4o-mini";
 
 /**
- * Custom error class for OpenAI operations
+ * Custom error class for OpenAI errors
  */
 class OpenAIError extends Error {
   constructor(message, status = null, code = null) {
@@ -47636,290 +55858,174 @@ class OpenAIError extends Error {
 }
 
 /**
- * OpenAI Client class for WordPress
+ * OpenAI client that proxies requests through WordPress REST API
  */
-class WordPressOpenAIClient {
+class CloudflareOpenAIClient {
   constructor() {
-    this.abortController = null;
+    this.openai = null;
+    this.config = null;
   }
 
   /**
-   * Get WordPress configuration from global variable
+   * Get configuration from WordPress
    *
-   * @return {Object} WordPress config
+   * @return {Object} Configuration object
    */
   getConfig() {
-    const config = window.nfdEditorChat || {};
-    return {
-      nonce: config.nonce || "",
-      restUrl: config.restUrl || "/wp-json/nfd-editor-chat/v1/",
-      homeUrl: config.homeUrl || "",
-      currentUser: config.currentUser || {
-        display_name: "User"
+    if (this.config) {
+      return this.config;
+    }
+
+    // Get config from WordPress localized script
+    if (typeof window !== "undefined" && window.nfdEditorChat) {
+      this.config = {
+        nonce: window.nfdEditorChat.nonce,
+        restUrl: window.nfdEditorChat.restUrl,
+        homeUrl: window.nfdEditorChat.homeUrl,
+        currentUser: window.nfdEditorChat.currentUser || {}
+      };
+    } else {
+      this.config = {
+        nonce: "",
+        restUrl: "",
+        homeUrl: "",
+        currentUser: {}
+      };
+    }
+    return this.config;
+  }
+
+  /**
+   * Initialize the OpenAI client
+   *
+   * @return {OpenAI} OpenAI client instance
+   */
+  getOpenAIClient() {
+    if (this.openai) {
+      return this.openai;
+    }
+    const config = this.getConfig();
+
+    // Use WordPress proxy endpoint - all authentication handled server-side
+    this.openai = new openai__WEBPACK_IMPORTED_MODULE_0__["default"]({
+      apiKey: "proxy",
+      // Dummy key - real key is on the server
+      baseURL: `${config.restUrl}ai`,
+      dangerouslyAllowBrowser: true,
+      defaultHeaders: {
+        "X-WP-Nonce": config.nonce
       }
-    };
+    });
+    return this.openai;
+  }
+
+  /**
+   * Create a chat completion request (non-streaming)
+   *
+   * @param {Object} request Chat completion request params
+   * @return {Promise<Object>} Chat completion response
+   */
+  async createChatCompletion(request) {
+    try {
+      const openai = this.getOpenAIClient();
+      const response = await openai.chat.completions.create({
+        model: request.model || DEFAULT_MODEL,
+        messages: request.messages,
+        tools: request.tools,
+        tool_choice: request.tool_choice,
+        stream: false,
+        max_tokens: request.max_tokens,
+        temperature: request.temperature
+      });
+      return response;
+    } catch (error) {
+      throw new OpenAIError(error.message || "OpenAI API request failed", error.status, error.code);
+    }
   }
 
   /**
    * Create a streaming chat completion
    *
-   * @param {Object}   options            Request options
-   * @param {Array}    options.messages   Chat messages
-   * @param {Array}    options.tools      Available tools (optional)
-   * @param {string}   options.model      Model to use (optional)
-   * @param {number}   options.maxTokens  Max tokens (optional)
-   * @param {number}   options.temperature Temperature (optional)
-   * @param {Function} onChunk            Callback for each chunk
-   * @param {Function} onToolCall         Callback for tool calls
-   * @param {Function} onComplete         Callback when complete
-   * @param {Function} onError            Callback on error
+   * @param {Object}   request    Chat completion request params
+   * @param {Function} onChunk    Callback for each chunk
+   * @param {Function} onComplete Callback when complete
+   * @param {Function} onError    Callback for errors
    * @return {Promise<void>}
    */
-  async createStreamingCompletion({
-    messages,
-    tools = [],
-    model = DEFAULT_MODEL,
-    maxTokens = 2000,
-    temperature = 0.7
-  }, onChunk, onToolCall, onComplete, onError) {
-    const config = this.getConfig();
-
-    // Create abort controller for this request
-    this.abortController = new AbortController();
+  async createStreamingCompletion(request, onChunk, onComplete, onError) {
     try {
-      const requestBody = {
-        model,
-        messages,
-        stream: true,
-        max_tokens: maxTokens,
-        temperature
-      };
-
-      // Add tools if available
-      if (tools && tools.length > 0) {
-        requestBody.tools = tools;
-        requestBody.tool_choice = "auto";
-      }
-      const response = await fetch(`${config.restUrl}ai/stream`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-WP-Nonce": config.nonce
-        },
-        body: JSON.stringify(requestBody),
-        signal: this.abortController.signal
+      const openai = this.getOpenAIClient();
+      const stream = await openai.chat.completions.create({
+        ...request,
+        messages: request.messages,
+        stream: true
       });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new OpenAIError(errorData.message || `HTTP error: ${response.status}`, response.status, errorData.code);
-      }
-
-      // Process the stream
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      let fullContent = "";
-      const toolCalls = [];
-      let currentToolCall = null;
-      while (true) {
-        const {
-          done,
-          value
-        } = await reader.read();
-        if (done) {
-          break;
+      let fullMessage = "";
+      const toolCallsInProgress = {};
+      for await (const chunk of stream) {
+        const delta = chunk.choices[0]?.delta;
+        if (delta?.content) {
+          fullMessage += delta.content;
+          onChunk({
+            type: "content",
+            content: delta.content
+          });
         }
-        buffer += decoder.decode(value, {
-          stream: true
-        });
 
-        // Process SSE events
-        const lines = buffer.split("\n");
-        buffer = lines.pop() || ""; // Keep incomplete line in buffer
-
-        for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            const data = line.slice(6).trim();
-            if (data === "[DONE]") {
-              continue;
+        // Handle streaming tool calls
+        if (delta?.tool_calls) {
+          for (const toolCall of delta.tool_calls) {
+            const index = toolCall.index;
+            if (!toolCallsInProgress[index]) {
+              toolCallsInProgress[index] = {
+                id: toolCall.id || "",
+                type: "function",
+                function: {
+                  name: toolCall.function?.name || "",
+                  arguments: ""
+                }
+              };
             }
-            try {
-              const parsed = JSON.parse(data);
-              const delta = parsed.choices?.[0]?.delta;
-              const finishReason = parsed.choices?.[0]?.finish_reason;
-              if (delta) {
-                // Handle content chunks
-                if (delta.content) {
-                  fullContent += delta.content;
-                  if (onChunk) {
-                    onChunk({
-                      type: "content",
-                      content: delta.content,
-                      fullContent
-                    });
-                  }
-                }
-
-                // Handle tool calls
-                if (delta.tool_calls) {
-                  for (const toolCallDelta of delta.tool_calls) {
-                    const index = toolCallDelta.index;
-                    if (!toolCalls[index]) {
-                      toolCalls[index] = {
-                        id: toolCallDelta.id || "",
-                        type: "function",
-                        function: {
-                          name: "",
-                          arguments: ""
-                        }
-                      };
-                    }
-                    currentToolCall = toolCalls[index];
-                    if (toolCallDelta.id) {
-                      currentToolCall.id = toolCallDelta.id;
-                    }
-                    if (toolCallDelta.function?.name) {
-                      currentToolCall.function.name = toolCallDelta.function.name;
-                    }
-                    if (toolCallDelta.function?.arguments) {
-                      currentToolCall.function.arguments += toolCallDelta.function.arguments;
-                    }
-                  }
-                }
-              }
-
-              // Check for completion
-              if (finishReason === "tool_calls" && toolCalls.length > 0) {
-                // Process tool calls
-                const processedToolCalls = toolCalls.map(tc => ({
-                  id: tc.id,
-                  name: tc.function.name,
-                  arguments: this.safeParseJSON(tc.function.arguments)
-                }));
-                if (onToolCall) {
-                  onToolCall(processedToolCalls);
-                }
-              } else if (finishReason === "stop") {
-                if (onComplete) {
-                  onComplete({
-                    content: fullContent,
-                    toolCalls: toolCalls.length > 0 ? toolCalls : null
-                  });
-                }
-              }
-            } catch {
-              // Ignore JSON parse errors for malformed chunks
+            if (toolCall.id) {
+              toolCallsInProgress[index].id = toolCall.id;
+            }
+            if (toolCall.function?.name) {
+              toolCallsInProgress[index].function.name = toolCall.function.name;
+            }
+            if (toolCall.function?.arguments) {
+              toolCallsInProgress[index].function.arguments += toolCall.function.arguments;
             }
           }
+          onChunk({
+            type: "tool_calls",
+            tool_calls: Object.values(toolCallsInProgress)
+          });
+        }
+        if (chunk.choices[0]?.finish_reason) {
+          // Convert tool calls to final format
+          const finalToolCalls = Object.values(toolCallsInProgress).map(tc => ({
+            id: tc.id,
+            name: tc.function.name,
+            arguments: tc.function.arguments ? JSON.parse(tc.function.arguments) : {}
+          }));
+
+          // Await onComplete in case it's async (e.g., handles tool calls)
+          await onComplete(fullMessage, finalToolCalls.length > 0 ? finalToolCalls : null);
+          break;
         }
       }
-
-      // Final completion callback if not already called
-      if (onComplete && fullContent) {
-        onComplete({
-          content: fullContent,
-          toolCalls: toolCalls.length > 0 ? toolCalls : null
-        });
-      }
     } catch (error) {
-      if (error.name === "AbortError") {
-        return; // Request was cancelled
-      }
-      const openAIError = error instanceof OpenAIError ? error : new OpenAIError(error.message || "Streaming request failed");
-      if (onError) {
-        onError(openAIError);
-      } else {
-        throw openAIError;
-      }
-    } finally {
-      this.abortController = null;
-    }
-  }
-
-  /**
-   * Send a non-streaming chat completion (for follow-up with tool results)
-   *
-   * @param {Object} options Request options
-   * @return {Promise<Object>} Response with content and optional tool calls
-   */
-  async createChatCompletion({
-    messages,
-    tools = [],
-    model = DEFAULT_MODEL,
-    maxTokens = 2000,
-    temperature = 0.7
-  }) {
-    const config = this.getConfig();
-    const requestBody = {
-      model,
-      messages,
-      stream: false,
-      max_tokens: maxTokens,
-      temperature
-    };
-    if (tools && tools.length > 0) {
-      requestBody.tools = tools;
-      requestBody.tool_choice = "auto";
-    }
-    const response = await fetch(`${config.restUrl}ai/stream`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-WP-Nonce": config.nonce
-      },
-      body: JSON.stringify(requestBody)
-    });
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new OpenAIError(errorData.message || `HTTP error: ${response.status}`, response.status, errorData.code);
-    }
-    const data = await response.json();
-    const choice = data.choices?.[0];
-    if (!choice) {
-      throw new OpenAIError("No response from AI");
-    }
-    const result = {
-      content: choice.message?.content || "",
-      toolCalls: null
-    };
-    if (choice.message?.tool_calls) {
-      result.toolCalls = choice.message.tool_calls.map(tc => ({
-        id: tc.id,
-        name: tc.function.name,
-        arguments: this.safeParseJSON(tc.function.arguments)
-      }));
-    }
-    return result;
-  }
-
-  /**
-   * Stop the current streaming request
-   */
-  stop() {
-    if (this.abortController) {
-      this.abortController.abort();
-      this.abortController = null;
-    }
-  }
-
-  /**
-   * Safely parse JSON string
-   *
-   * @param {string} str JSON string
-   * @return {Object} Parsed object or empty object
-   */
-  safeParseJSON(str) {
-    try {
-      return JSON.parse(str || "{}");
-    } catch {
-      return {};
+      onError(new OpenAIError(error.message || "Streaming request failed", error.status, error.code));
     }
   }
 
   /**
    * Convert chat messages to OpenAI format
    *
-   * @param {Array} messages Chat messages
+   * OpenAI requires that tool messages MUST follow an assistant message with tool_calls.
+   * This function ensures that constraint is satisfied.
+   *
+   * @param {Array} messages Array of chat messages
    * @return {Array} OpenAI formatted messages
    */
   convertMessagesToOpenAI(messages) {
@@ -47928,76 +56034,206 @@ class WordPressOpenAIClient {
       if (message.role === "system" || message.role === "user") {
         openaiMessages.push({
           role: message.role,
-          content: message.content
+          content: message.content || ""
         });
       } else if (message.role === "assistant") {
         const assistantMessage = {
           role: "assistant",
-          content: message.content
+          content: message.content || ""
         };
 
         // Add tool calls if present
-        if (message.toolCalls && message.toolCalls.length > 0) {
+        const hasToolCalls = message.toolCalls && message.toolCalls.length > 0;
+        if (hasToolCalls) {
           assistantMessage.tool_calls = message.toolCalls.map(call => ({
             id: call.id,
             type: "function",
             function: {
               name: call.name,
-              arguments: JSON.stringify(call.arguments)
+              arguments: typeof call.arguments === "string" ? call.arguments : JSON.stringify(call.arguments)
             }
           }));
         }
         openaiMessages.push(assistantMessage);
 
-        // Add tool results as separate tool messages
-        if (message.toolResults && message.toolResults.length > 0) {
+        // ONLY add tool results if there are corresponding tool_calls
+        // OpenAI requires tool messages to follow an assistant message with tool_calls
+        if (hasToolCalls && message.toolResults && message.toolResults.length > 0) {
           for (const result of message.toolResults) {
-            openaiMessages.push({
-              role: "tool",
-              content: result.error || JSON.stringify(result.result),
-              tool_call_id: result.id
-            });
+            // Only add if this result has a matching tool call
+            const hasMatchingCall = message.toolCalls.some(call => call.id === result.id);
+            if (hasMatchingCall) {
+              openaiMessages.push({
+                role: "tool",
+                content: result.error || JSON.stringify(result.result),
+                tool_call_id: result.id
+              });
+            }
           }
         }
       }
+      // Skip standalone tool messages - they're only valid after assistant tool_calls
+      // which we handle above
     }
     return openaiMessages;
   }
 
   /**
-   * Create a WordPress context system message
+   * Convert MCP tools to OpenAI tools format
+   *
+   * @param {Array} mcpTools Array of MCP tools
+   * @return {Array} OpenAI tools array
+   */
+  convertMCPToolsToOpenAI(mcpTools) {
+    return mcpTools.map(tool => ({
+      type: "function",
+      function: {
+        name: tool.name,
+        description: tool.description,
+        parameters: tool.inputSchema
+      }
+    }));
+  }
+
+  /**
+   * Process tool calls from OpenAI response
+   *
+   * @param {Array} toolCalls Raw tool calls from OpenAI
+   * @return {Array} Processed tool calls
+   */
+  processToolCalls(toolCalls) {
+    return toolCalls.map(call => ({
+      id: call.id,
+      name: call.function.name,
+      arguments: JSON.parse(call.function.arguments || "{}")
+    }));
+  }
+
+  /**
+   * Send a simple chat message
+   *
+   * @param {string} message  User message
+   * @param {Array}  context  Previous messages for context
+   * @param {Array}  tools    Available MCP tools
+   * @return {Promise<Object>} Response with message and optional tool calls
+   */
+  async sendMessage(message, context = [], tools = []) {
+    const messages = this.convertMessagesToOpenAI([...context, {
+      id: `user-${Date.now()}`,
+      role: "user",
+      content: message,
+      timestamp: new Date()
+    }]);
+    const request = {
+      model: DEFAULT_MODEL,
+      messages,
+      tools: tools.length > 0 ? this.convertMCPToolsToOpenAI(tools) : undefined,
+      tool_choice: tools.length > 0 ? "auto" : undefined,
+      temperature: 0.7,
+      max_tokens: 2000
+    };
+    try {
+      const response = await this.createChatCompletion(request);
+      const choice = response.choices[0];
+      if (!choice) {
+        throw new OpenAIError("No response from OpenAI");
+      }
+      const result = {
+        message: choice.message.content || ""
+      };
+      if (choice.message.tool_calls) {
+        result.toolCalls = this.processToolCalls(choice.message.tool_calls);
+      }
+      return result;
+    } catch (error) {
+      if (error instanceof OpenAIError) {
+        throw error;
+      }
+      throw new OpenAIError(`Failed to send message: ${error}`);
+    }
+  }
+
+  /**
+   * Create a system message for WordPress context
    *
    * @return {Object} System message object
    */
-  createSystemMessage() {
+  createWordPressSystemMessage() {
     const config = this.getConfig();
     return {
       role: "system",
-      content: `You are a helpful AI assistant integrated into a WordPress editor. You can interact with WordPress through MCP (Model Context Protocol) tools.
+      content: `You are a helpful AI assistant integrated into a WordPress editor. You specialize in managing global styles and color palettes.
 
-Available capabilities:
-- Create, read, update, and manage WordPress posts and pages
-- Access site information and settings
-- Interact with the WordPress system through predefined tools
+## How to Use MCP Tools
 
-Guidelines:
-- Always be helpful and provide accurate information
-- When performing WordPress actions, explain what you're doing
-- Ask for confirmation before making significant changes
-- Respect user permissions and WordPress security
-- Provide clear, actionable responses
+You have THREE tools available:
+1. **mcp-adapter-discover-abilities** - Lists all available WordPress abilities
+2. **mcp-adapter-get-ability-info** - Gets detailed info about a specific ability  
+3. **mcp-adapter-execute-ability** - EXECUTES an ability to perform actions
 
-Site Information:
-- Site URL: ${config.homeUrl}
-- Current User: ${config.currentUser?.display_name || "User"}
+## Bluehost Blueprint Theme Color Mappings
 
-You should use the available MCP tools to interact with WordPress when users request actions like creating posts, managing content, or retrieving site information.`
+This site uses the Bluehost Blueprint theme with these color slugs:
+- **accent-2** = Primary color (main brand color)
+- **accent-5** = Secondary color
+- **base** = Background color
+- **contrast** = Text color
+- **accent-1** = Darkest accent shade
+- **accent-3, accent-4, accent-6** = Lighter accent shades
+
+### Color Request Mappings:
+- "primary color" or "main color" → use slug \`accent-2\`
+- "secondary color" → use slug \`accent-5\`
+- "background color" → use slug \`base\`
+- "text color" or "foreground" → use slug \`contrast\`
+
+### Accent Palette Generation (for primary color changes):
+When changing the primary/accent color, generate ALL 6 accent shades from the provided color:
+- **accent-1**: Darkest (lightness -24%, saturation -3%)
+- **accent-2**: Primary color (unchanged - this is the user's color)
+- **accent-3**: Lighter (lightness +18%, saturation +1%)
+- **accent-4**: Lighter (lightness +28%, saturation +2%)
+- **accent-5**: Lighter (lightness +56%, saturation +3%)
+- **accent-6**: Lightest (lightness +63%, saturation +5%)
+
+## Available Abilities
+
+- \`nfd-editor-chat/get-global-styles\` - Get current palette
+- \`nfd-editor-chat/update-global-palette\` - Update colors
+
+## Examples
+
+User: "Change the primary color to blue (#0073aa)"
+Call update-global-palette with ALL accent colors generated from blue:
+{ "colors": [
+  { "slug": "accent-1", "color": "#003d5c", "name": "Accent 1" },
+  { "slug": "accent-2", "color": "#0073aa", "name": "Accent 2" },
+  { "slug": "accent-3", "color": "#3399cc", "name": "Accent 3" },
+  { "slug": "accent-4", "color": "#66b3d9", "name": "Accent 4" },
+  { "slug": "accent-5", "color": "#b3d9ec", "name": "Accent 5" },
+  { "slug": "accent-6", "color": "#cce6f2", "name": "Accent 6" }
+] }
+
+User: "Change the background to #d3d3d3"
+Call: mcp-adapter-execute-ability with { "ability_name": "nfd-editor-chat/update-global-palette", "parameters": { "colors": [{ "slug": "base", "color": "#d3d3d3", "name": "Base" }] } }
+
+User: "Make the text color black"
+Call: mcp-adapter-execute-ability with { "ability_name": "nfd-editor-chat/update-global-palette", "parameters": { "colors": [{ "slug": "contrast", "color": "#000000", "name": "Contrast" }] } }
+
+## Guidelines
+- Use the EXACT color slugs listed above for this theme
+- When changing primary color, generate ALL 6 accent shades
+- For background changes, use "base" slug
+- For text changes, use "contrast" slug
+- All colors must be in HEX format (#RRGGBB)
+
+Site: ${config.homeUrl} | User: ${config.currentUser?.display_name || "Unknown"}`
     };
   }
 }
 
 // Export a singleton instance
-const openaiClient = new WordPressOpenAIClient();
+const openaiClient = new CloudflareOpenAIClient();
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (openaiClient);
 
 /***/ }),
@@ -48008,7 +56244,6 @@ const openaiClient = new WordPressOpenAIClient();
   \*****************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 // extracted by mini-css-extract-plugin
 
@@ -48021,7 +56256,6 @@ __webpack_require__.r(__webpack_exports__);
   \****************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   ReactComponent: () => (/* binding */ SvgSparks),
@@ -48054,7 +56288,6 @@ var SvgSparks = function SvgSparks(props) {
   \************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   fetchTemplatePartContent: () => (/* binding */ fetchTemplatePartContent),
@@ -48376,7 +56609,6 @@ const updateTemplatePartContent = async (tplBlock, updatedInnerBlocks) => {
   \******************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   simpleHash: () => (/* binding */ simpleHash)
@@ -48407,13 +56639,164 @@ const simpleHash = str => {
 
 /***/ }),
 
+/***/ "./src/utils/markdownParser.js":
+/*!*************************************!*\
+  !*** ./src/utils/markdownParser.js ***!
+  \*************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   containsMarkdown: () => (/* binding */ containsMarkdown),
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__),
+/* harmony export */   parseMarkdown: () => (/* binding */ parseMarkdown)
+/* harmony export */ });
+/**
+ * Simple Markdown Parser
+ *
+ * Converts common markdown syntax to HTML for chat messages.
+ * Handles: headers, bold, italic, code, lists, links, and line breaks.
+ */
+
+/**
+ * Check if a string contains markdown syntax
+ * @param {string} text - The text to check
+ * @returns {boolean} True if markdown is detected
+ */
+function containsMarkdown(text) {
+  if (!text || typeof text !== "string") {
+    return false;
+  }
+
+  // Check for common markdown patterns
+  const markdownPatterns = [/^#{1,6}\s/m,
+  // Headers
+  /\*\*[^*]+\*\*/,
+  // Bold
+  /\*[^*]+\*/,
+  // Italic
+  /__[^_]+__/,
+  // Bold (underscore)
+  /_[^_]+_/,
+  // Italic (underscore)
+  /`[^`]+`/,
+  // Inline code
+  /```[\s\S]*?```/,
+  // Code blocks
+  /^\s*[-*+]\s/m,
+  // Unordered lists
+  /^\s*\d+\.\s/m,
+  // Ordered lists
+  /\[([^\]]+)\]\(([^)]+)\)/ // Links
+  ];
+  return markdownPatterns.some(pattern => pattern.test(text));
+}
+
+/**
+ * Parse markdown text to HTML
+ * @param {string} text - The markdown text to parse
+ * @returns {string} HTML string
+ */
+function parseMarkdown(text) {
+  if (!text || typeof text !== "string") {
+    return "";
+  }
+  let html = text;
+
+  // Escape HTML entities first (but preserve existing HTML)
+  html = html.replace(/&(?![\w#]+;)/g, "&amp;").replace(/<(?![a-zA-Z/])/g, "&lt;").replace(/(?<![a-zA-Z"])>/g, "&gt;");
+
+  // Code blocks (``` ... ```) - must be done before other processing
+  html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, (match, lang, code) => {
+    const escapedCode = code.trim().replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    return `<pre><code class="language-${lang || "plaintext"}">${escapedCode}</code></pre>`;
+  });
+
+  // Inline code (` ... `)
+  html = html.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
+
+  // Headers (### ... )
+  html = html.replace(/^######\s+(.+)$/gm, '<h6 class="chat-h6">$1</h6>');
+  html = html.replace(/^#####\s+(.+)$/gm, '<h5 class="chat-h5">$1</h5>');
+  html = html.replace(/^####\s+(.+)$/gm, '<h4 class="chat-h4">$1</h4>');
+  html = html.replace(/^###\s+(.+)$/gm, '<h3 class="chat-h3">$1</h3>');
+  html = html.replace(/^##\s+(.+)$/gm, '<h2 class="chat-h2">$1</h2>');
+  html = html.replace(/^#\s+(.+)$/gm, '<h1 class="chat-h1">$1</h1>');
+
+  // Bold (**text** or __text__)
+  html = html.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  html = html.replace(/__([^_]+)__/g, "<strong>$1</strong>");
+
+  // Italic (*text* or _text_) - but not inside URLs or code
+  html = html.replace(/(?<![*_])\*(?!\*)([^*\n]+)(?<!\*)\*(?!\*)/g, "<em>$1</em>");
+  html = html.replace(/(?<![_*])_(?!_)([^_\n]+)(?<!_)_(?!_)/g, "<em>$1</em>");
+
+  // Links [text](url)
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+
+  // Unordered lists
+  html = html.replace(/^(\s*)[-*+]\s+(.+)$/gm, (match, indent, content) => {
+    const level = Math.floor(indent.length / 2);
+    return `<li class="chat-li" data-level="${level}">${content}</li>`;
+  });
+
+  // Wrap consecutive list items in <ul>
+  html = html.replace(/((?:<li[^>]*>.*?<\/li>\n?)+)/g, '<ul class="chat-ul">$1</ul>');
+
+  // Ordered lists
+  html = html.replace(/^(\s*)\d+\.\s+(.+)$/gm, (match, indent, content) => {
+    const level = Math.floor(indent.length / 2);
+    return `<oli class="chat-oli" data-level="${level}">${content}</oli>`;
+  });
+
+  // Wrap consecutive ordered list items in <ol>
+  html = html.replace(/((?:<oli[^>]*>.*?<\/oli>\n?)+)/g, match => {
+    return '<ol class="chat-ol">' + match.replace(/<\/?oli/g, m => m.replace("oli", "li")) + "</ol>";
+  });
+
+  // Horizontal rules
+  html = html.replace(/^---+$/gm, '<hr class="chat-hr" />');
+
+  // Blockquotes
+  html = html.replace(/^>\s+(.+)$/gm, '<blockquote class="chat-blockquote">$1</blockquote>');
+
+  // Paragraphs - wrap text blocks that aren't already wrapped
+  // Split by double newlines and wrap non-HTML blocks
+  const blocks = html.split(/\n\n+/);
+  html = blocks.map(block => {
+    const trimmed = block.trim();
+    // Don't wrap if it's already an HTML block element
+    if (trimmed.startsWith("<h") || trimmed.startsWith("<ul") || trimmed.startsWith("<ol") || trimmed.startsWith("<pre") || trimmed.startsWith("<blockquote") || trimmed.startsWith("<hr") || trimmed.startsWith("<p")) {
+      return trimmed;
+    }
+    // Wrap in paragraph if it has content
+    if (trimmed) {
+      return `<p class="chat-p">${trimmed}</p>`;
+    }
+    return "";
+  }).filter(Boolean).join("\n");
+
+  // Convert single line breaks within paragraphs to <br>
+  html = html.replace(/<p([^>]*)>([\s\S]*?)<\/p>/g, (match, attrs, content) => {
+    // Trim content to avoid trailing <br> tags, then convert newlines
+    const processedContent = content.trim().replace(/\n/g, "<br />");
+    return `<p${attrs}>${processedContent}</p>`;
+  });
+  return html;
+}
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  containsMarkdown,
+  parseMarkdown
+});
+
+/***/ }),
+
 /***/ "./src/utils/sanitizeHtml.js":
 /*!***********************************!*\
   !*** ./src/utils/sanitizeHtml.js ***!
   \***********************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   containsHtml: () => (/* binding */ containsHtml),
@@ -48459,7 +56842,6 @@ const containsHtml = content => {
   \********************************/
 /***/ ((module) => {
 
-"use strict";
 module.exports = window["wp"]["blocks"];
 
 /***/ }),
@@ -48470,7 +56852,6 @@ module.exports = window["wp"]["blocks"];
   \************************************/
 /***/ ((module) => {
 
-"use strict";
 module.exports = window["wp"]["components"];
 
 /***/ }),
@@ -48481,7 +56862,6 @@ module.exports = window["wp"]["components"];
   \*********************************/
 /***/ ((module) => {
 
-"use strict";
 module.exports = window["wp"]["compose"];
 
 /***/ }),
@@ -48492,7 +56872,6 @@ module.exports = window["wp"]["compose"];
   \**********************************/
 /***/ ((module) => {
 
-"use strict";
 module.exports = window["wp"]["coreData"];
 
 /***/ }),
@@ -48503,7 +56882,6 @@ module.exports = window["wp"]["coreData"];
   \******************************/
 /***/ ((module) => {
 
-"use strict";
 module.exports = window["wp"]["data"];
 
 /***/ }),
@@ -48514,7 +56892,6 @@ module.exports = window["wp"]["data"];
   \************************************/
 /***/ ((module) => {
 
-"use strict";
 module.exports = window["wp"]["deprecated"];
 
 /***/ }),
@@ -48525,7 +56902,6 @@ module.exports = window["wp"]["deprecated"];
   \**********************************/
 /***/ ((module) => {
 
-"use strict";
 module.exports = window["wp"]["domReady"];
 
 /***/ }),
@@ -48536,7 +56912,6 @@ module.exports = window["wp"]["domReady"];
   \********************************/
 /***/ ((module) => {
 
-"use strict";
 module.exports = window["wp"]["editor"];
 
 /***/ }),
@@ -48547,7 +56922,6 @@ module.exports = window["wp"]["editor"];
   \*********************************/
 /***/ ((module) => {
 
-"use strict";
 module.exports = window["wp"]["element"];
 
 /***/ }),
@@ -48558,7 +56932,6 @@ module.exports = window["wp"]["element"];
   \******************************/
 /***/ ((module) => {
 
-"use strict";
 module.exports = window["wp"]["i18n"];
 
 /***/ }),
@@ -48569,7 +56942,6 @@ module.exports = window["wp"]["i18n"];
   \*********************************/
 /***/ ((module) => {
 
-"use strict";
 module.exports = window["wp"]["plugins"];
 
 /***/ }),
@@ -48580,7 +56952,6 @@ module.exports = window["wp"]["plugins"];
   \*************************************/
 /***/ ((module) => {
 
-"use strict";
 module.exports = window["wp"]["preferences"];
 
 /***/ }),
@@ -48591,7 +56962,6 @@ module.exports = window["wp"]["preferences"];
   \************************************/
 /***/ ((module) => {
 
-"use strict";
 module.exports = window["wp"]["primitives"];
 
 /***/ }),
@@ -48602,7 +56972,6 @@ module.exports = window["wp"]["primitives"];
   \**********************************/
 /***/ ((module) => {
 
-"use strict";
 module.exports = window["wp"]["viewport"];
 
 /***/ }),
@@ -48613,7 +56982,6 @@ module.exports = window["wp"]["viewport"];
   \************************/
 /***/ ((module) => {
 
-"use strict";
 module.exports = window["React"];
 
 /***/ }),
@@ -48624,7 +56992,6 @@ module.exports = window["React"];
   \**********************************/
 /***/ ((module) => {
 
-"use strict";
 module.exports = window["ReactJSXRuntime"];
 
 /***/ })
@@ -48698,9 +57065,8 @@ module.exports = window["ReactJSXRuntime"];
 /******/ 	
 /************************************************************************/
 var __webpack_exports__ = {};
-// This entry needs to be wrapped in an IIFE because it needs to be in strict mode.
+// This entry needs to be wrapped in an IIFE because it needs to be isolated against other modules in the chunk.
 (() => {
-"use strict";
 /*!****************************!*\
   !*** ./src/chat-editor.js ***!
   \****************************/

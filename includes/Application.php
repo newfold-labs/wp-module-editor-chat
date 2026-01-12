@@ -30,6 +30,9 @@ class Application {
 
 		// Initialize REST API
 		new RestApi();
+
+		// Initialize MCP Abilities
+		Abilities::get_instance();
 	}
 
 	/**

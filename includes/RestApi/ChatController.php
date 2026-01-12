@@ -48,7 +48,7 @@ class ChatController extends WP_REST_Controller {
 	protected $remote_api_client;
 
 	/**
-	 * OpenAI proxy service instance
+	 * OpenAI proxy instance
 	 *
 	 * @var OpenAIProxy
 	 */
@@ -113,14 +113,14 @@ class ChatController extends WP_REST_Controller {
 			)
 		);
 
-		// AI streaming proxy endpoint
+		// AI proxy endpoint for Cloudflare AI Gateway / OpenAI
 		register_rest_route(
 			$this->namespace,
-			'/ai/stream',
+			'/ai/chat/completions',
 			array(
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => array( $this, 'stream_ai_completion' ),
+					'callback'            => array( $this, 'proxy_ai_request' ),
 					'permission_callback' => array( $this, 'send_message_permissions_check' ),
 					'args'                => array(
 						'model'       => array(
@@ -147,7 +147,7 @@ class ChatController extends WP_REST_Controller {
 							'description' => 'Whether to stream the response',
 							'type'        => 'boolean',
 							'required'    => false,
-							'default'     => true,
+							'default'     => false,
 						),
 						'max_tokens'  => array(
 							'description' => 'Maximum tokens in response',
@@ -160,6 +160,19 @@ class ChatController extends WP_REST_Controller {
 							'required'    => false,
 						),
 					),
+				),
+			)
+		);
+
+		// AI settings endpoint
+		register_rest_route(
+			$this->namespace,
+			'/ai/settings',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_ai_settings' ),
+					'permission_callback' => array( $this, 'send_message_permissions_check' ),
 				),
 			)
 		);
@@ -326,27 +339,17 @@ class ChatController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Stream AI chat completion through OpenAI proxy
+	 * Proxy AI requests to OpenAI or Cloudflare AI Gateway
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
-	 * @return WP_REST_Response|WP_Error|void Returns response for non-streaming, void for streaming
+	 * @return WP_REST_Response|WP_Error|void
 	 */
-	public function stream_ai_completion( $request ) {
-		// Check if OpenAI is configured
+	public function proxy_ai_request( $request ) {
+		// Check if AI is configured
 		if ( ! $this->openai_proxy->is_configured() ) {
 			return new WP_Error(
-				'openai_not_configured',
-				'OpenAI API key is not configured. Please add OPENAI_API_KEY constant to wp-config.php',
-				array( 'status' => 400 )
-			);
-		}
-
-		$messages = $request->get_param( 'messages' );
-
-		if ( empty( $messages ) || ! is_array( $messages ) ) {
-			return new WP_Error(
-				'missing_messages',
-				'Messages array is required',
+				'ai_not_configured',
+				'AI is not configured. Please configure Cloudflare AI Gateway or OpenAI API key.',
 				array( 'status' => 400 )
 			);
 		}
@@ -354,7 +357,7 @@ class ChatController extends WP_REST_Controller {
 		// Prepare request data
 		$request_data = array(
 			'model'    => $request->get_param( 'model' ) ?: 'gpt-4o-mini',
-			'messages' => $this->sanitize_messages( $messages ),
+			'messages' => $this->sanitize_messages( $request->get_param( 'messages' ) ),
 		);
 
 		// Add optional parameters
@@ -381,24 +384,40 @@ class ChatController extends WP_REST_Controller {
 		$stream = $request->get_param( 'stream' );
 
 		// Handle streaming vs non-streaming
-		if ( false === $stream ) {
-			// Non-streaming request
-			$response = $this->openai_proxy->chat_completion( $request_data );
-
-			if ( is_wp_error( $response ) ) {
-				return $response;
-			}
-
-			return new WP_REST_Response( $response, 200 );
+		if ( $stream ) {
+			// Streaming request - output directly and exit
+			$this->openai_proxy->stream_request( $request_data );
+			exit;
 		}
 
-		// Streaming request - output directly and exit
-		$this->openai_proxy->stream_chat_completion( $request_data );
-		exit;
+		// Non-streaming request
+		$response = $this->openai_proxy->proxy_request( $request_data );
+
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
+
+		return new WP_REST_Response( $response, 200 );
 	}
 
 	/**
-	 * Sanitize messages array for OpenAI API
+	 * Get AI settings (masked for frontend)
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response
+	 */
+	public function get_ai_settings( $request ) {
+		return new WP_REST_Response(
+			array(
+				'success'  => true,
+				'settings' => $this->openai_proxy->get_masked_settings(),
+			),
+			200
+		);
+	}
+
+	/**
+	 * Sanitize messages array for AI API
 	 *
 	 * @param array $messages Raw messages array.
 	 * @return array Sanitized messages

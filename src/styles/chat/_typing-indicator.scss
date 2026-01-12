@@ -6,19 +6,113 @@
 	padding-top: 4px;
 }
 
-.nfd-editor-chat-typing-indicator__message {
-	font-size: var(--nfd-editor-chat-font-size-base);
-	color: var(--nfd-editor-chat-color-grey-medium);
-	font-style: italic;
+.nfd-editor-chat-typing-indicator__icon {
+	font-size: 16px;
+	line-height: 1;
 }
 
 .nfd-editor-chat-typing-indicator__status {
 	font-size: var(--nfd-editor-chat-font-size-base);
 	color: var(--nfd-editor-chat-color-grey-medium);
 	font-style: italic;
-	margin-left: 4px;
 }
 
+.nfd-editor-chat-typing-indicator__dots {
+	display: flex;
+	gap: 3px;
+	align-items: center;
+
+	span {
+		width: 4px;
+		height: 4px;
+		border-radius: 50%;
+		background-color: var(--nfd-editor-chat-color-grey-medium);
+		animation: nfd-dot-bounce 1.4s infinite ease-in-out both;
+
+		&:nth-child(1) {
+			animation-delay: -0.32s;
+		}
+
+		&:nth-child(2) {
+			animation-delay: -0.16s;
+		}
+
+		&:nth-child(3) {
+			animation-delay: 0s;
+		}
+	}
+}
+
+@keyframes nfd-dot-bounce {
+
+	0%,
+	80%,
+	100% {
+		transform: scale(0.6);
+		opacity: 0.5;
+	}
+
+	40% {
+		transform: scale(1);
+		opacity: 1;
+	}
+}
+
+// Tool status display (detailed view during tool execution)
+.nfd-editor-chat-tool-status {
+	background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(147, 51, 234, 0.08) 100%);
+	border: 1px solid rgba(59, 130, 246, 0.2);
+	border-radius: 12px;
+	padding: 12px 16px;
+	min-width: 200px;
+}
+
+.nfd-editor-chat-tool-status__header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 4px;
+}
+
+.nfd-editor-chat-tool-status__icon {
+	font-size: 18px;
+	line-height: 1;
+}
+
+.nfd-editor-chat-tool-status__title {
+	font-weight: 600;
+	font-size: var(--nfd-editor-chat-font-size-base);
+	color: var(--nfd-editor-chat-color-text);
+	flex: 1;
+}
+
+.nfd-editor-chat-tool-status__spinner {
+	width: 16px;
+	height: 16px;
+	border: 2px solid rgba(59, 130, 246, 0.2);
+	border-top-color: rgb(59, 130, 246);
+	border-radius: 50%;
+	animation: nfd-spin 0.8s linear infinite;
+}
+
+@keyframes nfd-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.nfd-editor-chat-tool-status__description {
+	font-size: var(--nfd-editor-chat-font-size-sm);
+	color: var(--nfd-editor-chat-color-grey-medium);
+	line-height: 1.4;
+}
+
+.nfd-editor-chat-tool-status__params {
+	color: var(--nfd-editor-chat-color-primary);
+	font-weight: 500;
+}
+
+// Legacy loader (keeping for backward compatibility)
 .nfd-editor-chat-typing-indicator__loader {
 	width: 20px;
 	aspect-ratio: 2;

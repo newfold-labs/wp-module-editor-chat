@@ -78,15 +78,16 @@ final class ChatEditor {
 				'nfdEditorChat',
 				array(
 					'nonce'          => \wp_create_nonce( 'wp_rest' ),
-					'restUrl'        => \rest_url( 'nfd-editor-chat/v1/' ),
 					'nfdRestURL'     => \get_home_url() . '/index.php?rest_route=/nfd-editor-chat/v1',
-					'mcpUrl'         => \rest_url( 'mcp/mcp-adapter-default-server' ),
+					'restUrl'        => \esc_url_raw( \rest_url( 'nfd-editor-chat/v1/' ) ),
+					'mcpUrl'         => \esc_url_raw( \rest_url( 'mcp/mcp-adapter-default-server' ) ),
 					'homeUrl'        => \esc_url( \get_home_url() ),
 					'wpVer'          => \esc_html( \get_bloginfo( 'version' ) ),
 					'nfdChatVersion' => \esc_html( NFD_EDITOR_CHAT_VERSION ),
 					'currentUser'    => array(
 						'ID'           => \get_current_user_id(),
 						'display_name' => \wp_get_current_user()->display_name,
+						'user_email'   => \wp_get_current_user()->user_email,
 					),
 				)
 			);

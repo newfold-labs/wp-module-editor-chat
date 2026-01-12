@@ -1,34 +1,28 @@
+/* eslint-disable no-console */
 /**
- * WordPress MCP Client
+ * WordPress MCP Client using the official TypeScript SDK
  *
- * MCP client implementation using the official TypeScript SDK
- * for WordPress integration with nonce-based authentication.
+ * This client uses StreamableHTTPClientTransport to communicate with
+ * the WordPress MCP adapter endpoint.
  */
-
-/* eslint-disable no-undef */
-
-// Note: These imports require the @modelcontextprotocol/sdk package to be installed
-// eslint-disable-next-line import/no-unresolved
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-// eslint-disable-next-line import/no-unresolved
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 
 /**
- * Custom error class for MCP operations
+ * Custom error class for MCP errors
  */
 export class MCPError extends Error {
-	constructor(message, code = null, details = null) {
+	constructor(message, code = null) {
 		super(message);
 		this.name = "MCPError";
 		this.code = code;
-		this.details = details;
 	}
 }
 
 /**
- * WordPress MCP Client class
+ * WordPress MCP Client implementation using the official TypeScript SDK
  */
-export class WordPressMCPClient {
+class WordPressMCPClient {
 	constructor() {
 		this.client = null;
 		this.transport = null;
@@ -36,20 +30,37 @@ export class WordPressMCPClient {
 		this.tools = [];
 		this.resources = [];
 		this.eventListeners = new Map();
+		this.config = null;
 	}
 
 	/**
-	 * Get WordPress configuration from global variable
+	 * Get configuration from WordPress
 	 *
-	 * @return {Object} WordPress config
+	 * @return {Object} Configuration object
 	 */
 	getConfig() {
-		const config = window.nfdEditorChat || {};
-		return {
-			nonce: config.nonce || "",
-			restUrl: config.restUrl || "/wp-json/",
-			mcpUrl: config.mcpUrl || `${config.restUrl || "/wp-json/"}mcp/mcp-adapter-default-server`,
-		};
+		if (this.config) {
+			return this.config;
+		}
+
+		// Get config from WordPress localized script
+		if (typeof window !== "undefined" && window.nfdEditorChat) {
+			this.config = {
+				nonce: window.nfdEditorChat.nonce,
+				mcpUrl: window.nfdEditorChat.mcpUrl,
+				restUrl: window.nfdEditorChat.restUrl,
+				homeUrl: window.nfdEditorChat.homeUrl,
+			};
+		} else {
+			this.config = {
+				nonce: "",
+				mcpUrl: "",
+				restUrl: "",
+				homeUrl: "",
+			};
+		}
+
+		return this.config;
 	}
 
 	/**
@@ -90,7 +101,6 @@ export class WordPressMCPClient {
 				try {
 					listener(event);
 				} catch (error) {
-					// eslint-disable-next-line no-console
 					console.error("Error in MCP event listener:", error);
 				}
 			});
@@ -98,15 +108,21 @@ export class WordPressMCPClient {
 	}
 
 	/**
-	 * Connect to the MCP server
+	 * Connect to the MCP server using official SDK StreamableHTTPClientTransport
 	 *
+	 * @param {string} serverUrl Optional server URL (uses config if not provided)
 	 * @return {Promise<void>}
 	 */
-	async connect() {
+	async connect(serverUrl = null) {
 		try {
 			const config = this.getConfig();
+			const mcpEndpoint = serverUrl || config.mcpUrl;
 
-			// Initialize the MCP Client
+			if (!mcpEndpoint) {
+				throw new MCPError("MCP endpoint URL not configured");
+			}
+
+			// Initialize the MCP Client using the official SDK
 			this.client = new Client(
 				{
 					name: "nfd-editor-chat-client",
@@ -118,7 +134,7 @@ export class WordPressMCPClient {
 			);
 
 			// Create HTTP transport with WordPress authentication headers
-			this.transport = new StreamableHTTPClientTransport(new URL(config.mcpUrl), {
+			this.transport = new StreamableHTTPClientTransport(new URL(mcpEndpoint), {
 				requestInit: {
 					headers: {
 						"X-WP-Nonce": config.nonce,
@@ -127,21 +143,21 @@ export class WordPressMCPClient {
 				},
 			});
 
-			// Connect using the SDK
+			// Connect using the official SDK
 			await this.client.connect(this.transport);
 
 			this.connected = true;
 			this.emit({ type: "connected" });
 		} catch (error) {
 			const mcpError =
-				error instanceof MCPError ? error : new MCPError(`Connection failed: ${error.message}`);
+				error instanceof MCPError ? error : new MCPError(`Connection failed: ${error}`);
 			this.emit({ type: "error", data: mcpError });
 			throw mcpError;
 		}
 	}
 
 	/**
-	 * Initialize the MCP session and load tools/resources
+	 * Initialize the MCP session - SDK handles this automatically after connect
 	 *
 	 * @return {Promise<Object>} Initialization result
 	 */
@@ -151,9 +167,11 @@ export class WordPressMCPClient {
 		}
 
 		try {
-			// Load tools and resources
+			// The SDK has already handled initialization during connect()
+			// Load initial tools and resources using SDK methods
 			await Promise.all([this.loadTools(), this.loadResources()]);
 
+			// Create a compatible result object
 			const initResult = {
 				protocolVersion: "2025-06-18",
 				capabilities: {
@@ -172,7 +190,7 @@ export class WordPressMCPClient {
 			return initResult;
 		} catch (error) {
 			const mcpError =
-				error instanceof MCPError ? error : new MCPError(`Initialization failed: ${error.message}`);
+				error instanceof MCPError ? error : new MCPError(`Initialization failed: ${error}`);
 			this.emit({ type: "error", data: mcpError });
 			throw mcpError;
 		}
@@ -200,7 +218,7 @@ export class WordPressMCPClient {
 			};
 		}
 
-		// Ensure type is set to object
+		// Ensure type is set to object and properties/required exist
 		return {
 			type: schema.type || "object",
 			properties: schema.properties || {},
@@ -209,40 +227,41 @@ export class WordPressMCPClient {
 	}
 
 	/**
-	 * Load available tools from the MCP server
+	 * Load tools using the official MCP SDK
 	 *
 	 * @return {Promise<void>}
 	 */
 	async loadTools() {
 		try {
+			// Use the SDK's listTools method - it handles all the protocol details
 			const result = await this.client.listTools();
 
-			// Convert SDK tools format to our internal format
+			// Convert SDK tools format to our internal format with normalized schemas
 			this.tools = result.tools.map((tool) => ({
 				name: tool.name,
 				description: tool.description || "",
 				inputSchema: this.normalizeInputSchema(tool.inputSchema),
-				// Extract annotations for permission checking
 				annotations: tool.annotations || {},
 			}));
 
 			this.emit({ type: "tools_updated", data: this.tools });
 		} catch (error) {
-			// eslint-disable-next-line no-console
 			console.error("Failed to load tools via SDK:", error);
 			this.tools = [];
 		}
 	}
 
 	/**
-	 * Load available resources from the MCP server
+	 * Load resources using the official MCP SDK
 	 *
 	 * @return {Promise<void>}
 	 */
 	async loadResources() {
 		try {
+			// Use the SDK's listResources method - it handles all the protocol details
 			const result = await this.client.listResources();
 
+			// Convert SDK resources format to our internal format
 			this.resources = result.resources.map((resource) => ({
 				uri: resource.uri,
 				name: resource.name || "",
@@ -252,7 +271,6 @@ export class WordPressMCPClient {
 
 			this.emit({ type: "resources_updated", data: this.resources });
 		} catch (error) {
-			// eslint-disable-next-line no-console
 			console.error("Failed to load resources via SDK:", error);
 			this.resources = [];
 		}
@@ -271,7 +289,7 @@ export class WordPressMCPClient {
 	}
 
 	/**
-	 * Call a tool on the MCP server
+	 * Call a tool using the official MCP SDK
 	 *
 	 * @param {string} name Tool name
 	 * @param {Object} args Tool arguments
@@ -283,18 +301,21 @@ export class WordPressMCPClient {
 		}
 
 		try {
+			// Use the SDK's callTool method - it handles all the protocol details
 			const result = await this.client.callTool({ name, arguments: args });
 
-			return {
+			// Convert SDK result format to our internal format
+			const toolResult = {
 				content: Array.isArray(result.content) ? result.content : [],
 				isError: Boolean(result.isError),
 				meta: result.meta || {},
 			};
+
+			return toolResult;
 		} catch (error) {
-			// eslint-disable-next-line no-console
 			console.error(`Tool "${name}" call failed:`, error);
 			const mcpError =
-				error instanceof MCPError ? error : new MCPError(`Tool call failed: ${error.message}`);
+				error instanceof MCPError ? error : new MCPError(`Tool call failed: ${error}`);
 			this.emit({ type: "error", data: mcpError });
 			throw mcpError;
 		}
@@ -313,7 +334,7 @@ export class WordPressMCPClient {
 	}
 
 	/**
-	 * Read a resource from the MCP server
+	 * Read a resource using the official MCP SDK
 	 *
 	 * @param {string} uri Resource URI
 	 * @return {Promise<Object>} Resource content
@@ -324,24 +345,26 @@ export class WordPressMCPClient {
 		}
 
 		try {
-			return await this.client.readResource({ uri });
+			// Use the SDK's readResource method - it handles all the protocol details
+			const result = await this.client.readResource({ uri });
+			return result;
 		} catch (error) {
-			// eslint-disable-next-line no-console
 			console.error(`Resource "${uri}" read failed:`, error);
 			const mcpError =
-				error instanceof MCPError ? error : new MCPError(`Resource read failed: ${error.message}`);
+				error instanceof MCPError ? error : new MCPError(`Resource read failed: ${error}`);
 			this.emit({ type: "error", data: mcpError });
 			throw mcpError;
 		}
 	}
 
 	/**
-	 * Disconnect from the MCP server
+	 * Disconnect from the MCP server using the official SDK
 	 *
 	 * @return {Promise<void>}
 	 */
 	async disconnect() {
 		try {
+			// Use the SDK's disconnect method
 			if (this.transport) {
 				await this.client.close();
 				this.transport = null;
@@ -352,22 +375,21 @@ export class WordPressMCPClient {
 			this.resources = [];
 			this.emit({ type: "disconnected" });
 		} catch (error) {
-			// eslint-disable-next-line no-console
 			console.error("Error during SDK disconnect:", error);
 		}
 	}
 
 	/**
-	 * Check if connected to MCP server
+	 * Get connection status
 	 *
-	 * @return {boolean} Connection status
+	 * @return {boolean} True if connected
 	 */
 	isConnected() {
 		return this.connected;
 	}
 
 	/**
-	 * Get cached tools
+	 * Get available tools (cached)
 	 *
 	 * @return {Array} List of tools
 	 */
@@ -376,7 +398,7 @@ export class WordPressMCPClient {
 	}
 
 	/**
-	 * Get cached resources
+	 * Get available resources (cached)
 	 *
 	 * @return {Array} List of resources
 	 */
@@ -385,35 +407,18 @@ export class WordPressMCPClient {
 	}
 
 	/**
-	 * Check if a tool is destructive (requires permission)
+	 * Check if a tool is read-only based on annotations
 	 *
 	 * @param {string} toolName Tool name to check
-	 * @return {boolean} True if destructive
-	 */
-	isToolDestructive(toolName) {
-		const tool = this.tools.find((t) => t.name === toolName);
-		if (!tool) {
-			return false;
-		}
-
-		// Check annotations for destructive flag
-		return tool.annotations?.destructive === true || tool.annotations?.readOnly === false;
-	}
-
-	/**
-	 * Check if a tool is read-only
-	 *
-	 * @param {string} toolName Tool name to check
-	 * @return {boolean} True if read-only
+	 * @return {boolean} True if tool is read-only
 	 */
 	isToolReadOnly(toolName) {
 		const tool = this.tools.find((t) => t.name === toolName);
 		if (!tool) {
-			return true; // Default to requiring permission if unknown
+			return false;
 		}
-
 		// Check annotations for readonly flag
-		return tool.annotations?.readonly === true || tool.annotations?.readOnly === true;
+		return tool.annotations?.readonly === true || tool.annotations?.readOnlyHint === true;
 	}
 
 	/**
@@ -440,7 +445,7 @@ export class WordPressMCPClient {
 	 */
 	getToolsForOpenAI() {
 		return this.tools.map((tool) => {
-			// Use normalizeInputSchema for extra safety in case tools were added without normalization
+			// Use normalizeInputSchema for extra safety
 			const parameters = this.normalizeInputSchema(tool.inputSchema);
 
 			return {

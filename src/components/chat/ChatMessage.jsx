@@ -4,103 +4,60 @@
 import { useMemo } from "@wordpress/element";
 
 /**
- * External dependencies
- */
-import { Loader2 } from "lucide-react";
-import classnames from "classnames";
-
-/**
  * Internal dependencies
  */
 import { containsHtml, sanitizeHtml } from "../../utils/sanitizeHtml";
-import { ToolCallsList } from "./ToolCallDisplay";
+import { containsMarkdown, parseMarkdown } from "../../utils/markdownParser";
 
 /**
  * ChatMessage Component
  *
- * Displays a single message in the chat with appropriate styling,
- * tool calls, and streaming indicator.
+ * Displays a single message in the chat with appropriate styling and avatar.
+ * Supports HTML and Markdown rendering for assistant messages.
  *
- * @param {Object}  props                    - The component props.
- * @param {string}  props.message            - The message content to display.
- * @param {string}  [props.type="assistant"] - The message type ("user" or "assistant").
- * @param {Array}   [props.toolCalls]        - Array of tool calls (optional).
- * @param {Array}   [props.toolResults]      - Array of tool results (optional).
- * @param {boolean} [props.isStreaming]      - Whether this message is currently streaming.
- * @param {boolean} [props.isExecutingTools] - Whether tools are currently being executed.
+ * @param {Object} props                    - The component props.
+ * @param {string} props.message            - The message content to display.
+ * @param {string} [props.type="assistant"] - The message type ("user" or "assistant").
  * @return {JSX.Element} The ChatMessage component.
  */
-const ChatMessage = ({
-	message,
-	type = "assistant",
-	toolCalls,
-	toolResults,
-	isStreaming = false,
-	isExecutingTools = false,
-}) => {
+const ChatMessage = ({ message, type = "assistant" }) => {
 	const isUser = type === "user";
 
 	// Sanitize and prepare content for rendering
-	const sanitizedContent = useMemo(() => {
+	const { content, isRichContent } = useMemo(() => {
 		if (!message) {
-			return "";
+			return { content: "", isRichContent: false };
 		}
 
 		// For user messages, always render as plain text
 		if (isUser) {
-			return message;
+			return { content: message, isRichContent: false };
 		}
 
-		// For AI messages, check if it contains HTML
+		// For AI messages, check if it contains HTML first
 		if (containsHtml(message)) {
-			return sanitizeHtml(message);
+			return { content: sanitizeHtml(message), isRichContent: true };
+		}
+
+		// Check if it contains Markdown
+		if (containsMarkdown(message)) {
+			const parsed = parseMarkdown(message);
+			return { content: sanitizeHtml(parsed), isRichContent: true };
 		}
 
 		// Plain text messages
-		return message;
+		return { content: message, isRichContent: false };
 	}, [message, isUser]);
 
-	// Determine if we should render as HTML
-	const shouldRenderAsHtml = !isUser && containsHtml(message);
-
-	const hasToolCalls = toolCalls && toolCalls.length > 0;
-
 	return (
-		<div
-			className={classnames("nfd-editor-chat-message", `nfd-editor-chat-message--${type}`, {
-				"nfd-editor-chat-message--streaming": isStreaming,
-				"nfd-editor-chat-message--has-tools": hasToolCalls,
-			})}
-		>
-			{/* Message content */}
-			{shouldRenderAsHtml ? (
+		<div className={`nfd-editor-chat-message nfd-editor-chat-message--${type}`}>
+			{isRichContent ? (
 				<div
-					className="nfd-editor-chat-message__content"
-					dangerouslySetInnerHTML={{ __html: sanitizedContent }}
+					className="nfd-editor-chat-message__content nfd-editor-chat-message__content--rich"
+					dangerouslySetInnerHTML={{ __html: content }}
 				/>
 			) : (
-				<div className="nfd-editor-chat-message__content">
-					{sanitizedContent}
-					{isStreaming && !sanitizedContent && (
-						<span className="nfd-editor-chat-message__typing">
-							<Loader2 className="nfd-editor-chat-message__typing-icon" />
-						</span>
-					)}
-				</div>
-			)}
-
-			{/* Streaming cursor indicator */}
-			{isStreaming && sanitizedContent && <span className="nfd-editor-chat-message__cursor" />}
-
-			{/* Tool calls display */}
-			{hasToolCalls && (
-				<div className="nfd-editor-chat-message__tools">
-					<ToolCallsList
-						toolCalls={toolCalls}
-						toolResults={toolResults}
-						isExecuting={isExecutingTools}
-					/>
-				</div>
+				<div className="nfd-editor-chat-message__content">{content}</div>
 			)}
 		</div>
 	);

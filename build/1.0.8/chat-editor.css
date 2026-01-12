@@ -601,6 +601,11 @@
   font-family: "Courier New", Courier, monospace;
   font-size: 0.9em;
 }
+.nfd-editor-chat-message .nfd-editor-chat-message__content code.inline-code {
+  background-color: rgba(0, 0, 0, 0.06);
+  color: var(--nfd-editor-chat-color-text);
+  font-weight: 500;
+}
 .nfd-editor-chat-message .nfd-editor-chat-message__content ul,
 .nfd-editor-chat-message .nfd-editor-chat-message__content ol {
   margin: 1rem 0;
@@ -718,6 +723,15 @@
   border-radius: 0;
   white-space: pre-wrap;
 }
+.nfd-editor-chat-message--assistant .nfd-editor-chat-message__content--rich {
+  white-space: normal;
+}
+.nfd-editor-chat-message--assistant .nfd-editor-chat-message__content--rich > *:first-child {
+  margin-top: 0;
+}
+.nfd-editor-chat-message--assistant .nfd-editor-chat-message__content--rich > *:last-child {
+  margin-bottom: 0;
+}
 .nfd-editor-chat-message--user {
   justify-content: flex-end;
 }
@@ -752,49 +766,7 @@
   position: relative;
   overflow-wrap: break-word;
 }
-.nfd-editor-chat-message--streaming .nfd-editor-chat-message__content {
-  position: relative;
-}
-.nfd-editor-chat-message__cursor {
-  display: inline-block;
-  width: 2px;
-  height: 1em;
-  background-color: var(--nfd-editor-chat-color-primary, #3b82f6);
-  margin-left: 2px;
-  vertical-align: text-bottom;
-  animation: nfd-cursor-blink 1s step-end infinite;
-}
-.nfd-editor-chat-message__typing {
-  display: inline-flex;
-  align-items: center;
-}
-.nfd-editor-chat-message__typing-icon {
-  width: 16px;
-  height: 16px;
-  color: var(--nfd-editor-chat-color-primary, #3b82f6);
-  animation: nfd-spin 1s linear infinite;
-}
-.nfd-editor-chat-message__tools {
-  margin-top: 12px;
-  width: 100%;
-}
 
-@keyframes nfd-cursor-blink {
-  0%, 50% {
-    opacity: 1;
-  }
-  50.01%, 100% {
-    opacity: 0;
-  }
-}
-@keyframes nfd-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
 .nfd-editor-chat-welcome {
   flex: 1 1 auto;
   display: flex;
@@ -847,17 +819,99 @@
   padding-top: 4px;
 }
 
-.nfd-editor-chat-typing-indicator__message {
-  font-size: var(--nfd-editor-chat-font-size-base);
-  color: var(--nfd-editor-chat-color-grey-medium);
-  font-style: italic;
+.nfd-editor-chat-typing-indicator__icon {
+  font-size: 16px;
+  line-height: 1;
 }
 
 .nfd-editor-chat-typing-indicator__status {
   font-size: var(--nfd-editor-chat-font-size-base);
   color: var(--nfd-editor-chat-color-grey-medium);
   font-style: italic;
-  margin-left: 4px;
+}
+
+.nfd-editor-chat-typing-indicator__dots {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+}
+.nfd-editor-chat-typing-indicator__dots span {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: var(--nfd-editor-chat-color-grey-medium);
+  animation: nfd-dot-bounce 1.4s infinite ease-in-out both;
+}
+.nfd-editor-chat-typing-indicator__dots span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+.nfd-editor-chat-typing-indicator__dots span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+.nfd-editor-chat-typing-indicator__dots span:nth-child(3) {
+  animation-delay: 0s;
+}
+
+@keyframes nfd-dot-bounce {
+  0%, 80%, 100% {
+    transform: scale(0.6);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.nfd-editor-chat-tool-status {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(147, 51, 234, 0.08) 100%);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 12px;
+  padding: 12px 16px;
+  min-width: 200px;
+}
+
+.nfd-editor-chat-tool-status__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.nfd-editor-chat-tool-status__icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.nfd-editor-chat-tool-status__title {
+  font-weight: 600;
+  font-size: var(--nfd-editor-chat-font-size-base);
+  color: var(--nfd-editor-chat-color-text);
+  flex: 1;
+}
+
+.nfd-editor-chat-tool-status__spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(59, 130, 246, 0.2);
+  border-top-color: rgb(59, 130, 246);
+  border-radius: 50%;
+  animation: nfd-spin 0.8s linear infinite;
+}
+
+@keyframes nfd-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.nfd-editor-chat-tool-status__description {
+  font-size: var(--nfd-editor-chat-font-size-sm);
+  color: var(--nfd-editor-chat-color-grey-medium);
+  line-height: 1.4;
+}
+
+.nfd-editor-chat-tool-status__params {
+  color: var(--nfd-editor-chat-color-primary);
+  font-weight: 500;
 }
 
 .nfd-editor-chat-typing-indicator__loader {

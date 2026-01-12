@@ -135,6 +135,12 @@
 			font-size: 0.9em;
 		}
 
+		code.inline-code {
+			background-color: rgba(0, 0, 0, 0.06);
+			color: var(--nfd-editor-chat-color-text);
+			font-weight: 500;
+		}
+
 		// Lists
 		ul,
 		ol {
@@ -286,6 +292,21 @@
 			padding: 4px 0 0 0;
 			border-radius: 0;
 			white-space: pre-wrap;
+
+			// Rich content (markdown/HTML) - don't preserve whitespace for formatted content
+			&--rich {
+				white-space: normal;
+
+				// First element shouldn't have top margin
+				> *:first-child {
+					margin-top: 0;
+				}
+
+				// Last element shouldn't have bottom margin
+				> *:last-child {
+					margin-bottom: 0;
+				}
+			}
 		}
 	}
 
