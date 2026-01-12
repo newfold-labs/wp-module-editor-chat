@@ -2,7 +2,7 @@
 /**
  * WordPress dependencies
  */
-import { useEffect, useState, useRef } from "@wordpress/element";
+import { useEffect, useState, useRef, useCallback } from "@wordpress/element";
 import { __ } from "@wordpress/i18n";
 import { useDispatch, useSelect } from "@wordpress/data";
 import { store as coreStore } from "@wordpress/core-data";
@@ -10,9 +10,10 @@ import { store as coreStore } from "@wordpress/core-data";
 /**
  * Internal dependencies
  */
-import { sendMessage, createNewConversation, checkStatus } from "../services/chatApi";
 import actionExecutor from "../services/actionExecutor";
 import { simpleHash } from "../utils/helpers";
+import { mcpClient, MCPError } from "../services/mcpClient";
+import { openaiClient } from "../services/openaiClient";
 
 /**
  * Get site-specific localStorage keys for chat persistence
@@ -25,44 +26,8 @@ const getStorageKeys = () => {
 	const siteId = simpleHash(window.nfdEditorChat.homeUrl);
 
 	return {
-		CONVERSATION_ID: `nfd-editor-chat-conversation-id-${siteId}`,
 		MESSAGES: `nfd-editor-chat-messages-${siteId}`,
 	};
-};
-
-/**
- * Load conversation ID from localStorage
- *
- * @return {string|null} The conversation ID or null
- */
-const loadConversationId = () => {
-	try {
-		const STORAGE_KEYS = getStorageKeys();
-		return localStorage.getItem(STORAGE_KEYS.CONVERSATION_ID);
-	} catch (error) {
-		// eslint-disable-next-line no-console
-		console.warn("Failed to load conversation ID from localStorage:", error);
-		return null;
-	}
-};
-
-/**
- * Save conversation ID to localStorage
- *
- * @param {string} conversationId The conversation ID to save
- */
-const saveConversationId = (conversationId) => {
-	try {
-		const STORAGE_KEYS = getStorageKeys();
-		if (conversationId) {
-			localStorage.setItem(STORAGE_KEYS.CONVERSATION_ID, conversationId);
-		} else {
-			localStorage.removeItem(STORAGE_KEYS.CONVERSATION_ID);
-		}
-	} catch (error) {
-		// eslint-disable-next-line no-console
-		console.warn("Failed to save conversation ID to localStorage:", error);
-	}
 };
 
 /**
@@ -76,9 +41,9 @@ const loadMessages = () => {
 		const stored = localStorage.getItem(STORAGE_KEYS.MESSAGES);
 		if (stored) {
 			const messages = JSON.parse(stored);
-			// Remove hasActions and undoData from loaded messages (actions should only show once)
+			// Remove hasActions, undoData, and streaming state from loaded messages
 			return messages.map((msg) => {
-				const { hasActions, undoData, ...rest } = msg;
+				const { hasActions, undoData, isStreaming, ...rest } = msg;
 				return rest;
 			});
 		}
@@ -98,7 +63,12 @@ const loadMessages = () => {
 const saveMessages = (messages) => {
 	try {
 		const STORAGE_KEYS = getStorageKeys();
-		localStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify(messages));
+		// Filter out streaming state before saving
+		const messagesToSave = messages.map((msg) => {
+			const { isStreaming, ...rest } = msg;
+			return rest;
+		});
+		localStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify(messagesToSave));
 	} catch (error) {
 		// eslint-disable-next-line no-console
 		console.warn("Failed to save messages to localStorage:", error);
@@ -111,7 +81,6 @@ const saveMessages = (messages) => {
 const clearChatData = () => {
 	try {
 		const STORAGE_KEYS = getStorageKeys();
-		localStorage.removeItem(STORAGE_KEYS.CONVERSATION_ID);
 		localStorage.removeItem(STORAGE_KEYS.MESSAGES);
 	} catch (error) {
 		// eslint-disable-next-line no-console
@@ -120,34 +89,35 @@ const clearChatData = () => {
 };
 
 /**
- * Custom hook for managing chat functionality
+ * Custom hook for managing chat functionality with streaming and MCP integration
  *
  * @return {Object} Chat state and handlers
  */
 const useChat = () => {
 	// Initialize state from localStorage immediately
-	const savedConversationId = loadConversationId();
 	const savedMessages = loadMessages();
 
 	const [messages, setMessages] = useState(savedMessages || []);
 	const [isLoading, setIsLoading] = useState(false);
-	const [conversationId, setConversationId] = useState(savedConversationId);
 	const [error, setError] = useState(null);
-	const [status, setStatus] = useState(null); // 'received', 'generating', 'completed', 'failed'
+	const [status, setStatus] = useState(null); // 'connecting', 'streaming', 'tool_calling', 'completed'
 	const [isSaving, setIsSaving] = useState(false);
 	const [hasGlobalStylesChanges, setHasGlobalStylesChanges] = useState(false);
+	const [streamingContent, setStreamingContent] = useState("");
+	const [currentToolCalls, setCurrentToolCalls] = useState([]);
+	const [pendingToolPermission, setPendingToolPermission] = useState(null);
+	const [mcpTools, setMcpTools] = useState([]);
+	const [mcpConnectionStatus, setMcpConnectionStatus] = useState("disconnected"); // 'disconnected', 'connecting', 'connected'
+
 	const hasInitializedRef = useRef(false);
-	const pollingIntervalRef = useRef(null);
-	const pollingTimeoutRef = useRef(null);
-	const pollingStartTimeRef = useRef(null);
+	const messageIdRef = useRef(0);
 
 	// Get WordPress editor dispatch functions
 	const { savePost } = useDispatch("core/editor");
 	const { saveEditedEntityRecord } = useDispatch(coreStore);
 	const { __experimentalGetCurrentGlobalStylesId } = useSelect(
 		(select) => ({
-			__experimentalGetCurrentGlobalStylesId:
-				select(coreStore).__experimentalGetCurrentGlobalStylesId,
+			__experimentalGetCurrentGlobalStylesId: select(coreStore).__experimentalGetCurrentGlobalStylesId,
 		}),
 		[]
 	);
@@ -177,39 +147,43 @@ const useChat = () => {
 		}
 	}, [isSaving, isSavingPost]);
 
-	// Create a new conversation only once on mount if there's nothing in localStorage
+	/**
+	 * Initialize MCP client connection
+	 */
+	const initializeMCP = useCallback(async () => {
+		if (mcpConnectionStatus === "connecting" || mcpConnectionStatus === "connected") {
+			return;
+		}
+
+		try {
+			setMcpConnectionStatus("connecting");
+
+			await mcpClient.connect();
+			await mcpClient.initialize();
+
+			const tools = mcpClient.getTools();
+			setMcpTools(tools);
+			setMcpConnectionStatus("connected");
+
+			// eslint-disable-next-line no-console
+			console.log(`MCP connected with ${tools.length} tools available`);
+		} catch (err) {
+			// eslint-disable-next-line no-console
+			console.error("Failed to initialize MCP:", err);
+			setMcpConnectionStatus("disconnected");
+			// Don't block chat if MCP fails - just continue without tools
+		}
+	}, [mcpConnectionStatus]);
+
+	// Initialize MCP on mount
 	useEffect(() => {
-		// Only initialize once per component mount
 		if (hasInitializedRef.current) {
 			return;
 		}
 
 		hasInitializedRef.current = true;
-
-		// Check localStorage directly to avoid dependency issues
-		// Only create a new conversation if we don't have one in localStorage
-		const storedConversationId = loadConversationId();
-		if (!storedConversationId) {
-			const initializeConversation = async () => {
-				try {
-					const response = await createNewConversation();
-					if (response.conversationId) {
-						setConversationId(response.conversationId);
-					}
-				} catch (err) {
-					// eslint-disable-next-line no-console
-					console.error("Failed to initialize conversation:", err);
-				}
-			};
-
-			initializeConversation();
-		}
-	}, []); // Empty dependency array - only run once on mount
-
-	// Save conversation ID when it changes
-	useEffect(() => {
-		saveConversationId(conversationId);
-	}, [conversationId]);
+		initializeMCP();
+	}, [initializeMCP]);
 
 	// Save messages when they change
 	useEffect(() => {
@@ -218,67 +192,315 @@ const useChat = () => {
 		}
 	}, [messages]);
 
-	// Cleanup polling interval and timeout on unmount
+	// Cleanup on unmount
 	useEffect(() => {
 		return () => {
-			if (pollingIntervalRef.current) {
-				clearInterval(pollingIntervalRef.current);
-				pollingIntervalRef.current = null;
-			}
-			if (pollingTimeoutRef.current) {
-				clearTimeout(pollingTimeoutRef.current);
-				pollingTimeoutRef.current = null;
+			openaiClient.stop();
+			if (mcpClient.isConnected()) {
+				mcpClient.disconnect();
 			}
 		};
 	}, []);
 
+	/**
+	 * Generate a unique message ID
+	 *
+	 * @return {string} Unique message ID
+	 */
+	const generateMessageId = () => {
+		messageIdRef.current += 1;
+		return `msg-${Date.now()}-${messageIdRef.current}`;
+	};
+
+	/**
+	 * Execute a tool call with permission checking
+	 *
+	 * @param {Object} toolCall Tool call object with name and arguments
+	 * @return {Promise<Object>} Tool result
+	 */
+	const executeToolCall = async (toolCall) => {
+		const { name, arguments: args } = toolCall;
+
+		try {
+			const result = await mcpClient.callTool(name, args);
+
+			return {
+				id: toolCall.id,
+				name,
+				result: result.content,
+				isError: result.isError,
+			};
+		} catch (err) {
+			return {
+				id: toolCall.id,
+				name,
+				result: null,
+				error: err.message || "Tool execution failed",
+				isError: true,
+			};
+		}
+	};
+
+	/**
+	 * Check if any tools require permission (are destructive)
+	 *
+	 * @param {Array} toolCalls Array of tool calls
+	 * @return {Array} Array of destructive tool calls
+	 */
+	const getDestructiveToolCalls = (toolCalls) => {
+		return toolCalls.filter((tc) => !mcpClient.isToolReadOnly(tc.name));
+	};
+
+	/**
+	 * Continue chat after tool results
+	 *
+	 * @param {Array}  chatHistory   Current chat history
+	 * @param {Array}  toolResults   Results from tool execution
+	 * @param {Object} assistantMsg  Original assistant message with tool calls
+	 * @return {Promise<void>}
+	 */
+	const continueWithToolResults = async (chatHistory, toolResults, assistantMsg) => {
+		const tools = mcpClient.getToolsForOpenAI();
+
+		// Build messages including the tool results
+		const messagesForAPI = openaiClient.convertMessagesToOpenAI([
+			{ role: "system", content: openaiClient.createSystemMessage().content },
+			...chatHistory,
+			{
+				role: "assistant",
+				content: assistantMsg.content || "",
+				toolCalls: assistantMsg.toolCalls,
+				toolResults,
+			},
+		]);
+
+		// Create a new streaming message for the follow-up response
+		const followUpMsgId = generateMessageId();
+		setStreamingContent("");
+		setStatus("streaming");
+
+		setMessages((prev) => [
+			...prev,
+			{
+				id: followUpMsgId,
+				type: "assistant",
+				content: "",
+				isStreaming: true,
+			},
+		]);
+
+		await openaiClient.createStreamingCompletion(
+			{
+				messages: messagesForAPI,
+				tools: tools.length > 0 ? tools : undefined,
+			},
+			// onChunk
+			(chunk) => {
+				if (chunk.type === "content") {
+					setStreamingContent((prev) => prev + chunk.content);
+					setMessages((prev) =>
+						prev.map((msg) =>
+							msg.id === followUpMsgId ? { ...msg, content: chunk.fullContent } : msg
+						)
+					);
+				}
+			},
+			// onToolCall - handle nested tool calls
+			async (newToolCalls) => {
+				setStatus("tool_calling");
+				// Execute new tool calls
+				const newResults = await Promise.all(newToolCalls.map(executeToolCall));
+
+				setMessages((prev) =>
+					prev.map((msg) =>
+						msg.id === followUpMsgId
+							? {
+									...msg,
+									toolCalls: newToolCalls,
+									toolResults: newResults,
+								}
+							: msg
+					)
+				);
+
+				// Continue with new tool results if needed
+				const currentMessages = messages.filter((m) => m.id !== followUpMsgId);
+				await continueWithToolResults(currentMessages, newResults, {
+					content: streamingContent,
+					toolCalls: newToolCalls,
+				});
+			},
+			// onComplete
+			(result) => {
+				setMessages((prev) =>
+					prev.map((msg) =>
+						msg.id === followUpMsgId ? { ...msg, content: result.content, isStreaming: false } : msg
+					)
+				);
+				setStreamingContent("");
+				setStatus(null);
+				setIsLoading(false);
+			},
+			// onError
+			(err) => {
+				setError(err.message || "Failed to get AI response");
+				setIsLoading(false);
+				setStatus(null);
+			}
+		);
+	};
+
+	/**
+	 * Handle sending a message with streaming
+	 *
+	 * @param {string} messageContent User message content
+	 */
 	const handleSendMessage = async (messageContent) => {
 		// Clear any previous errors and status
 		setError(null);
 		setStatus(null);
-
-		// Check if we have a conversation ID
-		if (!conversationId) {
-			setError(
-				__(
-					"No active conversation. Please refresh the page and try again.",
-					"wp-module-editor-chat"
-				)
-			);
-			return;
-		}
+		setStreamingContent("");
+		setCurrentToolCalls([]);
 
 		// Add user message
+		const userMsgId = generateMessageId();
 		const userMessage = {
+			id: userMsgId,
 			type: "user",
 			content: messageContent,
 		};
 		setMessages((prev) => [...prev, userMessage]);
 		setIsLoading(true);
-		setStatus("received");
+		setStatus("streaming");
 
 		try {
-			// Send message to API with existing conversation
-			// This now returns message_id immediately
-			const response = await sendMessage(conversationId, messageContent);
+			// Build chat history for context
+			const chatHistory = [...messages, userMessage].slice(-20); // Keep last 20 messages for context
 
-			if (!response.message_id) {
-				// eslint-disable-next-line no-console
-				console.error("No message_id in response:", response);
-				throw new Error("No message_id received from API");
-			}
+			// Get MCP tools in OpenAI format
+			const tools = mcpClient.isConnected() ? mcpClient.getToolsForOpenAI() : [];
 
-			// Start polling for status
-			const messageId = response.message_id;
-			// Call polling in next tick to ensure state updates are processed
-			setTimeout(() => {
-				pollMessageStatus(messageId);
-			}, 0);
+			// Build messages for OpenAI API
+			const messagesForAPI = openaiClient.convertMessagesToOpenAI([
+				{ role: "system", content: openaiClient.createSystemMessage().content },
+				...chatHistory.map((msg) => ({
+					role: msg.type === "user" ? "user" : "assistant",
+					content: msg.content,
+					toolCalls: msg.toolCalls,
+					toolResults: msg.toolResults,
+				})),
+			]);
+
+			// Create assistant message placeholder for streaming
+			const assistantMsgId = generateMessageId();
+			setMessages((prev) => [
+				...prev,
+				{
+					id: assistantMsgId,
+					type: "assistant",
+					content: "",
+					isStreaming: true,
+				},
+			]);
+
+			let finalToolCalls = null;
+
+			await openaiClient.createStreamingCompletion(
+				{
+					messages: messagesForAPI,
+					tools: tools.length > 0 ? tools : undefined,
+				},
+				// onChunk - handle streaming content
+				(chunk) => {
+					if (chunk.type === "content") {
+						setStreamingContent(chunk.fullContent);
+						setMessages((prev) =>
+							prev.map((msg) =>
+								msg.id === assistantMsgId ? { ...msg, content: chunk.fullContent } : msg
+							)
+						);
+					}
+				},
+				// onToolCall - handle tool calls
+				(toolCalls) => {
+					finalToolCalls = toolCalls;
+					setCurrentToolCalls(toolCalls);
+					setStatus("tool_calling");
+
+					// Update message with tool calls
+					setMessages((prev) =>
+						prev.map((msg) =>
+							msg.id === assistantMsgId ? { ...msg, toolCalls, isStreaming: false } : msg
+						)
+					);
+				},
+				// onComplete - handle completion
+				async (result) => {
+					// Update message with final content
+					setMessages((prev) =>
+						prev.map((msg) =>
+							msg.id === assistantMsgId
+								? { ...msg, content: result.content, isStreaming: false }
+								: msg
+						)
+					);
+
+					// If there were tool calls, execute them
+					if (finalToolCalls && finalToolCalls.length > 0) {
+						// Check for destructive tools that need permission
+						const destructiveTools = getDestructiveToolCalls(finalToolCalls);
+
+						if (destructiveTools.length > 0) {
+							// Set pending permission state
+							setPendingToolPermission({
+								toolCalls: finalToolCalls,
+								assistantMsgId,
+								chatHistory,
+							});
+							setStatus("awaiting_permission");
+							return;
+						}
+
+						// Execute all tool calls
+						const toolResults = await Promise.all(finalToolCalls.map(executeToolCall));
+
+						// Update message with tool results
+						setMessages((prev) =>
+							prev.map((msg) => (msg.id === assistantMsgId ? { ...msg, toolResults } : msg))
+						);
+
+						// Continue conversation with tool results
+						await continueWithToolResults(chatHistory, toolResults, {
+							content: result.content,
+							toolCalls: finalToolCalls,
+						});
+					} else {
+						setStreamingContent("");
+						setStatus(null);
+						setIsLoading(false);
+					}
+				},
+				// onError
+				(err) => {
+					// eslint-disable-next-line no-console
+					console.error("Streaming error:", err);
+					setError(
+						__(
+							"Sorry, I encountered an error processing your request. Please try again.",
+							"wp-module-editor-chat"
+						)
+					);
+					setIsLoading(false);
+					setStatus(null);
+
+					// Remove the streaming message on error
+					setMessages((prev) => prev.filter((msg) => msg.id !== assistantMsgId));
+				}
+			);
 		} catch (err) {
 			// eslint-disable-next-line no-console
 			console.error("Error sending message:", err);
 
-			// Set error state instead of adding error message to chat
 			setError(
 				__(
 					"Sorry, I encountered an error processing your request. Please try again.",
@@ -291,255 +513,76 @@ const useChat = () => {
 	};
 
 	/**
-	 * Stop polling and cleanup
+	 * Approve pending tool permission and execute tools
 	 */
-	const stopPolling = () => {
-		if (pollingIntervalRef.current) {
-			clearInterval(pollingIntervalRef.current);
-			pollingIntervalRef.current = null;
+	const handleApproveToolPermission = async () => {
+		if (!pendingToolPermission) {
+			return;
 		}
-		if (pollingTimeoutRef.current) {
-			clearTimeout(pollingTimeoutRef.current);
-			pollingTimeoutRef.current = null;
-		}
-		pollingStartTimeRef.current = null;
+
+		const { toolCalls, assistantMsgId, chatHistory } = pendingToolPermission;
+		setPendingToolPermission(null);
+		setStatus("tool_calling");
+
+		// Execute all tool calls
+		const toolResults = await Promise.all(toolCalls.map(executeToolCall));
+
+		// Update message with tool results
+		setMessages((prev) => prev.map((msg) => (msg.id === assistantMsgId ? { ...msg, toolResults } : msg)));
+
+		// Get the current message content
+		const currentMsg = messages.find((m) => m.id === assistantMsgId);
+		const content = currentMsg?.content || "";
+
+		// Continue conversation with tool results
+		await continueWithToolResults(chatHistory, toolResults, {
+			content,
+			toolCalls,
+		});
 	};
 
 	/**
-	 * Poll the status endpoint every 4 seconds, with a maximum of 2 minutes
-	 *
-	 * @param {string} messageId - The message ID to check status for
+	 * Deny pending tool permission
 	 */
-	const pollMessageStatus = (messageId) => {
-		// Clear any existing polling interval and timeout
-		stopPolling();
+	const handleDenyToolPermission = () => {
+		setPendingToolPermission(null);
+		setStatus(null);
+		setIsLoading(false);
 
-		// Record start time
-		pollingStartTimeRef.current = Date.now();
-		const MAX_POLLING_TIME = 120000; // 2 minutes in milliseconds
-		const POLLING_INTERVAL = 4000; // 4 seconds in milliseconds
-
-		// Poll immediately, then every 4 seconds
-		const checkStatusNow = async () => {
-			try {
-				// Check if we've exceeded the maximum polling time
-				const elapsedTime = Date.now() - pollingStartTimeRef.current;
-				if (elapsedTime >= MAX_POLLING_TIME) {
-					stopPolling();
-					setError(
-						__(
-							"The request is taking longer than expected. Please try again or refresh the page.",
-							"wp-module-editor-chat"
-						)
-					);
-					setIsLoading(false);
-					setStatus(null);
-					return;
-				}
-
-				const statusResponse = await checkStatus(messageId);
-
-				const currentStatus = statusResponse.status;
-
-				setStatus(currentStatus);
-
-				if (currentStatus === "completed") {
-					stopPolling();
-
-					// Process the completed response
-					if (statusResponse.data) {
-						const data = statusResponse.data;
-
-						// Extract assistant message
-						let assistantMessage = "I received your message.";
-						if (data.chat?.current_message?.assistant) {
-							assistantMessage = data.chat.current_message.assistant;
-						}
-
-						// Execute actions if present
-						let hasExecutedActions = false;
-						let undoData = null;
-						if (data.actions && Array.isArray(data.actions) && data.actions.length > 0) {
-							try {
-								// Check if there's already a pending action (existing message with hasActions)
-								const hasPendingAction = messages.some((msg) => msg.hasActions);
-
-								if (hasPendingAction) {
-									// There's already a pending action - reuse the initial undo data
-									const firstActionMessage = messages.find((msg) => msg.hasActions && msg.undoData);
-
-									// Normalize undo data structure (handle both old array format and new object format)
-									if (firstActionMessage && firstActionMessage.undoData) {
-										if (Array.isArray(firstActionMessage.undoData)) {
-											// Convert old array format to new object format
-											undoData = {
-												blocks: firstActionMessage.undoData,
-												globalStyles: null,
-											};
-										} else {
-											// Already in new object format
-											undoData = firstActionMessage.undoData;
-										}
-									} else {
-										undoData = null;
-									}
-
-									// Execute the new action (this will modify the already-modified content)
-									await actionExecutor.executeActions(data.actions);
-									hasExecutedActions = true;
-
-									// Check if any action was change_site_colors
-									const hasColorChanges = data.actions.some(
-										(action) => action.action === "change_site_colors"
-									);
-									if (hasColorChanges) {
-										setHasGlobalStylesChanges(true);
-									}
-								} else {
-									// This is the FIRST action in a sequence
-									// We need to capture the initial state before any modifications
-
-									// Execute actions and capture the initial state
-									const actionResult = await actionExecutor.executeActions(data.actions);
-									hasExecutedActions = true;
-
-									// Check if any action was change_site_colors
-									const hasColorChanges = data.actions.some(
-										(action) => action.action === "change_site_colors"
-									);
-									if (hasColorChanges) {
-										setHasGlobalStylesChanges(true);
-									}
-
-									// Extract the INITIAL undo data (state before this first action)
-									// Structure: { blocks: [], globalStyles: { originalStyles, globalStylesId } }
-									undoData = {
-										blocks: [],
-										globalStyles: null,
-									};
-
-									if (actionResult.results && actionResult.results.length > 0) {
-										actionResult.results.forEach((result) => {
-											// Handle block-based actions (edit_content)
-											if (result.results && Array.isArray(result.results)) {
-												result.results.forEach((blockResult) => {
-													if (blockResult.originalBlock) {
-														undoData.blocks.push(blockResult.originalBlock);
-													}
-												});
-											}
-
-											// Handle global styles actions (change_site_colors)
-											if (
-												result.type === "change_site_colors" &&
-												result.originalStyles &&
-												result.globalStylesId
-											) {
-												undoData.globalStyles = {
-													originalStyles: result.originalStyles,
-													globalStylesId: result.globalStylesId,
-												};
-											}
-										});
-									}
-								}
-							} catch (actionError) {
-								// eslint-disable-next-line no-console
-								console.error("Error executing actions:", actionError);
-							}
-						}
-
-						// Add AI response with action information
-						const aiMessage = {
-							type: "assistant",
-							content: assistantMessage,
-							hasActions: hasExecutedActions,
-							undoData, // Store undo data (either new or reused from first message)
-						};
-						setMessages((prev) => [...prev, aiMessage]);
-					}
-
-					setIsLoading(false);
-					setStatus(null);
-				} else if (currentStatus === "failed") {
-					stopPolling();
-
-					setError(
-						__(
-							"Sorry, I encountered an error processing your request. Please try again.",
-							"wp-module-editor-chat"
-						)
-					);
-					setIsLoading(false);
-					setStatus(null);
-				}
-				// For 'received' and 'generating', continue polling
-			} catch (err) {
-				// eslint-disable-next-line no-console
-				console.error("Error checking status:", err);
-
-				// Check if we've exceeded the maximum polling time even on error
-				const elapsedTime = Date.now() - pollingStartTimeRef.current;
-				if (elapsedTime >= MAX_POLLING_TIME) {
-					stopPolling();
-					setError(
-						__(
-							"The request is taking longer than expected. Please try again or refresh the page.",
-							"wp-module-editor-chat"
-						)
-					);
-					setIsLoading(false);
-					setStatus(null);
-				}
-				// Continue polling even on error (might be temporary)
-			}
-		};
-
-		// Check immediately
-		checkStatusNow();
-
-		// Then poll every 4 seconds
-		pollingIntervalRef.current = setInterval(checkStatusNow, POLLING_INTERVAL);
-
-		// Set timeout to stop polling after 2 minutes
-		pollingTimeoutRef.current = setTimeout(() => {
-			stopPolling();
-			setError(
-				__(
-					"The request is taking longer than expected. Please try again or refresh the page.",
+		// Add a message indicating tools were not executed
+		setMessages((prev) => [
+			...prev,
+			{
+				id: generateMessageId(),
+				type: "assistant",
+				content: __(
+					"I understand. The requested actions were not performed. How else can I help you?",
 					"wp-module-editor-chat"
-				)
-			);
-			setIsLoading(false);
-			setStatus(null);
-		}, MAX_POLLING_TIME);
+				),
+			},
+		]);
 	};
 
+	/**
+	 * Handle starting a new chat
+	 */
 	const handleNewChat = async () => {
-		// Stop any active polling/requests
-		stopPolling();
+		// Stop any active requests
+		openaiClient.stop();
 
 		// Clear loading and status states
 		setIsLoading(false);
 		setStatus(null);
+		setStreamingContent("");
+		setCurrentToolCalls([]);
+		setPendingToolPermission(null);
 
-		// Reset messages and conversation ID to show welcome screen
+		// Reset messages
 		setMessages([]);
-		setConversationId(null);
 		setError(null);
+
 		// Clear localStorage data
 		clearChatData();
-
-		// Create a new conversation immediately
-		try {
-			const response = await createNewConversation();
-			if (response.conversationId) {
-				setConversationId(response.conversationId);
-			}
-		} catch (err) {
-			// eslint-disable-next-line no-console
-			console.error("Failed to create new conversation:", err);
-		}
 	};
 
 	/**
@@ -630,27 +673,43 @@ const useChat = () => {
 	 * Stop the current request
 	 */
 	const handleStopRequest = () => {
-		// Stop polling
-		stopPolling();
-
-		// Clear loading state and status
+		openaiClient.stop();
 		setIsLoading(false);
 		setStatus(null);
 		setError(null);
+		setStreamingContent("");
+	};
+
+	/**
+	 * Reconnect MCP client
+	 */
+	const handleReconnectMCP = async () => {
+		if (mcpClient.isConnected()) {
+			await mcpClient.disconnect();
+		}
+		setMcpConnectionStatus("disconnected");
+		await initializeMCP();
 	};
 
 	return {
 		messages,
 		isLoading,
-		conversationId,
 		error,
 		status,
 		isSaving,
+		streamingContent,
+		currentToolCalls,
+		pendingToolPermission,
+		mcpTools,
+		mcpConnectionStatus,
 		handleSendMessage,
 		handleNewChat,
 		handleAcceptChanges,
 		handleDeclineChanges,
 		handleStopRequest,
+		handleApproveToolPermission,
+		handleDenyToolPermission,
+		handleReconnectMCP,
 	};
 };
 

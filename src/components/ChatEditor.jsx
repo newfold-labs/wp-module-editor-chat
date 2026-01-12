@@ -29,11 +29,15 @@ const ChatEditor = () => {
 		error,
 		status,
 		isSaving,
+		pendingToolPermission,
+		mcpConnectionStatus,
 		handleSendMessage,
 		handleNewChat,
 		handleAcceptChanges,
 		handleDeclineChanges,
 		handleStopRequest,
+		handleApproveToolPermission,
+		handleDenyToolPermission,
 	} = useChat();
 
 	useEffect(() => {
@@ -46,6 +50,9 @@ const ChatEditor = () => {
 
 	// Disable new chat button when there are no messages (brand new chat)
 	const isNewChatDisabled = messages.length === 0;
+
+	// Disable input when awaiting permission
+	const isInputDisabled = isLoading || status === "awaiting_permission";
 
 	return (
 		<>
@@ -70,7 +77,15 @@ const ChatEditor = () => {
 					{messages.length === 0 ? (
 						<WelcomeScreen onSendMessage={handleSendMessage} />
 					) : (
-						<ChatMessages messages={messages} isLoading={isLoading} error={error} status={status} />
+						<ChatMessages
+							messages={messages}
+							isLoading={isLoading}
+							error={error}
+							status={status}
+							pendingToolPermission={pendingToolPermission}
+							onApprovePermission={handleApproveToolPermission}
+							onDenyPermission={handleDenyToolPermission}
+						/>
 					)}
 					{hasPendingActions && (
 						<ActionButtons
@@ -83,7 +98,7 @@ const ChatEditor = () => {
 					<ChatInput
 						onSendMessage={handleSendMessage}
 						onStopRequest={handleStopRequest}
-						disabled={isLoading}
+						disabled={isInputDisabled}
 					/>
 				</div>
 			</PluginSidebar>

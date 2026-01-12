@@ -326,4 +326,61 @@
 			overflow-wrap: break-word;
 		}
 	}
+
+	// Streaming message state
+	&--streaming {
+		.nfd-editor-chat-message__content {
+			position: relative;
+		}
+	}
+
+	// Streaming cursor indicator
+	&__cursor {
+		display: inline-block;
+		width: 2px;
+		height: 1em;
+		background-color: var(--nfd-editor-chat-color-primary, #3b82f6);
+		margin-left: 2px;
+		vertical-align: text-bottom;
+		animation: nfd-cursor-blink 1s step-end infinite;
+	}
+
+	// Typing indicator for empty streaming messages
+	&__typing {
+		display: inline-flex;
+		align-items: center;
+
+		&-icon {
+			width: 16px;
+			height: 16px;
+			color: var(--nfd-editor-chat-color-primary, #3b82f6);
+			animation: nfd-spin 1s linear infinite;
+		}
+	}
+
+	// Tool calls container
+	&__tools {
+		margin-top: 12px;
+		width: 100%;
+	}
+}
+
+@keyframes nfd-cursor-blink {
+	0%,
+	50% {
+		opacity: 1;
+	}
+	50.01%,
+	100% {
+		opacity: 0;
+	}
+}
+
+@keyframes nfd-spin {
+	from {
+		transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg);
+	}
 }

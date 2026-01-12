@@ -1,0 +1,152 @@
+// Permission Dialog Styles
+
+.nfd-permission-dialog {
+	margin: 12px 0;
+	background-color: var(--nfd-chat-bg-warning, #fffbeb);
+	border: 1px solid var(--nfd-chat-border-warning, #fcd34d);
+	border-radius: 8px;
+	overflow: hidden;
+
+	&__header {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		padding: 12px 14px;
+		background-color: rgba(251, 191, 36, 0.1);
+		border-bottom: 1px solid var(--nfd-chat-border-warning, #fcd34d);
+	}
+
+	&__icon {
+		width: 20px;
+		height: 20px;
+		color: var(--nfd-chat-warning, #d97706);
+		flex-shrink: 0;
+	}
+
+	&__title {
+		margin: 0;
+		font-size: 14px;
+		font-weight: 600;
+		color: var(--nfd-chat-text-primary, #333);
+	}
+
+	&__body {
+		padding: 14px;
+	}
+
+	&__description {
+		margin: 0 0 12px 0;
+		font-size: 13px;
+		color: var(--nfd-chat-text-primary, #333);
+		line-height: 1.5;
+	}
+
+	&__tool-list {
+		list-style: none;
+		margin: 0 0 12px 0;
+		padding: 0;
+	}
+
+	&__tool-item {
+		padding: 10px 12px;
+		background-color: var(--nfd-chat-bg-primary, #fff);
+		border: 1px solid var(--nfd-chat-border, #e0e0e0);
+		border-radius: 6px;
+		margin-bottom: 8px;
+
+		&:last-child {
+			margin-bottom: 0;
+		}
+	}
+
+	&__tool-name {
+		display: block;
+		font-size: 13px;
+		font-weight: 500;
+		color: var(--nfd-chat-text-primary, #333);
+	}
+
+	&__tool-details {
+		margin-top: 8px;
+
+		summary {
+			font-size: 11px;
+			color: var(--nfd-chat-accent, #3b82f6);
+			cursor: pointer;
+			user-select: none;
+
+			&:hover {
+				text-decoration: underline;
+			}
+		}
+	}
+
+	&__tool-args {
+		margin-top: 8px;
+		font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+		font-size: 11px;
+		line-height: 1.5;
+		background-color: var(--nfd-chat-bg-secondary, #f5f5f5);
+		padding: 8px 10px;
+		border-radius: 4px;
+		overflow-x: auto;
+		white-space: pre-wrap;
+		word-break: break-word;
+		color: var(--nfd-chat-text-primary, #333);
+	}
+
+	&__warning {
+		margin: 0;
+		font-size: 13px;
+		font-weight: 500;
+		color: var(--nfd-chat-text-primary, #333);
+	}
+
+	&__actions {
+		display: flex;
+		gap: 10px;
+		padding: 12px 14px;
+		background-color: var(--nfd-chat-bg-secondary, #f5f5f5);
+		border-top: 1px solid var(--nfd-chat-border, #e0e0e0);
+	}
+
+	&__button {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 6px;
+		flex: 1;
+		padding: 10px 16px;
+		font-size: 13px;
+		font-weight: 500;
+		border-radius: 6px;
+		border: none;
+		cursor: pointer;
+		transition: all 0.15s ease;
+
+		svg {
+			width: 16px;
+			height: 16px;
+		}
+
+		&--deny {
+			background-color: var(--nfd-chat-bg-primary, #fff);
+			color: var(--nfd-chat-text-secondary, #666);
+			border: 1px solid var(--nfd-chat-border, #e0e0e0);
+
+			&:hover {
+				background-color: var(--nfd-chat-bg-hover, #f9f9f9);
+				border-color: var(--nfd-chat-text-secondary, #666);
+			}
+		}
+
+		&--approve {
+			background-color: var(--nfd-chat-success, #22c55e);
+			color: #fff;
+
+			&:hover {
+				background-color: #16a34a;
+			}
+		}
+	}
+}

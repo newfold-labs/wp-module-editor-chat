@@ -4,6 +4,7 @@ namespace NewfoldLabs\WP\Module\EditorChat\RestApi;
 
 use NewfoldLabs\WP\Module\EditorChat\Permissions;
 use NewfoldLabs\WP\Module\EditorChat\Services\ContextBuilder;
+use NewfoldLabs\WP\Module\EditorChat\Services\OpenAIProxy;
 use NewfoldLabs\WP\Module\EditorChat\Clients\RemoteApiClient;
 use WP_REST_Controller;
 use WP_REST_Server;
@@ -46,6 +47,13 @@ class ChatController extends WP_REST_Controller {
 	 */
 	protected $remote_api_client;
 
+	/**
+	 * OpenAI proxy service instance
+	 *
+	 * @var OpenAIProxy
+	 */
+	protected $openai_proxy;
+
 
 	/**
 	 * Constructor
@@ -53,6 +61,7 @@ class ChatController extends WP_REST_Controller {
 	public function __construct() {
 		$this->context_builder   = new ContextBuilder();
 		$this->remote_api_client = new RemoteApiClient();
+		$this->openai_proxy      = new OpenAIProxy();
 	}
 
 	/**
@@ -98,6 +107,57 @@ class ChatController extends WP_REST_Controller {
 							'description' => 'The message ID to check status for',
 							'type'        => 'string',
 							'required'    => true,
+						),
+					),
+				),
+			)
+		);
+
+		// AI streaming proxy endpoint
+		register_rest_route(
+			$this->namespace,
+			'/ai/stream',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'stream_ai_completion' ),
+					'permission_callback' => array( $this, 'send_message_permissions_check' ),
+					'args'                => array(
+						'model'       => array(
+							'description' => 'The AI model to use',
+							'type'        => 'string',
+							'required'    => false,
+							'default'     => 'gpt-4o-mini',
+						),
+						'messages'    => array(
+							'description' => 'The chat messages array',
+							'type'        => 'array',
+							'required'    => true,
+						),
+						'tools'       => array(
+							'description' => 'Available tools/functions',
+							'type'        => 'array',
+							'required'    => false,
+						),
+						'tool_choice' => array(
+							'description' => 'Tool choice strategy',
+							'required'    => false,
+						),
+						'stream'      => array(
+							'description' => 'Whether to stream the response',
+							'type'        => 'boolean',
+							'required'    => false,
+							'default'     => true,
+						),
+						'max_tokens'  => array(
+							'description' => 'Maximum tokens in response',
+							'type'        => 'integer',
+							'required'    => false,
+						),
+						'temperature' => array(
+							'description' => 'Temperature for response randomness',
+							'type'        => 'number',
+							'required'    => false,
 						),
 					),
 				),
@@ -263,5 +323,116 @@ class ChatController extends WP_REST_Controller {
 		// The remote API returns status and optionally data when completed
 		// Format: { "status": "received|generating|completed|failed", "data": {...} }
 		return new WP_REST_Response( $response, 200 );
+	}
+
+	/**
+	 * Stream AI chat completion through OpenAI proxy
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error|void Returns response for non-streaming, void for streaming
+	 */
+	public function stream_ai_completion( $request ) {
+		// Check if OpenAI is configured
+		if ( ! $this->openai_proxy->is_configured() ) {
+			return new WP_Error(
+				'openai_not_configured',
+				'OpenAI API key is not configured. Please add OPENAI_API_KEY constant to wp-config.php',
+				array( 'status' => 400 )
+			);
+		}
+
+		$messages = $request->get_param( 'messages' );
+
+		if ( empty( $messages ) || ! is_array( $messages ) ) {
+			return new WP_Error(
+				'missing_messages',
+				'Messages array is required',
+				array( 'status' => 400 )
+			);
+		}
+
+		// Prepare request data
+		$request_data = array(
+			'model'    => $request->get_param( 'model' ) ?: 'gpt-4o-mini',
+			'messages' => $this->sanitize_messages( $messages ),
+		);
+
+		// Add optional parameters
+		$tools = $request->get_param( 'tools' );
+		if ( ! empty( $tools ) ) {
+			$request_data['tools'] = $tools;
+		}
+
+		$tool_choice = $request->get_param( 'tool_choice' );
+		if ( null !== $tool_choice ) {
+			$request_data['tool_choice'] = $tool_choice;
+		}
+
+		$max_tokens = $request->get_param( 'max_tokens' );
+		if ( null !== $max_tokens ) {
+			$request_data['max_tokens'] = $max_tokens;
+		}
+
+		$temperature = $request->get_param( 'temperature' );
+		if ( null !== $temperature ) {
+			$request_data['temperature'] = $temperature;
+		}
+
+		$stream = $request->get_param( 'stream' );
+
+		// Handle streaming vs non-streaming
+		if ( false === $stream ) {
+			// Non-streaming request
+			$response = $this->openai_proxy->chat_completion( $request_data );
+
+			if ( is_wp_error( $response ) ) {
+				return $response;
+			}
+
+			return new WP_REST_Response( $response, 200 );
+		}
+
+		// Streaming request - output directly and exit
+		$this->openai_proxy->stream_chat_completion( $request_data );
+		exit;
+	}
+
+	/**
+	 * Sanitize messages array for OpenAI API
+	 *
+	 * @param array $messages Raw messages array.
+	 * @return array Sanitized messages
+	 */
+	private function sanitize_messages( array $messages ) {
+		$sanitized = array();
+
+		foreach ( $messages as $message ) {
+			if ( ! isset( $message['role'] ) ) {
+				continue;
+			}
+
+			$sanitized_message = array(
+				'role' => sanitize_text_field( $message['role'] ),
+			);
+
+			// Handle content (can be string or null for tool calls)
+			if ( isset( $message['content'] ) ) {
+				$sanitized_message['content'] = wp_kses_post( $message['content'] );
+			}
+
+			// Handle tool calls from assistant
+			if ( ! empty( $message['tool_calls'] ) && is_array( $message['tool_calls'] ) ) {
+				$sanitized_message['tool_calls'] = $message['tool_calls'];
+			}
+
+			// Handle tool response
+			if ( isset( $message['tool_call_id'] ) ) {
+				$sanitized_message['tool_call_id'] = sanitize_text_field( $message['tool_call_id'] );
+			}
+
+			$sanitized[] = $sanitized_message;
+		}
+
+		return $sanitized;
 	}
 }
