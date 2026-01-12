@@ -16,5 +16,3 @@ domReady(() => {
 
 // Export components for potential reuse
 export { ChatEditor };
-
-console.log("kika");

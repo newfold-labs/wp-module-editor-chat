@@ -297,9 +297,9 @@ class CloudflareOpenAIClient {
 	/**
 	 * Send a simple chat message
 	 *
-	 * @param {string} message  User message
-	 * @param {Array}  context  Previous messages for context
-	 * @param {Array}  tools    Available MCP tools
+	 * @param {string} message User message
+	 * @param {Array}  context Previous messages for context
+	 * @param {Array}  tools   Available MCP tools
 	 * @return {Promise<Object>} Response with message and optional tool calls
 	 */
 	async sendMessage(message, context = [], tools = []) {

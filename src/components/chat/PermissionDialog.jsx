@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { __ } from "@wordpress/i18n";
+import { __, sprintf } from "@wordpress/i18n";
 
 /**
  * External dependencies
@@ -27,24 +27,45 @@ const PermissionDialog = ({ toolCalls = [], onApprove, onDeny }) => {
 
 	/**
 	 * Format tool name for display
+	 *
+	 * @param {string} name Tool name to format
+	 * @return {string} Formatted tool name
 	 */
 	const formatToolName = (name) => {
-		return name.replace(/^wp-mcp\//, "").replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+		return name
+			.replace(/^wp-mcp\//, "")
+			.replace(/-/g, " ")
+			.replace(/\b\w/g, (l) => l.toUpperCase());
 	};
 
 	/**
 	 * Get a human-readable description of what the tool will do
+	 *
+	 * @param {Object} toolCall Tool call object
+	 * @return {string} Human-readable description
 	 */
 	const getToolDescription = (toolCall) => {
 		const { name, arguments: args } = toolCall;
 
 		switch (name) {
 			case "wp-mcp/create-post":
-				return __(`Create a new post: "${args.title || "Untitled"}"`, "wp-module-editor-chat");
+				return sprintf(
+					/* translators: %s: post title */
+					__('Create a new post: "%s"', "wp-module-editor-chat"),
+					args.title || __("Untitled", "wp-module-editor-chat")
+				);
 			case "wp-mcp/update-post":
-				return __(`Update post ID: ${args.post_id}`, "wp-module-editor-chat");
+				return sprintf(
+					/* translators: %s: post ID */
+					__("Update post ID: %s", "wp-module-editor-chat"),
+					args.post_id
+				);
 			case "wp-mcp/delete-post":
-				return __(`Delete post ID: ${args.post_id}`, "wp-module-editor-chat");
+				return sprintf(
+					/* translators: %s: post ID */
+					__("Delete post ID: %s", "wp-module-editor-chat"),
+					args.post_id
+				);
 			default:
 				return formatToolName(name);
 		}
@@ -70,7 +91,9 @@ const PermissionDialog = ({ toolCalls = [], onApprove, onDeny }) => {
 				<ul className="nfd-permission-dialog__tool-list">
 					{toolCalls.map((toolCall, index) => (
 						<li key={toolCall.id || index} className="nfd-permission-dialog__tool-item">
-							<span className="nfd-permission-dialog__tool-name">{getToolDescription(toolCall)}</span>
+							<span className="nfd-permission-dialog__tool-name">
+								{getToolDescription(toolCall)}
+							</span>
 							{toolCall.arguments && Object.keys(toolCall.arguments).length > 0 && (
 								<details className="nfd-permission-dialog__tool-details">
 									<summary>{__("View details", "wp-module-editor-chat")}</summary>

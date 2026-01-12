@@ -227,7 +227,7 @@ const useChat = () => {
 
 		// Initialize MCP connection
 		initializeMCP();
-	}, [sessionId, initializeMCP]);
+	}, [sessionId, savedSessionId, initializeMCP]);
 
 	// Save session ID when it changes
 	useEffect(() => {

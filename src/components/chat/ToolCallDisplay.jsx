@@ -16,10 +16,10 @@ import classnames from "classnames";
  * Displays a single tool call with expandable request/response details.
  * Shows status indicators and formatted JSON data.
  *
- * @param {Object}  props              Component props
- * @param {Object}  props.toolCall     The tool call object
- * @param {Object}  props.toolResult   The tool result object (optional)
- * @param {boolean} props.isExecuting  Whether the tool is currently executing
+ * @param {Object}  props             Component props
+ * @param {Object}  props.toolCall    The tool call object
+ * @param {Object}  props.toolResult  The tool result object (optional)
+ * @param {boolean} props.isExecuting Whether the tool is currently executing
  * @return {JSX.Element} The ToolCallDisplay component
  */
 const ToolCallDisplay = ({ toolCall, toolResult, isExecuting = false }) => {
@@ -40,7 +40,9 @@ const ToolCallDisplay = ({ toolCall, toolResult, isExecuting = false }) => {
 			if (isError) {
 				return <XCircle className="nfd-tool-call__status-icon nfd-tool-call__status-icon--error" />;
 			}
-			return <CheckCircle className="nfd-tool-call__status-icon nfd-tool-call__status-icon--success" />;
+			return (
+				<CheckCircle className="nfd-tool-call__status-icon nfd-tool-call__status-icon--success" />
+			);
 		}
 		return <Wrench className="nfd-tool-call__status-icon nfd-tool-call__status-icon--pending" />;
 	};
@@ -50,7 +52,7 @@ const ToolCallDisplay = ({ toolCall, toolResult, isExecuting = false }) => {
 	 */
 	const getStatusText = () => {
 		if (isExecuting) {
-			return __("Executing...", "wp-module-editor-chat");
+			return __("Executing…", "wp-module-editor-chat");
 		}
 		if (hasResult) {
 			if (isError) {
@@ -63,14 +65,23 @@ const ToolCallDisplay = ({ toolCall, toolResult, isExecuting = false }) => {
 
 	/**
 	 * Format tool name for display
+	 *
+	 * @param {string} toolName The tool name to format
+	 * @return {string} Formatted tool name
 	 */
 	const formatToolName = (toolName) => {
 		// Remove common prefixes and format nicely
-		return toolName.replace(/^wp-mcp\//, "").replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+		return toolName
+			.replace(/^wp-mcp\//, "")
+			.replace(/-/g, " ")
+			.replace(/\b\w/g, (l) => l.toUpperCase());
 	};
 
 	/**
 	 * Format JSON for display
+	 *
+	 * @param {*} data The data to format
+	 * @return {string} Formatted string
 	 */
 	const formatJSON = (data) => {
 		try {
@@ -85,6 +96,9 @@ const ToolCallDisplay = ({ toolCall, toolResult, isExecuting = false }) => {
 
 	/**
 	 * Extract text content from tool result
+	 *
+	 * @param {*} result The result to extract text from
+	 * @return {string|null} Extracted text or null
 	 */
 	const extractResultText = (result) => {
 		if (!result) {
@@ -172,9 +186,7 @@ const ToolCallDisplay = ({ toolCall, toolResult, isExecuting = false }) => {
 									{toolResult.error || __("Tool execution failed", "wp-module-editor-chat")}
 								</div>
 							) : (
-								<pre className="nfd-tool-call__code">
-									{extractResultText(toolResult.result)}
-								</pre>
+								<pre className="nfd-tool-call__code">{extractResultText(toolResult.result)}</pre>
 							)}
 						</div>
 					)}

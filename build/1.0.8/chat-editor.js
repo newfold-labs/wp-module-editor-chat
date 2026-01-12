@@ -53428,7 +53428,7 @@ const useChat = () => {
 
     // Initialize MCP connection
     initializeMCP();
-  }, [sessionId, initializeMCP]);
+  }, [sessionId, savedSessionId, initializeMCP]);
 
   // Save session ID when it changes
   (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useEffect)(() => {
@@ -55021,7 +55021,7 @@ __webpack_require__.r(__webpack_exports__);
 
 /**
  * Get the WordPress data module
- * @returns {Object|null} WordPress data object or null if not available
+ * @return {Object|null} WordPress data object or null if not available
  */
 function getWPData() {
   if (typeof window !== "undefined" && window.wp && window.wp.data) {
@@ -55032,7 +55032,7 @@ function getWPData() {
 
 /**
  * Get the global styles ID from the current site editor context
- * @returns {number|null} Global styles post ID or null
+ * @return {number|null} Global styles post ID or null
  */
 function getGlobalStylesId() {
   const data = getWPData();
@@ -55091,7 +55091,7 @@ function getGlobalStylesId() {
 
 /**
  * Get current global styles from the data store
- * @returns {Object} Current global styles object
+ * @return {Object} Current global styles object
  */
 function getCurrentGlobalStyles() {
   const data = getWPData();
@@ -55176,9 +55176,9 @@ function getCurrentGlobalStyles() {
 /**
  * Update the global color palette in real-time
  *
- * @param {Array} colors Array of color objects: [{ slug: string, color: string, name: string }]
+ * @param {Array}   colors     Array of color objects: [{ slug: string, color: string, name: string }]
  * @param {boolean} replaceAll If true, replace entire custom palette. If false, merge with existing.
- * @returns {Promise<Object>} Result object with success status and updated palette
+ * @return {Promise<Object>} Result object with success status and updated palette
  */
 async function updateGlobalPalette(colors, replaceAll = false) {
   const data = getWPData();
@@ -55298,7 +55298,7 @@ async function updateGlobalPalette(colors, replaceAll = false) {
 
 /**
  * Check if we're in an environment where global styles can be edited
- * @returns {boolean} True if global styles editing is available
+ * @return {boolean} True if global styles editing is available
  */
 function isGlobalStylesAvailable() {
   const data = getWPData();
@@ -55316,7 +55316,7 @@ function isGlobalStylesAvailable() {
 
 /**
  * Get a formatted list of current palette colors for display
- * @returns {Array} Array of formatted color strings
+ * @return {Array} Array of formatted color strings
  */
 function getFormattedPalette() {
   const {
@@ -56112,9 +56112,9 @@ class CloudflareOpenAIClient {
   /**
    * Send a simple chat message
    *
-   * @param {string} message  User message
-   * @param {Array}  context  Previous messages for context
-   * @param {Array}  tools    Available MCP tools
+   * @param {string} message User message
+   * @param {Array}  context Previous messages for context
+   * @param {Array}  tools   Available MCP tools
    * @return {Promise<Object>} Response with message and optional tool calls
    */
   async sendMessage(message, context = [], tools = []) {
@@ -56661,7 +56661,7 @@ __webpack_require__.r(__webpack_exports__);
 /**
  * Check if a string contains markdown syntax
  * @param {string} text - The text to check
- * @returns {boolean} True if markdown is detected
+ * @return {boolean} True if markdown is detected
  */
 function containsMarkdown(text) {
   if (!text || typeof text !== "string") {
@@ -56695,7 +56695,7 @@ function containsMarkdown(text) {
 /**
  * Parse markdown text to HTML
  * @param {string} text - The markdown text to parse
- * @returns {string} HTML string
+ * @return {string} HTML string
  */
 function parseMarkdown(text) {
   if (!text || typeof text !== "string") {
@@ -57097,7 +57097,6 @@ _wordpress_dom_ready__WEBPACK_IMPORTED_MODULE_1___default()(() => {
 
 // Export components for potential reuse
 
-console.log("kika");
 })();
 
 ((((window.newfold = window.newfold || {}).wordpress = window.newfold.wordpress || {}).editor = window.newfold.wordpress.editor || {}).chat = window.newfold.wordpress.editor.chat || {})["chat-editor"] = __webpack_exports__;

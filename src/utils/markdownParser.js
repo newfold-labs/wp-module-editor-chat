@@ -8,7 +8,7 @@
 /**
  * Check if a string contains markdown syntax
  * @param {string} text - The text to check
- * @returns {boolean} True if markdown is detected
+ * @return {boolean} True if markdown is detected
  */
 export function containsMarkdown(text) {
 	if (!text || typeof text !== "string") {
@@ -35,7 +35,7 @@ export function containsMarkdown(text) {
 /**
  * Parse markdown text to HTML
  * @param {string} text - The markdown text to parse
- * @returns {string} HTML string
+ * @return {string} HTML string
  */
 export function parseMarkdown(text) {
 	if (!text || typeof text !== "string") {

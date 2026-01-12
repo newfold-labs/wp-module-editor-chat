@@ -71,7 +71,13 @@ const ChatEditor = () => {
 					{messages.length === 0 ? (
 						<WelcomeScreen onSendMessage={handleSendMessage} />
 					) : (
-						<ChatMessages messages={messages} isLoading={isLoading} error={error} status={status} activeToolCall={activeToolCall} />
+						<ChatMessages
+							messages={messages}
+							isLoading={isLoading}
+							error={error}
+							status={status}
+							activeToolCall={activeToolCall}
+						/>
 					)}
 					{hasPendingActions && (
 						<ActionButtons

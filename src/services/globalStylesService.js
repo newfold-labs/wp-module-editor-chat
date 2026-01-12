@@ -8,7 +8,7 @@
 
 /**
  * Get the WordPress data module
- * @returns {Object|null} WordPress data object or null if not available
+ * @return {Object|null} WordPress data object or null if not available
  */
 function getWPData() {
 	if (typeof window !== "undefined" && window.wp && window.wp.data) {
@@ -19,7 +19,7 @@ function getWPData() {
 
 /**
  * Get the global styles ID from the current site editor context
- * @returns {number|null} Global styles post ID or null
+ * @return {number|null} Global styles post ID or null
  */
 export function getGlobalStylesId() {
 	const data = getWPData();
@@ -47,7 +47,10 @@ export function getGlobalStylesId() {
 			if (typeof editSiteStore.getSettings === "function") {
 				const settings = editSiteStore.getSettings();
 				if (settings?.__experimentalGlobalStylesUserEntityId) {
-					console.log("Found global styles ID via edit-site settings:", settings.__experimentalGlobalStylesUserEntityId);
+					console.log(
+						"Found global styles ID via edit-site settings:",
+						settings.__experimentalGlobalStylesUserEntityId
+					);
 					return settings.__experimentalGlobalStylesUserEntityId;
 				}
 			}
@@ -79,7 +82,7 @@ export function getGlobalStylesId() {
 
 /**
  * Get current global styles from the data store
- * @returns {Object} Current global styles object
+ * @return {Object} Current global styles object
  */
 export function getCurrentGlobalStyles() {
 	const data = getWPData();
@@ -164,9 +167,9 @@ export function getCurrentGlobalStyles() {
 /**
  * Update the global color palette in real-time
  *
- * @param {Array} colors Array of color objects: [{ slug: string, color: string, name: string }]
+ * @param {Array}   colors     Array of color objects: [{ slug: string, color: string, name: string }]
  * @param {boolean} replaceAll If true, replace entire custom palette. If false, merge with existing.
- * @returns {Promise<Object>} Result object with success status and updated palette
+ * @return {Promise<Object>} Result object with success status and updated palette
  */
 export async function updateGlobalPalette(colors, replaceAll = false) {
 	const data = getWPData();
@@ -299,7 +302,7 @@ export async function updateGlobalPalette(colors, replaceAll = false) {
 
 /**
  * Check if we're in an environment where global styles can be edited
- * @returns {boolean} True if global styles editing is available
+ * @return {boolean} True if global styles editing is available
  */
 export function isGlobalStylesAvailable() {
 	const data = getWPData();
@@ -318,7 +321,7 @@ export function isGlobalStylesAvailable() {
 
 /**
  * Get a formatted list of current palette colors for display
- * @returns {Array} Array of formatted color strings
+ * @return {Array} Array of formatted color strings
  */
 export function getFormattedPalette() {
 	const { palette } = getCurrentGlobalStyles();
