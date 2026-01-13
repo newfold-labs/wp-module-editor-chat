@@ -169,6 +169,7 @@ const useChat = () => {
 
 	const hasInitializedRef = useRef(false);
 	const abortControllerRef = useRef(null);
+	const originalGlobalStylesRef = useRef(null); // Track original global styles for revert all
 
 	// Get WordPress editor dispatch functions
 	const { savePost } = useDispatch("core/editor");
@@ -292,21 +293,17 @@ const useChat = () => {
 		abortControllerRef.current = new AbortController();
 
 		try {
-			// Build message context for OpenAI
-			const systemMessage = openaiClient.createWordPressSystemMessage();
+			// Build message context for API (system prompt is injected server-side by cloud-patterns)
 			const recentMessages = [...messages, userMessage].slice(-10);
 
-			const openaiMessages = [
-				systemMessage,
-				...openaiClient.convertMessagesToOpenAI(
-					recentMessages.map((msg) => ({
-						role: msg.type === "user" ? "user" : "assistant",
-						content: msg.content ?? "", // Ensure content is never null/undefined
-						toolCalls: msg.toolCalls,
-						toolResults: msg.toolResults,
-					}))
-				),
-			];
+			const openaiMessages = openaiClient.convertMessagesToOpenAI(
+				recentMessages.map((msg) => ({
+					role: msg.type === "user" ? "user" : "assistant",
+					content: msg.content ?? "", // Ensure content is never null/undefined
+					toolCalls: msg.toolCalls,
+					toolResults: msg.toolResults,
+				}))
+			);
 
 			// Get MCP tools in OpenAI format
 			const openaiTools = mcpClient.isConnected() ? mcpClient.getToolsForOpenAI() : [];
@@ -443,6 +440,7 @@ const useChat = () => {
 	 */
 	const handleToolCalls = async (toolCalls, assistantMessageId, previousMessages) => {
 		const toolResults = [];
+		let globalStylesUndoData = null; // Track undo data for global style changes
 
 		// Set status to tool_call mode
 		setStatus("tool_call");
@@ -450,11 +448,7 @@ const useChat = () => {
 
 		// Mark message as executing tools
 		setMessages((prev) =>
-			prev.map((msg) =>
-				msg.id === assistantMessageId
-					? { ...msg, isExecutingTools: true }
-					: msg
-			)
+			prev.map((msg) => (msg.id === assistantMessageId ? { ...msg, isExecutingTools: true } : msg))
 		);
 
 		for (let i = 0; i < toolCalls.length; i++) {
@@ -487,34 +481,62 @@ const useChat = () => {
 					);
 
 					// Handle global palette update via JS service for real-time updates
-					if (abilityName === "nfd-editor-chat/update-global-palette") {
-						await updateProgress(__("Reading current color palette…", "wp-module-editor-chat"), 500);
+					if (abilityName === "blu/update-global-palette") {
+						await updateProgress(
+							__("Reading current color palette…", "wp-module-editor-chat"),
+							500
+						);
 						console.log("=== Intercepting global palette update for real-time changes ===");
 						console.log("Colors:", params.colors);
 						console.log("Replace all:", params.replace_all);
 
 						try {
-							await updateProgress(__("Applying new colors to your site…", "wp-module-editor-chat"), 600);
+							await updateProgress(
+								__("Applying new colors to your site…", "wp-module-editor-chat"),
+								600
+							);
 							const jsResult = await updateGlobalPalette(params.colors, params.replace_all);
 							console.log("JS update result:", jsResult);
 
 							if (jsResult.success) {
-								await updateProgress(__("✓ Colors updated successfully!", "wp-module-editor-chat"), 800);
+								await updateProgress(
+									__("✓ Colors updated! Review and Accept or Decline.", "wp-module-editor-chat"),
+									800
+								);
 								setHasGlobalStylesChanges(true);
+
+								// Only capture original state ONCE (first change)
+								// This ensures "Decline" reverts to the true original, not intermediate states
+								if (jsResult.undoData && !originalGlobalStylesRef.current) {
+									originalGlobalStylesRef.current = jsResult.undoData;
+								}
+
+								// Always use the first captured original state for undo
+								if (originalGlobalStylesRef.current) {
+									globalStylesUndoData = originalGlobalStylesRef.current;
+								}
+
 								toolResults.push({
 									id: toolCall.id,
 									result: [{ type: "text", text: JSON.stringify(jsResult) }],
 									isError: false,
+									hasChanges: true, // Flag to indicate this tool made changes
 								});
 								continue;
 							} else {
 								// Fall back to MCP if JS fails
-								await updateProgress(__("Retrying with alternative method…", "wp-module-editor-chat"), 400);
+								await updateProgress(
+									__("Retrying with alternative method…", "wp-module-editor-chat"),
+									400
+								);
 								console.warn("JS update failed, falling back to MCP:", jsResult.error);
 							}
 						} catch (jsError) {
 							console.error("JS update threw error:", jsError);
-							await updateProgress(__("Retrying with alternative method…", "wp-module-editor-chat"), 400);
+							await updateProgress(
+								__("Retrying with alternative method…", "wp-module-editor-chat"),
+								400
+							);
 						}
 
 						// Fallback to MCP
@@ -528,7 +550,7 @@ const useChat = () => {
 					}
 
 					// Handle get global styles via JS service for more accurate data
-					if (abilityName === "nfd-editor-chat/get-global-styles") {
+					if (abilityName === "blu/get-global-styles") {
 						await updateProgress(__("Reading site color palette…", "wp-module-editor-chat"), 500);
 						console.log("=== Intercepting get global styles for real-time data ===");
 
@@ -556,12 +578,18 @@ const useChat = () => {
 								});
 								continue;
 							} else {
-								await updateProgress(__("Checking WordPress database…", "wp-module-editor-chat"), 400);
+								await updateProgress(
+									__("Checking WordPress database…", "wp-module-editor-chat"),
+									400
+								);
 								console.warn("JS get styles returned empty, falling back to MCP");
 							}
 						} catch (jsError) {
 							console.error("JS get styles threw error:", jsError);
-							await updateProgress(__("Checking WordPress database…", "wp-module-editor-chat"), 400);
+							await updateProgress(
+								__("Checking WordPress database…", "wp-module-editor-chat"),
+								400
+							);
 						}
 						// Fall through to MCP if JS fails
 					}
@@ -594,6 +622,9 @@ const useChat = () => {
 		// Show completion briefly before transitioning
 		await updateProgress(__("✓ Actions completed", "wp-module-editor-chat"), 500);
 
+		// Check if any tools made changes that need accept/decline
+		const hasChanges = toolResults.some((r) => r.hasChanges);
+
 		// Update message with tool results and mark execution as complete
 		setMessages((prev) =>
 			prev.map((msg) =>
@@ -602,6 +633,13 @@ const useChat = () => {
 							...msg,
 							toolResults,
 							isExecutingTools: false,
+							// Add hasActions and undoData if there are changes to accept/decline
+							...(hasChanges && globalStylesUndoData
+								? {
+										hasActions: true,
+										undoData: globalStylesUndoData,
+									}
+								: {}),
 						}
 					: msg
 			)
@@ -646,10 +684,8 @@ const useChat = () => {
 					},
 				]);
 
-				// Build messages for follow-up
-				const systemMessage = openaiClient.createWordPressSystemMessage();
+				// Build messages for follow-up (system prompt injected server-side)
 				const followUpMessages = [
-					systemMessage,
 					...openaiClient.convertMessagesToOpenAI(previousMessages.slice(0, -1)),
 					{
 						role: "user",
@@ -729,6 +765,8 @@ const useChat = () => {
 		setStatus(null);
 		setError(null);
 		setMessages([]);
+		setHasGlobalStylesChanges(false);
+		originalGlobalStylesRef.current = null; // Reset original state tracking
 
 		// Generate new session ID
 		const newSessionId = generateSessionId();
@@ -760,6 +798,9 @@ const useChat = () => {
 				if (globalStylesId) {
 					await saveEditedEntityRecord("root", "globalStyles", globalStylesId);
 				}
+
+				// Reset the original state ref since changes are now committed
+				originalGlobalStylesRef.current = null;
 			} catch (saveError) {
 				console.error("Error saving global styles:", saveError);
 			}
@@ -817,8 +858,9 @@ const useChat = () => {
 				})
 			);
 
-			// Reset global styles changes flag
+			// Reset global styles changes flag and original state ref
 			setHasGlobalStylesChanges(false);
+			originalGlobalStylesRef.current = null;
 		} catch (restoreError) {
 			console.error("Error restoring changes:", restoreError);
 		}

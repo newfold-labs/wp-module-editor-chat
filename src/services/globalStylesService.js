@@ -165,11 +165,11 @@ export function getCurrentGlobalStyles() {
 }
 
 /**
- * Update the global color palette in real-time
+ * Update the global color palette in real-time (preview mode - doesn't auto-save)
  *
  * @param {Array}   colors     Array of color objects: [{ slug: string, color: string, name: string }]
  * @param {boolean} replaceAll If true, replace entire custom palette. If false, merge with existing.
- * @return {Promise<Object>} Result object with success status and updated palette
+ * @return {Promise<Object>} Result object with success status, updated palette, and undo data
  */
 export async function updateGlobalPalette(colors, replaceAll = false) {
 	const data = getWPData();
@@ -205,6 +205,9 @@ export async function updateGlobalPalette(colors, replaceAll = false) {
 				error: "Could not load current global styles.",
 			};
 		}
+
+		// Capture original state for undo BEFORE making any changes
+		const originalStyles = JSON.parse(JSON.stringify(currentRecord.settings || {}));
 
 		// Build the new settings
 		const currentSettings = currentRecord.settings || {};
@@ -273,23 +276,26 @@ export async function updateGlobalPalette(colors, replaceAll = false) {
 
 		console.log("New settings:", newSettings);
 
-		// Update the entity record (this makes it appear immediately in the editor)
+		// Update the entity record (this makes it appear immediately in the editor as a PREVIEW)
+		// Note: We do NOT save here - user must click Accept to save
 		await coreDispatch.editEntityRecord("root", "globalStyles", globalStylesId, {
 			settings: newSettings,
 		});
 
-		console.log("Entity record updated, now saving...");
-
-		// Save the changes to persist them
-		await coreDispatch.saveEditedEntityRecord("root", "globalStyles", globalStylesId);
-
-		console.log("Global styles saved successfully!");
+		console.log("Entity record updated (preview mode - not saved yet)");
 
 		return {
 			success: true,
 			updatedColors: validatedColors,
 			currentPalette: newCustomPalette,
-			message: `Successfully updated ${validatedColors.length} color(s) in the global palette. The changes should be visible immediately.`,
+			message: `Updated ${validatedColors.length} color(s) in the global palette. Click Accept to save or Decline to revert.`,
+			// Include undo data for accept/decline functionality
+			undoData: {
+				globalStyles: {
+					originalStyles,
+					globalStylesId,
+				},
+			},
 		};
 	} catch (error) {
 		console.error("Error updating global palette:", error);
