@@ -49,6 +49,11 @@ const ChatMessage = ({ message, type = "assistant" }) => {
 		return { content: message, isRichContent: false };
 	}, [message, isUser]);
 
+	// Don't render empty messages
+	if (!content) {
+		return null;
+	}
+
 	return (
 		<div className={`nfd-editor-chat-message nfd-editor-chat-message--${type}`}>
 			{isRichContent ? (

@@ -22,6 +22,7 @@ import ChatMessage from "./ChatMessage";
  * @param {string}  props.error          - Error message to display (optional).
  * @param {string}  props.status         - The current status ('received', 'generating', 'tool_call', etc.).
  * @param {Object}  props.activeToolCall - The currently executing tool call (optional).
+ * @param {string}  props.toolProgress   - Real-time progress message during tool execution (optional).
  * @return {JSX.Element} The ChatMessages component.
  */
 const ChatMessages = ({
@@ -30,22 +31,29 @@ const ChatMessages = ({
 	error = null,
 	status = null,
 	activeToolCall = null,
+	toolProgress = null,
 }) => {
 	const messagesEndRef = useRef(null);
 
 	// Scroll to bottom when new messages arrive or loading state changes
 	useEffect(() => {
 		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-	}, [messages, isLoading]);
+	}, [messages, isLoading, toolProgress]);
 
 	return (
 		<div className="nfd-editor-chat-messages">
-			{messages.length &&
+			{messages.length > 0 &&
 				messages.map((msg, index) => (
-					<ChatMessage key={index} message={msg.content} type={msg.type} />
+					<ChatMessage key={msg.id || index} message={msg.content} type={msg.type} />
 				))}
 			{error && <ErrorAlert message={error} />}
-			{isLoading && <TypingIndicator status={status} activeToolCall={activeToolCall} />}
+			{isLoading && (
+				<TypingIndicator
+					status={status}
+					activeToolCall={activeToolCall}
+					toolProgress={toolProgress}
+				/>
+			)}
 			<div ref={messagesEndRef} />
 		</div>
 	);

@@ -857,10 +857,116 @@
 .nfd-editor-chat-typing-indicator {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding-top: 4px;
+  gap: 10px;
+  padding: 8px 0;
 }
 
+.nfd-editor-chat-typing-indicator__spinner {
+  color: var(--nfd-editor-chat-color-primary, #3b82f6);
+  animation: nfd-spin 1s linear infinite;
+  flex-shrink: 0;
+}
+
+.nfd-editor-chat-typing-indicator__text {
+  font-size: var(--nfd-editor-chat-font-size-base);
+  color: var(--nfd-editor-chat-color-text);
+  font-weight: 500;
+}
+
+.nfd-editor-chat-typing-indicator__preview {
+  margin-top: 8px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 8px;
+  font-size: var(--nfd-editor-chat-font-size-sm);
+  color: var(--nfd-editor-chat-color-grey-dark);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.nfd-editor-chat-tool-status {
+  background: linear-gradient(-135deg, rgba(59, 130, 246, 0.06) 0%, rgba(147, 51, 234, 0.06) 100%);
+  border: 1px solid rgba(59, 130, 246, 0.15);
+  border-radius: 12px;
+  padding: 14px 16px;
+  min-width: 220px;
+}
+
+.nfd-editor-chat-tool-status__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.nfd-editor-chat-tool-status__spinner {
+  color: var(--nfd-editor-chat-color-primary, #3b82f6);
+  animation: nfd-spin 1s linear infinite;
+  flex-shrink: 0;
+}
+
+.nfd-editor-chat-tool-status__title {
+  font-weight: 600;
+  font-size: var(--nfd-editor-chat-font-size-base);
+  color: var(--nfd-editor-chat-color-text);
+  flex: 1;
+}
+
+.nfd-editor-chat-tool-status__description {
+  font-size: var(--nfd-editor-chat-font-size-sm);
+  color: var(--nfd-editor-chat-color-grey-medium);
+  line-height: 1.5;
+  padding-right: 28px;
+}
+
+.nfd-editor-chat-tool-status__params {
+  color: var(--nfd-editor-chat-color-primary, #3b82f6);
+  font-weight: 500;
+}
+
+.nfd-editor-chat-tool-status__progress {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+.nfd-editor-chat-tool-status__progress-bar {
+  height: 3px;
+  background: rgba(59, 130, 246, 0.15);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.nfd-editor-chat-tool-status__progress-fill {
+  height: 100%;
+  width: 30%;
+  background: linear-gradient(-90deg, #3b82f6, #8b5cf6, #3b82f6);
+  background-size: 200% 100%;
+  border-radius: 2px;
+  animation: nfd-progress-slide 1.5s ease-in-out infinite;
+}
+
+@keyframes nfd-spin {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+@keyframes nfd-progress-slide {
+  0% {
+    transform: translateX(100%);
+    background-position: 100% 50%;
+  }
+  50% {
+    background-position: 0% 50%;
+  }
+  100% {
+    transform: translateX(-400%);
+    background-position: 100% 50%;
+  }
+}
 .nfd-editor-chat-typing-indicator__icon {
   font-size: 16px;
   line-height: 1;
@@ -904,58 +1010,6 @@
     opacity: 1;
   }
 }
-.nfd-editor-chat-tool-status {
-  background: linear-gradient(-135deg, rgba(59, 130, 246, 0.08) 0%, rgba(147, 51, 234, 0.08) 100%);
-  border: 1px solid rgba(59, 130, 246, 0.2);
-  border-radius: 12px;
-  padding: 12px 16px;
-  min-width: 200px;
-}
-
-.nfd-editor-chat-tool-status__header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
-}
-
-.nfd-editor-chat-tool-status__icon {
-  font-size: 18px;
-  line-height: 1;
-}
-
-.nfd-editor-chat-tool-status__title {
-  font-weight: 600;
-  font-size: var(--nfd-editor-chat-font-size-base);
-  color: var(--nfd-editor-chat-color-text);
-  flex: 1;
-}
-
-.nfd-editor-chat-tool-status__spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(59, 130, 246, 0.2);
-  border-top-color: rgb(59, 130, 246);
-  border-radius: 50%;
-  animation: nfd-spin 0.8s linear infinite;
-}
-
-@keyframes nfd-spin {
-  to {
-    transform: rotate(-360deg);
-  }
-}
-.nfd-editor-chat-tool-status__description {
-  font-size: var(--nfd-editor-chat-font-size-sm);
-  color: var(--nfd-editor-chat-color-grey-medium);
-  line-height: 1.4;
-}
-
-.nfd-editor-chat-tool-status__params {
-  color: var(--nfd-editor-chat-color-primary);
-  font-weight: 500;
-}
-
 .nfd-editor-chat-typing-indicator__loader {
   width: 20px;
   aspect-ratio: 2;

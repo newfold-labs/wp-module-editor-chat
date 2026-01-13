@@ -2,7 +2,8 @@
 /**
  * OpenAI Proxy Service
  *
- * Handles proxying requests to OpenAI API or Cloudflare AI Gateway.
+ * Handles proxying requests to the cloud-patterns AI endpoint,
+ * which in turn proxies to OpenAI API or Cloudflare AI Gateway.
  * Supports both streaming and non-streaming requests.
  *
  * @package NewfoldLabs\WP\Module\EditorChat\Services
@@ -10,6 +11,7 @@
 
 namespace NewfoldLabs\WP\Module\EditorChat\Services;
 
+use NewfoldLabs\WP\Module\Data\HiiveConnection;
 use WP_Error;
 
 /**
@@ -18,11 +20,18 @@ use WP_Error;
 class OpenAIProxy {
 
 	/**
-	 * OpenAI API base URL
+	 * Production base URL for the AI proxy
 	 *
 	 * @var string
 	 */
-	const OPENAI_API_URL = 'https://api.openai.com/v1';
+	const PRODUCTION_BASE_URL = 'https://patterns.hiive.cloud/api/v1/ai/chat/completions';
+
+	/**
+	 * Local base URL for development
+	 *
+	 * @var string
+	 */
+	const LOCAL_BASE_URL = 'https://localhost:8888/api/v1/ai/chat/completions';
 
 	/**
 	 * Default model to use
@@ -32,148 +41,67 @@ class OpenAIProxy {
 	const DEFAULT_MODEL = 'gpt-4o-mini';
 
 	/**
-	 * Get the OpenAI API key from options or wp-config.php constant
+	 * API path for chat completions endpoint
 	 *
-	 * @return string|null API key or null if not defined
+	 * @var string
 	 */
-	public function get_openai_api_key() {
-		// First check WordPress option
-		$key = get_option( 'nfd_editor_chat_openai_api_key', '' );
-		if ( ! empty( $key ) ) {
-			return $key;
+	const API_PATH = '/api/v1/ai/chat/completions';
+
+	/**
+	 * Get the AI proxy URL based on environment
+	 *
+	 * @return string The AI proxy URL
+	 */
+	private function get_proxy_url(): string {
+		// Check for custom URL override (can be full URL or just base URL)
+		if ( defined( 'NFD_AI_PROXY_URL' ) && ! empty( NFD_AI_PROXY_URL ) ) {
+			$url = NFD_AI_PROXY_URL;
+			// Append API path if not already included
+			if ( strpos( $url, self::API_PATH ) === false ) {
+				$url = rtrim( $url, '/' ) . self::API_PATH;
+			}
+			return $url;
 		}
 
-		// Fall back to wp-config.php constant
-		if ( defined( 'OPENAI_API_KEY' ) && ! empty( OPENAI_API_KEY ) ) {
-			return OPENAI_API_KEY;
+		// Check for local base URL override
+		if ( defined( 'NFD_WB_LOCAL_BASE_URL' ) && ! empty( NFD_WB_LOCAL_BASE_URL ) ) {
+			return rtrim( NFD_WB_LOCAL_BASE_URL, '/' ) . self::API_PATH;
 		}
 
-		return null;
+		// Use dev mode URL if enabled
+		if ( defined( 'NFD_DATA_WB_DEV_MODE' ) && constant( 'NFD_DATA_WB_DEV_MODE' ) ) {
+			return self::LOCAL_BASE_URL;
+		}
+
+		return self::PRODUCTION_BASE_URL;
 	}
 
 	/**
-	 * Get Cloudflare AI Gateway URL from wp-config.php or options
+	 * Check if AI is configured
 	 *
-	 * @return string|null Gateway URL or null if not configured
-	 */
-	public function get_cloudflare_gateway_url() {
-		// First check wp-config.php constant
-		if ( defined( 'CF_AI_GATEWAY_URL' ) && ! empty( CF_AI_GATEWAY_URL ) ) {
-			return CF_AI_GATEWAY_URL;
-		}
-
-		// Fall back to WordPress option
-		return get_option( 'nfd_editor_chat_cloudflare_gateway_url', '' ) ?: null;
-	}
-
-	/**
-	 * Get Cloudflare token from wp-config.php or options
-	 *
-	 * @return string|null Token or null if not configured
-	 */
-	public function get_cloudflare_token() {
-		// First check wp-config.php constant
-		if ( defined( 'CF_AI_GATEWAY_TOKEN' ) && ! empty( CF_AI_GATEWAY_TOKEN ) ) {
-			return CF_AI_GATEWAY_TOKEN;
-		}
-
-		// Fall back to WordPress option
-		return get_option( 'nfd_editor_chat_cloudflare_token', '' ) ?: null;
-	}
-
-	/**
-	 * Check if AI is configured (either OpenAI or Cloudflare)
+	 * Always returns true since cloud-patterns handles credentials.
 	 *
 	 * @return bool True if configured
 	 */
 	public function is_configured() {
-		$cloudflare_url   = $this->get_cloudflare_gateway_url();
-		$cloudflare_token = $this->get_cloudflare_token();
-		$openai_key       = $this->get_openai_api_key();
-
-		// Check Cloudflare configuration first
-		if ( ! empty( $cloudflare_url ) && ! empty( $cloudflare_token ) ) {
-			return true;
-		}
-
-		// Fall back to OpenAI
-		return ! empty( $openai_key );
+		// Cloud-patterns handles all credential management
+		// We just need to be able to reach the endpoint
+		return true;
 	}
 
 	/**
 	 * Get the API configuration (URL and headers)
 	 *
-	 * @return array|WP_Error Configuration array with 'url' and 'headers' or WP_Error
+	 * @return array Configuration array with 'url' and 'headers'
 	 */
 	public function get_api_config() {
-		$cloudflare_url   = $this->get_cloudflare_gateway_url();
-		$cloudflare_token = $this->get_cloudflare_token();
-		$openai_key       = $this->get_openai_api_key();
-
-		// Prefer Cloudflare AI Gateway if configured
-		if ( ! empty( $cloudflare_url ) && ! empty( $cloudflare_token ) ) {
-			return array(
-				'url'     => rtrim( $cloudflare_url, '/' ) . '/chat/completions',
-				'headers' => array(
-					'cf-aig-authorization' => 'Bearer ' . $cloudflare_token,
-					'Content-Type'         => 'application/json',
-				),
-			);
-		}
-
-		// Fall back to direct OpenAI API
-		if ( ! empty( $openai_key ) ) {
-			return array(
-				'url'     => self::OPENAI_API_URL . '/chat/completions',
-				'headers' => array(
-					'Authorization' => 'Bearer ' . $openai_key,
-					'Content-Type'  => 'application/json',
-				),
-			);
-		}
-
-		return new WP_Error(
-			'missing_ai_config',
-			'AI configuration is missing. Please configure Cloudflare AI Gateway or OpenAI API key in settings.',
-			array( 'status' => 400 )
+		return array(
+			'url'     => $this->get_proxy_url(),
+			'headers' => array(
+				'Authorization' => 'Bearer ' . HiiveConnection::get_auth_token(),
+				'Content-Type'  => 'application/json',
+			),
 		);
-	}
-
-	/**
-	 * Fix empty arrays that should be empty objects for JSON Schema compliance
-	 *
-	 * PHP's json_decode converts {} to [] when using associative arrays.
-	 * This breaks OpenAI's JSON Schema validation which expects objects.
-	 *
-	 * @param array $tools The tools array to fix.
-	 * @return array Fixed tools array with proper object types.
-	 */
-	private function fix_tools_schema( array $tools ): array {
-		foreach ( $tools as &$tool ) {
-			if ( isset( $tool['function']['parameters'] ) ) {
-				$params = &$tool['function']['parameters'];
-
-				// Ensure parameters is an object, not an empty array
-				if ( empty( $params ) || ( is_array( $params ) && array_keys( $params ) === range( 0, count( $params ) - 1 ) && count( $params ) === 0 ) ) {
-					$params = (object) array(
-						'type'       => 'object',
-						'properties' => (object) array(),
-					);
-				} else {
-					// Ensure type is set
-					if ( ! isset( $params['type'] ) ) {
-						$params['type'] = 'object';
-					}
-
-					// Ensure properties is an object, not an empty array
-					if ( ! isset( $params['properties'] ) || ( is_array( $params['properties'] ) && empty( $params['properties'] ) ) ) {
-						$params['properties'] = (object) array();
-					}
-				}
-			}
-		}
-
-		return $tools;
 	}
 
 	/**
@@ -185,20 +113,17 @@ class OpenAIProxy {
 	public function proxy_request( array $request_data ) {
 		$config = $this->get_api_config();
 
-		if ( is_wp_error( $config ) ) {
-			return $config;
-		}
-
 		// Prepare the request body
 		$body = array(
 			'model'    => $request_data['model'] ?? self::DEFAULT_MODEL,
 			'messages' => $request_data['messages'] ?? array(),
 			'stream'   => false,
+			'context'  => $request_data['context'] ?? 'editor',
 		);
 
-		// Add optional parameters - fix tools schema to prevent empty array issues
+		// Add optional parameters
 		if ( ! empty( $request_data['tools'] ) ) {
-			$body['tools'] = $this->fix_tools_schema( $request_data['tools'] );
+			$body['tools'] = $request_data['tools'];
 		}
 
 		if ( isset( $request_data['tool_choice'] ) ) {
@@ -218,8 +143,9 @@ class OpenAIProxy {
 			array(
 				'headers'     => $config['headers'],
 				'body'        => wp_json_encode( $body ),
-				'timeout'     => 60,
+				'timeout'     => 120,
 				'data_format' => 'body',
+				'sslverify'   => $this->should_verify_ssl(),
 			)
 		);
 
@@ -258,21 +184,17 @@ class OpenAIProxy {
 	public function stream_request( array $request_data ) {
 		$config = $this->get_api_config();
 
-		if ( is_wp_error( $config ) ) {
-			$this->send_error_event( $config->get_error_message() );
-			return;
-		}
-
 		// Prepare the request body
 		$body = array(
 			'model'    => $request_data['model'] ?? self::DEFAULT_MODEL,
 			'messages' => $request_data['messages'] ?? array(),
 			'stream'   => true,
+			'context'  => $request_data['context'] ?? 'editor',
 		);
 
-		// Add optional parameters - fix tools schema to prevent empty array issues
+		// Add optional parameters
 		if ( ! empty( $request_data['tools'] ) ) {
-			$body['tools'] = $this->fix_tools_schema( $request_data['tools'] );
+			$body['tools'] = $request_data['tools'];
 		}
 
 		if ( isset( $request_data['tool_choice'] ) ) {
@@ -334,18 +256,23 @@ class OpenAIProxy {
 			$curl_headers[] = "{$key}: {$value}";
 		}
 
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_setopt_array
-		curl_setopt_array(
-			$ch,
-			array(
-				CURLOPT_POST           => true,
-				CURLOPT_POSTFIELDS     => wp_json_encode( $body ),
-				CURLOPT_HTTPHEADER     => $curl_headers,
-				CURLOPT_RETURNTRANSFER => false,
-				CURLOPT_TIMEOUT        => 120,
-				CURLOPT_WRITEFUNCTION  => array( $this, 'handle_stream_chunk' ),
-			)
+		$curl_options = array(
+			CURLOPT_POST           => true,
+			CURLOPT_POSTFIELDS     => wp_json_encode( $body ),
+			CURLOPT_HTTPHEADER     => $curl_headers,
+			CURLOPT_RETURNTRANSFER => false,
+			CURLOPT_TIMEOUT        => 120,
+			CURLOPT_WRITEFUNCTION  => array( $this, 'handle_stream_chunk' ),
 		);
+
+		// Disable SSL verification in development
+		if ( ! $this->should_verify_ssl() ) {
+			$curl_options[ CURLOPT_SSL_VERIFYPEER ] = false;
+			$curl_options[ CURLOPT_SSL_VERIFYHOST ] = 0;
+		}
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_setopt_array
+		curl_setopt_array( $ch, $curl_options );
 
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_exec
 		$result = curl_exec( $ch );
@@ -376,7 +303,7 @@ class OpenAIProxy {
 	 * @return int Number of bytes handled
 	 */
 	public function handle_stream_chunk( $ch, $data ) {
-		// Forward the data as-is (it's already in SSE format from OpenAI)
+		// Forward the data as-is (it's already in SSE format)
 		echo $data;
 
 		if ( ob_get_level() > 0 ) {
@@ -412,16 +339,38 @@ class OpenAIProxy {
 	}
 
 	/**
+	 * Determine if SSL should be verified
+	 *
+	 * @return bool
+	 */
+	private function should_verify_ssl() {
+		// In development environments, disable SSL verification
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			return false;
+		}
+
+		// Check if we're on a local development environment
+		$site_url = get_site_url();
+		if ( strpos( $site_url, 'localhost' ) !== false ||
+			strpos( $site_url, '127.0.0.1' ) !== false ||
+			strpos( $site_url, '.test' ) !== false ||
+			strpos( $site_url, '.local' ) !== false ) {
+			return false;
+		}
+
+		// For production, always verify SSL
+		return true;
+	}
+
+	/**
 	 * Get masked settings for frontend display
 	 *
 	 * @return array Settings with sensitive values masked
 	 */
 	public function get_masked_settings() {
 		return array(
-			'openai_api_key'         => ! empty( $this->get_openai_api_key() ) ? '***' : '',
-			'cloudflare_gateway_url' => $this->get_cloudflare_gateway_url() ?: '',
-			'cloudflare_token'       => ! empty( $this->get_cloudflare_token() ) ? '***' : '',
-			'is_configured'          => $this->is_configured(),
+			'proxy_url'     => $this->get_proxy_url(),
+			'is_configured' => $this->is_configured(),
 		);
 	}
 }

@@ -30,6 +30,7 @@ const ChatEditor = () => {
 		status,
 		isSaving,
 		activeToolCall,
+		toolProgress,
 		handleSendMessage,
 		handleNewChat,
 		handleAcceptChanges,
@@ -77,6 +78,7 @@ const ChatEditor = () => {
 							error={error}
 							status={status}
 							activeToolCall={activeToolCall}
+							toolProgress={toolProgress}
 						/>
 					)}
 					{hasPendingActions && (

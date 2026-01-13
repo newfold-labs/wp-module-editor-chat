@@ -42954,6 +42954,36 @@ const Layers = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])(
 
 /***/ }),
 
+/***/ "./node_modules/lucide-react/dist/esm/icons/loader-circle.js":
+/*!*******************************************************************!*\
+  !*** ./node_modules/lucide-react/dist/esm/icons/loader-circle.js ***!
+  \*******************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* binding */ LoaderCircle)
+/* harmony export */ });
+/* harmony import */ var _createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../createLucideIcon.js */ "./node_modules/lucide-react/dist/esm/createLucideIcon.js");
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+
+const LoaderCircle = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])("LoaderCircle", [
+  ["path", { d: "M21 12a9 9 0 1 1-6.219-8.56", key: "13zald" }]
+]);
+
+
+//# sourceMappingURL=loader-circle.js.map
+
+
+/***/ }),
+
 /***/ "./node_modules/lucide-react/dist/esm/icons/palette.js":
 /*!*************************************************************!*\
   !*** ./node_modules/lucide-react/dist/esm/icons/palette.js ***!
@@ -52026,6 +52056,7 @@ const ChatEditor = () => {
     status,
     isSaving,
     activeToolCall,
+    toolProgress,
     handleSendMessage,
     handleNewChat,
     handleAcceptChanges,
@@ -52075,7 +52106,8 @@ const ChatEditor = () => {
           isLoading: isLoading,
           error: error,
           status: status,
-          activeToolCall: activeToolCall
+          activeToolCall: activeToolCall,
+          toolProgress: toolProgress
         }), hasPendingActions && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)(_chat_ActionButtons__WEBPACK_IMPORTED_MODULE_6__["default"], {
           pendingCount: pendingActionsCount,
           onAccept: handleAcceptChanges,
@@ -52408,6 +52440,11 @@ const ChatMessage = ({
       isRichContent: false
     };
   }, [message, isUser]);
+
+  // Don't render empty messages
+  if (!content) {
+    return null;
+  }
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("div", {
     className: `nfd-editor-chat-message nfd-editor-chat-message--${type}`,
     children: isRichContent ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("div", {
@@ -52466,6 +52503,7 @@ __webpack_require__.r(__webpack_exports__);
  * @param {string}  props.error          - Error message to display (optional).
  * @param {string}  props.status         - The current status ('received', 'generating', 'tool_call', etc.).
  * @param {Object}  props.activeToolCall - The currently executing tool call (optional).
+ * @param {string}  props.toolProgress   - Real-time progress message during tool execution (optional).
  * @return {JSX.Element} The ChatMessages component.
  */
 
@@ -52474,7 +52512,8 @@ const ChatMessages = ({
   isLoading = false,
   error = null,
   status = null,
-  activeToolCall = null
+  activeToolCall = null,
+  toolProgress = null
 }) => {
   const messagesEndRef = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useRef)(null);
 
@@ -52483,17 +52522,18 @@ const ChatMessages = ({
     messagesEndRef.current?.scrollIntoView({
       behavior: "smooth"
     });
-  }, [messages, isLoading]);
+  }, [messages, isLoading, toolProgress]);
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("div", {
     className: "nfd-editor-chat-messages",
-    children: [messages.length && messages.map((msg, index) => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(_ChatMessage__WEBPACK_IMPORTED_MODULE_3__["default"], {
+    children: [messages.length > 0 && messages.map((msg, index) => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(_ChatMessage__WEBPACK_IMPORTED_MODULE_3__["default"], {
       message: msg.content,
       type: msg.type
-    }, index)), error && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(_ui_ErrorAlert__WEBPACK_IMPORTED_MODULE_1__["default"], {
+    }, msg.id || index)), error && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(_ui_ErrorAlert__WEBPACK_IMPORTED_MODULE_1__["default"], {
       message: error
     }), isLoading && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(_ui_TypingIndicator__WEBPACK_IMPORTED_MODULE_2__["default"], {
       status: status,
-      activeToolCall: activeToolCall
+      activeToolCall: activeToolCall,
+      toolProgress: toolProgress
     }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("div", {
       ref: messagesEndRef
     })]
@@ -52993,42 +53033,57 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @wordpress/i18n */ "@wordpress/i18n");
 /* harmony import */ var _wordpress_i18n__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react/jsx-runtime */ "react/jsx-runtime");
-/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/loader-circle.js");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! react/jsx-runtime */ "react/jsx-runtime");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__);
 /**
  * WordPress dependencies
  */
 
 
 /**
+ * External dependencies
+ */
+
+
+/**
  * Get ability details for display
+ *
  * @param {string} abilityName The ability name
- * @return {Object} { title, description, icon }
+ * @return {Object} { title, description }
  */
 
 const getAbilityDetails = abilityName => {
   const abilityMap = {
     "nfd-editor-chat/get-global-styles": {
-      title: "Reading Site Colors",
-      description: "Fetching current color palette and typography settings"
+      title: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Reading Site Colors", "wp-module-editor-chat"),
+      description: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Fetching current color palette and typography settings", "wp-module-editor-chat")
     },
     "nfd-editor-chat/update-global-palette": {
-      title: "Updating Site Colors",
-      description: "Applying new colors to global styles"
+      title: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Updating Site Colors", "wp-module-editor-chat"),
+      description: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Applying new colors to global styles", "wp-module-editor-chat")
+    },
+    "mcp-adapter-discover-abilities": {
+      title: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Discovering Actions", "wp-module-editor-chat"),
+      description: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Finding available WordPress abilities", "wp-module-editor-chat")
+    },
+    "mcp-adapter-get-ability-info": {
+      title: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Getting Ability Info", "wp-module-editor-chat"),
+      description: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Fetching ability details", "wp-module-editor-chat")
     }
   };
   return abilityMap[abilityName] || {
-    title: abilityName,
-    description: "Executing action",
-    icon: "⚙️"
+    title: abilityName?.replace(/[-_]/g, " ").replace(/\b\w/g, l => l.toUpperCase()) || (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Executing", "wp-module-editor-chat"),
+    description: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Running action", "wp-module-editor-chat")
   };
 };
 
 /**
  * Get tool details for display
+ *
  * @param {string} toolName The tool name
  * @param {Object} args     The tool arguments
- * @return {Object} { title, description, icon, params }
+ * @return {Object} { title, description, params }
  */
 const getToolDetails = (toolName, args = {}) => {
   if (toolName === "mcp-adapter-execute-ability") {
@@ -53046,125 +53101,97 @@ const getToolDetails = (toolName, args = {}) => {
       params
     };
   }
-  if (toolName === "mcp-adapter-discover-abilities") {
-    return {
-      title: "Discovering Actions",
-      description: "Finding available WordPress abilities",
-      icon: "🔍",
-      params: null
-    };
-  }
-  if (toolName === "mcp-adapter-get-ability-info") {
-    return {
-      title: "Getting Ability Info",
-      description: `Fetching details for ${args?.ability_name || "ability"}`,
-      icon: "📋",
-      params: null
-    };
-  }
-  return {
-    title: toolName,
-    description: "Executing tool",
-    icon: "🔧",
-    params: null
-  };
+  return getAbilityDetails(toolName);
 };
 
 /**
  * TypingIndicator Component
  *
- * Displays an animated typing indicator with detailed tool call information.
+ * Displays an animated typing indicator with spinner and real-time progress.
  *
  * @param {Object} props                - The component props.
  * @param {string} props.status         - The current status ('received', 'generating', 'tool_call', 'summarizing', etc.).
  * @param {Object} props.activeToolCall - The currently executing tool call (optional).
+ * @param {string} props.toolProgress   - Real-time progress message during tool execution (optional).
  * @return {JSX.Element} The TypingIndicator component.
  */
 const TypingIndicator = ({
   status = null,
-  activeToolCall = null
+  activeToolCall = null,
+  toolProgress = null
 }) => {
-  // If we have an active tool call, show detailed view
+  // Get status text based on status
+  const getStatusText = () => {
+    switch (status) {
+      case "received":
+        return (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Message received", "wp-module-editor-chat");
+      case "generating":
+        return (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Thinking", "wp-module-editor-chat");
+      case "tool_call":
+        return (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Executing action", "wp-module-editor-chat");
+      case "summarizing":
+        return (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Summarizing results", "wp-module-editor-chat");
+      case "completed":
+        return (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Processing", "wp-module-editor-chat");
+      case "failed":
+        return (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Error occurred", "wp-module-editor-chat");
+      default:
+        return (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Thinking", "wp-module-editor-chat");
+    }
+  };
+
+  // If we have an active tool call, show detailed tool status with streaming progress
   if (activeToolCall) {
     const details = getToolDetails(activeToolCall.name, activeToolCall.arguments);
-    return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("div", {
+    const progressIndicator = activeToolCall.total > 1 ? ` (${activeToolCall.index}/${activeToolCall.total})` : "";
+    return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)("div", {
       className: "nfd-editor-chat-message nfd-editor-chat-message--assistant",
-      children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("div", {
+      children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)("div", {
         className: "nfd-editor-chat-message__content",
-        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxs)("div", {
+        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxs)("div", {
           className: "nfd-editor-chat-tool-status",
-          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxs)("div", {
+          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxs)("div", {
             className: "nfd-editor-chat-tool-status__header",
-            children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("span", {
-              className: "nfd-editor-chat-tool-status__icon",
-              children: details.icon
-            }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("span", {
+            children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)(lucide_react__WEBPACK_IMPORTED_MODULE_1__["default"], {
+              className: "nfd-editor-chat-tool-status__spinner",
+              size: 18
+            }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxs)("span", {
               className: "nfd-editor-chat-tool-status__title",
-              children: details.title
-            }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("div", {
-              className: "nfd-editor-chat-tool-status__spinner"
+              children: [details.title, progressIndicator]
             })]
-          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxs)("div", {
+          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxs)("div", {
             className: "nfd-editor-chat-tool-status__description",
-            children: [details.description, details.params && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxs)("span", {
+            children: [toolProgress || details.description, details.params && !toolProgress && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxs)("span", {
               className: "nfd-editor-chat-tool-status__params",
               children: [" \u2022 ", details.params]
             })]
+          }), toolProgress && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)("div", {
+            className: "nfd-editor-chat-tool-status__progress",
+            children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)("div", {
+              className: "nfd-editor-chat-tool-status__progress-bar",
+              children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)("div", {
+                className: "nfd-editor-chat-tool-status__progress-fill"
+              })
+            })
           })]
         })
       })
     });
   }
 
-  // Default status text
-  const getStatusText = () => {
-    switch (status) {
-      case "received":
-        return {
-          text: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Message received", "wp-module-editor-chat")
-        };
-      case "generating":
-        return {
-          text: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Thinking", "wp-module-editor-chat")
-        };
-      case "tool_call":
-        return {
-          text: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Executing action", "wp-module-editor-chat")
-        };
-      case "summarizing":
-        return {
-          text: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Summarizing results", "wp-module-editor-chat")
-        };
-      case "completed":
-        return {
-          text: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Processing", "wp-module-editor-chat")
-        };
-      case "failed":
-        return {
-          text: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Error occurred", "wp-module-editor-chat")
-        };
-      default:
-        return {
-          text: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Thinking", "wp-module-editor-chat")
-        };
-    }
-  };
-  const statusInfo = getStatusText();
-  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("div", {
+  // Default thinking indicator with spinner
+  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)("div", {
     className: "nfd-editor-chat-message nfd-editor-chat-message--assistant",
-    children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("div", {
+    children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)("div", {
       className: "nfd-editor-chat-message__content",
-      children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxs)("div", {
+      children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxs)("div", {
         className: "nfd-editor-chat-typing-indicator",
-        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("div", {
-          className: "nfd-editor-chat-typing-indicator__icon",
-          children: statusInfo.icon
-        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("div", {
-          className: "nfd-editor-chat-typing-indicator__status",
-          children: statusInfo.text
-        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxs)("div", {
-          className: "nfd-editor-chat-typing-indicator__dots",
-          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("span", {}), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("span", {}), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("span", {})]
+        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)(lucide_react__WEBPACK_IMPORTED_MODULE_1__["default"], {
+          className: "nfd-editor-chat-typing-indicator__spinner",
+          size: 16
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)("span", {
+          className: "nfd-editor-chat-typing-indicator__text",
+          children: getStatusText()
         })]
       })
     })
@@ -53275,6 +53302,7 @@ const loadMessages = () => {
     if (stored) {
       const messages = JSON.parse(stored);
       // Remove hasActions and undoData from loaded messages (actions should only show once)
+      // Also filter out invalid assistant messages (no content and no tool calls)
       return messages.map(msg => {
         const {
           hasActions,
@@ -53283,6 +53311,19 @@ const loadMessages = () => {
           ...rest
         } = msg;
         return rest;
+      }).filter(msg => {
+        // Keep all user messages
+        if (msg.type === "user") {
+          return true;
+        }
+        // For assistant messages, require either content or toolCalls
+        const hasContent = msg.content != null && msg.content !== "";
+        const hasToolCalls = msg.toolCalls && msg.toolCalls.length > 0;
+        if (!hasContent && !hasToolCalls) {
+          console.warn("Filtering out invalid assistant message from localStorage");
+          return false;
+        }
+        return true;
       });
     }
     return [];
@@ -53352,6 +53393,8 @@ const useChat = () => {
   const [mcpConnectionStatus, setMcpConnectionStatus] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useState)("disconnected");
   const [tools, setTools] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useState)([]);
   const [activeToolCall, setActiveToolCall] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useState)(null);
+  const [toolProgress, setToolProgress] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useState)(null); // For streaming tool progress
+
   const hasInitializedRef = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useRef)(false);
   const abortControllerRef = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_0__.useRef)(null);
 
@@ -53478,12 +53521,16 @@ const useChat = () => {
       // Build message context for OpenAI
       const systemMessage = _services_openaiClient__WEBPACK_IMPORTED_MODULE_5__.openaiClient.createWordPressSystemMessage();
       const recentMessages = [...messages, userMessage].slice(-10);
-      const openaiMessages = [systemMessage, ..._services_openaiClient__WEBPACK_IMPORTED_MODULE_5__.openaiClient.convertMessagesToOpenAI(recentMessages.map(msg => ({
-        role: msg.type === "user" ? "user" : "assistant",
-        content: msg.content,
-        toolCalls: msg.toolCalls,
-        toolResults: msg.toolResults
-      })))];
+      const openaiMessages = [systemMessage, ..._services_openaiClient__WEBPACK_IMPORTED_MODULE_5__.openaiClient.convertMessagesToOpenAI(recentMessages.map(msg => {
+        var _msg$content;
+        return {
+          role: msg.type === "user" ? "user" : "assistant",
+          content: (_msg$content = msg.content) !== null && _msg$content !== void 0 ? _msg$content : "",
+          // Ensure content is never null/undefined
+          toolCalls: msg.toolCalls,
+          toolResults: msg.toolResults
+        };
+      }))];
 
       // Get MCP tools in OpenAI format
       const openaiTools = _services_mcpClient__WEBPACK_IMPORTED_MODULE_4__.mcpClient.isConnected() ? _services_mcpClient__WEBPACK_IMPORTED_MODULE_4__.mcpClient.getToolsForOpenAI() : [];
@@ -53564,6 +53611,25 @@ const useChat = () => {
   };
 
   /**
+   * Helper to wait for a minimum time (for UX - so users can see progress)
+   *
+   * @param {number} ms Milliseconds to wait
+   * @return {Promise} Promise that resolves after ms
+   */
+  const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+  /**
+   * Update progress with minimum display time
+   *
+   * @param {string} message Progress message to show
+   * @param {number} minTime Minimum time to display (default 400ms)
+   */
+  const updateProgress = async (message, minTime = 400) => {
+    setToolProgress(message);
+    await wait(minTime);
+  };
+
+  /**
    * Handle tool calls from OpenAI response
    *
    * @param {Array}  toolCalls          Tool calls from OpenAI
@@ -53575,11 +53641,24 @@ const useChat = () => {
 
     // Set status to tool_call mode
     setStatus("tool_call");
-    for (const toolCall of toolCalls) {
+    await updateProgress((0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("Preparing to execute actions…", "wp-module-editor-chat"), 300);
+
+    // Mark message as executing tools
+    setMessages(prev => prev.map(msg => msg.id === assistantMessageId ? {
+      ...msg,
+      isExecutingTools: true
+    } : msg));
+    for (let i = 0; i < toolCalls.length; i++) {
+      const toolCall = toolCalls[i];
+      const toolIndex = i + 1;
+      const totalTools = toolCalls.length;
+
       // Set the active tool call for UI display
       setActiveToolCall({
         name: toolCall.name,
-        arguments: toolCall.arguments
+        arguments: toolCall.arguments,
+        index: toolIndex,
+        total: totalTools
       });
       try {
         // Check if this is a global styles update - handle it via JS for real-time updates
@@ -53591,13 +53670,16 @@ const useChat = () => {
 
           // Handle global palette update via JS service for real-time updates
           if (abilityName === "nfd-editor-chat/update-global-palette") {
+            await updateProgress((0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("Reading current color palette…", "wp-module-editor-chat"), 500);
             console.log("=== Intercepting global palette update for real-time changes ===");
             console.log("Colors:", params.colors);
             console.log("Replace all:", params.replace_all);
             try {
+              await updateProgress((0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("Applying new colors to your site…", "wp-module-editor-chat"), 600);
               const jsResult = await (0,_services_globalStylesService__WEBPACK_IMPORTED_MODULE_8__.updateGlobalPalette)(params.colors, params.replace_all);
               console.log("JS update result:", jsResult);
               if (jsResult.success) {
+                await updateProgress((0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("✓ Colors updated successfully!", "wp-module-editor-chat"), 800);
                 setHasGlobalStylesChanges(true);
                 toolResults.push({
                   id: toolCall.id,
@@ -53610,10 +53692,12 @@ const useChat = () => {
                 continue;
               } else {
                 // Fall back to MCP if JS fails
+                await updateProgress((0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("Retrying with alternative method…", "wp-module-editor-chat"), 400);
                 console.warn("JS update failed, falling back to MCP:", jsResult.error);
               }
             } catch (jsError) {
               console.error("JS update threw error:", jsError);
+              await updateProgress((0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("Retrying with alternative method…", "wp-module-editor-chat"), 400);
             }
 
             // Fallback to MCP
@@ -53628,13 +53712,17 @@ const useChat = () => {
 
           // Handle get global styles via JS service for more accurate data
           if (abilityName === "nfd-editor-chat/get-global-styles") {
+            await updateProgress((0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("Reading site color palette…", "wp-module-editor-chat"), 500);
             console.log("=== Intercepting get global styles for real-time data ===");
             try {
+              await updateProgress((0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("Analyzing theme settings…", "wp-module-editor-chat"), 600);
               const jsResult = (0,_services_globalStylesService__WEBPACK_IMPORTED_MODULE_8__.getCurrentGlobalStyles)();
               console.log("JS get styles result:", jsResult);
 
               // Check if we got valid data (palette has items or we have rawSettings)
               if (jsResult.palette?.length > 0 || jsResult.rawSettings) {
+                const colorCount = jsResult.palette?.length || 0;
+                await updateProgress(`✓ Found ${colorCount} colors in palette`, 700);
                 toolResults.push({
                   id: toolCall.id,
                   result: [{
@@ -53648,17 +53736,25 @@ const useChat = () => {
                 });
                 continue;
               } else {
+                await updateProgress((0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("Checking WordPress database…", "wp-module-editor-chat"), 400);
                 console.warn("JS get styles returned empty, falling back to MCP");
               }
             } catch (jsError) {
               console.error("JS get styles threw error:", jsError);
+              await updateProgress((0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("Checking WordPress database…", "wp-module-editor-chat"), 400);
             }
             // Fall through to MCP if JS fails
           }
+
+          // For other abilities, show generic progress
+          const abilityShortName = abilityName.split("/").pop();
+          await updateProgress(`Executing ${abilityShortName}…`, 400);
         }
 
         // Default: use MCP for all other tool calls
+        await updateProgress((0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("Communicating with WordPress…", "wp-module-editor-chat"), 400);
         const result = await _services_mcpClient__WEBPACK_IMPORTED_MODULE_4__.mcpClient.callTool(toolCall.name, toolCall.arguments);
+        await updateProgress((0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("Processing response…", "wp-module-editor-chat"), 300);
         toolResults.push({
           id: toolCall.id,
           result: result.content,
@@ -53666,6 +53762,7 @@ const useChat = () => {
         });
       } catch (err) {
         console.error(`Tool call ${toolCall.name} failed:`, err);
+        await updateProgress((0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("Action failed: ", "wp-module-editor-chat") + err.message, 1000);
         toolResults.push({
           id: toolCall.id,
           result: null,
@@ -53674,14 +53771,19 @@ const useChat = () => {
       }
     }
 
-    // Update message with tool results
+    // Show completion briefly before transitioning
+    await updateProgress((0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_1__.__)("✓ Actions completed", "wp-module-editor-chat"), 500);
+
+    // Update message with tool results and mark execution as complete
     setMessages(prev => prev.map(msg => msg.id === assistantMessageId ? {
       ...msg,
-      toolResults
+      toolResults,
+      isExecutingTools: false
     } : msg));
 
-    // Clear active tool call
+    // Clear active tool call and progress
     setActiveToolCall(null);
+    setToolProgress(null);
 
     // If we have successful results, get a streaming follow-up response
     if (toolResults.some(r => !r.error)) {
@@ -53911,6 +54013,7 @@ const useChat = () => {
     mcpConnectionStatus,
     tools,
     activeToolCall,
+    toolProgress,
     handleSendMessage,
     handleNewChat,
     handleAcceptChanges,
@@ -56032,18 +56135,31 @@ class CloudflareOpenAIClient {
     const openaiMessages = [];
     for (const message of messages) {
       if (message.role === "system" || message.role === "user") {
+        var _message$content;
         openaiMessages.push({
           role: message.role,
-          content: message.content || ""
+          content: (_message$content = message.content) !== null && _message$content !== void 0 ? _message$content : "" // Use nullish coalescing for safety
         });
       } else if (message.role === "assistant") {
+        var _message$content2, _message$content3;
+        // Check for valid content and tool calls
+        const hasToolCalls = message.toolCalls && message.toolCalls.length > 0;
+        const hasContent = message.content != null && message.content !== "";
+
+        // Skip invalid assistant messages (no content AND no tool calls)
+        // OpenAI requires either content OR tool_calls for assistant messages
+        if (!hasContent && !hasToolCalls) {
+          console.warn("Skipping invalid assistant message with no content and no tool calls");
+          continue;
+        }
         const assistantMessage = {
           role: "assistant",
-          content: message.content || ""
+          // When there are tool_calls, content can be null (OpenAI allows this)
+          // When there are no tool_calls, content must be a string
+          content: hasToolCalls ? (_message$content2 = message.content) !== null && _message$content2 !== void 0 ? _message$content2 : null : (_message$content3 = message.content) !== null && _message$content3 !== void 0 ? _message$content3 : ""
         };
 
         // Add tool calls if present
-        const hasToolCalls = message.toolCalls && message.toolCalls.length > 0;
         if (hasToolCalls) {
           assistantMessage.tool_calls = message.toolCalls.map(call => ({
             id: call.id,
@@ -56660,6 +56776,7 @@ __webpack_require__.r(__webpack_exports__);
 
 /**
  * Check if a string contains markdown syntax
+ *
  * @param {string} text - The text to check
  * @return {boolean} True if markdown is detected
  */
@@ -56694,6 +56811,7 @@ function containsMarkdown(text) {
 
 /**
  * Parse markdown text to HTML
+ *
  * @param {string} text - The markdown text to parse
  * @return {string} HTML string
  */
@@ -56734,14 +56852,18 @@ function parseMarkdown(text) {
   // Links [text](url)
   html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
 
-  // Unordered lists
+  // Unordered lists - collect consecutive list items
   html = html.replace(/^(\s*)[-*+]\s+(.+)$/gm, (match, indent, content) => {
     const level = Math.floor(indent.length / 2);
     return `<li class="chat-li" data-level="${level}">${content}</li>`;
   });
 
-  // Wrap consecutive list items in <ul>
-  html = html.replace(/((?:<li[^>]*>.*?<\/li>\n?)+)/g, '<ul class="chat-ul">$1</ul>');
+  // Wrap consecutive list items in <ul> and remove newlines between them
+  html = html.replace(/((?:<li[^>]*>.*?<\/li>\s*)+)/g, match => {
+    // Remove all whitespace/newlines between list items
+    const cleanedItems = match.replace(/(<\/li>)\s+(<li)/g, "$1$2");
+    return `<ul class="chat-ul">${cleanedItems}</ul>`;
+  });
 
   // Ordered lists
   html = html.replace(/^(\s*)\d+\.\s+(.+)$/gm, (match, indent, content) => {
@@ -56749,9 +56871,11 @@ function parseMarkdown(text) {
     return `<oli class="chat-oli" data-level="${level}">${content}</oli>`;
   });
 
-  // Wrap consecutive ordered list items in <ol>
-  html = html.replace(/((?:<oli[^>]*>.*?<\/oli>\n?)+)/g, match => {
-    return '<ol class="chat-ol">' + match.replace(/<\/?oli/g, m => m.replace("oli", "li")) + "</ol>";
+  // Wrap consecutive ordered list items in <ol> and remove newlines between them
+  html = html.replace(/((?:<oli[^>]*>.*?<\/oli>\s*)+)/g, match => {
+    // Remove all whitespace/newlines between list items and convert oli to li
+    const cleanedItems = match.replace(/(<\/oli>)\s+(<oli)/g, "$1$2").replace(/<\/?oli/g, m => m.replace("oli", "li"));
+    return `<ol class="chat-ol">${cleanedItems}</ol>`;
   });
 
   // Horizontal rules
@@ -56774,14 +56898,24 @@ function parseMarkdown(text) {
       return `<p class="chat-p">${trimmed}</p>`;
     }
     return "";
-  }).filter(Boolean).join("\n");
+  }).filter(Boolean).join("");
 
-  // Convert single line breaks within paragraphs to <br>
+  // Convert single line breaks within paragraphs to <br> (only inside <p> tags)
   html = html.replace(/<p([^>]*)>([\s\S]*?)<\/p>/g, (match, attrs, content) => {
     // Trim content to avoid trailing <br> tags, then convert newlines
-    const processedContent = content.trim().replace(/\n/g, "<br />");
+    const processedContent = content.trim().replace(/\n/g, "<br>");
     return `<p${attrs}>${processedContent}</p>`;
   });
+
+  // Clean up any stray <br> tags between block elements
+  html = html.replace(/<br\s*\/?>\s*(<\/?(ul|ol|li|p|h[1-6]|pre|blockquote|hr))/gi, "$1");
+  html = html.replace(/(<\/(ul|ol|li|p|h[1-6]|pre|blockquote)>)\s*<br\s*\/?>/gi, "$1");
+
+  // Remove empty paragraphs
+  html = html.replace(/<p[^>]*>\s*<\/p>/g, "");
+
+  // Clean up multiple consecutive <br> tags
+  html = html.replace(/(<br\s*\/?>){2,}/g, "<br>");
   return html;
 }
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({

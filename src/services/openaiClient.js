@@ -214,16 +214,28 @@ class CloudflareOpenAIClient {
 			if (message.role === "system" || message.role === "user") {
 				openaiMessages.push({
 					role: message.role,
-					content: message.content || "",
+					content: message.content ?? "", // Use nullish coalescing for safety
 				});
 			} else if (message.role === "assistant") {
+				// Check for valid content and tool calls
+				const hasToolCalls = message.toolCalls && message.toolCalls.length > 0;
+				const hasContent = message.content != null && message.content !== "";
+
+				// Skip invalid assistant messages (no content AND no tool calls)
+				// OpenAI requires either content OR tool_calls for assistant messages
+				if (!hasContent && !hasToolCalls) {
+					console.warn("Skipping invalid assistant message with no content and no tool calls");
+					continue;
+				}
+
 				const assistantMessage = {
 					role: "assistant",
-					content: message.content || "",
+					// When there are tool_calls, content can be null (OpenAI allows this)
+					// When there are no tool_calls, content must be a string
+					content: hasToolCalls ? (message.content ?? null) : (message.content ?? ""),
 				};
 
 				// Add tool calls if present
-				const hasToolCalls = message.toolCalls && message.toolCalls.length > 0;
 				if (hasToolCalls) {
 					assistantMessage.tool_calls = message.toolCalls.map((call) => ({
 						id: call.id,

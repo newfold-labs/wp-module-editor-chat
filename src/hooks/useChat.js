@@ -77,10 +77,26 @@ const loadMessages = () => {
 		if (stored) {
 			const messages = JSON.parse(stored);
 			// Remove hasActions and undoData from loaded messages (actions should only show once)
-			return messages.map((msg) => {
-				const { hasActions, undoData, isStreaming, ...rest } = msg;
-				return rest;
-			});
+			// Also filter out invalid assistant messages (no content and no tool calls)
+			return messages
+				.map((msg) => {
+					const { hasActions, undoData, isStreaming, ...rest } = msg;
+					return rest;
+				})
+				.filter((msg) => {
+					// Keep all user messages
+					if (msg.type === "user") {
+						return true;
+					}
+					// For assistant messages, require either content or toolCalls
+					const hasContent = msg.content != null && msg.content !== "";
+					const hasToolCalls = msg.toolCalls && msg.toolCalls.length > 0;
+					if (!hasContent && !hasToolCalls) {
+						console.warn("Filtering out invalid assistant message from localStorage");
+						return false;
+					}
+					return true;
+				});
 		}
 		return [];
 	} catch (error) {
@@ -149,6 +165,7 @@ const useChat = () => {
 	const [mcpConnectionStatus, setMcpConnectionStatus] = useState("disconnected");
 	const [tools, setTools] = useState([]);
 	const [activeToolCall, setActiveToolCall] = useState(null);
+	const [toolProgress, setToolProgress] = useState(null); // For streaming tool progress
 
 	const hasInitializedRef = useRef(false);
 	const abortControllerRef = useRef(null);
@@ -284,7 +301,7 @@ const useChat = () => {
 				...openaiClient.convertMessagesToOpenAI(
 					recentMessages.map((msg) => ({
 						role: msg.type === "user" ? "user" : "assistant",
-						content: msg.content,
+						content: msg.content ?? "", // Ensure content is never null/undefined
 						toolCalls: msg.toolCalls,
 						toolResults: msg.toolResults,
 					}))
@@ -399,6 +416,25 @@ const useChat = () => {
 	};
 
 	/**
+	 * Helper to wait for a minimum time (for UX - so users can see progress)
+	 *
+	 * @param {number} ms Milliseconds to wait
+	 * @return {Promise} Promise that resolves after ms
+	 */
+	const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+	/**
+	 * Update progress with minimum display time
+	 *
+	 * @param {string} message Progress message to show
+	 * @param {number} minTime Minimum time to display (default 400ms)
+	 */
+	const updateProgress = async (message, minTime = 400) => {
+		setToolProgress(message);
+		await wait(minTime);
+	};
+
+	/**
 	 * Handle tool calls from OpenAI response
 	 *
 	 * @param {Array}  toolCalls          Tool calls from OpenAI
@@ -410,12 +446,28 @@ const useChat = () => {
 
 		// Set status to tool_call mode
 		setStatus("tool_call");
+		await updateProgress(__("Preparing to execute actions…", "wp-module-editor-chat"), 300);
 
-		for (const toolCall of toolCalls) {
+		// Mark message as executing tools
+		setMessages((prev) =>
+			prev.map((msg) =>
+				msg.id === assistantMessageId
+					? { ...msg, isExecutingTools: true }
+					: msg
+			)
+		);
+
+		for (let i = 0; i < toolCalls.length; i++) {
+			const toolCall = toolCalls[i];
+			const toolIndex = i + 1;
+			const totalTools = toolCalls.length;
+
 			// Set the active tool call for UI display
 			setActiveToolCall({
 				name: toolCall.name,
 				arguments: toolCall.arguments,
+				index: toolIndex,
+				total: totalTools,
 			});
 
 			try {
@@ -436,15 +488,18 @@ const useChat = () => {
 
 					// Handle global palette update via JS service for real-time updates
 					if (abilityName === "nfd-editor-chat/update-global-palette") {
+						await updateProgress(__("Reading current color palette…", "wp-module-editor-chat"), 500);
 						console.log("=== Intercepting global palette update for real-time changes ===");
 						console.log("Colors:", params.colors);
 						console.log("Replace all:", params.replace_all);
 
 						try {
+							await updateProgress(__("Applying new colors to your site…", "wp-module-editor-chat"), 600);
 							const jsResult = await updateGlobalPalette(params.colors, params.replace_all);
 							console.log("JS update result:", jsResult);
 
 							if (jsResult.success) {
+								await updateProgress(__("✓ Colors updated successfully!", "wp-module-editor-chat"), 800);
 								setHasGlobalStylesChanges(true);
 								toolResults.push({
 									id: toolCall.id,
@@ -454,10 +509,12 @@ const useChat = () => {
 								continue;
 							} else {
 								// Fall back to MCP if JS fails
+								await updateProgress(__("Retrying with alternative method…", "wp-module-editor-chat"), 400);
 								console.warn("JS update failed, falling back to MCP:", jsResult.error);
 							}
 						} catch (jsError) {
 							console.error("JS update threw error:", jsError);
+							await updateProgress(__("Retrying with alternative method…", "wp-module-editor-chat"), 400);
 						}
 
 						// Fallback to MCP
@@ -472,14 +529,18 @@ const useChat = () => {
 
 					// Handle get global styles via JS service for more accurate data
 					if (abilityName === "nfd-editor-chat/get-global-styles") {
+						await updateProgress(__("Reading site color palette…", "wp-module-editor-chat"), 500);
 						console.log("=== Intercepting get global styles for real-time data ===");
 
 						try {
+							await updateProgress(__("Analyzing theme settings…", "wp-module-editor-chat"), 600);
 							const jsResult = getCurrentGlobalStyles();
 							console.log("JS get styles result:", jsResult);
 
 							// Check if we got valid data (palette has items or we have rawSettings)
 							if (jsResult.palette?.length > 0 || jsResult.rawSettings) {
+								const colorCount = jsResult.palette?.length || 0;
+								await updateProgress(`✓ Found ${colorCount} colors in palette`, 700);
 								toolResults.push({
 									id: toolCall.id,
 									result: [
@@ -495,17 +556,25 @@ const useChat = () => {
 								});
 								continue;
 							} else {
+								await updateProgress(__("Checking WordPress database…", "wp-module-editor-chat"), 400);
 								console.warn("JS get styles returned empty, falling back to MCP");
 							}
 						} catch (jsError) {
 							console.error("JS get styles threw error:", jsError);
+							await updateProgress(__("Checking WordPress database…", "wp-module-editor-chat"), 400);
 						}
 						// Fall through to MCP if JS fails
 					}
+
+					// For other abilities, show generic progress
+					const abilityShortName = abilityName.split("/").pop();
+					await updateProgress(`Executing ${abilityShortName}…`, 400);
 				}
 
 				// Default: use MCP for all other tool calls
+				await updateProgress(__("Communicating with WordPress…", "wp-module-editor-chat"), 400);
 				const result = await mcpClient.callTool(toolCall.name, toolCall.arguments);
+				await updateProgress(__("Processing response…", "wp-module-editor-chat"), 300);
 				toolResults.push({
 					id: toolCall.id,
 					result: result.content,
@@ -513,6 +582,7 @@ const useChat = () => {
 				});
 			} catch (err) {
 				console.error(`Tool call ${toolCall.name} failed:`, err);
+				await updateProgress(__("Action failed: ", "wp-module-editor-chat") + err.message, 1000);
 				toolResults.push({
 					id: toolCall.id,
 					result: null,
@@ -521,20 +591,25 @@ const useChat = () => {
 			}
 		}
 
-		// Update message with tool results
+		// Show completion briefly before transitioning
+		await updateProgress(__("✓ Actions completed", "wp-module-editor-chat"), 500);
+
+		// Update message with tool results and mark execution as complete
 		setMessages((prev) =>
 			prev.map((msg) =>
 				msg.id === assistantMessageId
 					? {
 							...msg,
 							toolResults,
+							isExecutingTools: false,
 						}
 					: msg
 			)
 		);
 
-		// Clear active tool call
+		// Clear active tool call and progress
 		setActiveToolCall(null);
+		setToolProgress(null);
 
 		// If we have successful results, get a streaming follow-up response
 		if (toolResults.some((r) => !r.error)) {
@@ -796,6 +871,7 @@ const useChat = () => {
 		mcpConnectionStatus,
 		tools,
 		activeToolCall,
+		toolProgress,
 		handleSendMessage,
 		handleNewChat,
 		handleAcceptChanges,
