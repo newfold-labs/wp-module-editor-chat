@@ -89,7 +89,7 @@ const loadMessages = () => {
 						return true;
 					}
 					// For assistant messages, require either content or toolCalls
-					const hasContent = msg.content != null && msg.content !== "";
+					const hasContent = msg.content !== null && msg.content !== "";
 					const hasToolCalls = msg.toolCalls && msg.toolCalls.length > 0;
 					if (!hasContent && !hasToolCalls) {
 						console.warn("Filtering out invalid assistant message from localStorage");
@@ -166,6 +166,8 @@ const useChat = () => {
 	const [tools, setTools] = useState([]);
 	const [activeToolCall, setActiveToolCall] = useState(null);
 	const [toolProgress, setToolProgress] = useState(null); // For streaming tool progress
+	const [executedTools, setExecutedTools] = useState([]); // Completed tool executions
+	const [pendingTools, setPendingTools] = useState([]); // Queued tools waiting to execute
 
 	const hasInitializedRef = useRef(false);
 	const abortControllerRef = useRef(null);
@@ -274,9 +276,11 @@ const useChat = () => {
 	 * @param {string} messageContent The message to send
 	 */
 	const handleSendMessage = async (messageContent) => {
-		// Clear any previous errors
+		// Clear any previous errors and tool execution state
 		setError(null);
 		setStatus(null);
+		setExecutedTools([]);
+		setPendingTools([]);
 
 		// Add user message
 		const userMessage = {
@@ -440,11 +444,21 @@ const useChat = () => {
 	 */
 	const handleToolCalls = async (toolCalls, assistantMessageId, previousMessages) => {
 		const toolResults = [];
+		const completedToolsList = []; // Local tracking for tools (not relying on React state)
 		let globalStylesUndoData = null; // Track undo data for global style changes
 
 		// Set status to tool_call mode
 		setStatus("tool_call");
 		await updateProgress(__("Preparing to execute actions…", "wp-module-editor-chat"), 300);
+
+		// Initialize pending tools list (all tools queued for execution)
+		setPendingTools(
+			toolCalls.map((tc, idx) => ({
+				...tc,
+				id: tc.id || `tool-${idx}`,
+			}))
+		);
+		setExecutedTools([]);
 
 		// Mark message as executing tools
 		setMessages((prev) =>
@@ -456,8 +470,12 @@ const useChat = () => {
 			const toolIndex = i + 1;
 			const totalTools = toolCalls.length;
 
+			// Move current tool from pending to active
+			setPendingTools((prev) => prev.filter((_, idx) => idx !== 0));
+
 			// Set the active tool call for UI display
 			setActiveToolCall({
+				id: toolCall.id || `tool-${i}`,
 				name: toolCall.name,
 				arguments: toolCall.arguments,
 				index: toolIndex,
@@ -516,12 +534,18 @@ const useChat = () => {
 									globalStylesUndoData = originalGlobalStylesRef.current;
 								}
 
+								// Strip undoData from result before sending to AI (it's internal/local only)
+								const { undoData: _unused, ...resultForAI } = jsResult;
+
 								toolResults.push({
 									id: toolCall.id,
-									result: [{ type: "text", text: JSON.stringify(jsResult) }],
+									result: [{ type: "text", text: JSON.stringify(resultForAI) }],
 									isError: false,
 									hasChanges: true, // Flag to indicate this tool made changes
 								});
+								// Mark tool as executed (success)
+								completedToolsList.push({ ...toolCall, isError: false });
+								setExecutedTools((prev) => [...prev, { ...toolCall, isError: false }]);
 								continue;
 							} else {
 								// Fall back to MCP if JS fails
@@ -546,6 +570,9 @@ const useChat = () => {
 							result: result.content,
 							isError: result.isError,
 						});
+						// Mark tool as executed (MCP fallback)
+						completedToolsList.push({ ...toolCall, isError: result.isError });
+						setExecutedTools((prev) => [...prev, { ...toolCall, isError: result.isError }]);
 						continue;
 					}
 
@@ -576,6 +603,9 @@ const useChat = () => {
 									],
 									isError: false,
 								});
+								// Mark tool as executed (success)
+								completedToolsList.push({ ...toolCall, isError: false });
+								setExecutedTools((prev) => [...prev, { ...toolCall, isError: false }]);
 								continue;
 							} else {
 								await updateProgress(
@@ -608,14 +638,26 @@ const useChat = () => {
 					result: result.content,
 					isError: result.isError,
 				});
+				// Mark tool as executed (default MCP path)
+				completedToolsList.push({ ...toolCall, isError: result.isError });
+				setExecutedTools((prev) => [...prev, { ...toolCall, isError: result.isError }]);
 			} catch (err) {
 				console.error(`Tool call ${toolCall.name} failed:`, err);
-				await updateProgress(__("Action failed: ", "wp-module-editor-chat") + err.message, 1000);
+				await updateProgress(
+					__("Action failed:", "wp-module-editor-chat") + " " + err.message,
+					1000
+				);
 				toolResults.push({
 					id: toolCall.id,
 					result: null,
 					error: err.message,
 				});
+				// Mark tool as executed with error
+				completedToolsList.push({ ...toolCall, isError: true, errorMessage: err.message });
+				setExecutedTools((prev) => [
+					...prev,
+					{ ...toolCall, isError: true, errorMessage: err.message },
+				]);
 			}
 		}
 
@@ -632,6 +674,7 @@ const useChat = () => {
 					? {
 							...msg,
 							toolResults,
+							executedTools: completedToolsList, // Attach local list to message for inline rendering
 							isExecutingTools: false,
 							// Add hasActions and undoData if there are changes to accept/decline
 							...(hasChanges && globalStylesUndoData
@@ -645,9 +688,11 @@ const useChat = () => {
 			)
 		);
 
-		// Clear active tool call and progress
+		// Clear active tool call, progress, and global executedTools (now stored on message)
 		setActiveToolCall(null);
 		setToolProgress(null);
+		setExecutedTools([]);
+		setPendingTools([]);
 
 		// If we have successful results, get a streaming follow-up response
 		if (toolResults.some((r) => !r.error)) {
@@ -914,6 +959,8 @@ const useChat = () => {
 		tools,
 		activeToolCall,
 		toolProgress,
+		executedTools,
+		pendingTools,
 		handleSendMessage,
 		handleNewChat,
 		handleAcceptChanges,
