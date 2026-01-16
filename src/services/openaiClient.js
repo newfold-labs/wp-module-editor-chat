@@ -47,14 +47,12 @@ class CloudflareOpenAIClient {
 				nonce: window.nfdEditorChat.nonce,
 				restUrl: window.nfdEditorChat.restUrl,
 				homeUrl: window.nfdEditorChat.homeUrl,
-				currentUser: window.nfdEditorChat.currentUser || {},
 			};
 		} else {
 			this.config = {
 				nonce: "",
 				restUrl: "",
 				homeUrl: "",
-				currentUser: {},
 			};
 		}
 

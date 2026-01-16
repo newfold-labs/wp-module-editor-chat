@@ -84,11 +84,6 @@ final class ChatEditor {
 					'homeUrl'        => \esc_url( \get_home_url() ),
 					'wpVer'          => \esc_html( \get_bloginfo( 'version' ) ),
 					'nfdChatVersion' => \esc_html( NFD_EDITOR_CHAT_VERSION ),
-					'currentUser'    => array(
-						'ID'           => \get_current_user_id(),
-						'display_name' => \wp_get_current_user()->display_name,
-						'user_email'   => \wp_get_current_user()->user_email,
-					),
 				)
 			);
 

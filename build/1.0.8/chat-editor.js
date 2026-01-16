@@ -57069,15 +57069,13 @@ class CloudflareOpenAIClient {
       this.config = {
         nonce: window.nfdEditorChat.nonce,
         restUrl: window.nfdEditorChat.restUrl,
-        homeUrl: window.nfdEditorChat.homeUrl,
-        currentUser: window.nfdEditorChat.currentUser || {}
+        homeUrl: window.nfdEditorChat.homeUrl
       };
     } else {
       this.config = {
         nonce: "",
         restUrl: "",
-        homeUrl: "",
-        currentUser: {}
+        homeUrl: ""
       };
     }
     return this.config;
