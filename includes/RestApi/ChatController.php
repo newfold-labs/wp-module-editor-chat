@@ -3,7 +3,7 @@
 namespace NewfoldLabs\WP\Module\EditorChat\RestApi;
 
 use NewfoldLabs\WP\Module\EditorChat\Permissions;
-use NewfoldLabs\WP\Module\EditorChat\Services\OpenAIProxy;
+use NewfoldLabs\WP\Module\EditorChat\Services\AiChatProxy;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -27,15 +27,15 @@ class ChatController extends WP_REST_Controller {
 	/**
 	 * OpenAI proxy instance
 	 *
-	 * @var OpenAIProxy
+	 * @var AiChatProxy
 	 */
-	protected $openai_proxy;
+	protected $ai_chat_proxy;
 
 	/**
 	 * Constructor
 	 */
 	public function __construct() {
-		$this->openai_proxy = new OpenAIProxy();
+		$this->ai_chat_proxy = new AiChatProxy();
 	}
 
 	/**
@@ -124,14 +124,6 @@ class ChatController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error|void
 	 */
 	public function proxy_ai_request( $request ) {
-		// Check if AI is configured
-		if ( ! $this->openai_proxy->is_configured() ) {
-			return new WP_Error(
-				'ai_not_configured',
-				'AI is not configured. Please configure Cloudflare AI Gateway or OpenAI API key.',
-				array( 'status' => 400 )
-			);
-		}
 
 		// Prepare request data
 		$request_data = array(
@@ -165,12 +157,12 @@ class ChatController extends WP_REST_Controller {
 		// Handle streaming vs non-streaming
 		if ( $stream ) {
 			// Streaming request - output directly and exit
-			$this->openai_proxy->stream_request( $request_data );
+			$this->ai_chat_proxy->stream_request( $request_data );
 			exit;
 		}
 
 		// Non-streaming request
-		$response = $this->openai_proxy->proxy_request( $request_data );
+		$response = $this->ai_chat_proxy->proxy_request( $request_data );
 
 		if ( is_wp_error( $response ) ) {
 			return $response;
@@ -189,7 +181,7 @@ class ChatController extends WP_REST_Controller {
 		return new WP_REST_Response(
 			array(
 				'success'  => true,
-				'settings' => $this->openai_proxy->get_masked_settings(),
+				'settings' => $this->ai_chat_proxy->get_masked_settings(),
 			),
 			200
 		);

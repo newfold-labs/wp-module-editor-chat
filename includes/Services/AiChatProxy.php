@@ -17,21 +17,21 @@ use WP_Error;
 /**
  * OpenAI Proxy class
  */
-class OpenAIProxy {
+class AiChatProxy {
 
 	/**
 	 * Production base URL for the AI proxy
 	 *
 	 * @var string
 	 */
-	const PRODUCTION_BASE_URL = 'https://patterns.hiive.cloud/api/v1/ai/chat/completions';
+	const PRODUCTION_BASE_URL = 'https://patterns.hiive.cloud';
 
 	/**
 	 * Local base URL for development
 	 *
 	 * @var string
 	 */
-	const LOCAL_BASE_URL = 'https://localhost:8888/api/v1/ai/chat/completions';
+	const LOCAL_BASE_URL = 'https://localhost:8888';
 
 	/**
 	 * Default model to use
@@ -74,19 +74,6 @@ class OpenAIProxy {
 		}
 
 		return self::PRODUCTION_BASE_URL;
-	}
-
-	/**
-	 * Check if AI is configured
-	 *
-	 * Always returns true since cloud-patterns handles credentials.
-	 *
-	 * @return bool True if configured
-	 */
-	public function is_configured() {
-		// Cloud-patterns handles all credential management
-		// We just need to be able to reach the endpoint
-		return true;
 	}
 
 	/**
@@ -232,11 +219,6 @@ class OpenAIProxy {
 		header( 'Cache-Control: no-cache' );
 		header( 'Connection: keep-alive' );
 		header( 'X-Accel-Buffering: no' ); // Disable nginx buffering
-
-		// Flush headers
-		if ( function_exists( 'fastcgi_finish_request' ) ) {
-			// Don't call this - it would end the request
-		}
 	}
 
 	/**
@@ -369,8 +351,7 @@ class OpenAIProxy {
 	 */
 	public function get_masked_settings() {
 		return array(
-			'proxy_url'     => $this->get_proxy_url(),
-			'is_configured' => $this->is_configured(),
+			'proxy_url' => $this->get_proxy_url(),
 		);
 	}
 }
