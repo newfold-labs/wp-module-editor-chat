@@ -343,15 +343,4 @@ class AiChatProxy {
 		// For production, always verify SSL
 		return true;
 	}
-
-	/**
-	 * Get masked settings for frontend display
-	 *
-	 * @return array Settings with sensitive values masked
-	 */
-	public function get_masked_settings() {
-		return array(
-			'proxy_url' => $this->get_proxy_url(),
-		);
-	}
 }

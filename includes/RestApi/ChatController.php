@@ -92,19 +92,6 @@ class ChatController extends WP_REST_Controller {
 				),
 			)
 		);
-
-		// AI settings endpoint
-		register_rest_route(
-			$this->namespace,
-			'/ai/settings',
-			array(
-				array(
-					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_ai_settings' ),
-					'permission_callback' => array( $this, 'permissions_check' ),
-				),
-			)
-		);
 	}
 
 	/**
@@ -118,7 +105,7 @@ class ChatController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Proxy AI requests to cloud-patterns (which forwards to Cloudflare AI Gateway)
+	 * Proxy AI requests to cloud-patterns
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response|WP_Error|void
@@ -169,22 +156,6 @@ class ChatController extends WP_REST_Controller {
 		}
 
 		return new WP_REST_Response( $response, 200 );
-	}
-
-	/**
-	 * Get AI settings (masked for frontend)
-	 *
-	 * @param WP_REST_Request $request Full details about the request.
-	 * @return WP_REST_Response
-	 */
-	public function get_ai_settings( $request ) {
-		return new WP_REST_Response(
-			array(
-				'success'  => true,
-				'settings' => $this->ai_chat_proxy->get_masked_settings(),
-			),
-			200
-		);
 	}
 
 	/**
