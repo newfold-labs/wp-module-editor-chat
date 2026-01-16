@@ -16,10 +16,10 @@ import ToolExecutionList from "../ui/ToolExecutionList";
  * Displays a single message in the chat with appropriate styling and avatar.
  * Supports HTML and Markdown rendering for assistant messages.
  *
- * @param {Object} props                     - The component props.
- * @param {string} props.message             - The message content to display.
- * @param {string} [props.type="assistant"]  - The message type ("user" or "assistant").
- * @param {Array}  [props.executedTools=[]]  - List of executed tools to show inline.
+ * @param {Object} props                    - The component props.
+ * @param {string} props.message            - The message content to display.
+ * @param {string} [props.type="assistant"] - The message type ("user" or "assistant").
+ * @param {Array}  [props.executedTools=[]] - List of executed tools to show inline.
  * @return {JSX.Element} The ChatMessage component.
  */
 const ChatMessage = ({ message, type = "assistant", executedTools = [] }) => {
@@ -59,16 +59,15 @@ const ChatMessage = ({ message, type = "assistant", executedTools = [] }) => {
 	return (
 		<div className={`nfd-editor-chat-message nfd-editor-chat-message--${type}`}>
 			{/* Message content */}
-			{content && (
-				isRichContent ? (
+			{content &&
+				(isRichContent ? (
 					<div
 						className="nfd-editor-chat-message__content nfd-editor-chat-message__content--rich"
 						dangerouslySetInnerHTML={{ __html: content }}
 					/>
 				) : (
 					<div className="nfd-editor-chat-message__content">{content}</div>
-				)
-			)}
+				))}
 			{/* Tool execution list (rendered inline after the message content) */}
 			{executedTools && executedTools.length > 0 && (
 				<ToolExecutionList executedTools={executedTools} />
