@@ -35,7 +35,6 @@ export function getGlobalStylesId() {
 		if (typeof coreStore.__experimentalGetCurrentGlobalStylesId === "function") {
 			const id = coreStore.__experimentalGetCurrentGlobalStylesId();
 			if (id) {
-				console.log("Found global styles ID via __experimentalGetCurrentGlobalStylesId:", id);
 				return id;
 			}
 		}
@@ -47,10 +46,6 @@ export function getGlobalStylesId() {
 			if (typeof editSiteStore.getSettings === "function") {
 				const settings = editSiteStore.getSettings();
 				if (settings?.__experimentalGlobalStylesUserEntityId) {
-					console.log(
-						"Found global styles ID via edit-site settings:",
-						settings.__experimentalGlobalStylesUserEntityId
-					);
 					return settings.__experimentalGlobalStylesUserEntityId;
 				}
 			}
@@ -59,7 +54,6 @@ export function getGlobalStylesId() {
 				const postId = editSiteStore.getEditedPostId();
 				const postType = editSiteStore.getEditedPostType?.();
 				if (postType === "wp_global_styles" && postId) {
-					console.log("Found global styles ID via edit-site post:", postId);
 					return postId;
 				}
 			}
@@ -68,7 +62,6 @@ export function getGlobalStylesId() {
 		// Method 3: Get from entity records
 		const records = coreStore.getEntityRecords("root", "globalStyles", { per_page: 1 });
 		if (records && records.length > 0) {
-			console.log("Found global styles ID via entity records:", records[0].id);
 			return records[0].id;
 		}
 
@@ -101,7 +94,6 @@ export function getCurrentGlobalStyles() {
 		const globalStylesId = getGlobalStylesId();
 		if (globalStylesId) {
 			const record = coreStore.getEditedEntityRecord("root", "globalStyles", globalStylesId);
-			console.log("Global styles record:", record);
 
 			if (record && record.settings) {
 				rawSettings = record.settings;
@@ -129,7 +121,6 @@ export function getCurrentGlobalStyles() {
 			const blockEditorStore = data.select("core/block-editor");
 			if (blockEditorStore && typeof blockEditorStore.getSettings === "function") {
 				const editorSettings = blockEditorStore.getSettings();
-				console.log("Block editor settings:", editorSettings);
 
 				if (editorSettings?.colors) {
 					themePalette = editorSettings.colors;
@@ -150,7 +141,6 @@ export function getCurrentGlobalStyles() {
 		}
 
 		palette = [...themePalette, ...customPalette];
-		console.log("Final palette:", palette);
 
 		return {
 			palette,
@@ -185,9 +175,6 @@ export async function updateGlobalPalette(colors, replaceAll = false) {
 		const coreDispatch = data.dispatch("core");
 		const globalStylesId = getGlobalStylesId();
 
-		console.log("Updating global palette with ID:", globalStylesId);
-		console.log("Colors to update:", colors);
-
 		if (!globalStylesId) {
 			return {
 				success: false,
@@ -197,7 +184,6 @@ export async function updateGlobalPalette(colors, replaceAll = false) {
 
 		// Get current record
 		const currentRecord = coreStore.getEditedEntityRecord("root", "globalStyles", globalStylesId);
-		console.log("Current record:", currentRecord);
 
 		if (!currentRecord) {
 			return {
@@ -225,8 +211,6 @@ export async function updateGlobalPalette(colors, replaceAll = false) {
 
 		// Also get theme palette for reference
 		const themePalette = currentPalette.theme || [];
-		console.log("Existing custom palette:", existingCustomPalette);
-		console.log("Theme palette:", themePalette);
 
 		// Validate and prepare new colors
 		const validatedColors = colors
@@ -260,8 +244,6 @@ export async function updateGlobalPalette(colors, replaceAll = false) {
 			newCustomPalette = Array.from(paletteBySlug.values());
 		}
 
-		console.log("New custom palette:", newCustomPalette);
-
 		// Build new settings object - preserve theme palette structure
 		const newSettings = {
 			...currentSettings,
@@ -274,15 +256,11 @@ export async function updateGlobalPalette(colors, replaceAll = false) {
 			},
 		};
 
-		console.log("New settings:", newSettings);
-
 		// Update the entity record (this makes it appear immediately in the editor as a PREVIEW)
 		// Note: We do NOT save here - user must click Accept to save
 		await coreDispatch.editEntityRecord("root", "globalStyles", globalStylesId, {
 			settings: newSettings,
 		});
-
-		console.log("Entity record updated (preview mode - not saved yet)");
 
 		return {
 			success: true,

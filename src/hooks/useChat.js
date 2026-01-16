@@ -15,6 +15,7 @@ import { openaiClient } from "../services/openaiClient";
 import actionExecutor from "../services/actionExecutor";
 import { simpleHash } from "../utils/helpers";
 import { updateGlobalPalette, getCurrentGlobalStyles } from "../services/globalStylesService";
+import { ToolAnnotationsSchema } from "@modelcontextprotocol/sdk/types.js";
 
 /**
  * Get site-specific localStorage keys for chat persistence
@@ -483,150 +484,121 @@ const useChat = () => {
 			});
 
 			try {
-				// Check if this is a global styles update - handle it via JS for real-time updates
-				if (toolCall.name === "mcp-adapter-execute-ability") {
-					const args = toolCall.arguments || {};
-					const abilityName = args.ability_name;
-					const params = args.parameters || {};
+				const toolName = toolCall.name || "";
+				const args = toolCall.arguments || {};
 
-					console.log(
-						"Tool call intercepted:",
-						toolCall.name,
-						"ability:",
-						abilityName,
-						"params:",
-						params
-					);
+				// Handle global palette update via JS service for real-time updates
+				if (toolName === "blu-update-global-palette") {
+					await updateProgress(__("Reading current color palette…", "wp-module-editor-chat"), 500);
 
-					// Handle global palette update via JS service for real-time updates
-					if (abilityName === "blu/update-global-palette") {
+					try {
 						await updateProgress(
-							__("Reading current color palette…", "wp-module-editor-chat"),
-							500
+							__("Applying new colors to your site…", "wp-module-editor-chat"),
+							600
 						);
-						console.log("=== Intercepting global palette update for real-time changes ===");
-						console.log("Colors:", params.colors);
-						console.log("Replace all:", params.replace_all);
+						const jsResult = await updateGlobalPalette(args.colors, args.replace_all);
 
-						try {
+						if (jsResult.success) {
 							await updateProgress(
-								__("Applying new colors to your site…", "wp-module-editor-chat"),
-								600
+								__("✓ Colors updated! Review and Accept or Decline.", "wp-module-editor-chat"),
+								800
 							);
-							const jsResult = await updateGlobalPalette(params.colors, params.replace_all);
-							console.log("JS update result:", jsResult);
+							setHasGlobalStylesChanges(true);
 
-							if (jsResult.success) {
-								await updateProgress(
-									__("✓ Colors updated! Review and Accept or Decline.", "wp-module-editor-chat"),
-									800
-								);
-								setHasGlobalStylesChanges(true);
-
-								// Only capture original state ONCE (first change)
-								// This ensures "Decline" reverts to the true original, not intermediate states
-								if (jsResult.undoData && !originalGlobalStylesRef.current) {
-									originalGlobalStylesRef.current = jsResult.undoData;
-								}
-
-								// Always use the first captured original state for undo
-								if (originalGlobalStylesRef.current) {
-									globalStylesUndoData = originalGlobalStylesRef.current;
-								}
-
-								// Strip undoData from result before sending to AI (it's internal/local only)
-								const { undoData: _unused, ...resultForAI } = jsResult;
-
-								toolResults.push({
-									id: toolCall.id,
-									result: [{ type: "text", text: JSON.stringify(resultForAI) }],
-									isError: false,
-									hasChanges: true, // Flag to indicate this tool made changes
-								});
-								// Mark tool as executed (success)
-								completedToolsList.push({ ...toolCall, isError: false });
-								setExecutedTools((prev) => [...prev, { ...toolCall, isError: false }]);
-								continue;
-							} else {
-								// Fall back to MCP if JS fails
-								await updateProgress(
-									__("Retrying with alternative method…", "wp-module-editor-chat"),
-									400
-								);
-								console.warn("JS update failed, falling back to MCP:", jsResult.error);
+							// Only capture original state ONCE (first change)
+							// This ensures "Decline" reverts to the true original, not intermediate states
+							if (jsResult.undoData && !originalGlobalStylesRef.current) {
+								originalGlobalStylesRef.current = jsResult.undoData;
 							}
-						} catch (jsError) {
-							console.error("JS update threw error:", jsError);
+
+							// Always use the first captured original state for undo
+							if (originalGlobalStylesRef.current) {
+								globalStylesUndoData = originalGlobalStylesRef.current;
+							}
+
+							// Strip undoData from result before sending to AI (it's internal/local only)
+							const { undoData: _unused, ...resultForAI } = jsResult;
+
+							toolResults.push({
+								id: toolCall.id,
+								result: [{ type: "text", text: JSON.stringify(resultForAI) }],
+								isError: false,
+								hasChanges: true, // Flag to indicate this tool made changes
+							});
+							// Mark tool as executed (success)
+							completedToolsList.push({ ...toolCall, isError: false });
+							setExecutedTools((prev) => [...prev, { ...toolCall, isError: false }]);
+							continue;
+						} else {
+							// Fall back to MCP if JS fails
 							await updateProgress(
 								__("Retrying with alternative method…", "wp-module-editor-chat"),
 								400
 							);
+							console.warn("JS update failed, falling back to MCP:", jsResult.error);
 						}
-
-						// Fallback to MCP
-						const result = await mcpClient.callTool(toolCall.name, toolCall.arguments);
-						toolResults.push({
-							id: toolCall.id,
-							result: result.content,
-							isError: result.isError,
-						});
-						// Mark tool as executed (MCP fallback)
-						completedToolsList.push({ ...toolCall, isError: result.isError });
-						setExecutedTools((prev) => [...prev, { ...toolCall, isError: result.isError }]);
-						continue;
+					} catch (jsError) {
+						console.error("JS update threw error:", jsError);
+						await updateProgress(
+							__("Retrying with alternative method…", "wp-module-editor-chat"),
+							400
+						);
 					}
 
-					// Handle get global styles via JS service for more accurate data
-					if (abilityName === "blu/get-global-styles") {
-						await updateProgress(__("Reading site color palette…", "wp-module-editor-chat"), 500);
-						console.log("=== Intercepting get global styles for real-time data ===");
+					// Fallback to MCP
+					const result = await mcpClient.callTool(toolCall.name, toolCall.arguments);
+					toolResults.push({
+						id: toolCall.id,
+						result: result.content,
+						isError: result.isError,
+					});
+					// Mark tool as executed (MCP fallback)
+					completedToolsList.push({ ...toolCall, isError: result.isError });
+					setExecutedTools((prev) => [...prev, { ...toolCall, isError: result.isError }]);
+					continue;
+				}
 
-						try {
-							await updateProgress(__("Analyzing theme settings…", "wp-module-editor-chat"), 600);
-							const jsResult = getCurrentGlobalStyles();
-							console.log("JS get styles result:", jsResult);
+				// Handle get global styles via JS service for more accurate data
+				if (toolName === "blu-get-global-styles") {
+					await updateProgress(__("Reading site color palette…", "wp-module-editor-chat"), 500);
 
-							// Check if we got valid data (palette has items or we have rawSettings)
-							if (jsResult.palette?.length > 0 || jsResult.rawSettings) {
-								const colorCount = jsResult.palette?.length || 0;
-								await updateProgress(`✓ Found ${colorCount} colors in palette`, 700);
-								toolResults.push({
-									id: toolCall.id,
-									result: [
-										{
-											type: "text",
-											text: JSON.stringify({
-												styles: jsResult,
-												message: "Retrieved global styles from editor",
-											}),
-										},
-									],
-									isError: false,
-								});
-								// Mark tool as executed (success)
-								completedToolsList.push({ ...toolCall, isError: false });
-								setExecutedTools((prev) => [...prev, { ...toolCall, isError: false }]);
-								continue;
-							} else {
-								await updateProgress(
-									__("Checking WordPress database…", "wp-module-editor-chat"),
-									400
-								);
-								console.warn("JS get styles returned empty, falling back to MCP");
-							}
-						} catch (jsError) {
-							console.error("JS get styles threw error:", jsError);
+					try {
+						await updateProgress(__("Analyzing theme settings…", "wp-module-editor-chat"), 600);
+						const jsResult = getCurrentGlobalStyles();
+
+						// Check if we got valid data (palette has items or we have rawSettings)
+						if (jsResult.palette?.length > 0 || jsResult.rawSettings) {
+							const colorCount = jsResult.palette?.length || 0;
+							await updateProgress(`✓ Found ${colorCount} colors in palette`, 700);
+							toolResults.push({
+								id: toolCall.id,
+								result: [
+									{
+										type: "text",
+										text: JSON.stringify({
+											styles: jsResult,
+											message: "Retrieved global styles from editor",
+										}),
+									},
+								],
+								isError: false,
+							});
+							// Mark tool as executed (success)
+							completedToolsList.push({ ...toolCall, isError: false });
+							setExecutedTools((prev) => [...prev, { ...toolCall, isError: false }]);
+							continue;
+						} else {
 							await updateProgress(
 								__("Checking WordPress database…", "wp-module-editor-chat"),
 								400
 							);
+							console.warn("JS get styles returned empty, falling back to MCP");
 						}
-						// Fall through to MCP if JS fails
+					} catch (jsError) {
+						console.error("JS get styles threw error:", jsError);
+						await updateProgress(__("Checking WordPress database…", "wp-module-editor-chat"), 400);
 					}
-
-					// For other abilities, show generic progress
-					const abilityShortName = abilityName.split("/").pop();
-					await updateProgress(`Executing ${abilityShortName}…`, 400);
+					// Fall through to MCP if JS fails
 				}
 
 				// Default: use MCP for all other tool calls

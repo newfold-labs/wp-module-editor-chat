@@ -80,7 +80,7 @@ final class ChatEditor {
 					'nonce'          => \wp_create_nonce( 'wp_rest' ),
 					'nfdRestURL'     => \get_home_url() . '/index.php?rest_route=/nfd-editor-chat/v1',
 					'restUrl'        => \esc_url_raw( \rest_url( 'nfd-editor-chat/v1/' ) ),
-					'mcpUrl'         => \esc_url_raw( \rest_url( 'mcp/mcp-adapter-default-server' ) ),
+					'mcpUrl'         => \esc_url_raw( \rest_url( 'blu/mcp' ) ),
 					'homeUrl'        => \esc_url( \get_home_url() ),
 					'wpVer'          => \esc_html( \get_bloginfo( 'version' ) ),
 					'nfdChatVersion' => \esc_html( NFD_EDITOR_CHAT_VERSION ),
