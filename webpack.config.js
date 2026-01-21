@@ -9,6 +9,12 @@ const nfdChatEditorWebpackConfig = {
 		library: ["newfold", "wordpress", "editor", "chat", "[name]"],
 		libraryTarget: "window",
 	},
+	resolve: {
+		alias: {
+			// Ensure ai-chat module resolves to sibling vendor package
+			"@newfold-labs/wp-module-ai-chat": path.resolve(__dirname, "../wp-module-ai-chat"),
+		},
+	},
 };
 
 module.exports = merge(wpScriptsConfig, nfdChatEditorWebpackConfig);

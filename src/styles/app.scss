@@ -1,14 +1,18 @@
-@use "vars";
-@use "mixins";
-@use "overrides";
-@use "ui/avatars";
-@use "ui/suggestions";
-@use "ui/error-alert";
-@use "ui/context-tag";
-@use "sidebar/main";
-@use "sidebar/header";
-@use "sidebar/input";
-@use "sidebar/messages";
-@use "sidebar/welcome";
-@use "chat/typing-indicator";
-@use "chat/action-buttons";
+// Import base styles from ai-chat module first
+@import "../../../wp-module-ai-chat/src/styles/app.scss";
+
+// Editor-specific styles and overrides
+@import "vars";
+@import "mixins";
+@import "overrides";
+@import "ui/avatars";
+@import "ui/suggestions";
+@import "ui/error-alert";
+@import "ui/context-tag";
+@import "sidebar/main";
+@import "sidebar/header";
+@import "sidebar/input";
+@import "sidebar/messages";
+@import "sidebar/welcome";
+@import "chat/typing-indicator";
+@import "chat/action-buttons";

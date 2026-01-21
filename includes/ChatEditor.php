@@ -53,6 +53,7 @@ final class ChatEditor {
 	 * Register and enqueue chat editor assets.
 	 */
 	public static function register_assets() {
+
 		$asset_file = NFD_EDITOR_CHAT_BUILD_DIR . '/chat-editor.asset.php';
 
 		if ( \is_readable( $asset_file ) ) {
@@ -79,7 +80,7 @@ final class ChatEditor {
 				array(
 					'nonce'          => \wp_create_nonce( 'wp_rest' ),
 					'nfdRestURL'     => \get_home_url() . '/index.php?rest_route=/nfd-editor-chat/v1',
-					'restUrl'        => \esc_url_raw( \rest_url( 'nfd-editor-chat/v1/' ) ),
+					'restUrl'        => \esc_url_raw( \rest_url( 'nfd-ai-chat/v1/' ) ),
 					'mcpUrl'         => \esc_url_raw( \rest_url( 'blu/mcp' ) ),
 					'homeUrl'        => \esc_url( \get_home_url() ),
 					'wpVer'          => \esc_html( \get_bloginfo( 'version' ) ),

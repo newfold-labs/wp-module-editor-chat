@@ -9,3 +9,28 @@
 		color: inherit !important;
 	}
 }
+
+// Override ai-chat CSS variables within editor sidebar context
+// This ensures ai-chat components use editor-chat styling when rendered in the sidebar
+.nfd-editor-chat-sidebar {
+	// Map ai-chat CSS variables to editor-chat variables
+	--nfd-ai-chat-color-primary: var(--nfd-editor-chat-color-primary);
+	--nfd-ai-chat-color-primary-hover: var(--nfd-editor-chat-color-primary-hover);
+	--nfd-ai-chat-color-primary-light: var(--nfd-editor-chat-color-primary-light);
+	--nfd-ai-chat-color-primary-light-20: var(--nfd-editor-chat-color-primary-light-20);
+	--nfd-ai-chat-color-text: var(--nfd-editor-chat-color-text);
+	--nfd-ai-chat-color-text-secondary: var(--nfd-editor-chat-color-text-secondary);
+	--nfd-ai-chat-color-background: var(--nfd-editor-chat-color-background);
+	--nfd-ai-chat-color-white: var(--nfd-editor-chat-color-white);
+	--nfd-ai-chat-color-border: var(--nfd-editor-chat-color-border);
+	--nfd-ai-chat-color-grey-dark: var(--nfd-editor-chat-color-grey-dark);
+	--nfd-ai-chat-color-grey-medium: var(--nfd-editor-chat-color-grey-medium);
+	--nfd-ai-chat-color-grey-light: var(--nfd-editor-chat-color-grey-light);
+	--nfd-ai-chat-color-success: var(--nfd-editor-chat-color-success);
+	--nfd-ai-chat-color-error: var(--nfd-editor-chat-color-error);
+	--nfd-ai-chat-font-size-base: var(--nfd-editor-chat-font-size-base);
+	--nfd-ai-chat-font-size-sm: var(--nfd-editor-chat-font-size-sm);
+	--nfd-ai-chat-font-size-md: var(--nfd-editor-chat-font-size-md);
+	--nfd-ai-chat-font-size-lg: var(--nfd-editor-chat-font-size-lg);
+	--nfd-ai-chat-font-size-xl: var(--nfd-editor-chat-font-size-xl);
+}

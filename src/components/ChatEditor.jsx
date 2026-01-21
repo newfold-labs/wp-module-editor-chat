@@ -8,12 +8,16 @@ import { __ } from "@wordpress/i18n";
 import { store as interfaceStore } from "@wordpress/interface";
 
 /**
+ * External dependencies - from wp-module-ai-chat
+ */
+import { ChatMessages } from "@newfold-labs/wp-module-ai-chat";
+
+/**
  * Internal dependencies
  */
-import useChat from "../hooks/useChat";
+import useEditorChat from "../hooks/useEditorChat";
 import ActionButtons from "./chat/ActionButtons";
 import ChatInput from "./chat/ChatInput";
-import ChatMessages from "./chat/ChatMessages";
 import WelcomeScreen from "./chat/WelcomeScreen";
 import SidebarHeader from "./sidebar/SidebarHeader";
 import AILogo from "./ui/AILogo";
@@ -38,7 +42,7 @@ const ChatEditor = () => {
 		handleAcceptChanges,
 		handleDeclineChanges,
 		handleStopRequest,
-	} = useChat();
+	} = useEditorChat();
 
 	useEffect(() => {
 		enableComplementaryArea(SIDEBAR_SCOPE, SIDEBAR_NAME);
@@ -83,6 +87,7 @@ const ChatEditor = () => {
 							toolProgress={toolProgress}
 							executedTools={executedTools}
 							pendingTools={pendingTools}
+							textDomain="wp-module-editor-chat"
 						/>
 					)}
 					{hasPendingActions && (

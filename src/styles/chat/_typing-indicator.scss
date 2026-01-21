@@ -1,18 +1,21 @@
-// Typing indicator styles
-.nfd-editor-chat-typing-indicator {
+// Typing indicator styles - support both editor-chat and ai-chat class names
+.nfd-editor-chat-typing-indicator,
+.nfd-ai-chat-typing-indicator {
 	display: flex;
 	align-items: center;
 	gap: 10px;
 	padding: 8px 0;
 }
 
-.nfd-editor-chat-typing-indicator__spinner {
+.nfd-editor-chat-typing-indicator__spinner,
+.nfd-ai-chat-typing-indicator__spinner {
 	color: var(--nfd-editor-chat-color-primary, #3b82f6);
 	animation: nfd-spin 1s linear infinite;
 	flex-shrink: 0;
 }
 
-.nfd-editor-chat-typing-indicator__text {
+.nfd-editor-chat-typing-indicator__text,
+.nfd-ai-chat-typing-indicator__text {
 	font-size: var(--nfd-editor-chat-font-size-base);
 	color: var(--nfd-editor-chat-color-text);
 	font-weight: 500;
@@ -213,8 +216,10 @@
 
 // =============================================================================
 // Tool Execution List - Shows all tools in a persistent list
+// Support both editor-chat and ai-chat class names
 // =============================================================================
-.nfd-tool-execution {
+.nfd-tool-execution,
+.nfd-ai-chat-tool-execution {
 	background: #fff;
 	border: 1px solid #e8e8e8;
 	border-radius: 8px;
@@ -232,7 +237,8 @@
 	}
 }
 
-.nfd-tool-execution__header {
+.nfd-tool-execution__header,
+.nfd-ai-chat-tool-execution__header {
 	display: flex;
 	align-items: center;
 	gap: 6px;
@@ -241,7 +247,7 @@
 	background: #fafafa;
 	border: none;
 	border-bottom: 1px solid #e8e8e8;
-	font-size: var(--nfd-editor-chat-font-size-sm);
+	font-size: var(--nfd-editor-chat-font-size-sm, 13px);
 	font-weight: 500;
 	color: #888;
 	cursor: pointer;
@@ -259,28 +265,33 @@
 }
 
 // Hide border when collapsed
-.nfd-tool-execution--collapsed .nfd-tool-execution__header {
+.nfd-tool-execution--collapsed .nfd-tool-execution__header,
+.nfd-ai-chat-tool-execution--collapsed .nfd-ai-chat-tool-execution__header {
 	border-bottom: none;
 }
 
-.nfd-tool-execution__chevron {
+.nfd-tool-execution__chevron,
+.nfd-ai-chat-tool-execution__chevron {
 	color: #bbb;
 	flex-shrink: 0;
 }
 
-.nfd-tool-execution__header-count {
+.nfd-tool-execution__header-count,
+.nfd-ai-chat-tool-execution__header-count {
 	color: #aaa;
 	font-weight: 400;
 	margin-left: auto;
 }
 
-.nfd-tool-execution__list {
+.nfd-tool-execution__list,
+.nfd-ai-chat-tool-execution__list {
 	display: flex;
 	flex-direction: column;
 }
 
 // Individual tool execution item
-.nfd-tool-execution__item {
+.nfd-tool-execution__item,
+.nfd-ai-chat-tool-execution__item {
 	padding: 5px 10px;
 	border-bottom: 1px solid #f0f0f0;
 	transition: background 0.15s ease;
@@ -291,7 +302,8 @@
 
 	// Completed successfully
 	&--complete {
-		.nfd-tool-execution__item-title {
+		.nfd-tool-execution__item-title,
+		.nfd-ai-chat-tool-execution__item-title {
 			color: #aaa;
 		}
 	}
@@ -300,7 +312,8 @@
 	&--active {
 		background: #fafafa;
 
-		.nfd-tool-execution__item-title {
+		.nfd-tool-execution__item-title,
+		.nfd-ai-chat-tool-execution__item-title {
 			color: #666;
 			font-weight: 500;
 		}
@@ -310,19 +323,22 @@
 	&--error {
 		background: rgba(214, 54, 56, 0.04);
 
-		.nfd-tool-execution__item-title {
-			color: var(--nfd-editor-chat-color-error);
+		.nfd-tool-execution__item-title,
+		.nfd-ai-chat-tool-execution__item-title {
+			color: var(--nfd-editor-chat-color-error, #dc2626);
 		}
 	}
 }
 
-.nfd-tool-execution__item-header {
+.nfd-tool-execution__item-header,
+.nfd-ai-chat-tool-execution__item-header {
 	display: flex;
 	align-items: center;
 	gap: 6px;
 }
 
-.nfd-tool-execution__icon {
+.nfd-tool-execution__icon,
+.nfd-ai-chat-tool-execution__icon {
 	flex-shrink: 0;
 	width: 12px;
 	height: 12px;
@@ -341,24 +357,27 @@
 	}
 
 	&--error {
-		color: var(--nfd-editor-chat-color-error);
+		color: var(--nfd-editor-chat-color-error, #dc2626);
 	}
 }
 
-.nfd-tool-execution__item-title {
-	font-size: var(--nfd-editor-chat-font-size-sm);
+.nfd-tool-execution__item-title,
+.nfd-ai-chat-tool-execution__item-title {
+	font-size: var(--nfd-editor-chat-font-size-sm, 13px);
 	font-weight: 400;
 	color: #888;
 	flex: 1;
 }
 
-.nfd-tool-execution__item-params {
+.nfd-tool-execution__item-params,
+.nfd-ai-chat-tool-execution__item-params {
 	font-size: 11px;
 	color: #bbb;
 	font-weight: 400;
 }
 
-.nfd-tool-execution__item-progress {
+.nfd-tool-execution__item-progress,
+.nfd-ai-chat-tool-execution__item-progress {
 	margin-top: 3px;
 	padding-left: 18px;
 	font-size: 11px;

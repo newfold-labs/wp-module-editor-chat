@@ -1,6 +1,9 @@
 @use "../mixins";
 
-.nfd-editor-chat-messages {
+// Support both editor-chat and ai-chat class names
+// This allows using ai-chat components within the editor sidebar
+.nfd-editor-chat-messages,
+.nfd-ai-chat-messages {
 	display: flex;
 	flex: 1 1 auto;
 	flex-direction: column;
@@ -12,14 +15,16 @@
 	@include mixins.custom-scrollbar;
 }
 
-// Individual message
-.nfd-editor-chat-message {
+// Individual message - support both class prefixes
+.nfd-editor-chat-message,
+.nfd-ai-chat-message {
 	display: flex;
 	gap: 12px;
 	align-items: flex-start;
 	font-size: var(--nfd-editor-chat-font-size-base);
 
-	.nfd-editor-chat-message__content {
+	.nfd-editor-chat-message__content,
+	.nfd-ai-chat-message__content {
 		// Reset margins for all elements
 		> * {
 			margin-bottom: 1rem;
@@ -283,7 +288,8 @@
 		flex-direction: column;
 		justify-content: flex-start;
 
-		.nfd-editor-chat-message__content {
+		.nfd-editor-chat-message__content,
+	.nfd-ai-chat-message__content {
 			flex: 1;
 			width: 100%;
 			line-height: 1.6;
@@ -335,7 +341,8 @@
 			}
 		}
 
-		.nfd-editor-chat-message__content {
+		.nfd-editor-chat-message__content,
+	.nfd-ai-chat-message__content {
 			background: var(--nfd-editor-chat-color-background);
 			padding: 8px 16px;
 			border-radius: 12px;
@@ -350,7 +357,8 @@
 
 	// Streaming message state
 	&--streaming {
-		.nfd-editor-chat-message__content {
+		.nfd-editor-chat-message__content,
+	.nfd-ai-chat-message__content {
 			position: relative;
 		}
 	}

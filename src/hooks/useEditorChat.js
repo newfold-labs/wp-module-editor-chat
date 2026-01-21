@@ -2,31 +2,42 @@
 /**
  * WordPress dependencies
  */
-import { useEffect, useState, useRef, useCallback } from "@wordpress/element";
-import { __ } from "@wordpress/i18n";
-import { useDispatch, useSelect } from "@wordpress/data";
 import { store as coreStore } from "@wordpress/core-data";
+import { useDispatch, useSelect } from "@wordpress/data";
+import { useCallback, useEffect, useRef, useState } from "@wordpress/element";
+import { __ } from "@wordpress/i18n";
+
+/**
+ * External dependencies - from wp-module-ai-chat
+ */
+import {
+	CHAT_STATUS,
+	createMCPClient,
+	createOpenAIClient,
+	simpleHash,
+} from "@newfold-labs/wp-module-ai-chat";
 
 /**
  * Internal dependencies
  */
-import { mcpClient } from "../services/mcpClient";
-import { openaiClient } from "../services/openaiClient";
 import actionExecutor from "../services/actionExecutor";
-import { simpleHash } from "../utils/helpers";
-import { updateGlobalPalette, getCurrentGlobalStyles } from "../services/globalStylesService";
-import { ToolAnnotationsSchema } from "@modelcontextprotocol/sdk/types.js";
+import { getCurrentGlobalStyles, updateGlobalPalette } from "../services/globalStylesService";
+
+// Create editor-specific clients with the editor config
+const mcpClient = createMCPClient({ configKey: "nfdEditorChat" });
+const openaiClient = createOpenAIClient({
+	configKey: "nfdEditorChat",
+	apiPath: "",
+	mode: "editor",
+});
 
 /**
  * Get site-specific localStorage keys for chat persistence
- * Uses the site URL to ensure each site has its own isolated chat history
  *
  * @return {Object} Storage keys object with site-specific keys
  */
 const getStorageKeys = () => {
-	// Hash the site home URL to create a unique, compact identifier
 	const siteId = simpleHash(window.nfdEditorChat?.homeUrl || "default");
-
 	return {
 		SESSION_ID: `nfd-editor-chat-session-id-${siteId}`,
 		MESSAGES: `nfd-editor-chat-messages-${siteId}`,
@@ -77,26 +88,18 @@ const loadMessages = () => {
 		const stored = localStorage.getItem(STORAGE_KEYS.MESSAGES);
 		if (stored) {
 			const messages = JSON.parse(stored);
-			// Remove hasActions and undoData from loaded messages (actions should only show once)
-			// Also filter out invalid assistant messages (no content and no tool calls)
 			return messages
 				.map((msg) => {
 					const { hasActions, undoData, isStreaming, ...rest } = msg;
 					return rest;
 				})
 				.filter((msg) => {
-					// Keep all user messages
 					if (msg.type === "user") {
 						return true;
 					}
-					// For assistant messages, require either content or toolCalls
 					const hasContent = msg.content !== null && msg.content !== "";
 					const hasToolCalls = msg.toolCalls && msg.toolCalls.length > 0;
-					if (!hasContent && !hasToolCalls) {
-						console.warn("Filtering out invalid assistant message from localStorage");
-						return false;
-					}
-					return true;
+					return hasContent || hasToolCalls;
 				});
 		}
 		return [];
@@ -114,7 +117,6 @@ const loadMessages = () => {
 const saveMessages = (messages) => {
 	try {
 		const STORAGE_KEYS = getStorageKeys();
-		// Filter out streaming state before saving
 		const cleanMessages = messages.map(({ isStreaming, ...rest }) => rest);
 		localStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify(cleanMessages));
 	} catch (error) {
@@ -147,11 +149,15 @@ const generateSessionId = () => {
 };
 
 /**
- * Custom hook for managing chat functionality with MCP and streaming support
+ * useEditorChat Hook
  *
- * @return {Object} Chat state and handlers
+ * Editor-specific chat hook that uses services from wp-module-ai-chat
+ * and adds editor-specific functionality like accept/decline, localStorage
+ * persistence, and real-time visual updates for global styles.
+ *
+ * @return {Object} Chat state and handlers for the editor
  */
-const useChat = () => {
+const useEditorChat = () => {
 	// Initialize state from localStorage
 	const savedSessionId = loadSessionId();
 	const savedMessages = loadMessages();
@@ -166,13 +172,13 @@ const useChat = () => {
 	const [mcpConnectionStatus, setMcpConnectionStatus] = useState("disconnected");
 	const [tools, setTools] = useState([]);
 	const [activeToolCall, setActiveToolCall] = useState(null);
-	const [toolProgress, setToolProgress] = useState(null); // For streaming tool progress
-	const [executedTools, setExecutedTools] = useState([]); // Completed tool executions
-	const [pendingTools, setPendingTools] = useState([]); // Queued tools waiting to execute
+	const [toolProgress, setToolProgress] = useState(null);
+	const [executedTools, setExecutedTools] = useState([]);
+	const [pendingTools, setPendingTools] = useState([]);
 
 	const hasInitializedRef = useRef(false);
 	const abortControllerRef = useRef(null);
-	const originalGlobalStylesRef = useRef(null); // Track original global styles for revert all
+	const originalGlobalStylesRef = useRef(null);
 
 	// Get WordPress editor dispatch functions
 	const { savePost } = useDispatch("core/editor");
@@ -191,7 +197,6 @@ const useChat = () => {
 	// Watch for save completion
 	useEffect(() => {
 		if (isSaving && !isSavingPost) {
-			// Save just completed - remove hasActions and undoData from ALL messages
 			setMessages((prev) =>
 				prev.map((msg) => {
 					if (msg.hasActions) {
@@ -201,8 +206,6 @@ const useChat = () => {
 					return msg;
 				})
 			);
-
-			// Reset global styles changes flag
 			setHasGlobalStylesChanges(false);
 			setIsSaving(false);
 		}
@@ -218,18 +221,14 @@ const useChat = () => {
 
 		try {
 			setMcpConnectionStatus("connecting");
-
 			await mcpClient.connect();
 			await mcpClient.initialize();
-
 			const availableTools = await mcpClient.listTools();
 			setTools(availableTools);
-
 			setMcpConnectionStatus("connected");
 		} catch (err) {
 			console.error("Failed to initialize MCP:", err);
 			setMcpConnectionStatus("disconnected");
-			// Don't set error here - MCP is optional, chat can work without it
 		}
 	}, [mcpConnectionStatus]);
 
@@ -238,15 +237,11 @@ const useChat = () => {
 		if (hasInitializedRef.current) {
 			return;
 		}
-
 		hasInitializedRef.current = true;
 
-		// Save session ID if it's new
 		if (!savedSessionId) {
 			saveSessionId(sessionId);
 		}
-
-		// Initialize MCP connection
 		initializeMCP();
 	}, [sessionId, savedSessionId, initializeMCP]);
 
@@ -264,161 +259,16 @@ const useChat = () => {
 
 	// Cleanup on unmount
 	useEffect(() => {
+		const controller = abortControllerRef.current;
 		return () => {
-			if (abortControllerRef.current) {
-				abortControllerRef.current.abort();
+			if (controller) {
+				controller.abort();
 			}
 		};
 	}, []);
 
 	/**
-	 * Handle sending a message with streaming support
-	 *
-	 * @param {string} messageContent The message to send
-	 */
-	const handleSendMessage = async (messageContent) => {
-		// Clear any previous errors and tool execution state
-		setError(null);
-		setStatus(null);
-		setExecutedTools([]);
-		setPendingTools([]);
-
-		// Add user message
-		const userMessage = {
-			id: `user-${Date.now()}`,
-			type: "user",
-			role: "user",
-			content: messageContent,
-		};
-		setMessages((prev) => [...prev, userMessage]);
-		setIsLoading(true);
-		setStatus("generating");
-
-		// Create abort controller for this request
-		abortControllerRef.current = new AbortController();
-
-		try {
-			// Build message context for API (system prompt is injected server-side by cloud-patterns)
-			const recentMessages = [...messages, userMessage].slice(-10);
-
-			const openaiMessages = openaiClient.convertMessagesToOpenAI(
-				recentMessages.map((msg) => ({
-					role: msg.type === "user" ? "user" : "assistant",
-					content: msg.content ?? "", // Ensure content is never null/undefined
-					toolCalls: msg.toolCalls,
-					toolResults: msg.toolResults,
-				}))
-			);
-
-			// Get MCP tools in OpenAI format
-			const openaiTools = mcpClient.isConnected() ? mcpClient.getToolsForOpenAI() : [];
-
-			// Create streaming assistant message
-			const assistantMessageId = `assistant-${Date.now()}`;
-			let currentContent = "";
-
-			setMessages((prev) => [
-				...prev,
-				{
-					id: assistantMessageId,
-					type: "assistant",
-					role: "assistant",
-					content: "",
-					isStreaming: true,
-				},
-			]);
-
-			// Make streaming request
-			await openaiClient.createStreamingCompletion(
-				{
-					model: "gpt-4o-mini",
-					messages: openaiMessages,
-					tools: openaiTools.length > 0 ? openaiTools : undefined,
-					tool_choice: openaiTools.length > 0 ? "auto" : undefined,
-					temperature: 0.7,
-					max_tokens: 2000,
-				},
-				// onChunk callback
-				(chunk) => {
-					if (chunk.type === "content") {
-						currentContent += chunk.content;
-						setMessages((prev) =>
-							prev.map((msg) =>
-								msg.id === assistantMessageId ? { ...msg, content: currentContent } : msg
-							)
-						);
-					}
-				},
-				// onComplete callback
-				async (fullMessage, toolCallsResult) => {
-					// Mark streaming as complete
-					setMessages((prev) =>
-						prev.map((msg) =>
-							msg.id === assistantMessageId
-								? {
-										...msg,
-										content: fullMessage,
-										isStreaming: false,
-										toolCalls: toolCallsResult,
-									}
-								: msg
-						)
-					);
-
-					// Handle tool calls if present
-					if (toolCallsResult && toolCallsResult.length > 0 && mcpClient.isConnected()) {
-						// handleToolCalls will manage isLoading and status
-						await handleToolCalls(toolCallsResult, assistantMessageId, openaiMessages);
-						// Don't reset here - handleToolCalls manages the state
-						return;
-					}
-
-					// Only reset if no tool calls
-					setIsLoading(false);
-					setStatus(null);
-				},
-				// onError callback
-				(err) => {
-					console.error("Streaming error:", err);
-					setMessages((prev) =>
-						prev.map((msg) =>
-							msg.id === assistantMessageId
-								? {
-										...msg,
-										content:
-											currentContent || __("Sorry, an error occurred.", "wp-module-editor-chat"),
-										isStreaming: false,
-									}
-								: msg
-						)
-					);
-					setError(
-						err.message ||
-							__("An error occurred while processing your request.", "wp-module-editor-chat")
-					);
-					setIsLoading(false);
-					setStatus(null);
-				}
-			);
-		} catch (err) {
-			if (err.name === "AbortError") {
-				return;
-			}
-
-			console.error("Error sending message:", err);
-			setError(
-				__(
-					"Sorry, I encountered an error processing your request. Please try again.",
-					"wp-module-editor-chat"
-				)
-			);
-			setIsLoading(false);
-			setStatus(null);
-		}
-	};
-
-	/**
-	 * Helper to wait for a minimum time (for UX - so users can see progress)
+	 * Helper to wait for a minimum time
 	 *
 	 * @param {number} ms Milliseconds to wait
 	 * @return {Promise} Promise that resolves after ms
@@ -429,7 +279,7 @@ const useChat = () => {
 	 * Update progress with minimum display time
 	 *
 	 * @param {string} message Progress message to show
-	 * @param {number} minTime Minimum time to display (default 400ms)
+	 * @param {number} minTime Minimum time to display
 	 */
 	const updateProgress = async (message, minTime = 400) => {
 		setToolProgress(message);
@@ -445,14 +295,12 @@ const useChat = () => {
 	 */
 	const handleToolCalls = async (toolCalls, assistantMessageId, previousMessages) => {
 		const toolResults = [];
-		const completedToolsList = []; // Local tracking for tools (not relying on React state)
-		let globalStylesUndoData = null; // Track undo data for global style changes
+		const completedToolsList = [];
+		let globalStylesUndoData = null;
 
-		// Set status to tool_call mode
-		setStatus("tool_call");
+		setStatus(CHAT_STATUS.TOOL_CALL);
 		await updateProgress(__("Preparing to execute actions…", "wp-module-editor-chat"), 300);
 
-		// Initialize pending tools list (all tools queued for execution)
 		setPendingTools(
 			toolCalls.map((tc, idx) => ({
 				...tc,
@@ -461,7 +309,6 @@ const useChat = () => {
 		);
 		setExecutedTools([]);
 
-		// Mark message as executing tools
 		setMessages((prev) =>
 			prev.map((msg) => (msg.id === assistantMessageId ? { ...msg, isExecutingTools: true } : msg))
 		);
@@ -471,10 +318,7 @@ const useChat = () => {
 			const toolIndex = i + 1;
 			const totalTools = toolCalls.length;
 
-			// Move current tool from pending to active
 			setPendingTools((prev) => prev.filter((_, idx) => idx !== 0));
-
-			// Set the active tool call for UI display
 			setActiveToolCall({
 				id: toolCall.id || `tool-${i}`,
 				name: toolCall.name,
@@ -505,38 +349,28 @@ const useChat = () => {
 							);
 							setHasGlobalStylesChanges(true);
 
-							// Only capture original state ONCE (first change)
-							// This ensures "Decline" reverts to the true original, not intermediate states
 							if (jsResult.undoData && !originalGlobalStylesRef.current) {
 								originalGlobalStylesRef.current = jsResult.undoData;
 							}
-
-							// Always use the first captured original state for undo
 							if (originalGlobalStylesRef.current) {
 								globalStylesUndoData = originalGlobalStylesRef.current;
 							}
 
-							// Strip undoData from result before sending to AI (it's internal/local only)
 							const { undoData: _unused, ...resultForAI } = jsResult;
-
 							toolResults.push({
 								id: toolCall.id,
 								result: [{ type: "text", text: JSON.stringify(resultForAI) }],
 								isError: false,
-								hasChanges: true, // Flag to indicate this tool made changes
+								hasChanges: true,
 							});
-							// Mark tool as executed (success)
 							completedToolsList.push({ ...toolCall, isError: false });
 							setExecutedTools((prev) => [...prev, { ...toolCall, isError: false }]);
 							continue;
-						} else {
-							// Fall back to MCP if JS fails
-							await updateProgress(
-								__("Retrying with alternative method…", "wp-module-editor-chat"),
-								400
-							);
-							console.warn("JS update failed, falling back to MCP:", jsResult.error);
 						}
+						await updateProgress(
+							__("Retrying with alternative method…", "wp-module-editor-chat"),
+							400
+						);
 					} catch (jsError) {
 						console.error("JS update threw error:", jsError);
 						await updateProgress(
@@ -552,13 +386,12 @@ const useChat = () => {
 						result: result.content,
 						isError: result.isError,
 					});
-					// Mark tool as executed (MCP fallback)
 					completedToolsList.push({ ...toolCall, isError: result.isError });
 					setExecutedTools((prev) => [...prev, { ...toolCall, isError: result.isError }]);
 					continue;
 				}
 
-				// Handle get global styles via JS service for more accurate data
+				// Handle get global styles via JS service
 				if (toolName === "blu-get-global-styles") {
 					await updateProgress(__("Reading site color palette…", "wp-module-editor-chat"), 500);
 
@@ -566,7 +399,6 @@ const useChat = () => {
 						await updateProgress(__("Analyzing theme settings…", "wp-module-editor-chat"), 600);
 						const jsResult = getCurrentGlobalStyles();
 
-						// Check if we got valid data (palette has items or we have rawSettings)
 						if (jsResult.palette?.length > 0 || jsResult.rawSettings) {
 							const colorCount = jsResult.palette?.length || 0;
 							await updateProgress(`✓ Found ${colorCount} colors in palette`, 700);
@@ -583,34 +415,22 @@ const useChat = () => {
 								],
 								isError: false,
 							});
-							// Mark tool as executed (success)
 							completedToolsList.push({ ...toolCall, isError: false });
 							setExecutedTools((prev) => [...prev, { ...toolCall, isError: false }]);
 							continue;
-						} else {
-							await updateProgress(
-								__("Checking WordPress database…", "wp-module-editor-chat"),
-								400
-							);
-							console.warn("JS get styles returned empty, falling back to MCP");
 						}
+						await updateProgress(__("Checking WordPress database…", "wp-module-editor-chat"), 400);
 					} catch (jsError) {
 						console.error("JS get styles threw error:", jsError);
 						await updateProgress(__("Checking WordPress database…", "wp-module-editor-chat"), 400);
 					}
-					// Fall through to MCP if JS fails
 				}
 
 				// Default: use MCP for all other tool calls
 				await updateProgress(__("Communicating with WordPress…", "wp-module-editor-chat"), 400);
 				const result = await mcpClient.callTool(toolCall.name, toolCall.arguments);
 				await updateProgress(__("Processing response…", "wp-module-editor-chat"), 300);
-				toolResults.push({
-					id: toolCall.id,
-					result: result.content,
-					isError: result.isError,
-				});
-				// Mark tool as executed (default MCP path)
+				toolResults.push({ id: toolCall.id, result: result.content, isError: result.isError });
 				completedToolsList.push({ ...toolCall, isError: result.isError });
 				setExecutedTools((prev) => [...prev, { ...toolCall, isError: result.isError }]);
 			} catch (err) {
@@ -619,12 +439,7 @@ const useChat = () => {
 					__("Action failed:", "wp-module-editor-chat") + " " + err.message,
 					1000
 				);
-				toolResults.push({
-					id: toolCall.id,
-					result: null,
-					error: err.message,
-				});
-				// Mark tool as executed with error
+				toolResults.push({ id: toolCall.id, result: null, error: err.message });
 				completedToolsList.push({ ...toolCall, isError: true, errorMessage: err.message });
 				setExecutedTools((prev) => [
 					...prev,
@@ -633,46 +448,35 @@ const useChat = () => {
 			}
 		}
 
-		// Show completion briefly before transitioning
 		await updateProgress(__("✓ Actions completed", "wp-module-editor-chat"), 500);
-
-		// Check if any tools made changes that need accept/decline
 		const hasChanges = toolResults.some((r) => r.hasChanges);
 
-		// Update message with tool results and mark execution as complete
 		setMessages((prev) =>
 			prev.map((msg) =>
 				msg.id === assistantMessageId
 					? {
 							...msg,
 							toolResults,
-							executedTools: completedToolsList, // Attach local list to message for inline rendering
+							executedTools: completedToolsList,
 							isExecutingTools: false,
-							// Add hasActions and undoData if there are changes to accept/decline
 							...(hasChanges && globalStylesUndoData
-								? {
-										hasActions: true,
-										undoData: globalStylesUndoData,
-									}
+								? { hasActions: true, undoData: globalStylesUndoData }
 								: {}),
 						}
 					: msg
 			)
 		);
 
-		// Clear active tool call, progress, and global executedTools (now stored on message)
 		setActiveToolCall(null);
 		setToolProgress(null);
 		setExecutedTools([]);
 		setPendingTools([]);
 
-		// If we have successful results, get a streaming follow-up response
+		// Get follow-up response if we have successful results
 		if (toolResults.some((r) => !r.error)) {
-			// Set status to summarizing
-			setStatus("summarizing");
+			setStatus(CHAT_STATUS.SUMMARIZING);
 
 			try {
-				// Format tool results for AI
 				const toolResultsSummary = toolResults
 					.map((r) => {
 						if (r.error) {
@@ -685,11 +489,9 @@ const useChat = () => {
 					})
 					.join("\n\n");
 
-				// Create a streaming follow-up message
 				const followUpMessageId = `assistant-followup-${Date.now()}`;
 				let followUpContent = "";
 
-				// Add placeholder message for streaming
 				setMessages((prev) => [
 					...prev,
 					{
@@ -701,7 +503,6 @@ const useChat = () => {
 					},
 				]);
 
-				// Build messages for follow-up (system prompt injected server-side)
 				const followUpMessages = [
 					...openaiClient.convertMessagesToOpenAI(previousMessages.slice(0, -1)),
 					{
@@ -710,16 +511,15 @@ const useChat = () => {
 					},
 				];
 
-				// Stream the follow-up response (no tools for summary)
 				await openaiClient.createStreamingCompletion(
 					{
 						model: "gpt-4o-mini",
 						messages: followUpMessages,
-						tools: [], // Explicitly no tools for follow-up
+						tools: [],
 						temperature: 0.7,
 						max_tokens: 500,
+						mode: "editor",
 					},
-					// onChunk
 					(chunk) => {
 						if (chunk.type === "content") {
 							followUpContent += chunk.content;
@@ -730,7 +530,6 @@ const useChat = () => {
 							);
 						}
 					},
-					// onComplete
 					async (fullMessage) => {
 						setMessages((prev) =>
 							prev.map((msg) =>
@@ -742,7 +541,6 @@ const useChat = () => {
 						setStatus(null);
 						setIsLoading(false);
 					},
-					// onError
 					(err) => {
 						console.error("Follow-up streaming error:", err);
 						setMessages((prev) =>
@@ -762,9 +560,129 @@ const useChat = () => {
 				setIsLoading(false);
 			}
 		} else {
-			// No successful results, reset state
 			setStatus(null);
 			setIsLoading(false);
+		}
+	};
+
+	/**
+	 * Handle sending a message with streaming support
+	 *
+	 * @param {string} messageContent The message to send
+	 */
+	const handleSendMessage = async (messageContent) => {
+		setError(null);
+		setStatus(null);
+		setExecutedTools([]);
+		setPendingTools([]);
+
+		const userMessage = {
+			id: `user-${Date.now()}`,
+			type: "user",
+			role: "user",
+			content: messageContent,
+		};
+		setMessages((prev) => [...prev, userMessage]);
+		setIsLoading(true);
+		setStatus(CHAT_STATUS.GENERATING);
+
+		abortControllerRef.current = new AbortController();
+
+		try {
+			const recentMessages = [...messages, userMessage].slice(-10);
+			const openaiMessages = openaiClient.convertMessagesToOpenAI(
+				recentMessages.map((msg) => ({
+					role: msg.type === "user" ? "user" : "assistant",
+					content: msg.content ?? "",
+					toolCalls: msg.toolCalls,
+					toolResults: msg.toolResults,
+				}))
+			);
+
+			const openaiTools = mcpClient.isConnected() ? mcpClient.getToolsForOpenAI() : [];
+			const assistantMessageId = `assistant-${Date.now()}`;
+			let currentContent = "";
+
+			setMessages((prev) => [
+				...prev,
+				{
+					id: assistantMessageId,
+					type: "assistant",
+					role: "assistant",
+					content: "",
+					isStreaming: true,
+				},
+			]);
+
+			await openaiClient.createStreamingCompletion(
+				{
+					model: "gpt-4o-mini",
+					messages: openaiMessages,
+					tools: openaiTools.length > 0 ? openaiTools : undefined,
+					tool_choice: openaiTools.length > 0 ? "auto" : undefined,
+					temperature: 0.7,
+					max_tokens: 2000,
+					mode: "editor",
+				},
+				(chunk) => {
+					if (chunk.type === "content") {
+						currentContent += chunk.content;
+						setMessages((prev) =>
+							prev.map((msg) =>
+								msg.id === assistantMessageId ? { ...msg, content: currentContent } : msg
+							)
+						);
+					}
+				},
+				async (fullMessage, toolCallsResult) => {
+					setMessages((prev) =>
+						prev.map((msg) =>
+							msg.id === assistantMessageId
+								? { ...msg, content: fullMessage, isStreaming: false, toolCalls: toolCallsResult }
+								: msg
+						)
+					);
+
+					if (toolCallsResult && toolCallsResult.length > 0 && mcpClient.isConnected()) {
+						await handleToolCalls(toolCallsResult, assistantMessageId, openaiMessages);
+						return;
+					}
+
+					setIsLoading(false);
+					setStatus(null);
+				},
+				(err) => {
+					console.error("Streaming error:", err);
+					const fallbackContent =
+						currentContent || __("Sorry, an error occurred.", "wp-module-editor-chat");
+					setMessages((prev) =>
+						prev.map((msg) =>
+							msg.id === assistantMessageId
+								? { ...msg, content: fallbackContent, isStreaming: false }
+								: msg
+						)
+					);
+					setError(
+						err.message ||
+							__("An error occurred while processing your request.", "wp-module-editor-chat")
+					);
+					setIsLoading(false);
+					setStatus(null);
+				}
+			);
+		} catch (err) {
+			if (err.name === "AbortError") {
+				return;
+			}
+			console.error("Error sending message:", err);
+			setError(
+				__(
+					"Sorry, I encountered an error processing your request. Please try again.",
+					"wp-module-editor-chat"
+				)
+			);
+			setIsLoading(false);
+			setStatus(null);
 		}
 	};
 
@@ -772,28 +690,22 @@ const useChat = () => {
 	 * Start a new chat session
 	 */
 	const handleNewChat = async () => {
-		// Abort any ongoing requests
 		if (abortControllerRef.current) {
 			abortControllerRef.current.abort();
 		}
 
-		// Clear state
 		setIsLoading(false);
 		setStatus(null);
 		setError(null);
 		setMessages([]);
 		setHasGlobalStylesChanges(false);
-		originalGlobalStylesRef.current = null; // Reset original state tracking
+		originalGlobalStylesRef.current = null;
 
-		// Generate new session ID
 		const newSessionId = generateSessionId();
 		setSessionId(newSessionId);
-
-		// Clear localStorage
 		clearChatData();
 		saveSessionId(newSessionId);
 
-		// Reconnect MCP if needed
 		if (mcpConnectionStatus !== "connected") {
 			await initializeMCP();
 		}
@@ -805,7 +717,6 @@ const useChat = () => {
 	const handleAcceptChanges = async () => {
 		setIsSaving(true);
 
-		// Save global styles if they were changed
 		if (hasGlobalStylesChanges) {
 			try {
 				const globalStylesId = __experimentalGetCurrentGlobalStylesId
@@ -815,15 +726,12 @@ const useChat = () => {
 				if (globalStylesId) {
 					await saveEditedEntityRecord("root", "globalStyles", globalStylesId);
 				}
-
-				// Reset the original state ref since changes are now committed
 				originalGlobalStylesRef.current = null;
 			} catch (saveError) {
 				console.error("Error saving global styles:", saveError);
 			}
 		}
 
-		// Trigger WordPress save/publish
 		if (savePost) {
 			savePost();
 		}
@@ -833,7 +741,6 @@ const useChat = () => {
 	 * Decline changes - restore to initial state
 	 */
 	const handleDeclineChanges = async () => {
-		// Find the first message with undo data
 		const firstActionMessage = messages.find((msg) => msg.hasActions && msg.undoData);
 
 		if (!firstActionMessage || !firstActionMessage.undoData) {
@@ -844,14 +751,10 @@ const useChat = () => {
 		try {
 			const undoData = firstActionMessage.undoData;
 
-			// Handle new structure: { blocks: [], globalStyles: {...} }
 			if (undoData && typeof undoData === "object" && !Array.isArray(undoData)) {
-				// Restore blocks if they exist
 				if (undoData.blocks && Array.isArray(undoData.blocks) && undoData.blocks.length > 0) {
 					await actionExecutor.restoreBlocks(undoData.blocks);
 				}
-
-				// Restore global styles if they exist
 				if (
 					undoData.globalStyles &&
 					undoData.globalStyles.originalStyles &&
@@ -860,11 +763,9 @@ const useChat = () => {
 					await actionExecutor.restoreGlobalStyles(undoData.globalStyles);
 				}
 			} else if (Array.isArray(undoData)) {
-				// Handle old structure: array of blocks (backward compatibility)
 				await actionExecutor.restoreBlocks(undoData);
 			}
 
-			// Remove hasActions and undoData from ALL messages
 			setMessages((prev) =>
 				prev.map((msg) => {
 					if (msg.hasActions) {
@@ -875,7 +776,6 @@ const useChat = () => {
 				})
 			);
 
-			// Reset global styles changes flag and original state ref
 			setHasGlobalStylesChanges(false);
 			originalGlobalStylesRef.current = null;
 		} catch (restoreError) {
@@ -891,16 +791,8 @@ const useChat = () => {
 			abortControllerRef.current.abort();
 		}
 
-		// Update any streaming messages to complete
 		setMessages((prev) =>
-			prev.map((msg) =>
-				msg.isStreaming
-					? {
-							...msg,
-							isStreaming: false,
-						}
-					: msg
-			)
+			prev.map((msg) => (msg.isStreaming ? { ...msg, isStreaming: false } : msg))
 		);
 
 		setIsLoading(false);
@@ -908,21 +800,9 @@ const useChat = () => {
 		setError(null);
 	};
 
-	/**
-	 * Refresh MCP connection
-	 */
-	const refreshMCPConnection = async () => {
-		if (mcpClient.isConnected()) {
-			await mcpClient.disconnect();
-		}
-		setMcpConnectionStatus("disconnected");
-		await initializeMCP();
-	};
-
 	return {
 		messages,
 		isLoading,
-		conversationId: sessionId, // Alias for backward compatibility
 		sessionId,
 		error,
 		status,
@@ -938,8 +818,8 @@ const useChat = () => {
 		handleAcceptChanges,
 		handleDeclineChanges,
 		handleStopRequest,
-		refreshMCPConnection,
 	};
 };
 
-export default useChat;
+export { CHAT_STATUS };
+export default useEditorChat;

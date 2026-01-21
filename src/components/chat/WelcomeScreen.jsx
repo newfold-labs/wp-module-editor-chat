@@ -7,12 +7,12 @@ import { __ } from "@wordpress/i18n";
  * External dependencies
  */
 import { Edit3, FilePlus, Layers, Palette } from "lucide-react";
+import { SuggestionButton } from "@newfold-labs/wp-module-ai-chat";
 
 /**
  * Internal dependencies
  */
 import AILogo from "../ui/AILogo";
-import SuggestionButton from "../ui/SuggestionButton";
 
 /**
  * WelcomeScreen Component
