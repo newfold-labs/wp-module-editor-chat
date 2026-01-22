@@ -21,7 +21,7 @@ import {
  * Internal dependencies
  */
 import actionExecutor from "../services/actionExecutor";
-import { getCurrentGlobalStyles, updateGlobalPalette } from "../services/globalStylesService";
+import { getCurrentGlobalStyles, updateGlobalStyles } from "../services/globalStylesService";
 
 // Create editor-specific clients with the editor config
 const mcpClient = createMCPClient({ configKey: "nfdEditorChat" });
@@ -331,20 +331,22 @@ const useEditorChat = () => {
 				const toolName = toolCall.name || "";
 				const args = toolCall.arguments || {};
 
-				// Handle global palette update via JS service for real-time updates
-				if (toolName === "blu-update-global-palette") {
-					await updateProgress(__("Reading current color palette…", "wp-module-editor-chat"), 500);
+				console.log({ toolCall });
+
+				// Handle global styles update via JS service for real-time updates
+				if (toolName === "blu-update-global-styles" && args.settings) {
+					await updateProgress(__("Reading current styles…", "wp-module-editor-chat"), 500);
 
 					try {
 						await updateProgress(
-							__("Applying new colors to your site…", "wp-module-editor-chat"),
+							__("Applying style changes to your site…", "wp-module-editor-chat"),
 							600
 						);
-						const jsResult = await updateGlobalPalette(args.colors, args.replace_all);
+						const jsResult = await updateGlobalStyles(args.settings, args.styles);
 
 						if (jsResult.success) {
 							await updateProgress(
-								__("✓ Colors updated! Review and Accept or Decline.", "wp-module-editor-chat"),
+								__("✓ Styles updated! Review and Accept or Decline.", "wp-module-editor-chat"),
 								800
 							);
 							setHasGlobalStylesChanges(true);

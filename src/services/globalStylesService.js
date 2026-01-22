@@ -155,13 +155,13 @@ export function getCurrentGlobalStyles() {
 }
 
 /**
- * Update the global color palette in real-time (preview mode - doesn't auto-save)
+ * Update global styles using the full settings object (theme.json format)
  *
- * @param {Array}   colors     Array of color objects: [{ slug: string, color: string, name: string }]
- * @param {boolean} replaceAll If true, replace entire custom palette. If false, merge with existing.
- * @return {Promise<Object>} Result object with success status, updated palette, and undo data
+ * @param {Object} settings Settings object in theme.json format (e.g., { color: { palette: { custom: [...] } } })
+ * @param {Object} styles   Optional styles object for CSS declarations
+ * @return {Promise<Object>} Result object with success status and undo data
  */
-export async function updateGlobalPalette(colors, replaceAll = false) {
+export async function updateGlobalStyles(settings, styles = null) {
 	const data = getWPData();
 	if (!data) {
 		return {
@@ -194,94 +194,85 @@ export async function updateGlobalPalette(colors, replaceAll = false) {
 
 		// Capture original state for undo BEFORE making any changes
 		const originalStyles = JSON.parse(JSON.stringify(currentRecord.settings || {}));
+		const originalCssStyles = JSON.parse(JSON.stringify(currentRecord.styles || {}));
 
-		// Build the new settings
+		// Deep merge new settings with current settings
 		const currentSettings = currentRecord.settings || {};
-		const currentColorSettings = currentSettings.color || {};
-		const currentPalette = currentColorSettings.palette || {};
+		const newSettings = deepMerge(currentSettings, settings);
 
-		// Get existing custom palette - handle different structures
-		let existingCustomPalette = [];
-		if (Array.isArray(currentPalette.custom)) {
-			existingCustomPalette = currentPalette.custom;
-		} else if (Array.isArray(currentPalette)) {
-			// Some themes use flat palette structure
-			existingCustomPalette = [];
+		// Prepare update data
+		const updateData = { settings: newSettings };
+
+		// Handle styles if provided
+		if (styles) {
+			const currentCssStyles = currentRecord.styles || {};
+			updateData.styles = deepMerge(currentCssStyles, styles);
 		}
 
-		// Also get theme palette for reference
-		const themePalette = currentPalette.theme || [];
+		// Update the entity record (preview mode - user must click Accept to save)
+		await coreDispatch.editEntityRecord("root", "globalStyles", globalStylesId, updateData);
 
-		// Validate and prepare new colors
-		const validatedColors = colors
-			.filter((c) => c.slug && c.color)
-			.map((c) => ({
-				slug: c.slug,
-				color: c.color,
-				name: c.name || c.slug.charAt(0).toUpperCase() + c.slug.slice(1).replace(/-/g, " "),
-			}));
+		// Extract updated colors for the response message
+		const updatedColors = settings?.color?.palette?.custom || [];
+		const colorCount = updatedColors.length;
+		const hasTypography = !!settings?.typography;
+		const hasSpacing = !!settings?.spacing;
 
-		if (validatedColors.length === 0) {
-			return {
-				success: false,
-				error: "No valid colors provided. Each color needs a slug and color value.",
-			};
+		let message = "Updated global styles.";
+		if (colorCount > 0) {
+			message = `Updated ${colorCount} color(s) in the global palette.`;
 		}
-
-		let newCustomPalette;
-		if (replaceAll) {
-			newCustomPalette = validatedColors;
-		} else {
-			// Merge: update existing by slug, add new ones
-			// Start with existing custom palette
-			const paletteBySlug = new Map(existingCustomPalette.map((c) => [c.slug, c]));
-
-			// Update/add new colors
-			for (const newColor of validatedColors) {
-				paletteBySlug.set(newColor.slug, newColor);
-			}
-
-			newCustomPalette = Array.from(paletteBySlug.values());
+		if (hasTypography) {
+			message += " Typography settings updated.";
 		}
-
-		// Build new settings object - preserve theme palette structure
-		const newSettings = {
-			...currentSettings,
-			color: {
-				...currentColorSettings,
-				palette: {
-					theme: themePalette, // Preserve theme palette
-					custom: newCustomPalette,
-				},
-			},
-		};
-
-		// Update the entity record (this makes it appear immediately in the editor as a PREVIEW)
-		// Note: We do NOT save here - user must click Accept to save
-		await coreDispatch.editEntityRecord("root", "globalStyles", globalStylesId, {
-			settings: newSettings,
-		});
+		if (hasSpacing) {
+			message += " Spacing settings updated.";
+		}
+		message += " Click Accept to save or Decline to revert.";
 
 		return {
 			success: true,
-			updatedColors: validatedColors,
-			currentPalette: newCustomPalette,
-			message: `Updated ${validatedColors.length} color(s) in the global palette. Click Accept to save or Decline to revert.`,
-			// Include undo data for accept/decline functionality
+			updatedColors,
+			message,
 			undoData: {
 				globalStyles: {
 					originalStyles,
+					originalCssStyles,
 					globalStylesId,
 				},
 			},
 		};
 	} catch (error) {
-		console.error("Error updating global palette:", error);
+		console.error("Error updating global styles:", error);
 		return {
 			success: false,
-			error: `Failed to update palette: ${error.message}`,
+			error: `Failed to update global styles: ${error.message}`,
 		};
 	}
+}
+
+/**
+ * Deep merge two objects
+ * @param {Object} target Target object
+ * @param {Object} source Source object to merge
+ * @return {Object} Merged object
+ */
+function deepMerge(target, source) {
+	const output = { ...target };
+
+	for (const key of Object.keys(source)) {
+		if (source[key] && typeof source[key] === "object" && !Array.isArray(source[key])) {
+			if (target[key] && typeof target[key] === "object" && !Array.isArray(target[key])) {
+				output[key] = deepMerge(target[key], source[key]);
+			} else {
+				output[key] = { ...source[key] };
+			}
+		} else {
+			output[key] = source[key];
+		}
+	}
+
+	return output;
 }
 
 /**
@@ -315,7 +306,7 @@ export function getFormattedPalette() {
 export default {
 	getGlobalStylesId,
 	getCurrentGlobalStyles,
-	updateGlobalPalette,
+	updateGlobalStyles,
 	isGlobalStylesAvailable,
 	getFormattedPalette,
 };
