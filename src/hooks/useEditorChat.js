@@ -450,7 +450,6 @@ const useEditorChat = () => {
 			}
 		}
 
-		await updateProgress(__("✓ Actions completed", "wp-module-editor-chat"), 500);
 		const hasChanges = toolResults.some((r) => r.hasChanges);
 
 		setMessages((prev) =>

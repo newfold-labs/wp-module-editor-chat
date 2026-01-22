@@ -294,19 +294,9 @@ export function isGlobalStylesAvailable() {
 	}
 }
 
-/**
- * Get a formatted list of current palette colors for display
- * @return {Array} Array of formatted color strings
- */
-export function getFormattedPalette() {
-	const { palette } = getCurrentGlobalStyles();
-	return palette.map((c) => `${c.name || c.slug}: ${c.color}`);
-}
-
 export default {
 	getGlobalStylesId,
 	getCurrentGlobalStyles,
 	updateGlobalStyles,
 	isGlobalStylesAvailable,
-	getFormattedPalette,
 };
