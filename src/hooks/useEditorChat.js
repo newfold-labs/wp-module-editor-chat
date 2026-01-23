@@ -504,11 +504,31 @@ const useEditorChat = () => {
 					},
 				]);
 
+				// Get the user's original question from the last user message
+				const lastUserMessage = [...previousMessages].reverse().find((m) => m.role === "user");
+				const rawContent = lastUserMessage?.content;
+				let userQuestion = "the user's request";
+				if (typeof rawContent === "string") {
+					userQuestion = rawContent;
+				} else if (Array.isArray(rawContent)) {
+					userQuestion = rawContent
+						.map((c) => (typeof c === "string" ? c : c?.text || ""))
+						.join(" ");
+				}
+
+				// Include conversation history for context, but add a clear instruction
+				// to focus on the CURRENT question and its tool results
 				const followUpMessages = [
-					...openaiClient.convertMessagesToOpenAI(previousMessages.slice(0, -1)),
+					...openaiClient.convertMessagesToOpenAI(previousMessages),
 					{
 						role: "user",
-						content: `Here are the results from the tool execution:\n\n${toolResultsSummary}\n\nPlease provide a brief, helpful summary of what was done for the user. Be concise.`,
+						content: `I just executed tools to answer the user's MOST RECENT question: "${userQuestion}"
+
+Here are the tool results:
+
+${toolResultsSummary}
+
+IMPORTANT: Respond ONLY to the most recent question above. Use these tool results to provide a helpful, concise answer. Do not reference or summarize previous questions or actions from the conversation history.`,
 					},
 				];
 
