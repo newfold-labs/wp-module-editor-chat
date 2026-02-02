@@ -22,7 +22,7 @@ class ContextBuilderWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	}
 
 	/**
-	 * build_context returns array with page and site keys.
+	 * Returns array with page and site keys from build_context.
 	 *
 	 * @return void
 	 */
@@ -35,7 +35,7 @@ class ContextBuilderWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	}
 
 	/**
-	 * build_context site key has expected structure.
+	 * Site key has expected structure from build_context.
 	 *
 	 * @return void
 	 */
@@ -53,7 +53,7 @@ class ContextBuilderWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	}
 
 	/**
-	 * build_context page key has expected default keys.
+	 * Page key has expected default keys from build_context.
 	 *
 	 * @return void
 	 */

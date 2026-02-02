@@ -29,7 +29,7 @@ class ChatControllerWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	}
 
 	/**
-	 * send_message_permissions_check returns false when not logged in.
+	 * Returns false when not logged in from send_message_permissions_check.
 	 *
 	 * @return void
 	 */
@@ -41,7 +41,7 @@ class ChatControllerWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	}
 
 	/**
-	 * send_message_permissions_check returns true for editor.
+	 * Returns true for editor from send_message_permissions_check.
 	 *
 	 * @return void
 	 */

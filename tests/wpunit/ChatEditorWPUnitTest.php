@@ -10,13 +10,13 @@ namespace NewfoldLabs\WP\Module\EditorChat;
 class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 
 	/**
-	 * Allowed referrers includes nfd-editor-chat.
+	 * Allowed referrers include nfd-editor-chat.
 	 *
 	 * @return void
 	 */
 	public function test_allowed_referrers() {
-		$ref = new \ReflectionClass( ChatEditor::class );
-		$prop = $ref->getProperty( 'allowed_referrers' );
+		$ref    = new \ReflectionClass( ChatEditor::class );
+		$prop   = $ref->getProperty( 'allowed_referrers' );
 		$prop->setAccessible( true );
 		$allowed = $prop->getValue();
 		$this->assertIsArray( $allowed );
@@ -24,7 +24,7 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	}
 
 	/**
-	 * load_script_translation_file returns custom path for nfd-editor-chat handle.
+	 * Returns custom path for nfd-editor-chat handle from load_script_translation_file.
 	 *
 	 * @return void
 	 */
@@ -36,7 +36,7 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	}
 
 	/**
-	 * load_script_translation_file returns original file for other handle.
+	 * Returns original file for other handle from load_script_translation_file.
 	 *
 	 * @return void
 	 */
@@ -47,7 +47,7 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	}
 
 	/**
-	 * add_admin_body_class returns input unchanged when no current screen (WP_Screen is final, cannot mock).
+	 * Returns input unchanged when no current screen from add_admin_body_class (WP_Screen is final, cannot mock).
 	 *
 	 * @return void
 	 */
@@ -59,7 +59,7 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	}
 
 	/**
-	 * add_admin_body_class returns a string containing the original classes.
+	 * Returns a string containing the original classes from add_admin_body_class.
 	 *
 	 * @return void
 	 */

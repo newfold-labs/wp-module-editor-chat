@@ -28,7 +28,7 @@ class PermissionsWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	}
 
 	/**
-	 * is_admin returns false when not logged in.
+	 * Returns false when not logged in from is_admin.
 	 *
 	 * @return void
 	 */
@@ -38,7 +38,7 @@ class PermissionsWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	}
 
 	/**
-	 * is_editor returns false when not logged in.
+	 * Returns false when not logged in from is_editor.
 	 *
 	 * @return void
 	 */
@@ -48,7 +48,7 @@ class PermissionsWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	}
 
 	/**
-	 * is_authorized_admin returns false when not logged in.
+	 * Returns false when not logged in from is_authorized_admin.
 	 *
 	 * @return void
 	 */
@@ -58,7 +58,7 @@ class PermissionsWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	}
 
 	/**
-	 * is_admin returns true for administrator.
+	 * Returns true for administrator from is_admin.
 	 *
 	 * @return void
 	 */
@@ -69,7 +69,7 @@ class PermissionsWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	}
 
 	/**
-	 * is_editor returns true for editor.
+	 * Returns true for editor from is_editor.
 	 *
 	 * @return void
 	 */
