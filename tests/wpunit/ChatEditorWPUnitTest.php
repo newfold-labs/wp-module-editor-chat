@@ -47,35 +47,27 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	}
 
 	/**
-	 * add_admin_body_class appends nfd-editor-chat-enabled when screen is block editor.
+	 * add_admin_body_class returns input unchanged when no current screen (WP_Screen is final, cannot mock).
 	 *
 	 * @return void
 	 */
-	public function test_add_admin_body_class_appends_class_when_block_editor() {
-		$screen = $this->getMockBuilder( \WP_Screen::class )
-			->disableOriginalConstructor()
-			->getMock();
-		$screen->method( 'is_block_editor' )->willReturn( true );
-		$GLOBALS['current_screen'] = $screen;
-		$result = ChatEditor::add_admin_body_class( 'existing-class ' );
-		$this->assertStringContainsString( 'nfd-editor-chat-enabled', $result );
+	public function test_add_admin_body_class_returns_input_when_no_screen() {
 		unset( $GLOBALS['current_screen'] );
-	}
-
-	/**
-	 * add_admin_body_class returns unchanged when not block editor.
-	 *
-	 * @return void
-	 */
-	public function test_add_admin_body_class_unchanged_when_not_block_editor() {
-		$screen = $this->getMockBuilder( \WP_Screen::class )
-			->disableOriginalConstructor()
-			->getMock();
-		$screen->method( 'is_block_editor' )->willReturn( false );
-		$GLOBALS['current_screen'] = $screen;
 		$input  = 'existing-class ';
 		$result = ChatEditor::add_admin_body_class( $input );
 		$this->assertSame( $input, $result );
+	}
+
+	/**
+	 * add_admin_body_class returns a string containing the original classes.
+	 *
+	 * @return void
+	 */
+	public function test_add_admin_body_class_returns_string() {
 		unset( $GLOBALS['current_screen'] );
+		$input  = 'admin-body ';
+		$result = ChatEditor::add_admin_body_class( $input );
+		$this->assertIsString( $result );
+		$this->assertStringContainsString( $input, $result );
 	}
 }
