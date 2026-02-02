@@ -11,7 +11,7 @@ import {
 	getCurrentPageContent,
 	getCurrentPageId,
 	getCurrentPageTitle,
-	getSelectedBlock,
+	getSelectedBlocks,
 } from "../utils/editorHelpers";
 
 /**
@@ -28,26 +28,21 @@ import {
  */
 
 const buildContext = async () => {
-	const selectedBlock = getSelectedBlock();
-	let selectedBlockForContext = null;
-
-	if (selectedBlock) {
-		// Create a copy without clientId to prevent the LLM from using it
-		const { clientId, ...blockWithoutClientId } = selectedBlock;
-
-		// Create the block object with serialized content
-		// The AI needs the EXACT serialized HTML to match block comments properly
-		selectedBlockForContext = {
+	const selectedBlocks = getSelectedBlocks();
+	const selectedBlocksForContext = selectedBlocks.map((block) => {
+		const { clientId, ...blockWithoutClientId } = block;
+		return {
 			...blockWithoutClientId,
-			originalContent: serialize(selectedBlock),
+			originalContent: serialize(block),
 		};
-	}
+	});
 
 	return {
 		page: {
 			page_id: getCurrentPageId(),
 			page_title: getCurrentPageTitle(),
-			selected_block: selectedBlockForContext,
+			selected_block: selectedBlocksForContext.length === 1 ? selectedBlocksForContext[0] : null,
+			selected_blocks: selectedBlocksForContext.length > 0 ? selectedBlocksForContext : null,
 			content: await getCurrentPageContent(),
 		},
 	};

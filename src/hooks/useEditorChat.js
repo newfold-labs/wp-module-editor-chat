@@ -22,6 +22,14 @@ import {
  */
 import actionExecutor from "../services/actionExecutor";
 import { getCurrentGlobalStyles, updateGlobalStyles } from "../services/globalStylesService";
+import {
+	buildCompactBlockTree,
+	getBlockMarkup,
+	getCurrentPageTitle,
+	getCurrentPageId,
+	getSelectedBlocks,
+} from "../utils/editorHelpers";
+import { validateBlockMarkup } from "../utils/blockValidator";
 
 // Create editor-specific clients with the editor config
 const mcpClient = createMCPClient({ configKey: "nfdEditorChat" });
@@ -149,6 +157,110 @@ const generateSessionId = () => {
 };
 
 /**
+ * System prompt sent with every editor chat request.
+ * Instructs the AI on available tools, context format, and block editing rules.
+ */
+const EDITOR_SYSTEM_PROMPT = `You are a WordPress site editor assistant. You help users modify their page by editing blocks, adding sections, moving content, and changing styles.
+
+## Available Tools
+- blu/edit-block: Replace a block's content with new markup
+- blu/add-section: Insert new blocks at a position
+- blu/delete-block: Remove a block
+- blu/move-block: Reorder blocks
+- blu/get-block-markup: Fetch full markup of a block before editing
+- blu/update-global-styles: Change site-wide colors, typography, spacing
+- blu/get-global-styles: Read current global styles
+
+## Context Format
+Each message includes <editor_context> with:
+- Page info (title, ID)
+- A compact block tree showing all blocks with their clientId and text preview
+- Full markup for every block marked [SELECTED] (one or more)
+
+## Rules
+1. SELECTED BLOCKS: Blocks marked [SELECTED] in the block tree are the ones the user has selected. Their full markup is provided below the tree. When the user says "this", "these", "it", "them", "that", or similar pronouns, they mean the [SELECTED] block(s). When multiple blocks are selected the user may want changes applied to all of them — use context to decide. If no block is selected and the user uses such pronouns, ask them to select a block first.
+2. VALID MARKUP: Every block_content you provide MUST be valid WordPress block markup with proper <!-- wp:name {attrs} --> comments. Never output plain HTML without block comments.
+3. INNER BLOCKS: When editing a block that has inner blocks, include ALL inner blocks in your replacement markup unless the user specifically asked to remove them.
+4. BEFORE EDITING: If you need to edit a block that is NOT [SELECTED], call blu/get-block-markup first to see its current markup. Then modify that markup. Do not guess at a block's current content.
+5. MINIMAL CHANGES: Only change what the user asked for. Preserve all other content, styles, and attributes as-is.
+6. MULTIPLE OPERATIONS: You can call multiple tools in one turn for complex requests (e.g., move + edit, or delete + add).
+7. POSITIONING: Use the block tree index paths and clientIds to identify blocks. The tree shows nesting — indented blocks are inner blocks.
+8. TEMPLATE PARTS: Blocks inside template parts (header, footer) can be edited. Their clientIds are in the block tree.
+9. ADDING SECTIONS: You can insert content after ANY block at any nesting depth — not just top-level blocks. When the user specifies a position (e.g., "add a paragraph below this heading", "add a section after the hero"), use that block's client_id as after_client_id. When the user does NOT specify a position, insert at the top level of the page (use after_client_id of the last top-level block in the tree, or null for the very top).
+10. COLORS: This rule applies to EVERY block in your output — the target block AND every inner block you include. Scan the ENTIRE block_content for color violations before returning it.
+    - The ONLY valid values for "backgroundColor" and "textColor" attributes are the exact theme palette slugs: base, contrast, accent-1, accent-2, accent-3, accent-4, accent-5, accent-6. No other slugs exist. If the existing markup has an invalid slug (e.g., "backgroundColor":"red"), you MUST fix it.
+    - For any color that is NOT one of those theme slugs, REMOVE the "backgroundColor"/"textColor" attribute and use the style object with a HEX value instead: {"style":{"color":{"background":"#ff0000"}}} or {"style":{"color":{"text":"#ff0000"}}}.
+    - This also applies inside "elements" objects (e.g., link color). Replace any named color like "green" with its HEX equivalent.
+    - In the HTML portion of block markup, class names like "has-red-background-color" must be replaced with the generic "has-background" and the color applied via the inline style attribute.
+    - To reference a theme preset inside the style object use "var:preset|color|<slug>" (e.g., "var:preset|color|accent-1"). In inline CSS use var(--wp--preset--color--<slug>).
+    - Common color name → HEX: red → #ff0000, blue → #0000ff, green → #008000, yellow → #ffff00, orange → #ff8c00, purple → #800080, pink → #ff69b4, black → #000000, white → #ffffff.
+11. NFD UTILITY CLASSES: Blocks may have nfd-* utility classes in their className attribute (e.g., nfd-bg-primary, nfd-text-white, nfd-py-md, nfd-rounded, nfd-gap-sm). These classes apply predefined styles. When the user requests a change that conflicts with an nfd-* class, REMOVE the conflicting class. Examples:
+    - User asks to change background color → remove any nfd-bg-* class.
+    - User asks to change text color → remove any nfd-text-{color} class (but keep nfd-text-{size} classes like nfd-text-md).
+    - User asks to change padding → remove any nfd-p-*, nfd-py-*, nfd-px-*, nfd-pt-*, nfd-pb-*, nfd-pl-*, nfd-pr-* class.
+    - User asks to change margin → remove any nfd-m-*, nfd-my-*, nfd-mx-*, nfd-mt-*, nfd-mb-*, nfd-ml-*, nfd-mr-* class.
+    - User asks to change gap/spacing → remove any nfd-gap-* class.
+    - User asks to change border radius → remove any nfd-rounded* class.
+    - User asks to change layout (columns, grid, flex, width, alignment) → remove any nfd-grid-*, nfd-cols-*, nfd-row-*, nfd-col-*, nfd-w-*, nfd-flex-*, nfd-justify-*, nfd-items-*, nfd-self-*, nfd-order-* class.
+    Keep nfd-* classes that are unrelated to the requested change.`;
+
+/**
+ * Build editor context string with block tree and selected block markup.
+ * This is prepended to user messages so the AI has current page state.
+ *
+ * @return {string} Editor context string wrapped in <editor_context> tags
+ */
+const buildEditorContext = () => {
+	const { select: wpSelect } = wp.data;
+	const blockEditor = wpSelect("core/block-editor");
+	const blocks = blockEditor.getBlocks();
+	const selectedBlocks = getSelectedBlocks();
+	const selectedClientIds = selectedBlocks.map((b) => b.clientId);
+
+	const pageTitle = getCurrentPageTitle();
+	const pageId = getCurrentPageId();
+
+	let context = `Page: "${pageTitle}" (ID: ${pageId})\n\n`;
+	context += "Block tree:\n";
+	context += buildCompactBlockTree(blocks, selectedClientIds);
+
+	// Layer 2: Selected block markup (one section per selected block)
+	if (selectedBlocks.length > 0) {
+		const { serialize: wpSerialize } = wp.blocks;
+		const label = selectedBlocks.length === 1 ? "Selected block markup" : "Selected blocks markup";
+		context += `\n\n${label}:`;
+		for (const sel of selectedBlocks) {
+			const fullBlock = blockEditor.getBlock(sel.clientId);
+			if (fullBlock) {
+				const markup = wpSerialize(fullBlock);
+				context += `\n\n--- ${fullBlock.name} (id:${fullBlock.clientId}) ---\n${markup}`;
+			}
+		}
+	}
+
+	return context;
+};
+
+/**
+ * Deep clone blocks for snapshot undo.
+ * Uses the block editor's getBlocks() and serializes/re-parses for a clean deep copy.
+ *
+ * @param {Array} blocks Array of block objects from getBlocks()
+ * @return {Array} Deep-cloned block array
+ */
+const snapshotBlocks = (blocks) => {
+	try {
+		const { serialize: wpSerialize } = wp.blocks;
+		const { parse: wpParse } = wp.blocks;
+		const serialized = blocks.map((b) => wpSerialize(b)).join("");
+		return wpParse(serialized);
+	} catch (e) {
+		console.error("Failed to snapshot blocks:", e);
+		return [];
+	}
+};
+
+/**
  * useEditorChat Hook
  *
  * Editor-specific chat hook that uses services from wp-module-ai-chat
@@ -179,6 +291,7 @@ const useEditorChat = () => {
 	const hasInitializedRef = useRef(false);
 	const abortControllerRef = useRef(null);
 	const originalGlobalStylesRef = useRef(null);
+	const blockSnapshotRef = useRef(null);
 
 	// Get WordPress editor dispatch functions
 	const { savePost } = useDispatch("core/editor");
@@ -297,6 +410,23 @@ const useEditorChat = () => {
 		const toolResults = [];
 		const completedToolsList = [];
 		let globalStylesUndoData = null;
+		let hasBlockEdits = false;
+
+		// Capture block snapshot before any tool execution for atomic undo
+		const blockToolNames = [
+			"blu-edit-block",
+			"blu-add-section",
+			"blu-delete-block",
+			"blu-move-block",
+		];
+		const hasBlockTools = toolCalls.some(
+			(tc) => blockToolNames.includes(tc.name || "")
+		);
+		if (hasBlockTools && !blockSnapshotRef.current) {
+			const { select: wpSelect } = wp.data;
+			const allBlocks = wpSelect("core/block-editor").getBlocks();
+			blockSnapshotRef.current = snapshotBlocks(allBlocks);
+		}
 
 		setStatus(CHAT_STATUS.TOOL_CALL);
 		await updateProgress(__("Preparing to execute actions…", "wp-module-editor-chat"), 300);
@@ -428,6 +558,167 @@ const useEditorChat = () => {
 					}
 				}
 
+				// Handle blu/edit-block via client-side actionExecutor
+				if (toolName === "blu-edit-block" && args.client_id && args.block_content) {
+					await updateProgress(__("Validating block markup…", "wp-module-editor-chat"), 300);
+
+					const validation = validateBlockMarkup(args.block_content);
+					if (!validation.valid) {
+						toolResults.push({
+							id: toolCall.id,
+							result: [{ type: "text", text: JSON.stringify({ success: false, error: validation.error }) }],
+							isError: true,
+						});
+						completedToolsList.push({ ...toolCall, isError: true });
+						setExecutedTools((prev) => [...prev, { ...toolCall, isError: true }]);
+						continue;
+					}
+
+					await updateProgress(__("Editing block content…", "wp-module-editor-chat"), 400);
+					try {
+						const editResult = await actionExecutor.handleRewriteAction(args.client_id, args.block_content);
+						hasBlockEdits = true;
+						await updateProgress(__("Block updated successfully", "wp-module-editor-chat"), 500);
+						toolResults.push({
+							id: toolCall.id,
+							result: [{ type: "text", text: JSON.stringify({ success: true, message: editResult.message }) }],
+							isError: false,
+							hasChanges: true,
+						});
+						completedToolsList.push({ ...toolCall, isError: false });
+						setExecutedTools((prev) => [...prev, { ...toolCall, isError: false }]);
+					} catch (editError) {
+						toolResults.push({
+							id: toolCall.id,
+							result: [{ type: "text", text: JSON.stringify({ success: false, error: editError.message }) }],
+							isError: true,
+						});
+						completedToolsList.push({ ...toolCall, isError: true });
+						setExecutedTools((prev) => [...prev, { ...toolCall, isError: true }]);
+					}
+					continue;
+				}
+
+				// Handle blu/add-section via client-side actionExecutor
+				if (toolName === "blu-add-section" && args.block_content) {
+					await updateProgress(__("Validating block markup…", "wp-module-editor-chat"), 300);
+
+					const validation = validateBlockMarkup(args.block_content);
+					if (!validation.valid) {
+						toolResults.push({
+							id: toolCall.id,
+							result: [{ type: "text", text: JSON.stringify({ success: false, error: validation.error }) }],
+							isError: true,
+						});
+						completedToolsList.push({ ...toolCall, isError: true });
+						setExecutedTools((prev) => [...prev, { ...toolCall, isError: true }]);
+						continue;
+					}
+
+					await updateProgress(__("Adding new section…", "wp-module-editor-chat"), 400);
+					try {
+						const afterClientId = args.after_client_id || null;
+						const addResult = await actionExecutor.handleAddAction(afterClientId, [{ block_content: args.block_content }]);
+						hasBlockEdits = true;
+						await updateProgress(__("Section added successfully", "wp-module-editor-chat"), 500);
+						toolResults.push({
+							id: toolCall.id,
+							result: [{ type: "text", text: JSON.stringify({ success: true, message: addResult.message, blocksAdded: addResult.blocksAdded }) }],
+							isError: false,
+							hasChanges: true,
+						});
+						completedToolsList.push({ ...toolCall, isError: false });
+						setExecutedTools((prev) => [...prev, { ...toolCall, isError: false }]);
+					} catch (addError) {
+						toolResults.push({
+							id: toolCall.id,
+							result: [{ type: "text", text: JSON.stringify({ success: false, error: addError.message }) }],
+							isError: true,
+						});
+						completedToolsList.push({ ...toolCall, isError: true });
+						setExecutedTools((prev) => [...prev, { ...toolCall, isError: true }]);
+					}
+					continue;
+				}
+
+				// Handle blu/delete-block via client-side actionExecutor
+				if (toolName === "blu-delete-block" && args.client_id) {
+					await updateProgress(__("Deleting block…", "wp-module-editor-chat"), 400);
+					try {
+						const deleteResult = await actionExecutor.handleDeleteAction(args.client_id);
+						hasBlockEdits = true;
+						await updateProgress(__("Block deleted successfully", "wp-module-editor-chat"), 500);
+						toolResults.push({
+							id: toolCall.id,
+							result: [{ type: "text", text: JSON.stringify({ success: true, message: deleteResult.message }) }],
+							isError: false,
+							hasChanges: true,
+						});
+						completedToolsList.push({ ...toolCall, isError: false });
+						setExecutedTools((prev) => [...prev, { ...toolCall, isError: false }]);
+					} catch (deleteError) {
+						toolResults.push({
+							id: toolCall.id,
+							result: [{ type: "text", text: JSON.stringify({ success: false, error: deleteError.message }) }],
+							isError: true,
+						});
+						completedToolsList.push({ ...toolCall, isError: true });
+						setExecutedTools((prev) => [...prev, { ...toolCall, isError: true }]);
+					}
+					continue;
+				}
+
+				// Handle blu/move-block via client-side actionExecutor
+				if (toolName === "blu-move-block" && args.client_id && args.target_client_id && args.position) {
+					await updateProgress(__("Moving block…", "wp-module-editor-chat"), 400);
+					try {
+						const moveResult = await actionExecutor.handleMoveAction(args.client_id, args.target_client_id, args.position);
+						hasBlockEdits = true;
+						await updateProgress(__("Block moved successfully", "wp-module-editor-chat"), 500);
+						toolResults.push({
+							id: toolCall.id,
+							result: [{ type: "text", text: JSON.stringify({ success: true, message: moveResult.message }) }],
+							isError: false,
+							hasChanges: true,
+						});
+						completedToolsList.push({ ...toolCall, isError: false });
+						setExecutedTools((prev) => [...prev, { ...toolCall, isError: false }]);
+					} catch (moveError) {
+						toolResults.push({
+							id: toolCall.id,
+							result: [{ type: "text", text: JSON.stringify({ success: false, error: moveError.message }) }],
+							isError: true,
+						});
+						completedToolsList.push({ ...toolCall, isError: true });
+						setExecutedTools((prev) => [...prev, { ...toolCall, isError: true }]);
+					}
+					continue;
+				}
+
+				// Handle blu/get-block-markup via client-side (read-only, no undo needed)
+				if (toolName === "blu-get-block-markup" && args.client_id) {
+					await updateProgress(__("Reading block markup…", "wp-module-editor-chat"), 300);
+					const markupResult = getBlockMarkup(args.client_id);
+					if (markupResult) {
+						toolResults.push({
+							id: toolCall.id,
+							result: [{ type: "text", text: JSON.stringify(markupResult) }],
+							isError: false,
+						});
+						completedToolsList.push({ ...toolCall, isError: false });
+						setExecutedTools((prev) => [...prev, { ...toolCall, isError: false }]);
+					} else {
+						toolResults.push({
+							id: toolCall.id,
+							result: [{ type: "text", text: JSON.stringify({ error: `Block with clientId ${args.client_id} not found` }) }],
+							isError: true,
+						});
+						completedToolsList.push({ ...toolCall, isError: true });
+						setExecutedTools((prev) => [...prev, { ...toolCall, isError: true }]);
+					}
+					continue;
+				}
+
 				// Default: use MCP for all other tool calls
 				await updateProgress(__("Communicating with WordPress…", "wp-module-editor-chat"), 400);
 				const result = await mcpClient.callTool(toolCall.name, toolCall.arguments);
@@ -452,6 +743,21 @@ const useEditorChat = () => {
 
 		const hasChanges = toolResults.some((r) => r.hasChanges);
 
+		// Build composite undo data from both block snapshot and global styles
+		let compositeUndoData = null;
+		if (hasChanges) {
+			const undoParts = {};
+			if (hasBlockEdits && blockSnapshotRef.current) {
+				undoParts.blocks = blockSnapshotRef.current;
+			}
+			if (globalStylesUndoData) {
+				undoParts.globalStyles = globalStylesUndoData;
+			}
+			if (Object.keys(undoParts).length > 0) {
+				compositeUndoData = undoParts;
+			}
+		}
+
 		setMessages((prev) =>
 			prev.map((msg) =>
 				msg.id === assistantMessageId
@@ -460,8 +766,8 @@ const useEditorChat = () => {
 							toolResults,
 							executedTools: completedToolsList,
 							isExecutingTools: false,
-							...(hasChanges && globalStylesUndoData
-								? { hasActions: true, undoData: globalStylesUndoData }
+							...(compositeUndoData
+								? { hasActions: true, undoData: compositeUndoData }
 								: {}),
 						}
 					: msg
@@ -597,13 +903,17 @@ IMPORTANT: Respond ONLY to the most recent question above. Use these tool result
 		setExecutedTools([]);
 		setPendingTools([]);
 
+		// Build editor context and enrich the user's message
+		const editorContext = buildEditorContext();
+		const enrichedContent = `<editor_context>\n${editorContext}\n</editor_context>\n\n${messageContent}`;
+
 		const userMessage = {
 			id: `user-${Date.now()}`,
 			type: "user",
 			role: "user",
-			content: messageContent,
+			content: enrichedContent,
 		};
-		setMessages((prev) => [...prev, userMessage]);
+		setMessages((prev) => [...prev, { ...userMessage, content: messageContent }]);
 		setIsLoading(true);
 		setStatus(CHAT_STATUS.GENERATING);
 
@@ -611,14 +921,17 @@ IMPORTANT: Respond ONLY to the most recent question above. Use these tool result
 
 		try {
 			const recentMessages = [...messages, userMessage].slice(-10);
-			const openaiMessages = openaiClient.convertMessagesToOpenAI(
-				recentMessages.map((msg) => ({
-					role: msg.type === "user" ? "user" : "assistant",
-					content: msg.content ?? "",
-					toolCalls: msg.toolCalls,
-					toolResults: msg.toolResults,
-				}))
-			);
+			const openaiMessages = [
+				{ role: "system", content: EDITOR_SYSTEM_PROMPT },
+				...openaiClient.convertMessagesToOpenAI(
+					recentMessages.map((msg) => ({
+						role: msg.type === "user" || msg.type === "notification" ? "user" : "assistant",
+						content: msg.content ?? "",
+						toolCalls: msg.toolCalls,
+						toolResults: msg.toolResults,
+					}))
+				),
+			];
 
 			const openaiTools = mcpClient.isConnected() ? mcpClient.getToolsForOpenAI() : [];
 			const assistantMessageId = `assistant-${Date.now()}`;
@@ -637,12 +950,12 @@ IMPORTANT: Respond ONLY to the most recent question above. Use these tool result
 
 			await openaiClient.createStreamingCompletion(
 				{
-					model: "gpt-4o-mini",
+					model: "gpt-4o",
 					messages: openaiMessages,
 					tools: openaiTools.length > 0 ? openaiTools : undefined,
 					tool_choice: openaiTools.length > 0 ? "auto" : undefined,
-					temperature: 0.7,
-					max_tokens: 2000,
+					temperature: 0.3,
+					max_tokens: 4000,
 					mode: "editor",
 				},
 				(chunk) => {
@@ -721,6 +1034,7 @@ IMPORTANT: Respond ONLY to the most recent question above. Use these tool result
 		setMessages([]);
 		setHasGlobalStylesChanges(false);
 		originalGlobalStylesRef.current = null;
+		blockSnapshotRef.current = null;
 
 		const newSessionId = generateSessionId();
 		setSessionId(newSessionId);
@@ -753,6 +1067,19 @@ IMPORTANT: Respond ONLY to the most recent question above. Use these tool result
 			}
 		}
 
+		// Clear block snapshot on accept — changes are now permanent
+		blockSnapshotRef.current = null;
+
+		// Notify the AI that the user accepted the changes
+		setMessages((prev) => [
+			...prev,
+			{
+				id: `notification-${Date.now()}`,
+				type: "notification",
+				content: "The user accepted and saved all the changes you made.",
+			},
+		]);
+
 		if (savePost) {
 			savePost();
 		}
@@ -773,8 +1100,20 @@ IMPORTANT: Respond ONLY to the most recent question above. Use these tool result
 			const undoData = firstActionMessage.undoData;
 
 			if (undoData && typeof undoData === "object" && !Array.isArray(undoData)) {
+				// Restore block snapshot using resetBlocks for atomic undo
 				if (undoData.blocks && Array.isArray(undoData.blocks) && undoData.blocks.length > 0) {
-					await actionExecutor.restoreBlocks(undoData.blocks);
+					const { dispatch: wpDispatch } = wp.data;
+					const { createBlock: wpCreateBlock } = wp.blocks;
+
+					// Convert parsed snapshot blocks back to proper WordPress blocks
+					const restoreBlock = (parsed) => {
+						const innerBlocks = parsed.innerBlocks
+							? parsed.innerBlocks.map((inner) => restoreBlock(inner))
+							: [];
+						return wpCreateBlock(parsed.name, parsed.attributes || {}, innerBlocks);
+					};
+					const restoredBlocks = undoData.blocks.map((b) => restoreBlock(b));
+					wpDispatch("core/block-editor").resetBlocks(restoredBlocks);
 				}
 				if (
 					undoData.globalStyles &&
@@ -787,18 +1126,25 @@ IMPORTANT: Respond ONLY to the most recent question above. Use these tool result
 				await actionExecutor.restoreBlocks(undoData);
 			}
 
-			setMessages((prev) =>
-				prev.map((msg) => {
+			setMessages((prev) => [
+				...prev.map((msg) => {
 					if (msg.hasActions) {
 						const { hasActions, undoData: msgUndoData, ...rest } = msg;
 						return rest;
 					}
 					return msg;
-				})
-			);
+				}),
+				{
+					id: `notification-${Date.now()}`,
+					type: "notification",
+					content:
+						"The user declined the changes. All modifications have been reverted to their previous state. The page is back to how it was before your last edits.",
+				},
+			]);
 
 			setHasGlobalStylesChanges(false);
 			originalGlobalStylesRef.current = null;
+			blockSnapshotRef.current = null;
 		} catch (restoreError) {
 			console.error("Error restoring changes:", restoreError);
 		}

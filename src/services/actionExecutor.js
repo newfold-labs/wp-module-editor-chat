@@ -625,6 +625,62 @@ class ActionExecutor {
 	}
 
 	/**
+	 * Handle "move" action - move a block to a new position relative to another block
+	 *
+	 * @param {string} clientId       The clientId of the block to move
+	 * @param {string} targetClientId The clientId of the target block to position relative to
+	 * @param {string} position       "before" or "after" the target block
+	 * @return {Promise<Object>} Result of the move, including original position for undo
+	 */
+	async handleMoveAction(clientId, targetClientId, position) {
+		const { getBlock, getBlockRootClientId, getBlockIndex } = select("core/block-editor");
+		const { moveBlockToPosition } = dispatch("core/block-editor");
+
+		const block = getBlock(clientId);
+		if (!block) {
+			throw new Error(`Block with clientId ${clientId} not found`);
+		}
+
+		const targetBlock = getBlock(targetClientId);
+		if (!targetBlock) {
+			throw new Error(`Target block with clientId ${targetClientId} not found`);
+		}
+
+		// Record original position for undo
+		const originalRootClientId = getBlockRootClientId(clientId) || "";
+		const originalIndex = getBlockIndex(clientId);
+
+		// Determine target position
+		const targetRootClientId = getBlockRootClientId(targetClientId) || "";
+		let targetIndex = getBlockIndex(targetClientId);
+
+		if (position === "after") {
+			targetIndex += 1;
+		}
+
+		// If moving within the same root and the source is before the target,
+		// the target index needs adjustment because removing the source shifts indices
+		if (
+			originalRootClientId === targetRootClientId &&
+			originalIndex < targetIndex
+		) {
+			targetIndex -= 1;
+		}
+
+		moveBlockToPosition(clientId, originalRootClientId, targetRootClientId, targetIndex);
+
+		return {
+			clientId,
+			blockName: block.name,
+			message: `Block ${block.name} moved ${position} ${targetBlock.name} successfully`,
+			originalPosition: {
+				rootClientId: originalRootClientId,
+				index: originalIndex,
+			},
+		};
+	}
+
+	/**
 	 * Handle "delete" action - remove a block from the editor
 	 *
 	 * @param {string} clientId The block's client ID to delete
@@ -729,40 +785,34 @@ class ActionExecutor {
 	}
 
 	/**
-	 * Find which context a block belongs to (root or post-content)
+	 * Find a block's parent and index at any nesting depth.
+	 *
+	 * Uses getBlockRootClientId / getBlockIndex from the block editor store,
+	 * which work for blocks at any depth in the tree (root, post-content,
+	 * inner blocks of groups/columns/etc.).
 	 *
 	 * @param {string} clientId The block's client ID
-	 * @return {Object|null} Object with blocks array and parentClientId, or null if not found
+	 * @return {Object|null} { parentClientId, index } or null if not found
 	 */
 	findBlockContext(clientId) {
-		const { getBlocks } = select("core/block-editor");
-		const rootBlocks = getBlocks();
+		const { getBlockRootClientId, getBlockIndex, getBlock } = select("core/block-editor");
 
-		// Check if it's a root block
-		const rootIndex = rootBlocks.findIndex((block) => block.clientId === clientId);
-		if (rootIndex !== -1) {
-			return {
-				blocks: rootBlocks,
-				parentClientId: null,
-				index: rootIndex,
-			};
+		const block = getBlock(clientId);
+		if (!block) {
+			return null;
 		}
 
-		// Check if it's inside post-content
-		const postContentBlock = rootBlocks.find((block) => block.name === "core/post-content");
-		if (postContentBlock) {
-			const postContentInnerBlocks = getBlocks(postContentBlock.clientId);
-			const innerIndex = postContentInnerBlocks.findIndex((block) => block.clientId === clientId);
-			if (innerIndex !== -1) {
-				return {
-					blocks: postContentInnerBlocks,
-					parentClientId: postContentBlock.clientId,
-					index: innerIndex,
-				};
-			}
+		const parentClientId = getBlockRootClientId(clientId) || "";
+		const index = getBlockIndex(clientId);
+
+		if (index === -1) {
+			return null;
 		}
 
-		return null;
+		return {
+			parentClientId,
+			index,
+		};
 	}
 
 	/**
@@ -833,30 +883,24 @@ class ActionExecutor {
 				}
 			}
 		} else {
-			// Insert after the specified block
+			// Insert after the specified block (works at any nesting depth)
 			const targetBlock = getBlock(clientId);
 			if (!targetBlock) {
 				throw new Error(`Target block with clientId ${clientId} not found`);
 			}
 
-			// Find which context the target block belongs to
 			const context = this.findBlockContext(clientId);
 			if (!context) {
-				throw new Error(`Target block ${clientId} not found in root blocks or post-content`);
+				throw new Error(`Target block ${clientId} not found in the block tree`);
 			}
 
-			// Insert after the target block in its context
+			// Insert as a sibling right after the target block in its parent
 			const insertIndex = context.index + 1;
-			if (context.parentClientId) {
-				// Insert into post-content (always use parentClientId for post-content)
-				insertBlocks(blocksToInsert, insertIndex, context.parentClientId);
-			} else if (insertIndex < context.blocks.length) {
-				// Insert at root level before the next block
-				insertBlocks(blocksToInsert, insertIndex, context.blocks[insertIndex].clientId);
-			} else {
-				// Insert at the end of root
-				insertBlocks(blocksToInsert, insertIndex);
-			}
+			insertBlocks(
+				blocksToInsert,
+				insertIndex,
+				context.parentClientId || undefined
+			);
 		}
 
 		// Return result with original state (empty since these are new blocks)

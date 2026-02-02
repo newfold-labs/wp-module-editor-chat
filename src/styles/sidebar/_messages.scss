@@ -355,6 +355,20 @@
 		}
 	}
 
+	// Notification message (centered, subtle)
+	&--notification {
+		justify-content: center;
+
+		.nfd-editor-chat-message__content,
+		.nfd-ai-chat-message__content {
+			text-align: center;
+			font-size: var(--nfd-editor-chat-font-size-sm);
+			color: var(--nfd-editor-chat-color-text-secondary);
+			font-style: italic;
+			padding: 4px 12px;
+		}
+	}
+
 	// Streaming message state
 	&--streaming {
 		.nfd-editor-chat-message__content,

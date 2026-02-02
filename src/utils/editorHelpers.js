@@ -5,6 +5,109 @@ import { select, resolveSelect, dispatch } from "@wordpress/data";
 import { serialize } from "@wordpress/blocks";
 
 /**
+ * Build a compact text representation of the block tree for AI context.
+ *
+ * Produces a human-readable indented tree with index paths, block names,
+ * clientIds, and text previews. Template parts include area/slug metadata.
+ * Selected blocks are marked with [SELECTED].
+ *
+ * @param {Array}      blocks             Top-level blocks from getBlocks()
+ * @param {Array|null} selectedClientIds  Array of clientIds of the currently selected blocks
+ * @return {string} Compact block tree text
+ */
+export const buildCompactBlockTree = ( blocks, selectedClientIds = null ) => {
+	const lines = [];
+	const selectedSet = new Set( selectedClientIds || [] );
+
+	const extractTextPreview = ( block ) => {
+		// Try common text attributes first
+		const content = block.attributes?.content;
+		if ( content ) {
+			const plain = content.replace( /<[^>]*>/g, '' ).trim();
+			if ( plain ) {
+				return plain.length > 50 ? plain.substring( 0, 50 ) + '…' : plain;
+			}
+		}
+
+		// For blocks with metadata name
+		const metaName = block.attributes?.metadata?.name;
+		if ( metaName ) {
+			return metaName;
+		}
+
+		// For blocks with alt text (images)
+		const alt = block.attributes?.alt;
+		if ( alt ) {
+			return alt.length > 50 ? alt.substring( 0, 50 ) + '…' : alt;
+		}
+
+		return null;
+	};
+
+	const walkBlocks = ( blockList, prefix = '', depth = 0 ) => {
+		blockList.forEach( ( block, index ) => {
+			const indexPath = prefix ? `${ prefix }.${ index }` : `${ index }`;
+			const isSelected = selectedSet.has( block.clientId );
+			const selectedMarker = isSelected ? ' [SELECTED]' : '';
+
+			let line = `${ '  '.repeat( depth ) }[${ indexPath }] ${ block.name } (id:${ block.clientId })`;
+
+			// Add template part metadata
+			if ( block.name === 'core/template-part' ) {
+				const area = block.attributes?.area || '';
+				const slug = block.attributes?.slug || '';
+				if ( area ) {
+					line += ` area:${ area }`;
+				}
+				if ( slug ) {
+					line += ` slug:${ slug }`;
+				}
+			}
+
+			// Add text preview
+			const preview = extractTextPreview( block );
+			if ( preview ) {
+				line += ` → "${ preview }"`;
+			}
+
+			line += selectedMarker;
+			lines.push( line );
+
+			// Recurse into inner blocks
+			if ( block.innerBlocks && block.innerBlocks.length > 0 ) {
+				walkBlocks( block.innerBlocks, indexPath, depth + 1 );
+			}
+		} );
+	};
+
+	walkBlocks( blocks );
+	return lines.join( '\n' );
+};
+
+/**
+ * Get the full serialized markup of a block by its clientId.
+ *
+ * Used by the blu/get-block-markup tool interception for instant client-side response.
+ *
+ * @param {string} clientId The block's clientId
+ * @return {Object|null} Object with block_content, block_name, client_id, or null if not found
+ */
+export const getBlockMarkup = ( clientId ) => {
+	const blockEditor = select( 'core/block-editor' );
+	const block = blockEditor.getBlock( clientId );
+
+	if ( ! block ) {
+		return null;
+	}
+
+	return {
+		block_content: serialize( block ),
+		block_name: block.name,
+		client_id: clientId,
+	};
+};
+
+/**
  * Get the current page content
  *
  * @return {Promise<Object>} The page content with template parts
@@ -168,20 +271,35 @@ export const getCurrentPageTitle = () => {
 };
 
 /**
- * Get the currently selected block with its serialized content
- * This is a shared utility that can be used in both React hooks and service functions
+ * Get all currently selected blocks.
  *
- * @return {Object|null} The selected block object with serialized content or null if none selected
+ * Handles both single selection (click) and multi-selection (shift+click).
+ * Returns an array of block objects — empty array if nothing is selected.
+ *
+ * @return {Array} Array of selected block objects (may be empty)
  */
-export const getSelectedBlock = () => {
+export const getSelectedBlocks = () => {
 	const blockEditor = select("core/block-editor");
-	const selectedBlock = blockEditor.getSelectedBlock();
 
-	if (!selectedBlock) {
-		return null;
+	// Multi-selection (shift+click range)
+	const multiSelected = blockEditor.getMultiSelectedBlocks();
+	if (multiSelected && multiSelected.length > 0) {
+		return multiSelected;
 	}
 
-	return selectedBlock;
+	// Single selection
+	const single = blockEditor.getSelectedBlock();
+	return single ? [single] : [];
+};
+
+/**
+ * Get a single selected block (legacy helper).
+ *
+ * @return {Object|null} The selected block or null
+ */
+export const getSelectedBlock = () => {
+	const blocks = getSelectedBlocks();
+	return blocks.length > 0 ? blocks[0] : null;
 };
 
 /**
