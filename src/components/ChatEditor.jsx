@@ -3,7 +3,7 @@
  */
 import { useDispatch } from "@wordpress/data";
 import { PluginSidebar, PluginSidebarMoreMenuItem } from "@wordpress/editor";
-import { useEffect } from "@wordpress/element";
+import { useEffect, useMemo } from "@wordpress/element";
 import { __ } from "@wordpress/i18n";
 import { store as interfaceStore } from "@wordpress/interface";
 
@@ -55,6 +55,12 @@ const ChatEditor = () => {
 	// Disable new chat button when there are no messages (brand new chat)
 	const isNewChatDisabled = messages.length === 0;
 
+	// Filter out notification messages from rendering — they're only for AI context
+	const visibleMessages = useMemo(
+		() => messages.filter((msg) => msg.type !== "notification"),
+		[messages]
+	);
+
 	return (
 		<>
 			<PluginSidebarMoreMenuItem
@@ -75,11 +81,11 @@ const ChatEditor = () => {
 				header={<SidebarHeader onNewChat={handleNewChat} isNewChatDisabled={isNewChatDisabled} />}
 			>
 				<div className="nfd-editor-chat-sidebar__content">
-					{messages.length === 0 ? (
+					{visibleMessages.length === 0 ? (
 						<WelcomeScreen onSendMessage={handleSendMessage} />
 					) : (
 						<ChatMessages
-							messages={messages}
+							messages={visibleMessages}
 							isLoading={isLoading}
 							error={error}
 							status={status}

@@ -100,8 +100,18 @@ export const getBlockMarkup = ( clientId ) => {
 		return null;
 	}
 
+	// Template parts serialize to a self-closing comment (<!-- wp:template-part /-->).
+	// The AI needs the actual inner blocks content to be able to modify it.
+	let blockContent;
+	if ( block.name === 'core/template-part' ) {
+		const innerBlocks = blockEditor.getBlocks( clientId );
+		blockContent = innerBlocks.map( ( b ) => serialize( b ) ).join( '\n' );
+	} else {
+		blockContent = serialize( block );
+	}
+
 	return {
-		block_content: serialize( block ),
+		block_content: blockContent,
 		block_name: block.name,
 		client_id: clientId,
 	};
