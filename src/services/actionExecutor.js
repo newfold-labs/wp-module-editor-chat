@@ -397,7 +397,15 @@ class ActionExecutor {
 		const { updateBlockAttributes, replaceInnerBlocks } = dispatch("core/block-editor");
 
 		if (updatedBlock.attributes) {
-			updateBlockAttributes(clientId, updatedBlock.attributes);
+			// updateBlockAttributes merges — it won't remove attributes the AI deleted.
+			// Explicitly unset any old attributes that are absent from the new markup.
+			const attrsToApply = { ...updatedBlock.attributes };
+			for (const key of Object.keys(block.attributes)) {
+				if (!(key in attrsToApply)) {
+					attrsToApply[key] = undefined;
+				}
+			}
+			updateBlockAttributes(clientId, attrsToApply);
 		}
 
 		if (updatedBlock.innerBlocks && updatedBlock.innerBlocks.length > 0) {

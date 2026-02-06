@@ -221,6 +221,17 @@ Each message includes <editor_context> with:
     - Overlay opacity is set via \`"dimRatio"\` (0-100) in the block comment. The span class reflects it: \`has-background-dim-{value} has-background-dim\`.
     - Example: \`<!-- wp:cover {"overlayColor":"accent-1","dimRatio":50} -->\` with \`<span aria-hidden="true" class="wp-block-cover__background has-accent-1-background-color has-background-dim-50 has-background-dim"></span>\`
     - WRONG: \`style="background-color:rgba(...)"\` on the span — this causes block validation failure.
+16. GRADIENTS: To add a gradient background to a block, use the \`style.color.gradient\` attribute in the block comment — NEVER put \`background-image\` in the inline style.
+    - Block comment: \`{"style":{"color":{"gradient":"linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)"}}}\`
+    - HTML: \`style="background:linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)"\` (use \`background:\` not \`background-image:\`)
+    - Class: Add \`has-background\` to the HTML element
+    - For theme preset gradients, use the \`gradient\` attribute: \`{"gradient":"vivid-cyan-blue-to-vivid-purple"}\`
+    - WRONG: \`{"style":{"elements":{"background":{"backgroundImage":"..."}}}}\` — this is NOT a valid block attribute and will cause validation failure.
+    - WRONG: \`style="background-image:linear-gradient(...)"\` — WordPress outputs \`background:\` not \`background-image:\`
+17. FONT SIZE: When changing a block's font size, ALWAYS remove any existing font-size selection first — then apply the new one. Preset slugs and custom values are mutually exclusive; combining them causes the preset to silently win via CSS specificity.
+    - To apply a CUSTOM size: REMOVE the \`"fontSize"\` attribute from the block comment AND remove any \`has-*-font-size\` class from the HTML. Then set \`"style":{"typography":{"fontSize":"4.5rem"}}\` in the block comment and \`style="font-size:4.5rem"\` in the HTML.
+    - To apply a PRESET size: REMOVE \`style.typography.fontSize\` from the block comment AND remove any inline \`font-size:...\` from the style attribute. Then set \`"fontSize":"x-large"\` and add the class \`has-x-large-font-size\`.
+    - WRONG: \`{"fontSize":"x-large","style":{"typography":{"fontSize":"4.5rem"}}}\` — the preset class overrides the custom value, so the custom size is silently ignored. You MUST remove the preset before setting a custom size.
 
 ## Response Structure
 Before making changes, briefly explain your plan in 1-2 sentences:
@@ -322,6 +333,7 @@ const useEditorChat = () => {
 	const [executedTools, setExecutedTools] = useState([]);
 	const [pendingTools, setPendingTools] = useState([]);
 	const [reasoningContent, setReasoningContent] = useState("");
+	const [tokenUsage, setTokenUsage] = useState(null);
 
 	const hasInitializedRef = useRef(false);
 	const abortControllerRef = useRef(null);
@@ -940,7 +952,11 @@ const useEditorChat = () => {
 							);
 						}
 					},
-					async (fullMessage, toolCallsResult) => {
+					async (fullMessage, toolCallsResult, usage) => {
+						if (usage) {
+							setTokenUsage(usage);
+						}
+
 						setMessages((prev) =>
 							prev.map((msg) =>
 								msg.id === followUpMessageId
@@ -1073,7 +1089,11 @@ const useEditorChat = () => {
 						);
 					}
 				},
-				async (fullMessage, toolCallsResult) => {
+				async (fullMessage, toolCallsResult, usage) => {
+					if (usage) {
+						setTokenUsage(usage);
+					}
+
 					setMessages((prev) =>
 						prev.map((msg) =>
 							msg.id === assistantMessageId
@@ -1136,6 +1156,7 @@ const useEditorChat = () => {
 		setStatus(null);
 		setError(null);
 		setMessages([]);
+		setTokenUsage(null);
 		setHasGlobalStylesChanges(false);
 		originalGlobalStylesRef.current = null;
 		blockSnapshotRef.current = null;
@@ -1290,6 +1311,9 @@ const useEditorChat = () => {
 		setError(null);
 	};
 
+	// Warn when prompt tokens exceed 20K — conversation is getting large
+	const contextLimitWarning = tokenUsage?.prompt_tokens > 20000;
+
 	return {
 		messages,
 		isLoading,
@@ -1304,6 +1328,8 @@ const useEditorChat = () => {
 		executedTools,
 		pendingTools,
 		reasoningContent,
+		tokenUsage,
+		contextLimitWarning,
 		handleSendMessage,
 		handleNewChat,
 		handleAcceptChanges,

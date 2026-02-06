@@ -43,5 +43,30 @@ export const validateBlockMarkup = (blockContent) => {
 		};
 	}
 
+	// Check for conflicting preset + custom font-size (preset wins via CSS specificity, custom is ignored)
+	const commentMatch = blockContent.match(/<!-- wp:\S+\s+(\{[\s\S]*?\})\s*-->/);
+	if (commentMatch) {
+		try {
+			const attrs = JSON.parse(commentMatch[1]);
+			if (attrs.fontSize && attrs.style?.typography?.fontSize) {
+				return {
+					valid: false,
+					error: `Conflicting font size: found both "fontSize":"${attrs.fontSize}" (preset) and "style.typography.fontSize":"${attrs.style.typography.fontSize}" (custom). The preset class wins and the custom value is ignored. Remove the "fontSize" attribute and the has-${attrs.fontSize}-font-size class, then keep only the custom style.typography.fontSize value.`,
+				};
+			}
+		} catch {
+			// JSON parse failed — skip this check
+		}
+	}
+
+	// Check for invalid gradient usage in inline styles
+	const hasInvalidGradient = blockContent.includes('background-image:') && blockContent.includes('linear-gradient');
+	if (hasInvalidGradient) {
+		return {
+			valid: false,
+			error: 'Invalid gradient: Do not use background-image in inline styles. Use style.color.gradient in block comment attrs and background: (not background-image:) in the style attribute. Add has-background class.',
+		};
+	}
+
 	return { valid: true, blocks: parsed };
 };
