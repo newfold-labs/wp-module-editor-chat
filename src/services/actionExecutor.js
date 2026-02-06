@@ -313,8 +313,8 @@ class ActionExecutor {
 		const { replaceInnerBlocks } = dispatch("core/block-editor");
 		replaceInnerBlocks(templatePartBlock.clientId, updatedInnerBlocks);
 
-		// Save to entity / DB
-		const result = await updateTemplatePartContent(templatePartBlock, modifiedBlocks);
+		// Save to entity / DB — use proper WP blocks so serialize() produces canonical HTML
+		const result = await updateTemplatePartContent(templatePartBlock, updatedInnerBlocks);
 
 		return result;
 	}
@@ -571,7 +571,9 @@ class ActionExecutor {
 
 		// Save changes to the template part entity
 		// This ensures the changes persist across page reloads
-		const entityUpdateResult = await updateTemplatePartContent(block, updatedBlocks);
+		// Use the proper WP blocks (not raw parsed blocks) so serialize() goes through
+		// the block's save() function, producing canonical HTML that passes validation on reload.
+		const entityUpdateResult = await updateTemplatePartContent(block, updatedInnerBlocks);
 
 		if (!entityUpdateResult.success) {
 			// eslint-disable-next-line no-console

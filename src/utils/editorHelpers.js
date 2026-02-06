@@ -15,9 +15,19 @@ import { serialize } from "@wordpress/blocks";
  * @param {Array|null} selectedClientIds  Array of clientIds of the currently selected blocks
  * @return {string} Compact block tree text
  */
-export const buildCompactBlockTree = ( blocks, selectedClientIds = null ) => {
+export const buildCompactBlockTree = ( blocks, selectedClientIds = null, { collapseUnselected = false } = {} ) => {
 	const lines = [];
 	const selectedSet = new Set( selectedClientIds || [] );
+	const hasSelection = collapseUnselected && selectedSet.size > 0;
+
+	// Check if any block in a subtree contains a selected block
+	const subtreeHasSelected = ( blockList ) => {
+		for ( const block of blockList ) {
+			if ( selectedSet.has( block.clientId ) ) return true;
+			if ( block.innerBlocks?.length > 0 && subtreeHasSelected( block.innerBlocks ) ) return true;
+		}
+		return false;
+	};
 
 	const extractTextPreview = ( block ) => {
 		// Try common text attributes first
@@ -25,7 +35,7 @@ export const buildCompactBlockTree = ( blocks, selectedClientIds = null ) => {
 		if ( content ) {
 			const plain = content.replace( /<[^>]*>/g, '' ).trim();
 			if ( plain ) {
-				return plain.length > 50 ? plain.substring( 0, 50 ) + '…' : plain;
+				return plain.length > 30 ? plain.substring( 0, 30 ) + '…' : plain;
 			}
 		}
 
@@ -38,7 +48,7 @@ export const buildCompactBlockTree = ( blocks, selectedClientIds = null ) => {
 		// For blocks with alt text (images)
 		const alt = block.attributes?.alt;
 		if ( alt ) {
-			return alt.length > 50 ? alt.substring( 0, 50 ) + '…' : alt;
+			return alt.length > 30 ? alt.substring( 0, 30 ) + '…' : alt;
 		}
 
 		return null;
@@ -75,7 +85,11 @@ export const buildCompactBlockTree = ( blocks, selectedClientIds = null ) => {
 
 			// Recurse into inner blocks
 			if ( block.innerBlocks && block.innerBlocks.length > 0 ) {
-				walkBlocks( block.innerBlocks, indexPath, depth + 1 );
+				if ( hasSelection && !selectedSet.has( block.clientId ) && !subtreeHasSelected( block.innerBlocks ) ) {
+					lines.push( `${ '  '.repeat( depth + 1 ) }... (${ block.innerBlocks.length } inner blocks)` );
+				} else {
+					walkBlocks( block.innerBlocks, indexPath, depth + 1 );
+				}
 			}
 		} );
 	};

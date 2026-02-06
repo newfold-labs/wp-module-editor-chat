@@ -199,16 +199,37 @@ Each message includes <editor_context> with:
     - In the HTML portion of block markup, class names like "has-red-background-color" must be replaced with the generic "has-background" and the color applied via the inline style attribute.
     - To reference a theme preset inside the style object use "var:preset|color|<slug>" (e.g., "var:preset|color|accent-1"). In inline CSS use var(--wp--preset--color--<slug>).
     - Common color name → HEX: red → #ff0000, blue → #0000ff, green → #008000, yellow → #ffff00, orange → #ff8c00, purple → #800080, pink → #ff69b4, black → #000000, white → #ffffff.
-12. NFD UTILITY CLASSES: Blocks may have nfd-* utility classes in their className attribute (e.g., nfd-bg-primary, nfd-text-white, nfd-py-md, nfd-rounded, nfd-gap-sm). These classes apply predefined styles. When the user requests a change that conflicts with an nfd-* class, REMOVE the conflicting class. Examples:
-    - User asks to change background color → remove any nfd-bg-* class.
-    - User asks to change text color → remove any nfd-text-{color} class (but keep nfd-text-{size} classes like nfd-text-md).
-    - User asks to change padding → remove any nfd-p-*, nfd-py-*, nfd-px-*, nfd-pt-*, nfd-pb-*, nfd-pl-*, nfd-pr-* class.
-    - User asks to change margin → remove any nfd-m-*, nfd-my-*, nfd-mx-*, nfd-mt-*, nfd-mb-*, nfd-ml-*, nfd-mr-* class.
-    - User asks to change gap/spacing → remove any nfd-gap-* class.
-    - User asks to change border radius → remove any nfd-rounded* class.
-    - User asks to change layout (columns, grid, flex, width, alignment) → remove any nfd-grid-*, nfd-cols-*, nfd-row-*, nfd-col-*, nfd-w-*, nfd-flex-*, nfd-justify-*, nfd-items-*, nfd-self-*, nfd-order-* class.
-    Keep nfd-* classes that are unrelated to the requested change.
-13. HIGHLIGHTING: When the user asks where a block is, what a block looks like, or asks you to point to something, use blu/highlight-block to select and flash the block. This scrolls it into view and adds a brief visual pulse. Do NOT use this on every tool call — only when the user is asking about location or you need to draw attention to a specific block.`;
+12. NFD UTILITY CLASSES: NEVER use nfd-* utility classes in your output. When editing a block that has nfd-* classes (e.g., nfd-bg-primary, nfd-text-white, nfd-py-md, nfd-rounded, nfd-gap-sm), REMOVE any nfd-* class related to the user's requested change and apply the styling using WordPress block attributes instead. Mapping:
+    - nfd-bg-* → remove class, use "backgroundColor" attribute or {"style":{"color":{"background":"#hex"}}}
+    - nfd-text-{color} → remove class, use "textColor" attribute or {"style":{"color":{"text":"#hex"}}}
+    - nfd-text-{size} (nfd-text-sm, nfd-text-md, nfd-text-lg, nfd-text-xl) → remove class, use {"style":{"typography":{"fontSize":"value"}}}
+    - nfd-p-*, nfd-py-*, nfd-px-*, nfd-pt-*, nfd-pb-*, nfd-pl-*, nfd-pr-* → remove class, use {"style":{"spacing":{"padding":{...}}}}
+    - nfd-m-*, nfd-my-*, nfd-mx-*, nfd-mt-*, nfd-mb-*, nfd-ml-*, nfd-mr-* → remove class, use {"style":{"spacing":{"margin":{...}}}}
+    - nfd-gap-* → remove class, use {"style":{"spacing":{"blockGap":"value"}}}
+    - nfd-rounded* → remove class, use {"style":{"border":{"radius":"value"}}}
+    - nfd-grid-*, nfd-cols-*, nfd-row-*, nfd-col-*, nfd-w-*, nfd-flex-*, nfd-justify-*, nfd-items-*, nfd-self-*, nfd-order-* → remove class, use appropriate WordPress layout attributes
+    Keep nfd-* classes that are unrelated to the requested change. Always prefer WordPress native block attributes over utility classes.
+13. HIGHLIGHTING: When the user asks where a block is, what a block looks like, or asks you to point to something, use blu/highlight-block to select and flash the block. This scrolls it into view and adds a brief visual pulse. Do NOT use this on every tool call — only when the user is asking about location or you need to draw attention to a specific block.
+14. IMAGE ASPECT RATIO: When the user asks to change an image's aspect ratio, use the "aspectRatio" and "scale" attributes — NEVER set fixed "width"/"height" in pixels. Valid aspect ratios: "1/1", "4/3", "3/4", "3/2", "2/3", "16/9", "9/16". Example markup:
+    \`<!-- wp:image {"aspectRatio":"16/9","scale":"cover","sizeSlug":"full"} -->\`
+    \`<figure class="wp-block-image size-full"><img src="..." alt="" style="aspect-ratio:16/9;object-fit:cover"/></figure>\`
+    \`<!-- /wp:image -->\`
+    The inline style on the <img> tag MUST match: \`style="aspect-ratio:{ratio};object-fit:{scale}"\`. Remove any existing "width" and "height" attributes and "is-resized" class when switching to aspect ratio.
+15. COVER BLOCK OVERLAY: The cover block overlay color is controlled ONLY through block comment attributes — NEVER add inline styles to the overlay \`<span>\`. The \`<span>\` must only have classes, no \`style\` attribute.
+    - For theme palette colors: use \`"overlayColor":"<slug>"\` in the block comment and add class \`has-<slug>-background-color\` to the span.
+    - For custom colors: use \`"customOverlayColor":"#hex"\` in the block comment. The span gets NO inline style — WordPress handles it.
+    - Overlay opacity is set via \`"dimRatio"\` (0-100) in the block comment. The span class reflects it: \`has-background-dim-{value} has-background-dim\`.
+    - Example: \`<!-- wp:cover {"overlayColor":"accent-1","dimRatio":50} -->\` with \`<span aria-hidden="true" class="wp-block-cover__background has-accent-1-background-color has-background-dim-50 has-background-dim"></span>\`
+    - WRONG: \`style="background-color:rgba(...)"\` on the span — this causes block validation failure.
+
+## Response Structure
+Before making changes, briefly explain your plan in 1-2 sentences:
+- What you understand the user wants
+- What changes you'll make
+
+Example: "I'll modernize this About section by wrapping it in a styled group with a subtle background and improving the typography."
+
+After changes complete, give a brief confirmation of what was done.`;
 
 /**
  * Build editor context string with block tree and selected block markup.
@@ -228,7 +249,7 @@ const buildEditorContext = () => {
 
 	let context = `Page: "${pageTitle}" (ID: ${pageId})\n\n`;
 	context += "Block tree:\n";
-	context += buildCompactBlockTree(blocks, selectedClientIds);
+	context += buildCompactBlockTree(blocks, selectedClientIds, { collapseUnselected: selectedBlocks.length > 0 });
 
 	// Layer 2: Selected block markup (one section per selected block)
 	if (selectedBlocks.length > 0) {
@@ -300,6 +321,7 @@ const useEditorChat = () => {
 	const [toolProgress, setToolProgress] = useState(null);
 	const [executedTools, setExecutedTools] = useState([]);
 	const [pendingTools, setPendingTools] = useState([]);
+	const [reasoningContent, setReasoningContent] = useState("");
 
 	const hasInitializedRef = useRef(false);
 	const abortControllerRef = useRef(null);
@@ -896,16 +918,20 @@ const useEditorChat = () => {
 			try {
 				await openaiClient.createStreamingCompletion(
 					{
-						model: "gpt-4o",
+						model: "gpt-4.1-mini",
 						messages: allMessages,
 						tools: openaiTools.length > 0 ? openaiTools : undefined,
 						tool_choice: openaiTools.length > 0 ? "auto" : undefined,
-						temperature: 0.3,
-						max_tokens: 16000,
+						temperature: 0.2,
+						max_completion_tokens: 32000,
 						mode: "editor",
 					},
 					(chunk) => {
+						if (chunk.type === "reasoning") {
+							setReasoningContent((prev) => prev + chunk.content);
+						}
 						if (chunk.type === "content") {
+							setReasoningContent(""); // Clear reasoning when content starts
 							followUpContent += chunk.content;
 							setMessages((prev) =>
 								prev.map((msg) =>
@@ -988,15 +1014,22 @@ const useEditorChat = () => {
 		abortControllerRef.current = new AbortController();
 
 		try {
-			const recentMessages = [...messages, userMessage].slice(-10);
+			const recentMessages = [...messages, userMessage].slice(-6);
+
+			// Strip tool data from older messages to save tokens — keep only last 2 tool-bearing turns
+			const toolBearingIndices = recentMessages
+				.map((msg, i) => (msg.toolCalls?.length > 0 || msg.toolResults?.length > 0) ? i : -1)
+				.filter((i) => i !== -1);
+			const keepToolDataFrom = new Set(toolBearingIndices.slice(-2));
+
 			const openaiMessages = [
 				{ role: "system", content: EDITOR_SYSTEM_PROMPT },
 				...openaiClient.convertMessagesToOpenAI(
-					recentMessages.map((msg) => ({
+					recentMessages.map((msg, i) => ({
 						role: msg.type === "user" || msg.type === "notification" ? "user" : "assistant",
 						content: msg.content ?? "",
-						toolCalls: msg.toolCalls,
-						toolResults: msg.toolResults,
+						toolCalls: keepToolDataFrom.has(i) ? msg.toolCalls : undefined,
+						toolResults: keepToolDataFrom.has(i) ? msg.toolResults : undefined,
 					}))
 				),
 			];
@@ -1018,16 +1051,20 @@ const useEditorChat = () => {
 
 			await openaiClient.createStreamingCompletion(
 				{
-					model: "gpt-4o",
+					model: "gpt-4.1-mini",
 					messages: openaiMessages,
 					tools: openaiTools.length > 0 ? openaiTools : undefined,
 					tool_choice: openaiTools.length > 0 ? "auto" : undefined,
-					temperature: 0.3,
-					max_tokens: 16000,
+					temperature: 0.2,
+					max_completion_tokens: 32000,
 					mode: "editor",
 				},
 				(chunk) => {
+					if (chunk.type === "reasoning") {
+						setReasoningContent((prev) => prev + chunk.content);
+					}
 					if (chunk.type === "content") {
+						setReasoningContent(""); // Clear reasoning when content starts
 						currentContent += chunk.content;
 						setMessages((prev) =>
 							prev.map((msg) =>
@@ -1266,6 +1303,7 @@ const useEditorChat = () => {
 		toolProgress,
 		executedTools,
 		pendingTools,
+		reasoningContent,
 		handleSendMessage,
 		handleNewChat,
 		handleAcceptChanges,
