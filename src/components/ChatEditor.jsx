@@ -37,6 +37,7 @@ const ChatEditor = () => {
 		toolProgress,
 		executedTools,
 		pendingTools,
+		reasoningContent,
 		contextLimitWarning,
 		handleSendMessage,
 		handleNewChat,
@@ -94,6 +95,7 @@ const ChatEditor = () => {
 							toolProgress={toolProgress}
 							executedTools={executedTools}
 							pendingTools={pendingTools}
+							reasoningContent={reasoningContent}
 							textDomain="wp-module-editor-chat"
 						/>
 					)}

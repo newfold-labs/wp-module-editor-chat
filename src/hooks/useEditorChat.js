@@ -208,6 +208,7 @@ Each message includes <editor_context> with:
     - nfd-gap-* → remove class, use {"style":{"spacing":{"blockGap":"value"}}}
     - nfd-rounded* → remove class, use {"style":{"border":{"radius":"value"}}}
     - nfd-grid-*, nfd-cols-*, nfd-row-*, nfd-col-*, nfd-w-*, nfd-flex-*, nfd-justify-*, nfd-items-*, nfd-self-*, nfd-order-* → remove class, use appropriate WordPress layout attributes
+    EXCEPTION: NEVER remove the \`nfd-container\` class — it controls the block's container width and must be preserved. Only remove it if the user explicitly asks to change the container width.
     Keep nfd-* classes that are unrelated to the requested change. Always prefer WordPress native block attributes over utility classes.
 13. HIGHLIGHTING: When the user asks where a block is, what a block looks like, or asks you to point to something, use blu/highlight-block to select and flash the block. This scrolls it into view and adds a brief visual pulse. Do NOT use this on every tool call — only when the user is asking about location or you need to draw attention to a specific block.
 14. IMAGE ASPECT RATIO: When the user asks to change an image's aspect ratio, use the "aspectRatio" and "scale" attributes — NEVER set fixed "width"/"height" in pixels. Valid aspect ratios: "1/1", "4/3", "3/4", "3/2", "2/3", "16/9", "9/16". Example markup:
