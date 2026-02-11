@@ -157,7 +157,7 @@ export function getCurrentGlobalStyles() {
 /**
  * Update global styles using the full settings object (theme.json format)
  *
- * @param {Object} settings Settings object in theme.json format (e.g., { color: { palette: { custom: [...] } } })
+ * @param {Object} settings Settings object in theme.json format (e.g., { color: { palette: { theme: [...] } } })
  * @param {Object} styles   Optional styles object for CSS declarations
  * @return {Promise<Object>} Result object with success status and undo data
  */
@@ -196,6 +196,34 @@ export async function updateGlobalStyles(settings, styles = null) {
 		const originalStyles = JSON.parse(JSON.stringify(currentRecord.settings || {}));
 		const originalCssStyles = JSON.parse(JSON.stringify(currentRecord.styles || {}));
 
+		// Reroute theme palette slugs from custom → theme (safety net).
+		// Entity record only has user overrides — also check block editor settings for theme.json defaults.
+		const entityThemePalette = currentRecord.settings?.color?.palette?.theme || [];
+		const blockEditorSettings = data.select("core/block-editor")?.getSettings?.();
+		const themeJsonPalette = blockEditorSettings?.__experimentalFeatures?.color?.palette?.theme || [];
+		const THEME_SLUGS = new Set([
+			...entityThemePalette.map((e) => e.slug),
+			...themeJsonPalette.map((e) => e.slug),
+		]);
+
+		const customEntries = settings?.color?.palette?.custom;
+		if (Array.isArray(customEntries) && customEntries.length > 0) {
+			const themeEntries = customEntries.filter((e) => THEME_SLUGS.has(e.slug));
+			const remainingCustom = customEntries.filter((e) => !THEME_SLUGS.has(e.slug));
+			if (themeEntries.length > 0) {
+				settings = JSON.parse(JSON.stringify(settings));
+				settings.color.palette.theme = [
+					...(settings.color.palette.theme || []),
+					...themeEntries,
+				];
+				if (remainingCustom.length > 0) {
+					settings.color.palette.custom = remainingCustom;
+				} else {
+					delete settings.color.palette.custom;
+				}
+			}
+		}
+
 		// Deep merge new settings with current settings
 		const currentSettings = currentRecord.settings || {};
 		const newSettings = deepMerge(currentSettings, settings);
@@ -213,7 +241,9 @@ export async function updateGlobalStyles(settings, styles = null) {
 		await coreDispatch.editEntityRecord("root", "globalStyles", globalStylesId, updateData);
 
 		// Extract updated colors for the response message
-		const updatedColors = settings?.color?.palette?.custom || [];
+		const themeColors = settings?.color?.palette?.theme || [];
+		const customColors = settings?.color?.palette?.custom || [];
+		const updatedColors = [...themeColors, ...customColors];
 		const colorCount = updatedColors.length;
 		const hasTypography = !!settings?.typography;
 		const hasSpacing = !!settings?.spacing;

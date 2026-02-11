@@ -22,6 +22,7 @@ import {
  */
 import actionExecutor from "../services/actionExecutor";
 import { getCurrentGlobalStyles, updateGlobalStyles } from "../services/globalStylesService";
+import patternLibrary from "../services/patternLibrary";
 import {
 	buildCompactBlockTree,
 	getBlockMarkup,
@@ -31,6 +32,7 @@ import {
 	getSelectedBlocks,
 } from "../utils/editorHelpers";
 import { validateBlockMarkup } from "../utils/blockValidator";
+import { NFD_CLASS_REFERENCE } from "../utils/nfdClassReference";
 
 // Create editor-specific clients with the editor config
 const mcpClient = createMCPClient({ configKey: "nfdEditorChat" });
@@ -39,6 +41,134 @@ const openaiClient = createOpenAIClient({
 	apiPath: "",
 	mode: "editor",
 });
+
+/**
+ * Text-bearing block types whose content should be customized in patterns.
+ */
+const TEXT_BLOCK_TYPES = new Set([
+	"core/heading",
+	"core/paragraph",
+	"core/button",
+	"core/list-item",
+]);
+
+/**
+ * Walk a parsed block tree and collect leaf text blocks.
+ *
+ * @param {Array} blocks Parsed blocks from wp.blocks.parse().
+ * @param {Array} result Accumulator.
+ * @return {Array} Flat list of text block references (with innerHTML).
+ */
+function collectTextBlocks(blocks, result = []) {
+	for (const block of blocks) {
+		if (TEXT_BLOCK_TYPES.has(block.blockName) && block.innerHTML?.trim()) {
+			result.push(block);
+		}
+		if (block.innerBlocks?.length) {
+			collectTextBlocks(block.innerBlocks, result);
+		}
+	}
+	return result;
+}
+
+/**
+ * Customize pattern text via a background AI completion.
+ *
+ * Parses the pattern, extracts text blocks, rewrites their content via a
+ * lightweight AI call, then applies the changes via string replacement on
+ * the **original** markup — no re-serialization, so layout / styles / attrs
+ * are guaranteed to remain untouched.
+ *
+ * @param {string} patternMarkup   Original block markup from the library.
+ * @param {Object} ctx             Context for the AI.
+ * @param {string} ctx.pageTitle   Current page title.
+ * @param {string} ctx.userMessage The user's original request.
+ * @return {Promise<string>} Customized markup (or original on failure).
+ */
+async function customizePatternContent(patternMarkup, ctx) {
+	let blocks;
+	try {
+		blocks = wp.blocks.parse(patternMarkup);
+	} catch {
+		return patternMarkup;
+	}
+
+	const textBlocks = collectTextBlocks(blocks);
+	if (textBlocks.length === 0) {
+		return patternMarkup;
+	}
+
+	// Build items for AI — send trimmed innerHTML so the AI works with clean HTML snippets
+	const textItems = textBlocks.map((block, idx) => ({
+		id: idx,
+		type: block.blockName.replace("core/", ""),
+		html: block.innerHTML.trim(),
+	}));
+
+	try {
+		const response = await openaiClient.createChatCompletion({
+			messages: [
+				{
+					role: "system",
+					content:
+						"You customize website pattern text. The blocks below are from a template with placeholder content. " +
+						"Rewrite ALL human-readable text so it fits the website and page context. " +
+						"Keep every HTML tag, class, attribute, and href value identical — change ONLY the text between/inside tags. " +
+						"Keep the same approximate length and tone for each block. " +
+						"Return a JSON array with `id` and `html` fields. Return ONLY the JSON array, nothing else.",
+				},
+				{
+					role: "user",
+					content:
+						`Page: "${ctx.pageTitle}"\n` +
+						`Request: "${ctx.userMessage}"\n\n` +
+						`Text blocks:\n${JSON.stringify(textItems, null, 2)}`,
+				},
+			],
+			temperature: 0.7,
+			max_tokens: 4000,
+		});
+
+		const raw = response.choices?.[0]?.message?.content;
+		if (!raw) {
+			return patternMarkup;
+		}
+
+		const jsonMatch = raw.match(/\[[\s\S]*\]/);
+		if (!jsonMatch) {
+			return patternMarkup;
+		}
+
+		const customized = JSON.parse(jsonMatch[0]);
+
+		// Apply replacements to the original markup via string substitution.
+		// Each innerHTML is an exact substring of the original markup, so indexOf works.
+		let result = patternMarkup;
+		let searchFrom = 0;
+
+		for (const item of customized) {
+			const block = textBlocks[item.id];
+			if (!block || !item.html) {
+				continue;
+			}
+
+			const oldInner = block.innerHTML;
+			// Preserve the original leading/trailing whitespace, swap only the trimmed content
+			const newInner = oldInner.replace(oldInner.trim(), item.html.trim());
+
+			const pos = result.indexOf(oldInner, searchFrom);
+			if (pos !== -1) {
+				result = result.substring(0, pos) + newInner + result.substring(pos + oldInner.length);
+				searchFrom = pos + newInner.length;
+			}
+		}
+
+		return result;
+	} catch (err) {
+		console.warn("[customizePatternContent] AI customization failed, using original:", err);
+		return patternMarkup;
+	}
+}
 
 /**
  * Get site-specific localStorage keys for chat persistence
@@ -165,13 +295,15 @@ const EDITOR_SYSTEM_PROMPT = `You are a WordPress site editor assistant. You hel
 
 ## Available Tools
 - blu/edit-block: Replace a block's content with new markup
-- blu/add-section: Insert new blocks at a position
+- blu/add-section: Insert new blocks at a position (use pattern_slug for pattern library patterns)
 - blu/delete-block: Remove a block
 - blu/move-block: Reorder blocks
 - blu/get-block-markup: Fetch full markup of a block before editing
 - blu/update-global-styles: Change site-wide colors, typography, spacing
 - blu/highlight-block: Select and flash a block to show the user where it is
 - blu/get-global-styles: Read current global styles
+- blu/search-patterns: Search the pattern library for matching layouts
+- blu/get-pattern-markup: Get full block markup for a pattern by slug
 
 ## Context Format
 Each message includes <editor_context> with:
@@ -191,25 +323,23 @@ Each message includes <editor_context> with:
 7. AUTO-GENERATE CONTENT: When the user asks to rewrite, rephrase, improve, shorten, expand, or otherwise change text, generate the new text yourself based on their intent. Do not ask what the replacement text should be — use your judgment to produce appropriate content and apply it immediately.
 8. POSITIONING: Use the block tree index paths and clientIds to identify blocks. The tree shows nesting — indented blocks are inner blocks.
 9. TEMPLATE PARTS: Blocks inside template parts (header, footer) can be edited. Their clientIds are in the block tree.
-10. ADDING SECTIONS: You can insert content after ANY block at any nesting depth — not just top-level blocks. When the user specifies a position (e.g., "add a paragraph below this heading", "add a section after the hero"), use that block's client_id as after_client_id. When the user does NOT specify a position, insert at the top level of the page (use after_client_id of the last top-level block in the tree, or null for the very top).
-11. COLORS: This rule applies to EVERY block in your output — the target block AND every inner block you include. Scan the ENTIRE block_content for color violations before returning it.
+10. ADDING SECTIONS: You can insert content after ANY block at any nesting depth — not just top-level blocks. When the user specifies a position (e.g., "add a paragraph below this heading", "add a section after the hero"), use that block's client_id as after_client_id. When the user does NOT specify a position, insert at the top level of the page (use after_client_id of the last top-level block in the tree, or null for the very top). 11. COLORS: This rule applies to EVERY block in your output — the target block AND every inner block you include. Scan the ENTIRE block_content for color violations before returning it.
     - The ONLY valid values for "backgroundColor" and "textColor" attributes are the exact theme palette slugs: base, contrast, accent-1, accent-2, accent-3, accent-4, accent-5, accent-6. No other slugs exist. If the existing markup has an invalid slug (e.g., "backgroundColor":"red"), you MUST fix it.
     - For any color that is NOT one of those theme slugs, REMOVE the "backgroundColor"/"textColor" attribute and use the style object with a HEX value instead: {"style":{"color":{"background":"#ff0000"}}} or {"style":{"color":{"text":"#ff0000"}}}.
     - This also applies inside "elements" objects (e.g., link color). Replace any named color like "green" with its HEX equivalent.
     - In the HTML portion of block markup, class names like "has-red-background-color" must be replaced with the generic "has-background" and the color applied via the inline style attribute.
     - To reference a theme preset inside the style object use "var:preset|color|<slug>" (e.g., "var:preset|color|accent-1"). In inline CSS use var(--wp--preset--color--<slug>).
     - Common color name → HEX: red → #ff0000, blue → #0000ff, green → #008000, yellow → #ffff00, orange → #ff8c00, purple → #800080, pink → #ff69b4, black → #000000, white → #ffffff.
-12. NFD UTILITY CLASSES: NEVER use nfd-* utility classes in your output. When editing a block that has nfd-* classes (e.g., nfd-bg-primary, nfd-text-white, nfd-py-md, nfd-rounded, nfd-gap-sm), REMOVE any nfd-* class related to the user's requested change and apply the styling using WordPress block attributes instead. Mapping:
-    - nfd-bg-* → remove class, use "backgroundColor" attribute or {"style":{"color":{"background":"#hex"}}}
-    - nfd-text-{color} → remove class, use "textColor" attribute or {"style":{"color":{"text":"#hex"}}}
-    - nfd-text-{size} (nfd-text-sm, nfd-text-md, nfd-text-lg, nfd-text-xl) → remove class, use {"style":{"typography":{"fontSize":"value"}}}
-    - nfd-p-*, nfd-py-*, nfd-px-*, nfd-pt-*, nfd-pb-*, nfd-pl-*, nfd-pr-* → remove class, use {"style":{"spacing":{"padding":{...}}}}
-    - nfd-m-*, nfd-my-*, nfd-mx-*, nfd-mt-*, nfd-mb-*, nfd-ml-*, nfd-mr-* → remove class, use {"style":{"spacing":{"margin":{...}}}}
-    - nfd-gap-* → remove class, use {"style":{"spacing":{"blockGap":"value"}}}
-    - nfd-rounded* → remove class, use {"style":{"border":{"radius":"value"}}}
-    - nfd-grid-*, nfd-cols-*, nfd-row-*, nfd-col-*, nfd-w-*, nfd-flex-*, nfd-justify-*, nfd-items-*, nfd-self-*, nfd-order-* → remove class, use appropriate WordPress layout attributes
-    EXCEPTION: NEVER remove the \`nfd-container\` class — it controls the block's container width and must be preserved. Only remove it if the user explicitly asks to change the container width.
-    Keep nfd-* classes that are unrelated to the requested change. Always prefer WordPress native block attributes over utility classes.
+12. NFD UTILITY CLASSES: Do NOT add new nfd-* classes to blocks. When editing a block that has existing nfd-* classes, PRESERVE all nfd-* classes unless the user specifically asks to change the property they control. If the user asks to change a property controlled by an nfd-* class (e.g., "change the padding"), remove the nfd-* class for that property and apply the styling using WordPress block attributes instead. If the editor context includes an nfd class reference section, use it to understand what each class does. Key rules:
+    - NEVER remove nfd-container — it controls the block's container width
+    - NEVER remove nfd-theme-* — they control the section's color scheme
+    - NEVER remove nfd-wb-* animation classes or nfd-delay-* — they control entrance animations
+    - NEVER remove nfd-bg-effect-* — they control decorative background patterns
+    - NEVER remove nfd-divider-* — they control section dividers
+    - When replacing an nfd-* spacing/color/typography class, use the resolved CSS value from the reference (not a guess) to set the equivalent WordPress block attribute
+    - nfd-bg-surface, nfd-bg-primary, nfd-bg-subtle → preserve (theme-aware colors via CSS vars)
+    - nfd-text-faded, nfd-text-contrast, nfd-text-primary → preserve (theme-aware text colors)
+    - nfd-btn-*, nfd-rounded-*, nfd-shadow-* → preserve unless user asks to change that property
 13. HIGHLIGHTING: When the user asks where a block is, what a block looks like, or asks you to point to something, use blu/highlight-block to select and flash the block. This scrolls it into view and adds a brief visual pulse. Do NOT use this on every tool call — only when the user is asking about location or you need to draw attention to a specific block.
 14. IMAGE ASPECT RATIO: When the user asks to change an image's aspect ratio, use the "aspectRatio" and "scale" attributes — NEVER set fixed "width"/"height" in pixels. Valid aspect ratios: "1/1", "4/3", "3/4", "3/2", "2/3", "16/9", "9/16". Example markup:
     \`<!-- wp:image {"aspectRatio":"16/9","scale":"cover","sizeSlug":"full"} -->\`
@@ -233,6 +363,16 @@ Each message includes <editor_context> with:
     - To apply a CUSTOM size: REMOVE the \`"fontSize"\` attribute from the block comment AND remove any \`has-*-font-size\` class from the HTML. Then set \`"style":{"typography":{"fontSize":"4.5rem"}}\` in the block comment and \`style="font-size:4.5rem"\` in the HTML.
     - To apply a PRESET size: REMOVE \`style.typography.fontSize\` from the block comment AND remove any inline \`font-size:...\` from the style attribute. Then set \`"fontSize":"x-large"\` and add the class \`has-x-large-font-size\`.
     - WRONG: \`{"fontSize":"x-large","style":{"typography":{"fontSize":"4.5rem"}}}\` — the preset class overrides the custom value, so the custom size is silently ignored. You MUST remove the preset before setting a custom size.
+18. COLOR SCHEME CHANGES: When the user asks to update, change, or modify the color scheme or color palette WITHOUT specifying which colors they want, do NOT apply changes immediately. Instead, ask what colors or mood they have in mind, or suggest 2-3 specific color palette options for them to choose from (e.g., "warm earth tones", "cool ocean blues", "bold and vibrant"). Only proceed with applying colors after the user confirms a direction.
+19. PATTERN LIBRARY: When the user asks to add a new section, layout, or design element (hero, pricing, testimonials, FAQ, CTA, features, team, gallery, contact, etc.), follow this exact sequence:
+    a) Search the pattern library with blu/search-patterns.
+    b) Insert the best match using blu/add-section with the pattern_slug parameter. Do NOT call blu/get-pattern-markup or pass block_content — the system fetches the markup and automatically customizes the text to fit the page.
+    If the search returns zero results, generate the section markup from scratch using block_content — do NOT tell the user no patterns were found, just build it yourself. Only skip the pattern library for very simple requests (e.g., "add a paragraph").
+20. ALIGNMENT & CENTERING: The core/group block does NOT support the \`align\` attribute for centering — do NOT set \`"align":"center"\` on a group. When the user asks to center a section or its content:
+    - For flex containers (core/columns, core/buttons): These support \`"align":"center"\` directly.
+    - For core/row or core/stack (flex layout): Set \`"layout":{"type":"flex","justifyContent":"center"}\` in the block comment.
+    - For content inside a group: Inspect inner blocks and set alignment on those that support it — core/image and core/buttons support \`"align":"center"\`; core/heading and core/paragraph use \`"textAlign":"center"\`.
+    - WRONG: \`<!-- wp:group {"align":"center"} -->\` — this has no effect. Instead, set alignment on the inner blocks or use flex layout.
 
 ## Response Structure
 Before making changes, briefly explain your plan in 1-2 sentences:
@@ -242,6 +382,43 @@ Before making changes, briefly explain your plan in 1-2 sentences:
 Example: "I'll modernize this About section by wrapping it in a styled group with a subtle background and improving the typography."
 
 After changes complete, give a brief confirmation of what was done.`;
+
+/**
+ * Generate a brief summary sentence when the model calls tools without
+ * producing any visible content text. Ensures the user always sees at
+ * least one sentence before the tool-execution list appears.
+ *
+ * @param {Array} toolCalls Array of tool call objects with a `name` property
+ * @return {string} A short description of the upcoming action(s)
+ */
+const TOOL_DESCRIPTIONS = {
+	"blu-update-global-styles": "update the site styles",
+	"blu-edit-block": "edit the block",
+	"blu-add-section": "add a new section",
+	"blu-delete-block": "remove the block",
+	"blu-move-block": "move the block",
+	"blu-get-block-markup": "read the block markup",
+	"blu-get-global-styles": "check the current styles",
+	"blu-highlight-block": "highlight the block",
+	"blu-search-patterns": "search the pattern library",
+	"blu-get-pattern-markup": "fetch pattern markup",
+};
+
+const generateToolSummary = (toolCalls) => {
+	if (!toolCalls || toolCalls.length === 0) {
+		return "";
+	}
+	if (toolCalls.length === 1) {
+		const desc = TOOL_DESCRIPTIONS[toolCalls[0].name];
+		return desc ? `I'll ${desc}.` : "Let me make that change.";
+	}
+	const uniqueNames = new Set(toolCalls.map((tc) => tc.name));
+	if (uniqueNames.size === 1) {
+		const desc = TOOL_DESCRIPTIONS[toolCalls[0].name];
+		return desc ? `I'll ${desc} for each item.` : "Let me make those changes.";
+	}
+	return "Let me make those changes.";
+};
 
 /**
  * Build editor context string with block tree and selected block markup.
@@ -261,7 +438,9 @@ const buildEditorContext = () => {
 
 	let context = `Page: "${pageTitle}" (ID: ${pageId})\n\n`;
 	context += "Block tree:\n";
-	context += buildCompactBlockTree(blocks, selectedClientIds, { collapseUnselected: selectedBlocks.length > 0 });
+	context += buildCompactBlockTree(blocks, selectedClientIds, {
+		collapseUnselected: selectedBlocks.length > 0,
+	});
 
 	// Layer 2: Selected block markup (one section per selected block)
 	if (selectedBlocks.length > 0) {
@@ -282,6 +461,11 @@ const buildEditorContext = () => {
 				context += `\n\n--- ${fullBlock.name} (id:${fullBlock.clientId}) ---\n${markup}`;
 			}
 		}
+	}
+
+	// Inject nfd-* class reference when blocks use nfd-* utilities
+	if (context.includes("nfd-")) {
+		context += `\n\nNFD utility class reference (these classes are from the site's design system — preserve them, do not remove or replace unless the user specifically asks to change the property they control):\n${NFD_CLASS_REFERENCE}`;
 	}
 
 	return context;
@@ -340,6 +524,8 @@ const useEditorChat = () => {
 	const abortControllerRef = useRef(null);
 	const originalGlobalStylesRef = useRef(null);
 	const blockSnapshotRef = useRef(null);
+	const chainOriginRef = useRef(null);
+	const executedToolsRef = useRef([]);
 
 	// Get WordPress editor dispatch functions
 	const { savePost } = useDispatch("core/editor");
@@ -387,6 +573,10 @@ const useEditorChat = () => {
 			const availableTools = await mcpClient.listTools();
 			setTools(availableTools);
 			setMcpConnectionStatus("connected");
+
+			// Fire and forget — index loads in background
+			const providerName = window.nfdEditorChat?.patternProvider || "wonderblocks";
+			patternLibrary.initialize(providerName).catch(console.warn);
 		} catch (err) {
 			console.error("Failed to initialize MCP:", err);
 			setMcpConnectionStatus("disconnected");
@@ -418,6 +608,11 @@ const useEditorChat = () => {
 		}
 	}, [messages]);
 
+	// Keep executedToolsRef in sync so finalizeChain can read latest value
+	useEffect(() => {
+		executedToolsRef.current = executedTools;
+	}, [executedTools]);
+
 	// Cleanup on unmount
 	useEffect(() => {
 		const controller = abortControllerRef.current;
@@ -448,6 +643,31 @@ const useEditorChat = () => {
 	};
 
 	/**
+	 * Finalize a tool chain: clear origin ref, mark origin message done, reset tool state.
+	 */
+	const finalizeChain = () => {
+		const originId = chainOriginRef.current;
+		if (originId) {
+			const finalTools = executedToolsRef.current;
+			setMessages((prev) =>
+				prev.map((msg) => {
+					if (msg.id === originId) {
+						return {
+							...msg,
+							isExecutingTools: false,
+							executedTools: finalTools,
+						};
+					}
+					return msg;
+				})
+			);
+		}
+		chainOriginRef.current = null;
+		setExecutedTools([]);
+		setPendingTools([]);
+	};
+
+	/**
 	 * Handle tool calls from OpenAI response.
 	 * Supports chaining: after executing tools the follow-up model can call
 	 * additional tools (e.g. get-block-markup → edit-block) up to MAX_TOOL_DEPTH.
@@ -459,7 +679,13 @@ const useEditorChat = () => {
 	 * @param {number} depth              Current recursion depth (0-based)
 	 */
 	const MAX_TOOL_DEPTH = 5;
-	const handleToolCalls = async (toolCalls, assistantMessageId, previousMessages, assistantContent = "", depth = 0) => {
+	const handleToolCalls = async (
+		toolCalls,
+		assistantMessageId,
+		previousMessages,
+		assistantContent = "",
+		depth = 0
+	) => {
 		const toolResults = [];
 		const completedToolsList = [];
 		let globalStylesUndoData = null;
@@ -472,9 +698,7 @@ const useEditorChat = () => {
 			"blu-delete-block",
 			"blu-move-block",
 		];
-		const hasBlockTools = toolCalls.some(
-			(tc) => blockToolNames.includes(tc.name || "")
-		);
+		const hasBlockTools = toolCalls.some((tc) => blockToolNames.includes(tc.name || ""));
 		if (hasBlockTools && !blockSnapshotRef.current) {
 			const { select: wpSelect } = wp.data;
 			const allBlocks = wpSelect("core/block-editor").getBlocks();
@@ -484,16 +708,21 @@ const useEditorChat = () => {
 		setStatus(CHAT_STATUS.TOOL_CALL);
 		await updateProgress(__("Preparing to execute actions…", "wp-module-editor-chat"), 300);
 
+		if (depth === 0) {
+			chainOriginRef.current = assistantMessageId;
+			setExecutedTools([]);
+		}
+
 		setPendingTools(
 			toolCalls.map((tc, idx) => ({
 				...tc,
 				id: tc.id || `tool-${idx}`,
 			}))
 		);
-		setExecutedTools([]);
 
+		const originId = chainOriginRef.current || assistantMessageId;
 		setMessages((prev) =>
-			prev.map((msg) => (msg.id === assistantMessageId ? { ...msg, isExecutingTools: true } : msg))
+			prev.map((msg) => (msg.id === originId ? { ...msg, isExecutingTools: true } : msg))
 		);
 
 		for (let i = 0; i < toolCalls.length; i++) {
@@ -613,13 +842,18 @@ const useEditorChat = () => {
 
 				// Handle blu/edit-block via client-side actionExecutor
 				if (toolName === "blu-edit-block" && args.client_id && args.block_content) {
-		await updateProgress(__("Validating block markup…", "wp-module-editor-chat"), 300);
+					await updateProgress(__("Validating block markup…", "wp-module-editor-chat"), 300);
+
+					// Strip escaped quotes the LLM may copy from JSON-encoded tool results
+					args.block_content = args.block_content.replace(/\\"/g, '"');
 
 					const validation = validateBlockMarkup(args.block_content);
 					if (!validation.valid) {
 						toolResults.push({
 							id: toolCall.id,
-							result: [{ type: "text", text: JSON.stringify({ success: false, error: validation.error }) }],
+							result: [
+								{ type: "text", text: JSON.stringify({ success: false, error: validation.error }) },
+							],
 							isError: true,
 						});
 						completedToolsList.push({ ...toolCall, isError: true });
@@ -629,12 +863,20 @@ const useEditorChat = () => {
 
 					await updateProgress(__("Editing block content…", "wp-module-editor-chat"), 400);
 					try {
-						const editResult = await actionExecutor.handleRewriteAction(args.client_id, args.block_content);
+						const editResult = await actionExecutor.handleRewriteAction(
+							args.client_id,
+							args.block_content
+						);
 						hasBlockEdits = true;
 						await updateProgress(__("Block updated successfully", "wp-module-editor-chat"), 500);
 						toolResults.push({
 							id: toolCall.id,
-							result: [{ type: "text", text: JSON.stringify({ success: true, message: editResult.message }) }],
+							result: [
+								{
+									type: "text",
+									text: JSON.stringify({ success: true, message: editResult.message }),
+								},
+							],
 							isError: false,
 							hasChanges: true,
 						});
@@ -643,7 +885,12 @@ const useEditorChat = () => {
 					} catch (editError) {
 						toolResults.push({
 							id: toolCall.id,
-							result: [{ type: "text", text: JSON.stringify({ success: false, error: editError.message }) }],
+							result: [
+								{
+									type: "text",
+									text: JSON.stringify({ success: false, error: editError.message }),
+								},
+							],
 							isError: true,
 						});
 						completedToolsList.push({ ...toolCall, isError: true });
@@ -653,14 +900,72 @@ const useEditorChat = () => {
 				}
 
 				// Handle blu/add-section via client-side actionExecutor
-				if (toolName === "blu-add-section" && args.block_content) {
+				if (toolName === "blu-add-section" && (args.block_content || args.pattern_slug)) {
+					// When pattern_slug is provided, fetch markup directly from the library
+					if (args.pattern_slug && !args.block_content) {
+						await updateProgress(
+							__("Fetching pattern from library…", "wp-module-editor-chat"),
+							400
+						);
+						try {
+							const pattern = await patternLibrary.getMarkup(args.pattern_slug);
+							if (pattern && pattern.content) {
+								args.block_content = pattern.content;
+							} else {
+								toolResults.push({
+									id: toolCall.id,
+									result: [
+										{
+											type: "text",
+											text: JSON.stringify({
+												success: false,
+												error: `Pattern "${args.pattern_slug}" not found`,
+											}),
+										},
+									],
+									isError: true,
+								});
+								completedToolsList.push({ ...toolCall, isError: true });
+								setExecutedTools((prev) => [...prev, { ...toolCall, isError: true }]);
+								continue;
+							}
+						} catch (fetchErr) {
+							toolResults.push({
+								id: toolCall.id,
+								result: [
+									{
+										type: "text",
+										text: JSON.stringify({ success: false, error: fetchErr.message }),
+									},
+								],
+								isError: true,
+							});
+							completedToolsList.push({ ...toolCall, isError: true });
+							setExecutedTools((prev) => [...prev, { ...toolCall, isError: true }]);
+							continue;
+						}
+
+						// Customize text content to match the page context
+						await updateProgress(__("Customizing content…", "wp-module-editor-chat"), 400);
+						const lastUserMsg = [...messages].reverse().find((m) => m.type === "user");
+						args.block_content = await customizePatternContent(args.block_content, {
+							pageTitle: getCurrentPageTitle(),
+							userMessage: lastUserMsg?.content || "",
+						});
+					}
+
 					await updateProgress(__("Validating block markup…", "wp-module-editor-chat"), 300);
+
+					// Strip escaped quotes the LLM may copy from JSON-encoded tool results
+					args.block_content = args.block_content.replace(/\\"/g, '"');
 
 					const validation = validateBlockMarkup(args.block_content);
 					if (!validation.valid) {
 						toolResults.push({
 							id: toolCall.id,
-							result: [{ type: "text", text: JSON.stringify({ success: false, error: validation.error }) }],
+							result: [
+								{ type: "text", text: JSON.stringify({ success: false, error: validation.error }) },
+							],
 							isError: true,
 						});
 						completedToolsList.push({ ...toolCall, isError: true });
@@ -668,15 +973,55 @@ const useEditorChat = () => {
 						continue;
 					}
 
+					// Force constrained layout on the outermost block comment
+					let sectionContent = args.block_content;
+					try {
+						const commentEnd = sectionContent.indexOf("-->");
+						if (commentEnd !== -1) {
+							const comment = sectionContent.substring(0, commentEnd + 3);
+							const nameMatch = comment.match(/<!-- wp:(\S+)/);
+							if (nameMatch) {
+								const blockName = nameMatch[1];
+								const braceStart = comment.indexOf("{");
+								const braceEnd = comment.lastIndexOf("}");
+
+								let attrs = {};
+								if (braceStart !== -1 && braceEnd > braceStart) {
+									attrs = JSON.parse(comment.substring(braceStart, braceEnd + 1));
+								}
+
+								if (!attrs.layout) {
+									attrs.layout = { type: "constrained" };
+									const newComment = `<!-- wp:${blockName} ${JSON.stringify(attrs)} -->`;
+									sectionContent = newComment + sectionContent.substring(commentEnd + 3);
+								}
+							}
+						}
+					} catch (layoutErr) {
+						console.warn("Failed to enforce constrained layout:", layoutErr);
+					}
+
 					await updateProgress(__("Adding new section…", "wp-module-editor-chat"), 400);
 					try {
 						const afterClientId = args.after_client_id || null;
-						const addResult = await actionExecutor.handleAddAction(afterClientId, [{ block_content: args.block_content }]);
+						const addResult = await actionExecutor.handleAddAction(afterClientId, [
+							{ block_content: sectionContent },
+						]);
 						hasBlockEdits = true;
 						await updateProgress(__("Section added successfully", "wp-module-editor-chat"), 500);
+
 						toolResults.push({
 							id: toolCall.id,
-							result: [{ type: "text", text: JSON.stringify({ success: true, message: addResult.message, blocksAdded: addResult.blocksAdded }) }],
+							result: [
+								{
+									type: "text",
+									text: JSON.stringify({
+										success: true,
+										message: addResult.message,
+										blocksAdded: addResult.blocksAdded,
+									}),
+								},
+							],
 							isError: false,
 							hasChanges: true,
 						});
@@ -685,7 +1030,9 @@ const useEditorChat = () => {
 					} catch (addError) {
 						toolResults.push({
 							id: toolCall.id,
-							result: [{ type: "text", text: JSON.stringify({ success: false, error: addError.message }) }],
+							result: [
+								{ type: "text", text: JSON.stringify({ success: false, error: addError.message }) },
+							],
 							isError: true,
 						});
 						completedToolsList.push({ ...toolCall, isError: true });
@@ -696,14 +1043,19 @@ const useEditorChat = () => {
 
 				// Handle blu/delete-block via client-side actionExecutor
 				if (toolName === "blu-delete-block" && args.client_id) {
-		await updateProgress(__("Deleting block…", "wp-module-editor-chat"), 400);
+					await updateProgress(__("Deleting block…", "wp-module-editor-chat"), 400);
 					try {
 						const deleteResult = await actionExecutor.handleDeleteAction(args.client_id);
 						hasBlockEdits = true;
 						await updateProgress(__("Block deleted successfully", "wp-module-editor-chat"), 500);
 						toolResults.push({
 							id: toolCall.id,
-							result: [{ type: "text", text: JSON.stringify({ success: true, message: deleteResult.message }) }],
+							result: [
+								{
+									type: "text",
+									text: JSON.stringify({ success: true, message: deleteResult.message }),
+								},
+							],
 							isError: false,
 							hasChanges: true,
 						});
@@ -712,7 +1064,12 @@ const useEditorChat = () => {
 					} catch (deleteError) {
 						toolResults.push({
 							id: toolCall.id,
-							result: [{ type: "text", text: JSON.stringify({ success: false, error: deleteError.message }) }],
+							result: [
+								{
+									type: "text",
+									text: JSON.stringify({ success: false, error: deleteError.message }),
+								},
+							],
 							isError: true,
 						});
 						completedToolsList.push({ ...toolCall, isError: true });
@@ -722,15 +1079,29 @@ const useEditorChat = () => {
 				}
 
 				// Handle blu/move-block via client-side actionExecutor
-				if (toolName === "blu-move-block" && args.client_id && args.target_client_id && args.position) {
+				if (
+					toolName === "blu-move-block" &&
+					args.client_id &&
+					args.target_client_id &&
+					args.position
+				) {
 					await updateProgress(__("Moving block…", "wp-module-editor-chat"), 400);
 					try {
-						const moveResult = await actionExecutor.handleMoveAction(args.client_id, args.target_client_id, args.position);
+						const moveResult = await actionExecutor.handleMoveAction(
+							args.client_id,
+							args.target_client_id,
+							args.position
+						);
 						hasBlockEdits = true;
 						await updateProgress(__("Block moved successfully", "wp-module-editor-chat"), 500);
 						toolResults.push({
 							id: toolCall.id,
-							result: [{ type: "text", text: JSON.stringify({ success: true, message: moveResult.message }) }],
+							result: [
+								{
+									type: "text",
+									text: JSON.stringify({ success: true, message: moveResult.message }),
+								},
+							],
 							isError: false,
 							hasChanges: true,
 						});
@@ -739,7 +1110,12 @@ const useEditorChat = () => {
 					} catch (moveError) {
 						toolResults.push({
 							id: toolCall.id,
-							result: [{ type: "text", text: JSON.stringify({ success: false, error: moveError.message }) }],
+							result: [
+								{
+									type: "text",
+									text: JSON.stringify({ success: false, error: moveError.message }),
+								},
+							],
 							isError: true,
 						});
 						completedToolsList.push({ ...toolCall, isError: true });
@@ -763,7 +1139,14 @@ const useEditorChat = () => {
 					} else {
 						toolResults.push({
 							id: toolCall.id,
-							result: [{ type: "text", text: JSON.stringify({ error: `Block with clientId ${args.client_id} not found` }) }],
+							result: [
+								{
+									type: "text",
+									text: JSON.stringify({
+										error: `Block with clientId ${args.client_id} not found`,
+									}),
+								},
+							],
 							isError: true,
 						});
 						completedToolsList.push({ ...toolCall, isError: true });
@@ -782,7 +1165,9 @@ const useEditorChat = () => {
 						wpDispatch("core/block-editor").flashBlock(args.client_id);
 						toolResults.push({
 							id: toolCall.id,
-							result: [{ type: "text", text: JSON.stringify({ success: true, block_name: block.name }) }],
+							result: [
+								{ type: "text", text: JSON.stringify({ success: true, block_name: block.name }) },
+							],
 							isError: false,
 						});
 						completedToolsList.push({ ...toolCall, isError: false });
@@ -790,13 +1175,73 @@ const useEditorChat = () => {
 					} else {
 						toolResults.push({
 							id: toolCall.id,
-							result: [{ type: "text", text: JSON.stringify({ error: `Block ${args.client_id} not found` }) }],
+							result: [
+								{
+									type: "text",
+									text: JSON.stringify({ error: `Block ${args.client_id} not found` }),
+								},
+							],
 							isError: true,
 						});
 						completedToolsList.push({ ...toolCall, isError: true });
 						setExecutedTools((prev) => [...prev, { ...toolCall, isError: true }]);
 					}
 					continue;
+				}
+
+				// Handle blu/search-patterns client-side (fast in-memory search)
+				if (toolName === "blu-search-patterns" && args.query) {
+					await updateProgress(__("Searching pattern library…", "wp-module-editor-chat"), 300);
+					if (patternLibrary.isReady()) {
+						const results = patternLibrary.search(args.query, {
+							category: args.category,
+							limit: args.limit || 5,
+						});
+						const resultText =
+							results.length > 0
+								? JSON.stringify({ patterns: results, count: results.length })
+								: JSON.stringify({ patterns: [], count: 0, message: "No matching patterns found" });
+						toolResults.push({
+							id: toolCall.id,
+							result: [{ type: "text", text: resultText }],
+							isError: false,
+						});
+						completedToolsList.push({ ...toolCall, isError: false });
+						setExecutedTools((prev) => [...prev, { ...toolCall, isError: false }]);
+						continue;
+					}
+					// Fall through to MCP fallback if index not ready
+				}
+
+				// Handle blu/get-pattern-markup client-side
+				if (toolName === "blu-get-pattern-markup" && args.slug) {
+					await updateProgress(__("Fetching pattern markup…", "wp-module-editor-chat"), 400);
+					try {
+						const pattern = await patternLibrary.getMarkup(args.slug);
+						if (pattern && pattern.content) {
+							toolResults.push({
+								id: toolCall.id,
+								result: [
+									{
+										type: "text",
+										text: JSON.stringify({
+											slug: pattern.slug,
+											title: pattern.title,
+											content: pattern.content,
+											categories: pattern.categories,
+										}),
+									},
+								],
+								isError: false,
+							});
+							completedToolsList.push({ ...toolCall, isError: false });
+							setExecutedTools((prev) => [...prev, { ...toolCall, isError: false }]);
+							continue;
+						}
+					} catch (err) {
+						console.warn("Client-side pattern fetch failed, falling back to MCP:", err);
+					}
+					// Fall through to MCP fallback
 				}
 
 				// Default: use MCP for all other tool calls
@@ -838,25 +1283,63 @@ const useEditorChat = () => {
 			}
 		}
 
+		// Store toolResults on the message that owns the matching toolCalls (for API history),
+		// and accumulate undoData on the chain origin. executedTools are moved to origin by finalizeChain.
 		setMessages((prev) =>
-			prev.map((msg) =>
-				msg.id === assistantMessageId
-					? {
-							...msg,
-							toolResults,
-							executedTools: completedToolsList,
-							isExecutingTools: false,
-							...(compositeUndoData
-								? { hasActions: true, undoData: compositeUndoData }
-								: {}),
-						}
-					: msg
-			)
+			prev.map((msg) => {
+				// When origin === current (depth 0), update everything on one message
+				if (msg.id === originId && originId === assistantMessageId) {
+					return {
+						...msg,
+						toolResults: [...(msg.toolResults || []), ...toolResults],
+						isExecutingTools: true,
+						...(compositeUndoData
+							? {
+									hasActions: true,
+									undoData: {
+										...(msg.undoData || {}),
+										...compositeUndoData,
+										...(msg.undoData?.blocks && compositeUndoData?.blocks
+											? { blocks: msg.undoData.blocks }
+											: {}),
+									},
+								}
+							: {}),
+					};
+				}
+				// Chained batch: pair toolResults with this message's toolCalls
+				if (msg.id === assistantMessageId) {
+					return {
+						...msg,
+						toolResults: [...(msg.toolResults || []), ...toolResults],
+					};
+				}
+				// Chained batch: accumulate undoData on origin
+				if (msg.id === originId) {
+					return {
+						...msg,
+						isExecutingTools: true,
+						...(compositeUndoData
+							? {
+									hasActions: true,
+									undoData: {
+										...(msg.undoData || {}),
+										...compositeUndoData,
+										...(msg.undoData?.blocks && compositeUndoData?.blocks
+											? { blocks: msg.undoData.blocks }
+											: {}),
+									},
+								}
+							: {}),
+					};
+				}
+				return msg;
+			})
 		);
 
 		setActiveToolCall(null);
 		setToolProgress(null);
-		setExecutedTools([]);
+		// Don't clear executedTools — they persist for TypingIndicator across batches
 		setPendingTools([]);
 
 		// Build the full message list with proper tool call / result format
@@ -884,26 +1367,30 @@ const useEditorChat = () => {
 					: JSON.stringify(tr.result),
 		}));
 
-		const allMessages = [
-			...previousMessages,
-			assistantToolCallMessage,
-			...toolResultMessages,
-		];
+		const allMessages = [...previousMessages, assistantToolCallMessage, ...toolResultMessages];
 
 		const hasSuccessfulResults = toolResults.some((r) => !r.error);
 
 		if (!hasSuccessfulResults) {
+			finalizeChain();
 			setStatus(null);
 			setIsLoading(false);
 			return;
 		}
 
 		// Follow up with the AI to get a response (summary or chained tool call).
-		// Only pass tools after read-only calls so the model can chain (e.g. get-markup → edit).
+		// Allow chaining when any tool in the batch needs a follow-up (e.g., get-block-markup → edit-block).
 		setStatus(CHAT_STATUS.SUMMARIZING);
-		const readOnlyTools = ["blu-get-block-markup", "blu-get-global-styles", "blu-highlight-block"];
-		const allToolsReadOnly = toolCalls.every((tc) => readOnlyTools.includes(tc.name || ""));
-		const canChain = allToolsReadOnly && depth < MAX_TOOL_DEPTH && mcpClient.isConnected();
+		const chainableTools = [
+			"blu-get-block-markup",
+			"blu-get-global-styles",
+			"blu-highlight-block",
+			"blu-search-patterns",
+			"blu-get-pattern-markup",
+			"blu-add-section",
+		];
+		const hasChainableTool = toolCalls.some((tc) => chainableTools.includes(tc.name || ""));
+		const canChain = hasChainableTool && depth < MAX_TOOL_DEPTH && mcpClient.isConnected();
 		const openaiTools = canChain ? mcpClient.getToolsForOpenAI() : [];
 		const followUpMessageId = `assistant-followup-${Date.now()}`;
 		let followUpContent = "";
@@ -958,19 +1445,38 @@ const useEditorChat = () => {
 							setTokenUsage(usage);
 						}
 
+						const displayMessage =
+							!fullMessage && toolCallsResult?.length > 0
+								? generateToolSummary(toolCallsResult)
+								: fullMessage;
+
+						setReasoningContent("");
+
 						setMessages((prev) =>
 							prev.map((msg) =>
 								msg.id === followUpMessageId
-									? { ...msg, content: fullMessage, isStreaming: false, toolCalls: toolCallsResult }
+									? {
+											...msg,
+											content: displayMessage,
+											isStreaming: false,
+											toolCalls: toolCallsResult,
+										}
 									: msg
 							)
 						);
 
 						if (toolCallsResult && toolCallsResult.length > 0 && canChain) {
-							await handleToolCalls(toolCallsResult, followUpMessageId, allMessages, fullMessage, depth + 1);
+							await handleToolCalls(
+								toolCallsResult,
+								followUpMessageId,
+								allMessages,
+								fullMessage,
+								depth + 1
+							);
 							return;
 						}
 
+						finalizeChain();
 						setStatus(null);
 						setIsLoading(false);
 					},
@@ -984,7 +1490,9 @@ const useEditorChat = () => {
 			} catch (followUpError) {
 				const is429 = followUpError?.message?.includes("429") || followUpError?.status === 429;
 				if (is429 && attempt < MAX_RETRIES) {
-					console.warn(`[CHAIN] Rate limited (429), will retry (attempt ${attempt + 1}/${MAX_RETRIES})`);
+					console.warn(
+						`[CHAIN] Rate limited (429), will retry (attempt ${attempt + 1}/${MAX_RETRIES})`
+					);
 					continue;
 				}
 				// Final attempt failed or non-429 error — show what we have
@@ -996,6 +1504,7 @@ const useEditorChat = () => {
 							: msg
 					)
 				);
+				finalizeChain();
 				setStatus(null);
 				setIsLoading(false);
 				break;
@@ -1013,6 +1522,7 @@ const useEditorChat = () => {
 		setStatus(null);
 		setExecutedTools([]);
 		setPendingTools([]);
+		chainOriginRef.current = null;
 
 		// Build editor context and enrich the user's message
 		const editorContext = buildEditorContext();
@@ -1035,7 +1545,7 @@ const useEditorChat = () => {
 
 			// Strip tool data from older messages to save tokens — keep only last 2 tool-bearing turns
 			const toolBearingIndices = recentMessages
-				.map((msg, i) => (msg.toolCalls?.length > 0 || msg.toolResults?.length > 0) ? i : -1)
+				.map((msg, i) => (msg.toolCalls?.length > 0 || msg.toolResults?.length > 0 ? i : -1))
 				.filter((i) => i !== -1);
 			const keepToolDataFrom = new Set(toolBearingIndices.slice(-2));
 
@@ -1095,10 +1605,23 @@ const useEditorChat = () => {
 						setTokenUsage(usage);
 					}
 
+					// Ensure the user always sees at least a sentence before tool execution
+					const displayMessage =
+						!fullMessage && toolCallsResult?.length > 0
+							? generateToolSummary(toolCallsResult)
+							: fullMessage;
+
+					setReasoningContent("");
+
 					setMessages((prev) =>
 						prev.map((msg) =>
 							msg.id === assistantMessageId
-								? { ...msg, content: fullMessage, isStreaming: false, toolCalls: toolCallsResult }
+								? {
+										...msg,
+										content: displayMessage,
+										isStreaming: false,
+										toolCalls: toolCallsResult,
+									}
 								: msg
 						)
 					);
@@ -1122,9 +1645,7 @@ const useEditorChat = () => {
 								: msg
 						)
 					);
-					setError(
-						__("Something went wrong. Please try again.", "wp-module-editor-chat")
-					);
+					setError(__("Something went wrong. Please try again.", "wp-module-editor-chat"));
 					setIsLoading(false);
 					setStatus(null);
 				}
@@ -1161,6 +1682,7 @@ const useEditorChat = () => {
 		setHasGlobalStylesChanges(false);
 		originalGlobalStylesRef.current = null;
 		blockSnapshotRef.current = null;
+		chainOriginRef.current = null;
 
 		const newSessionId = generateSessionId();
 		setSessionId(newSessionId);
@@ -1197,8 +1719,7 @@ const useEditorChat = () => {
 		try {
 			const coreSelect = wp.data.select("core");
 			const getDirtyRecords =
-				coreSelect.__experimentalGetDirtyEntityRecords ||
-				coreSelect.getDirtyEntityRecords;
+				coreSelect.__experimentalGetDirtyEntityRecords || coreSelect.getDirtyEntityRecords;
 			if (getDirtyRecords) {
 				const allDirty = getDirtyRecords();
 				const dirtyTemplateParts = allDirty.filter(
@@ -1313,7 +1834,7 @@ const useEditorChat = () => {
 	};
 
 	// Warn when prompt tokens exceed 20K — conversation is getting large
-	const contextLimitWarning = tokenUsage?.prompt_tokens > 20000;
+	const contextLimitWarning = tokenUsage?.prompt_tokens > 27000;
 
 	return {
 		messages,
