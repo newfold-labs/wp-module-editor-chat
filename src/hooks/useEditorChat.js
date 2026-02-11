@@ -1357,15 +1357,17 @@ const useEditorChat = () => {
 			})),
 		};
 
-		const toolResultMessages = toolResults.map((tr) => ({
-			role: "tool",
-			tool_call_id: tr.id,
-			content: Array.isArray(tr.result)
-				? tr.result.map((item) => item.text || JSON.stringify(item)).join("\n")
-				: tr.error
-					? JSON.stringify({ error: tr.error })
-					: JSON.stringify(tr.result),
-		}));
+		const toolResultMessages = toolResults.map((tr) => {
+			let content;
+			if (Array.isArray(tr.result)) {
+				content = tr.result.map((item) => item.text || JSON.stringify(item)).join("\n");
+			} else if (tr.error) {
+				content = JSON.stringify({ error: tr.error });
+			} else {
+				content = JSON.stringify(tr.result);
+			}
+			return { role: "tool", tool_call_id: tr.id, content };
+		});
 
 		const allMessages = [...previousMessages, assistantToolCallMessage, ...toolResultMessages];
 
