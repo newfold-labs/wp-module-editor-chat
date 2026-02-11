@@ -35,8 +35,8 @@ class WonderBlocksProvider {
 	/**
 	 * Search the in-memory index using keyword scoring.
 	 *
-	 * @param {string} query    Search query (space-separated words).
-	 * @param {Object} opts     Options.
+	 * @param {string} query         Search query (space-separated words).
+	 * @param {Object} opts          Options.
 	 * @param {string} opts.category Optional category filter.
 	 * @param {number} opts.limit    Max results (default 5).
 	 * @return {Array} Matching patterns sorted by relevance.
@@ -49,17 +49,13 @@ class WonderBlocksProvider {
 		const queryWords = query.toLowerCase().split(/\s+/);
 
 		const scored = this.index
-			.filter(
-				(p) => !category || p.categories?.includes(category)
-			)
+			.filter((p) => !category || p.categories?.includes(category))
 			.map((p) => {
 				let score = 0;
 				const title = (p.title || "").toLowerCase();
 				const desc = (p.description || "").toLowerCase();
 				const tags = (p.tags || []).map((t) => t.toLowerCase());
-				const cats = (p.categories || []).map((c) =>
-					c.toLowerCase()
-				);
+				const cats = (p.categories || []).map((c) => c.toLowerCase());
 
 				for (const w of queryWords) {
 					if (title.includes(w)) {
@@ -125,9 +121,7 @@ class PatternLibrary {
 	async initialize(providerName = "wonderblocks") {
 		const Provider = PROVIDERS[providerName];
 		if (!Provider) {
-			console.warn(
-				`[PatternLibrary] Unknown provider: ${providerName}`
-			);
+			console.warn(`[PatternLibrary] Unknown provider: ${providerName}`);
 			return;
 		}
 		this.provider = new Provider();
@@ -137,10 +131,10 @@ class PatternLibrary {
 	/**
 	 * Whether the index has been loaded and is ready for search.
 	 *
-	 * @return {boolean}
+	 * @return {boolean} True if the index is loaded and ready for search.
 	 */
 	isReady() {
-		return this.provider?.index != null;
+		return this.provider?.index !== null;
 	}
 
 	/**

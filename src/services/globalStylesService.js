@@ -200,7 +200,8 @@ export async function updateGlobalStyles(settings, styles = null) {
 		// Entity record only has user overrides — also check block editor settings for theme.json defaults.
 		const entityThemePalette = currentRecord.settings?.color?.palette?.theme || [];
 		const blockEditorSettings = data.select("core/block-editor")?.getSettings?.();
-		const themeJsonPalette = blockEditorSettings?.__experimentalFeatures?.color?.palette?.theme || [];
+		const themeJsonPalette =
+			blockEditorSettings?.__experimentalFeatures?.color?.palette?.theme || [];
 		const THEME_SLUGS = new Set([
 			...entityThemePalette.map((e) => e.slug),
 			...themeJsonPalette.map((e) => e.slug),
@@ -212,10 +213,7 @@ export async function updateGlobalStyles(settings, styles = null) {
 			const remainingCustom = customEntries.filter((e) => !THEME_SLUGS.has(e.slug));
 			if (themeEntries.length > 0) {
 				settings = JSON.parse(JSON.stringify(settings));
-				settings.color.palette.theme = [
-					...(settings.color.palette.theme || []),
-					...themeEntries,
-				];
+				settings.color.palette.theme = [...(settings.color.palette.theme || []), ...themeEntries];
 				if (remainingCustom.length > 0) {
 					settings.color.palette.custom = remainingCustom;
 				} else {
@@ -322,7 +320,10 @@ function deepMerge(target, source) {
  * @return {boolean} True if every item has a slug
  */
 function isSlugArray(arr) {
-	return arr.length > 0 && arr.every((item) => item && typeof item === "object" && typeof item.slug === "string");
+	return (
+		arr.length > 0 &&
+		arr.every((item) => item && typeof item === "object" && typeof item.slug === "string")
+	);
 }
 
 /**
@@ -337,7 +338,9 @@ function isSlugArray(arr) {
  */
 function mergeBySlug(target, source) {
 	const sourceMap = new Map(source.map((item) => [item.slug, item]));
-	const merged = target.map((item) => (sourceMap.has(item.slug) ? { ...item, ...sourceMap.get(item.slug) } : item));
+	const merged = target.map((item) =>
+		sourceMap.has(item.slug) ? { ...item, ...sourceMap.get(item.slug) } : item
+	);
 	const existingSlugs = new Set(target.map((item) => item.slug));
 	const newItems = source.filter((item) => !existingSlugs.has(item.slug));
 	return [...merged, ...newItems];
