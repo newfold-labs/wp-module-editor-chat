@@ -66,15 +66,14 @@ const WelcomeScreen = ({ onSendMessage }) => {
 				</div>
 			</div>
 			<div className="nfd-editor-chat-suggestions">
-				{false &&
-					suggestions.map((suggestion, index) => (
-						<SuggestionButton
-							key={index}
-							icon={suggestion.icon}
-							text={suggestion.text}
-							onClick={suggestion.action}
-						/>
-					))}
+				{suggestions.map((suggestion, index) => (
+					<SuggestionButton
+						key={index}
+						icon={suggestion.icon}
+						text={suggestion.text}
+						onClick={suggestion.action}
+					/>
+				))}
 			</div>
 		</div>
 	);
