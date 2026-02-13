@@ -17,10 +17,10 @@ import { fetchTemplatePartContent } from "../services/templatePartEditor";
  * clientIds, and text previews. Template parts include area/slug metadata.
  * Selected blocks are marked with [SELECTED].
  *
- * @param {Array}      blocks                   Top-level blocks from getBlocks()
- * @param {Array|null} selectedClientIds        Array of clientIds of the currently selected blocks
- * @param              root0
- * @param              root0.collapseUnselected
+ * @param {Array}      blocks                     Top-level blocks from getBlocks()
+ * @param {Array|null} selectedClientIds          Array of clientIds of the currently selected blocks
+ * @param {Object}     options                    Options object
+ * @param {boolean}    options.collapseUnselected Whether to collapse unselected blocks
  * @return {string} Compact block tree text
  */
 export const buildCompactBlockTree = (
