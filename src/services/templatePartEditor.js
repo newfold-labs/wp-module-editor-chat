@@ -9,7 +9,7 @@
 import { dispatch, select, resolveSelect } from "@wordpress/data";
 import { serialize, parse } from "@wordpress/blocks";
 
-import { createBlockFromParsed, normalizeHtml } from "./blockUtils";
+import { createBlockFromParsed, normalizeHtml } from "../utils/blockUtils";
 
 // ────────────────────────────────────────────────────────────────────
 // Template part identity & entity helpers

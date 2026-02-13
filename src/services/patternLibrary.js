@@ -46,10 +46,7 @@ class WonderBlocksProvider {
 			return { results: [], totalMatches: 0 };
 		}
 
-		const queryWords = query
-			.toLowerCase()
-			.split(/\s+/)
-			.filter(Boolean);
+		const queryWords = query.toLowerCase().split(/\s+/).filter(Boolean);
 		const fullQuery = queryWords.join(" ");
 
 		const scored = this.index

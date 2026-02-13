@@ -26,7 +26,7 @@ import {
 	normalizeHtml,
 	getEffectiveRootBlocks,
 	findBlockContext,
-} from "./blockUtils";
+} from "../utils/blockUtils";
 
 /**
  * Action Executor

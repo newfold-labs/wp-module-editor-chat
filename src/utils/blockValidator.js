@@ -60,11 +60,13 @@ export const validateBlockMarkup = (blockContent) => {
 	}
 
 	// Check for invalid gradient usage in inline styles
-	const hasInvalidGradient = blockContent.includes('background-image:') && blockContent.includes('linear-gradient');
+	const hasInvalidGradient =
+		blockContent.includes("background-image:") && blockContent.includes("linear-gradient");
 	if (hasInvalidGradient) {
 		return {
 			valid: false,
-			error: 'Invalid gradient: Do not use background-image in inline styles. Use style.color.gradient in block comment attrs and background: (not background-image:) in the style attribute. Add has-background class.',
+			error:
+				"Invalid gradient: Do not use background-image in inline styles. Use style.color.gradient in block comment attrs and background: (not background-image:) in the style attribute. Add has-background class.",
 		};
 	}
 
