@@ -7,15 +7,17 @@
  */
 export const NFD_CLASS_REFERENCE = `## NFD Utility Classes Reference
 
+IMPORTANT: Always prioritize native WordPress block options (color, typography, spacing settings in the block comment attributes) over nfd-* utility classes. Only use nfd-* classes when there is no native WP option to achieve the desired style. When editing existing blocks, preserve nfd-* classes that are already present unless the user explicitly asks to change them.
+
 ### Container
 nfd-container — controls section width (default 1200px content, 1340px wide). NEVER remove.
 
-### Themes (override CSS color vars for the section — NEVER remove)
-nfd-theme-white — surface:#fff, text:#1d1d22, faded:#3f3f50
-nfd-theme-light — surface:#f7f7f8, text:#1d1d22, faded:#3f3f50
-nfd-theme-dark — surface:#1d1d22, text:#fff, faded:rgba(255,255,255,0.8)
-nfd-theme-darker — surface:#121217, text:#fff, faded:rgba(255,255,255,0.8)
-nfd-theme-primary — surface:var(--wndb--color--primary), text:#fff
+### Themes — DEPRECATED (do NOT add these to new or edited blocks; preserve on existing blocks only)
+nfd-theme-white — DEPRECATED. Use WP block background/text color settings instead.
+nfd-theme-light — DEPRECATED. Use WP block background/text color settings instead.
+nfd-theme-dark — DEPRECATED. Use WP block background/text color settings instead.
+nfd-theme-darker — DEPRECATED. Use WP block background/text color settings instead.
+nfd-theme-primary — DEPRECATED. Use WP block background/text color settings instead.
 
 ### Colors (theme-aware via CSS vars — preserve unless user asks to change)
 nfd-bg-surface — background:var(--wndb--color--surface), text:var(--wndb--color--text)

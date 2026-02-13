@@ -38,15 +38,19 @@ class WonderBlocksProvider {
 	 * @param {string} query         Search query (space-separated words).
 	 * @param {Object} opts          Options.
 	 * @param {string} opts.category Optional category filter.
-	 * @param {number} opts.limit    Max results (default 5).
-	 * @return {Array} Matching patterns sorted by relevance.
+	 * @param {number} opts.limit    Max results (default 15).
+	 * @return {{ results: Array, totalMatches: number }} Matching patterns and total count.
 	 */
-	search(query, { category, limit = 5 } = {}) {
+	search(query, { category, limit = 15 } = {}) {
 		if (!this.index) {
-			return [];
+			return { results: [], totalMatches: 0 };
 		}
 
-		const queryWords = query.toLowerCase().split(/\s+/);
+		const queryWords = query
+			.toLowerCase()
+			.split(/\s+/)
+			.filter(Boolean);
+		const fullQuery = queryWords.join(" ");
 
 		const scored = this.index
 			.filter((p) => !category || p.categories?.includes(category))
@@ -58,26 +62,51 @@ class WonderBlocksProvider {
 				const cats = (p.categories || []).map((c) => c.toLowerCase());
 
 				for (const w of queryWords) {
-					if (title.includes(w)) {
-						score += 5;
-					}
-					if (tags.some((t) => t.includes(w))) {
-						score += 3;
-					}
-					if (cats.some((c) => c.includes(w))) {
+					// Category: exact match only
+					if (cats.some((c) => c === w)) {
 						score += 10;
 					}
+
+					// Tag: exact match bonus vs partial
+					if (tags.some((t) => t === w)) {
+						score += 6;
+					} else if (tags.some((t) => t.includes(w))) {
+						score += 3;
+					}
+
+					// Title: word boundary match
+					const titleWordRe = new RegExp(`\\b${w}`);
+					if (titleWordRe.test(title)) {
+						score += 5;
+					}
+
+					// Description: boosted for rich descriptions
 					if (desc.includes(w)) {
-						score += 1;
+						score += 2;
 					}
 				}
+
+				// Multi-word phrase bonus
+				if (queryWords.length > 1) {
+					if (title.includes(fullQuery)) {
+						score += 8;
+					}
+					if (desc.includes(fullQuery)) {
+						score += 4;
+					}
+				}
+
 				return { ...p, _score: score };
 			})
 			.filter((p) => p._score > 0)
-			.sort((a, b) => b._score - a._score || Math.random() - 0.5)
-			.slice(0, limit);
+			.sort((a, b) => b._score - a._score || Math.random() - 0.5);
 
-		return scored.map(({ _score, ...rest }) => rest);
+		const totalMatches = scored.length;
+
+		return {
+			results: scored.slice(0, limit).map(({ _score, ...rest }) => rest),
+			totalMatches,
+		};
 	}
 
 	/**

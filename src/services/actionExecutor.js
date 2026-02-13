@@ -1094,9 +1094,9 @@ class ActionExecutor {
 		const { insertBlocks } = dispatch("core/block-editor");
 		const errors = [];
 
-		// Parse all block contents (raw parsed blocks for entity, WP blocks for editor)
+		// Parse all block contents — use parsed blocks directly to preserve original
+		// HTML (custom inline styles, classes, etc.) that createBlock() would strip.
 		const parsedBlocksList = [];
-		const blocksToInsert = [];
 		for (const change of changes) {
 			if (!change.block_content || typeof change.block_content !== "string") {
 				errors.push("Add action change missing block_content string");
@@ -1111,8 +1111,6 @@ class ActionExecutor {
 				}
 
 				parsedBlocksList.push(...parsedBlocks);
-				const wpBlocks = parsedBlocks.map((parsedBlock) => this.createBlockFromParsed(parsedBlock));
-				blocksToInsert.push(...wpBlocks);
 			} catch (error) {
 				errors.push(`Failed to parse block_content: ${error.message}`);
 				// eslint-disable-next-line no-console
@@ -1120,7 +1118,7 @@ class ActionExecutor {
 			}
 		}
 
-		if (blocksToInsert.length === 0) {
+		if (parsedBlocksList.length === 0) {
 			throw new Error("No valid blocks to insert");
 		}
 
@@ -1142,17 +1140,17 @@ class ActionExecutor {
 				const effectiveRoot = this.getEffectiveRootBlocks();
 				if (effectiveRoot.blocks.length > 0) {
 					if (effectiveRoot.parentClientId) {
-						insertBlocks(blocksToInsert, 0, effectiveRoot.parentClientId);
+						insertBlocks(parsedBlocksList, 0, effectiveRoot.parentClientId);
 					} else {
-						insertBlocks(blocksToInsert, 0, effectiveRoot.blocks[0].clientId);
+						insertBlocks(parsedBlocksList, 0, effectiveRoot.blocks[0].clientId);
 					}
 				} else {
 					const rootBlocks = getBlocks();
 					const postContentBlock = rootBlocks.find((block) => block.name === "core/post-content");
 					if (postContentBlock) {
-						insertBlocks(blocksToInsert, 0, postContentBlock.clientId);
+						insertBlocks(parsedBlocksList, 0, postContentBlock.clientId);
 					} else {
-						insertBlocks(blocksToInsert, 0);
+						insertBlocks(parsedBlocksList, 0);
 					}
 				}
 			} else {
@@ -1168,22 +1166,22 @@ class ActionExecutor {
 
 				const insertIndex = context.index + 1;
 				insertBlocks(
-					blocksToInsert,
+					parsedBlocksList,
 					insertIndex,
 					context.parentClientId || undefined
 				);
 			}
 		}
 
-		const insertedClientIds = blocksToInsert
+		const insertedClientIds = parsedBlocksList
 			.map((block) => block.clientId || null)
 			.filter(Boolean);
 
 		return {
 			clientId: clientId || "root",
-			blocksAdded: blocksToInsert.length,
+			blocksAdded: parsedBlocksList.length,
 			insertedClientIds,
-			message: `Added ${blocksToInsert.length} block(s) successfully`,
+			message: `Added ${parsedBlocksList.length} block(s) successfully`,
 			errors: errors.length > 0 ? errors : undefined,
 		};
 	}
