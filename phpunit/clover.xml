@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1771347507">
-  <project timestamp="1771347507">
+<coverage generated="1771347653">
+  <project timestamp="1771347653">
     <file name="/home/runner/work/wp-module-editor-chat/wp-module-editor-chat/includes/Application.php">
       <class name="NewfoldLabs\WP\Module\EditorChat\Application" namespace="global">
         <metrics complexity="3" methods="2" coveredmethods="0" conditionals="0" coveredconditionals="0" statements="5" coveredstatements="0" elements="7" coveredelements="0"/>
