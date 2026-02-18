@@ -10,7 +10,15 @@ import { __ } from "@wordpress/i18n";
 /**
  * External dependencies - from wp-module-ai-chat
  */
-import { CHAT_STATUS, createMCPClient, createOpenAIClient } from "@newfold-labs/wp-module-ai-chat";
+import {
+	CHAT_STATUS,
+	createMCPClient,
+	createOpenAIClient,
+	generateSessionId,
+	archiveConversation,
+	getChatHistoryStorageKeys,
+	hasMeaningfulUserMessage,
+} from "@newfold-labs/wp-module-ai-chat";
 
 /**
  * Internal dependencies
@@ -24,8 +32,9 @@ import {
 	loadMessages,
 	saveMessages,
 	clearChatData,
-	generateSessionId,
 } from "../utils/chatStorage";
+
+const EDITOR_CHAT_CONSUMER = "editor_chat";
 import {
 	EDITOR_SYSTEM_PROMPT,
 	generateToolSummary,
@@ -50,13 +59,39 @@ const openaiClient = createOpenAIClient({
  * @return {Object} Chat state and handlers for the editor
  */
 const useEditorChat = () => {
-	// Initialize state from localStorage
+	// Initialize state from localStorage, seeding from archive if needed
 	const savedSessionId = loadSessionId();
-	const savedMessages = loadMessages();
+	let savedMessages = loadMessages();
+	let initialSessionId = savedSessionId;
+
+	// Seed from archive: if no active messages but a recent archive exists, restore it
+	if ((!savedMessages || savedMessages.length === 0) && !savedSessionId) {
+		try {
+			const keys = getChatHistoryStorageKeys(EDITOR_CHAT_CONSUMER);
+			const rawArchive = localStorage.getItem(keys.archive);
+			if (rawArchive) {
+				const archive = JSON.parse(rawArchive);
+				const latest = Array.isArray(archive) && archive[0];
+				if (latest?.messages?.length > 0 && latest?.archivedAt) {
+					const RECENT_MS = 30 * 60 * 1000; // 30 minutes
+					const archivedAt = new Date(latest.archivedAt).getTime();
+					if (Date.now() - archivedAt <= RECENT_MS) {
+						savedMessages = latest.messages;
+						initialSessionId = latest.sessionId;
+						// Persist restored data so subsequent loads pick it up
+						saveMessages(savedMessages);
+						saveSessionId(initialSessionId);
+					}
+				}
+			}
+		} catch (err) {
+			// Ignore storage errors
+		}
+	}
 
 	const [messages, setMessages] = useState(savedMessages || []);
 	const [isLoading, setIsLoading] = useState(false);
-	const [sessionId, setSessionId] = useState(savedSessionId || generateSessionId());
+	const [sessionId, setSessionId] = useState(initialSessionId || generateSessionId());
 	const [error, setError] = useState(null);
 	const [status, setStatus] = useState(null);
 	const [isSaving, setIsSaving] = useState(false);
@@ -159,6 +194,13 @@ const useEditorChat = () => {
 		}
 	}, [messages]);
 
+	// Keep the archive entry current while chatting
+	useEffect(() => {
+		if (hasMeaningfulUserMessage(messages)) {
+			archiveConversation(messages, sessionId, null, EDITOR_CHAT_CONSUMER);
+		}
+	}, [messages, sessionId]);
+
 	// Keep refs in sync so callbacks can read latest values
 	useEffect(() => {
 		executedToolsRef.current = executedTools;
@@ -177,6 +219,17 @@ const useEditorChat = () => {
 			}
 		};
 	}, []);
+
+	// Archive conversation before page unload so it survives tab close / navigation
+	useEffect(() => {
+		const handleBeforeUnload = () => {
+			if (hasMeaningfulUserMessage(messagesRef.current)) {
+				archiveConversation(messagesRef.current, sessionId, null, EDITOR_CHAT_CONSUMER);
+			}
+		};
+		window.addEventListener("beforeunload", handleBeforeUnload);
+		return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+	}, [sessionId]);
 
 	/**
 	 * Helper to wait for a minimum time
@@ -416,6 +469,9 @@ const useEditorChat = () => {
 		if (abortControllerRef.current) {
 			abortControllerRef.current.abort();
 		}
+
+		// Archive the outgoing conversation before clearing
+		archiveConversation(messagesRef.current, sessionId, null, EDITOR_CHAT_CONSUMER);
 
 		setIsLoading(false);
 		setStatus(null);

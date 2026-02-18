@@ -4,6 +4,9 @@
  *
  * Pure helper functions for persisting editor-chat session data.
  * No React dependency — safe to import from anywhere.
+ *
+ * Archive functions (archiveConversation, getChatHistoryStorageKeys, etc.)
+ * live in wp-module-ai-chat and are imported directly by useEditorChat.
  */
 import { simpleHash } from "@newfold-labs/wp-module-ai-chat";
 
@@ -111,15 +114,4 @@ export const clearChatData = () => {
 	} catch (error) {
 		console.warn("Failed to clear chat data from localStorage:", error);
 	}
-};
-
-/**
- * Generate a new session ID
- *
- * @return {string} New session ID
- */
-export const generateSessionId = () => {
-	return crypto.randomUUID
-		? crypto.randomUUID()
-		: `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
 };
