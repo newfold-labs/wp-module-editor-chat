@@ -33,7 +33,7 @@
 		"concurrently": "^9.2.1",
 		"cssnano": "^7.1.2",
 		"esbuild": "^0.27.3",
-		"eslint": "^8.57.1",
+		"eslint": "^10.0.1",
 		"eslint-plugin-prettier": "^5.5.5",
 		"eslit": "^6.0.0",
 		"postcss": "^8.5.6",
