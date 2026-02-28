@@ -85,6 +85,7 @@ final class ChatEditor {
 					'homeUrl'        => \esc_url( \get_home_url() ),
 					'wpVer'          => \esc_html( \get_bloginfo( 'version' ) ),
 					'nfdChatVersion' => \esc_html( NFD_EDITOR_CHAT_VERSION ),
+					'agentsConfigUrl' => \esc_url_raw( \rest_url( 'nfd-agents/chat/v1/config' ) ),
 				)
 			);
 

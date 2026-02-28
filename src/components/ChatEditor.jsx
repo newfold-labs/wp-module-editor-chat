@@ -37,8 +37,6 @@ const ChatEditor = () => {
 		toolProgress,
 		executedTools,
 		pendingTools,
-		reasoningContent,
-		contextLimitWarning,
 		handleSendMessage,
 		handleNewChat,
 		handleAcceptChanges,
@@ -95,8 +93,8 @@ const ChatEditor = () => {
 							toolProgress={toolProgress}
 							executedTools={executedTools}
 							pendingTools={pendingTools}
-							reasoningContent={reasoningContent}
 							textDomain="wp-module-editor-chat"
+							messageBubbleStyle="minimal"
 						/>
 					)}
 					{hasPendingActions && (
@@ -106,23 +104,6 @@ const ChatEditor = () => {
 							onDecline={handleDeclineChanges}
 							isSaving={isSaving}
 						/>
-					)}
-					{contextLimitWarning && (
-						<div className="nfd-editor-chat-context-warning">
-							<p>
-								{__(
-									"This conversation is getting long and may affect response quality.",
-									"wp-module-editor-chat"
-								)}
-							</p>
-							<button
-								type="button"
-								className="nfd-editor-chat-context-warning__btn"
-								onClick={handleNewChat}
-							>
-								{__("Start new chat", "wp-module-editor-chat")}
-							</button>
-						</div>
 					)}
 					<ChatInput
 						onSendMessage={handleSendMessage}

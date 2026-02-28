@@ -4,7 +4,7 @@
  */
 import { store as coreStore } from "@wordpress/core-data";
 import { useDispatch, useSelect } from "@wordpress/data";
-import { useCallback, useEffect, useRef, useState } from "@wordpress/element";
+import { useCallback, useEffect, useMemo, useRef, useState } from "@wordpress/element";
 import { __ } from "@wordpress/i18n";
 
 /**
@@ -13,87 +13,36 @@ import { __ } from "@wordpress/i18n";
 import {
 	CHAT_STATUS,
 	createMCPClient,
-	createOpenAIClient,
-	generateSessionId,
+	useNfdAgentsWebSocket,
 	archiveConversation,
-	getChatHistoryStorageKeys,
 	hasMeaningfulUserMessage,
 } from "@newfold-labs/wp-module-ai-chat";
 
 /**
  * Internal dependencies
  */
-import actionExecutor from "../services/actionExecutor";
+import { restoreBlocks, restoreGlobalStyles } from "../services/actionExecutor";
 import patternLibrary from "../services/patternLibrary";
-import { executeToolCalls } from "../services/toolExecutor";
-import {
-	loadSessionId,
-	saveSessionId,
-	loadMessages,
-	saveMessages,
-	clearChatData,
-} from "../utils/chatStorage";
+import { executeToolCallsFromWebSocket } from "../services/toolExecutor";
+import { EDITOR_SYSTEM_PROMPT, buildEditorContext } from "../utils/editorContext";
 
 const EDITOR_CHAT_CONSUMER = "editor_chat";
-import {
-	EDITOR_SYSTEM_PROMPT,
-	generateToolSummary,
-	buildEditorContext,
-} from "../utils/editorContext";
 
-// Create editor-specific clients with the editor config
+// Create editor-specific MCP client (still used for tool discovery and fallback execution)
 const mcpClient = createMCPClient({ configKey: "nfdEditorChat" });
-const openaiClient = createOpenAIClient({
-	configKey: "nfdEditorChat",
-	apiPath: "",
-	mode: "editor",
-});
 
 /**
  * useEditorChat Hook
  *
- * Editor-specific chat hook that uses services from wp-module-ai-chat
- * and adds editor-specific functionality like accept/decline, localStorage
- * persistence, and real-time visual updates for global styles.
+ * Editor-specific chat hook that uses the Jarvis WebSocket gateway
+ * (via useNfdAgentsWebSocket) and adds editor-specific functionality
+ * like accept/decline, tool execution for block editing, and real-time
+ * visual updates for global styles.
  *
  * @return {Object} Chat state and handlers for the editor
  */
 const useEditorChat = () => {
-	// Initialize state from localStorage, seeding from archive if needed
-	const savedSessionId = loadSessionId();
-	let savedMessages = loadMessages();
-	let initialSessionId = savedSessionId;
-
-	// Seed from archive: if no active messages but a recent archive exists, restore it
-	if ((!savedMessages || savedMessages.length === 0) && !savedSessionId) {
-		try {
-			const keys = getChatHistoryStorageKeys(EDITOR_CHAT_CONSUMER);
-			const rawArchive = localStorage.getItem(keys.archive);
-			if (rawArchive) {
-				const archive = JSON.parse(rawArchive);
-				const latest = Array.isArray(archive) && archive[0];
-				if (latest?.messages?.length > 0 && latest?.archivedAt) {
-					const RECENT_MS = 30 * 60 * 1000; // 30 minutes
-					const archivedAt = new Date(latest.archivedAt).getTime();
-					if (Date.now() - archivedAt <= RECENT_MS) {
-						savedMessages = latest.messages;
-						initialSessionId = latest.sessionId;
-						// Persist restored data so subsequent loads pick it up
-						saveMessages(savedMessages);
-						saveSessionId(initialSessionId);
-					}
-				}
-			}
-		} catch (err) {
-			// Ignore storage errors
-		}
-	}
-
-	const [messages, setMessages] = useState(savedMessages || []);
-	const [isLoading, setIsLoading] = useState(false);
-	const [sessionId, setSessionId] = useState(initialSessionId || generateSessionId());
-	const [error, setError] = useState(null);
-	const [status, setStatus] = useState(null);
+	// Editor-specific state (not managed by WebSocket hook)
 	const [isSaving, setIsSaving] = useState(false);
 	const [hasGlobalStylesChanges, setHasGlobalStylesChanges] = useState(false);
 	const [mcpConnectionStatus, setMcpConnectionStatus] = useState("disconnected");
@@ -102,16 +51,13 @@ const useEditorChat = () => {
 	const [toolProgress, setToolProgress] = useState(null);
 	const [executedTools, setExecutedTools] = useState([]);
 	const [pendingTools, setPendingTools] = useState([]);
-	const [reasoningContent, setReasoningContent] = useState("");
-	const [tokenUsage, setTokenUsage] = useState(null);
+	const [localStatusOverride, setLocalStatusOverride] = useState(null);
 
 	const hasInitializedRef = useRef(false);
-	const abortControllerRef = useRef(null);
+	const isFirstMessageRef = useRef(true);
 	const originalGlobalStylesRef = useRef(null);
 	const blockSnapshotRef = useRef(null);
-	const chainOriginRef = useRef(null);
 	const executedToolsRef = useRef([]);
-	const messagesRef = useRef(messages);
 
 	// Get WordPress editor dispatch functions
 	const { savePost } = useDispatch("core/editor");
@@ -127,26 +73,161 @@ const useEditorChat = () => {
 	// Get WordPress save status
 	const isSavingPost = useSelect((select) => select("core/editor").isSavingPost(), []);
 
-	// Watch for save completion
-	useEffect(() => {
-		if (isSaving && !isSavingPost) {
-			setMessages((prev) =>
-				prev.map((msg) => {
-					if (msg.hasActions) {
-						const { hasActions, undoData, ...rest } = msg;
-						return rest;
-					}
-					return msg;
-				})
-			);
-			setHasGlobalStylesChanges(false);
-			setIsSaving(false);
-		}
-	}, [isSaving, isSavingPost]);
+	/**
+	 * Helper to wait for a minimum time
+	 *
+	 * @param {number} ms Milliseconds to wait
+	 * @return {Promise} Promise that resolves after ms
+	 */
+	const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 	/**
-	 * Initialize MCP client connection
+	 * Update progress with minimum display time
+	 *
+	 * @param {string} message Progress message to show
+	 * @param {number} minTime Minimum time to display
 	 */
+	const updateProgress = async (message, minTime = 400) => {
+		setToolProgress(message);
+		await wait(minTime);
+	};
+
+	// ───────────────────────────────────────────────────────────
+	// WebSocket hook — manages connection, messages, streaming
+	// ───────────────────────────────────────────────────────────
+	const configEndpoint = window.nfdEditorChat?.agentsConfigUrl || "";
+
+	// Use a ref for the tool call handler so the WebSocket hook always
+	// sees the latest version (the hook stores onToolCall in a ref internally).
+	const handleToolCallRef = useRef(null);
+
+	const {
+		messages: wsMessages,
+		setMessages: wsSetMessages,
+		isConnecting,
+		error: wsError,
+		isTyping,
+		status: wsStatus,
+		currentResponse,
+		connectionState,
+		sendMessage: wsSendMessage,
+		sendToolResult,
+		stopRequest: wsStopRequest,
+		clearChatHistory: wsClearChatHistory,
+		getSessionId,
+		connect: wsConnect,
+	} = useNfdAgentsWebSocket({
+		configEndpoint,
+		consumer: EDITOR_CHAT_CONSUMER,
+		consumerType: "editor_chat",
+		autoConnect: true,
+		autoLoadHistory: true,
+		onToolCall: (...args) => handleToolCallRef.current?.(...args),
+		getConnectionFailedFallbackMessage: () =>
+			__("I couldn't connect to the server. Please try again in a moment.", "wp-module-editor-chat"),
+	});
+
+	// Keep a ref to messages for callbacks
+	const wsMessagesRef = useRef(wsMessages);
+	useEffect(() => {
+		wsMessagesRef.current = wsMessages;
+	}, [wsMessages]);
+
+	/**
+	 * Build the shared context object passed to executeToolCallsFromWebSocket.
+	 */
+	const buildToolCtx = useCallback(
+		() => ({
+			mcpClient,
+			setMessages: wsSetMessages,
+			setStatus: setLocalStatusOverride,
+			setExecutedTools,
+			setPendingTools,
+			setActiveToolCall,
+			setToolProgress,
+			setHasGlobalStylesChanges,
+			blockSnapshotRef,
+			executedToolsRef,
+			originalGlobalStylesRef,
+			getMessages: () => wsMessagesRef.current,
+			updateProgress,
+			wait,
+			sendToolResult,
+		}),
+		[wsSetMessages, sendToolResult]
+	);
+
+	/**
+	 * Handle tool_call events from the WebSocket gateway.
+	 * Executes tools client-side for visual updates.
+	 */
+	const handleToolCall = useCallback(
+		(toolCalls) => {
+			executeToolCallsFromWebSocket(toolCalls, buildToolCtx());
+		},
+		[buildToolCtx]
+	);
+
+	// Keep the ref in sync so the WebSocket hook always calls the latest handler
+	useEffect(() => {
+		handleToolCallRef.current = handleToolCall;
+	}, [handleToolCall]);
+
+	// ───────────────────────────────────────────────────────────
+	// Derived status
+	// ───────────────────────────────────────────────────────────
+	const effectiveStatus = useMemo(() => {
+		if (activeToolCall) {
+			return CHAT_STATUS.TOOL_CALL;
+		}
+		if (localStatusOverride) {
+			return localStatusOverride;
+		}
+		if (isTyping && executedToolsRef.current.length > 0) {
+			return CHAT_STATUS.SUMMARIZING;
+		}
+		if (isTyping) {
+			return CHAT_STATUS.GENERATING;
+		}
+		return wsStatus;
+	}, [activeToolCall, localStatusOverride, isTyping, wsStatus]);
+
+	// Clear local status override when typing finishes
+	useEffect(() => {
+		if (!isTyping && !activeToolCall) {
+			setLocalStatusOverride(null);
+		}
+	}, [isTyping, activeToolCall]);
+
+	// ───────────────────────────────────────────────────────────
+	// Display messages: wsMessages + synthetic streaming message
+	// ───────────────────────────────────────────────────────────
+	const displayMessages = useMemo(() => {
+		if (!currentResponse) {
+			return wsMessages;
+		}
+		return [
+			...wsMessages,
+			{
+				id: "streaming-current",
+				type: "assistant",
+				role: "assistant",
+				content: currentResponse,
+				isStreaming: true,
+			},
+		];
+	}, [wsMessages, currentResponse]);
+
+	// ───────────────────────────────────────────────────────────
+	// Derived state
+	// ───────────────────────────────────────────────────────────
+	const isLoading = isTyping || isConnecting || !!activeToolCall;
+	const sessionId = getSessionId();
+	const error = wsError;
+
+	// ───────────────────────────────────────────────────────────
+	// MCP initialization (for tool discovery and pattern library)
+	// ───────────────────────────────────────────────────────────
 	const initializeMCP = useCallback(async () => {
 		if (mcpConnectionStatus === "connecting" || mcpConnectionStatus === "connected") {
 			return;
@@ -175,328 +256,157 @@ const useEditorChat = () => {
 			return;
 		}
 		hasInitializedRef.current = true;
-
-		if (!savedSessionId) {
-			saveSessionId(sessionId);
-		}
 		initializeMCP();
-	}, [sessionId, savedSessionId, initializeMCP]);
+	}, [initializeMCP]);
 
-	// Save session ID when it changes
+	// Watch for save completion
 	useEffect(() => {
-		saveSessionId(sessionId);
-	}, [sessionId]);
-
-	// Save messages when they change
-	useEffect(() => {
-		if (messages.length > 0) {
-			saveMessages(messages);
-		}
-	}, [messages]);
-
-	// Keep the archive entry current while chatting
-	useEffect(() => {
-		if (hasMeaningfulUserMessage(messages)) {
-			archiveConversation(messages, sessionId, null, EDITOR_CHAT_CONSUMER);
-		}
-	}, [messages, sessionId]);
-
-	// Keep refs in sync so callbacks can read latest values
-	useEffect(() => {
-		executedToolsRef.current = executedTools;
-	}, [executedTools]);
-
-	useEffect(() => {
-		messagesRef.current = messages;
-	}, [messages]);
-
-	// Cleanup on unmount
-	useEffect(() => {
-		const controller = abortControllerRef.current;
-		return () => {
-			if (controller) {
-				controller.abort();
-			}
-		};
-	}, []);
-
-	// Archive conversation before page unload so it survives tab close / navigation
-	useEffect(() => {
-		const handleBeforeUnload = () => {
-			if (hasMeaningfulUserMessage(messagesRef.current)) {
-				archiveConversation(messagesRef.current, sessionId, null, EDITOR_CHAT_CONSUMER);
-			}
-		};
-		window.addEventListener("beforeunload", handleBeforeUnload);
-		return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-	}, [sessionId]);
-
-	/**
-	 * Helper to wait for a minimum time
-	 *
-	 * @param {number} ms Milliseconds to wait
-	 * @return {Promise} Promise that resolves after ms
-	 */
-	const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-	/**
-	 * Update progress with minimum display time
-	 *
-	 * @param {string} message Progress message to show
-	 * @param {number} minTime Minimum time to display
-	 */
-	const updateProgress = async (message, minTime = 400) => {
-		setToolProgress(message);
-		await wait(minTime);
-	};
-
-	/**
-	 * Finalize a tool chain: clear origin ref, mark origin message done, reset tool state.
-	 */
-	const finalizeChain = () => {
-		const originId = chainOriginRef.current;
-		if (originId) {
-			const finalTools = executedToolsRef.current;
-			setMessages((prev) =>
+		if (isSaving && !isSavingPost) {
+			wsSetMessages((prev) =>
 				prev.map((msg) => {
-					if (msg.id === originId) {
-						return {
-							...msg,
-							isExecutingTools: false,
-							executedTools: finalTools,
-						};
+					if (msg.hasActions) {
+						const { hasActions, undoData, ...rest } = msg;
+						return rest;
 					}
 					return msg;
 				})
 			);
+			setHasGlobalStylesChanges(false);
+			setIsSaving(false);
 		}
-		chainOriginRef.current = null;
-		setExecutedTools([]);
-		setPendingTools([]);
-	};
+	}, [isSaving, isSavingPost, wsSetMessages]);
+
+	// Keep ref in sync during tool execution; skip clearing so ref
+	// persists for SUMMARIZING status after state is cleared
+	useEffect(() => {
+		if (executedTools.length > 0) {
+			executedToolsRef.current = executedTools;
+		}
+	}, [executedTools]);
+
+	// Archive conversation while chatting and before page unload
+	useEffect(() => {
+		if (hasMeaningfulUserMessage(wsMessages)) {
+			archiveConversation(wsMessages, getSessionId(), null, EDITOR_CHAT_CONSUMER);
+		}
+	}, [wsMessages, getSessionId]);
+
+	useEffect(() => {
+		const handleBeforeUnload = () => {
+			if (hasMeaningfulUserMessage(wsMessagesRef.current)) {
+				archiveConversation(wsMessagesRef.current, getSessionId(), null, EDITOR_CHAT_CONSUMER);
+			}
+		};
+		window.addEventListener("beforeunload", handleBeforeUnload);
+		return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+	}, [getSessionId]);
+
+	// Remove duplicate consecutive error messages (the WS hook may add
+	// a fallback from both its connectionState watcher and sendMessage)
+	useEffect(() => {
+		if (wsMessages.length >= 2) {
+			const last = wsMessages[wsMessages.length - 1];
+			const prev = wsMessages[wsMessages.length - 2];
+			if (
+				last.role === "assistant" &&
+				prev.role === "assistant" &&
+				last.content === prev.content
+			) {
+				wsSetMessages((msgs) => msgs.slice(0, -1));
+			}
+		}
+	}, [wsMessages, wsSetMessages]);
+
+	// ───────────────────────────────────────────────────────────
+	// Handlers
+	// ───────────────────────────────────────────────────────────
 
 	/**
-	 * Build the shared context object passed to executeToolCalls.
-	 */
-	const buildToolCtx = () => ({
-		mcpClient,
-		openaiClient,
-		setMessages,
-		setStatus,
-		setIsLoading,
-		setExecutedTools,
-		setPendingTools,
-		setActiveToolCall,
-		setToolProgress,
-		setHasGlobalStylesChanges,
-		setReasoningContent,
-		setTokenUsage,
-		blockSnapshotRef,
-		chainOriginRef,
-		executedToolsRef,
-		originalGlobalStylesRef,
-		getMessages: () => messagesRef.current,
-		finalizeChain,
-		updateProgress,
-		wait,
-	});
-
-	/**
-	 * Handle sending a message with streaming support
+	 * Handle sending a message via WebSocket
 	 *
 	 * @param {string} messageContent The message to send
 	 */
-	const handleSendMessage = async (messageContent) => {
-		setError(null);
-		setStatus(null);
-		setExecutedTools([]);
-		setPendingTools([]);
-		chainOriginRef.current = null;
+	const handleSendMessage = useCallback(
+		(messageContent) => {
+			// Reset editor-specific state
+			setExecutedTools([]);
+			executedToolsRef.current = [];
+			setPendingTools([]);
+			setActiveToolCall(null);
+			setToolProgress(null);
+			setLocalStatusOverride(null);
 
-		// Build editor context and enrich the user's message
-		const editorContext = buildEditorContext();
-		const enrichedContent = `<editor_context>\n${editorContext}\n</editor_context>\n\n${messageContent}`;
-
-		const userMessage = {
-			id: `user-${Date.now()}`,
-			type: "user",
-			role: "user",
-			content: enrichedContent,
-		};
-		setMessages((prev) => [...prev, { ...userMessage, content: messageContent }]);
-		setIsLoading(true);
-		setStatus(CHAT_STATUS.GENERATING);
-
-		abortControllerRef.current = new AbortController();
-
-		try {
-			const recentMessages = [...messages, userMessage].slice(-6);
-
-			// Strip tool data from older messages to save tokens — keep only last 2 tool-bearing turns
-			const toolBearingIndices = recentMessages
-				.map((msg, i) => (msg.toolCalls?.length > 0 || msg.toolResults?.length > 0 ? i : -1))
-				.filter((i) => i !== -1);
-			const keepToolDataFrom = new Set(toolBearingIndices.slice(-2));
-
-			const openaiMessages = [
-				{ role: "system", content: EDITOR_SYSTEM_PROMPT },
-				...openaiClient.convertMessagesToOpenAI(
-					recentMessages.map((msg, i) => ({
-						role: msg.type === "user" || msg.type === "notification" ? "user" : "assistant",
-						content: msg.content ?? "",
-						toolCalls: keepToolDataFrom.has(i) ? msg.toolCalls : undefined,
-						toolResults: keepToolDataFrom.has(i) ? msg.toolResults : undefined,
-					}))
-				),
-			];
-
-			const openaiTools = mcpClient.isConnected() ? mcpClient.getToolsForOpenAI() : [];
-			const assistantMessageId = `assistant-${Date.now()}`;
-			let currentContent = "";
-
-			setMessages((prev) => [
-				...prev,
-				{
-					id: assistantMessageId,
-					type: "assistant",
-					role: "assistant",
-					content: "",
-					isStreaming: true,
-				},
-			]);
-
-			await openaiClient.createStreamingCompletion(
-				{
-					model: "gpt-4.1-mini",
-					messages: openaiMessages,
-					tools: openaiTools.length > 0 ? openaiTools : undefined,
-					tool_choice: openaiTools.length > 0 ? "auto" : undefined,
-					temperature: 0.2,
-					max_completion_tokens: 32000,
-					mode: "editor",
-				},
-				(chunk) => {
-					if (chunk.type === "reasoning") {
-						setReasoningContent((prev) => prev + chunk.content);
-					}
-					if (chunk.type === "content") {
-						setReasoningContent(""); // Clear reasoning when content starts
-						currentContent += chunk.content;
-						setMessages((prev) =>
-							prev.map((msg) =>
-								msg.id === assistantMessageId ? { ...msg, content: currentContent } : msg
-							)
-						);
-					}
-				},
-				async (fullMessage, toolCallsResult, usage) => {
-					if (usage) {
-						setTokenUsage(usage);
-					}
-
-					// Ensure the user always sees at least a sentence before tool execution
-					const displayMessage =
-						!fullMessage && toolCallsResult?.length > 0
-							? generateToolSummary(toolCallsResult)
-							: fullMessage;
-
-					setReasoningContent("");
-
-					setMessages((prev) =>
-						prev.map((msg) =>
-							msg.id === assistantMessageId
-								? {
-										...msg,
-										content: displayMessage,
-										isStreaming: false,
-										toolCalls: toolCallsResult,
-									}
-								: msg
-						)
-					);
-
-					if (toolCallsResult && toolCallsResult.length > 0 && mcpClient.isConnected()) {
-						await executeToolCalls(
-							toolCallsResult,
-							assistantMessageId,
-							openaiMessages,
-							fullMessage,
-							0,
-							buildToolCtx()
-						);
-						return;
-					}
-
-					setIsLoading(false);
-					setStatus(null);
-				},
-				(err) => {
-					console.error("Streaming error:", err);
-					const fallbackContent =
-						currentContent || __("Sorry, an error occurred.", "wp-module-editor-chat");
-					setMessages((prev) =>
-						prev.map((msg) =>
-							msg.id === assistantMessageId
-								? { ...msg, content: fallbackContent, isStreaming: false }
-								: msg
-						)
-					);
-					setError(__("Something went wrong. Please try again.", "wp-module-editor-chat"));
-					setIsLoading(false);
-					setStatus(null);
-				}
-			);
-		} catch (err) {
-			if (err.name === "AbortError") {
-				return;
+			// Build editor context and enrich the user's message.
+			// On the first message of each conversation, include the system prompt
+			// so the AI receives all block-editing rules (color validation, inner
+			// block preservation, template parts, pattern library, etc.).
+			const editorContext = buildEditorContext();
+			let enrichedContent;
+			if (isFirstMessageRef.current) {
+				enrichedContent = `<system_instructions>\n${EDITOR_SYSTEM_PROMPT}\n</system_instructions>\n\n<editor_context>\n${editorContext}\n</editor_context>\n\n${messageContent}`;
+				isFirstMessageRef.current = false;
+			} else {
+				enrichedContent = `<editor_context>\n${editorContext}\n</editor_context>\n\n${messageContent}`;
 			}
-			console.error("Error sending message:", err);
-			setError(
-				__(
-					"Sorry, I encountered an error processing your request. Please try again.",
-					"wp-module-editor-chat"
-				)
-			);
-			setIsLoading(false);
-			setStatus(null);
-		}
-	};
+
+			// Send via WebSocket (the hook appends the user message to state)
+			wsSendMessage(enrichedContent);
+
+			// Strip the system_instructions and editor_context wrappers from
+			// the displayed user message so the user only sees their original text.
+			// Search backwards because the WS hook may append a fallback error
+			// message after the user message (e.g. on connection failure).
+			wsSetMessages((prev) => {
+				for (let i = prev.length - 1; i >= 0; i--) {
+					const hasContext = prev[i].role === "user" && (prev[i].content?.includes("<editor_context>") || prev[i].content?.includes("<system_instructions>"));
+					if (hasContext) {
+						return [
+							...prev.slice(0, i),
+							{ ...prev[i], content: messageContent },
+							...prev.slice(i + 1),
+						];
+					}
+				}
+				return prev;
+			});
+		},
+		[wsSendMessage, wsSetMessages]
+	);
 
 	/**
 	 * Start a new chat session
 	 */
-	const handleNewChat = async () => {
-		if (abortControllerRef.current) {
-			abortControllerRef.current.abort();
-		}
-
+	const handleNewChat = useCallback(async () => {
 		// Archive the outgoing conversation before clearing
-		archiveConversation(messagesRef.current, sessionId, null, EDITOR_CHAT_CONSUMER);
+		archiveConversation(wsMessagesRef.current, getSessionId(), null, EDITOR_CHAT_CONSUMER);
 
-		setIsLoading(false);
-		setStatus(null);
-		setError(null);
-		setMessages([]);
-		setTokenUsage(null);
+		// Clear WebSocket hook state (messages, conversationId, sessionId, localStorage)
+		wsClearChatHistory();
+
+		// Reset editor-specific state
+		isFirstMessageRef.current = true;
 		setHasGlobalStylesChanges(false);
+		setExecutedTools([]);
+		executedToolsRef.current = [];
+		setPendingTools([]);
+		setActiveToolCall(null);
+		setToolProgress(null);
+		setLocalStatusOverride(null);
 		originalGlobalStylesRef.current = null;
 		blockSnapshotRef.current = null;
-		chainOriginRef.current = null;
 
-		const newSessionId = generateSessionId();
-		setSessionId(newSessionId);
-		clearChatData();
-		saveSessionId(newSessionId);
+		// Reconnect with fresh session
+		wsConnect();
 
 		if (mcpConnectionStatus !== "connected") {
 			await initializeMCP();
 		}
-	};
+	}, [wsClearChatHistory, wsConnect, getSessionId, mcpConnectionStatus, initializeMCP]);
 
 	/**
 	 * Accept changes - trigger WordPress save
 	 */
-	const handleAcceptChanges = async () => {
+	const handleAcceptChanges = useCallback(async () => {
 		setIsSaving(true);
 
 		if (hasGlobalStylesChanges) {
@@ -536,7 +446,7 @@ const useEditorChat = () => {
 		blockSnapshotRef.current = null;
 
 		// Notify the AI that the user accepted the changes
-		setMessages((prev) => [
+		wsSetMessages((prev) => [
 			...prev,
 			{
 				id: `notification-${Date.now()}`,
@@ -548,13 +458,19 @@ const useEditorChat = () => {
 		if (savePost) {
 			savePost();
 		}
-	};
+	}, [
+		hasGlobalStylesChanges,
+		__experimentalGetCurrentGlobalStylesId,
+		saveEditedEntityRecord,
+		savePost,
+		wsSetMessages,
+	]);
 
 	/**
 	 * Decline changes - restore to initial state
 	 */
-	const handleDeclineChanges = async () => {
-		const firstActionMessage = messages.find((msg) => msg.hasActions && msg.undoData);
+	const handleDeclineChanges = useCallback(async () => {
+		const firstActionMessage = wsMessages.find((msg) => msg.hasActions && msg.undoData);
 
 		if (!firstActionMessage || !firstActionMessage.undoData) {
 			console.error("No undo data available");
@@ -585,13 +501,13 @@ const useEditorChat = () => {
 					undoData.globalStyles.originalStyles &&
 					undoData.globalStyles.globalStylesId
 				) {
-					await actionExecutor.restoreGlobalStyles(undoData.globalStyles);
+					await restoreGlobalStyles(undoData.globalStyles);
 				}
 			} else if (Array.isArray(undoData)) {
-				await actionExecutor.restoreBlocks(undoData);
+				await restoreBlocks(undoData);
 			}
 
-			setMessages((prev) => [
+			wsSetMessages((prev) => [
 				...prev.map((msg) => {
 					if (msg.hasActions) {
 						const { hasActions, undoData: msgUndoData, ...rest } = msg;
@@ -613,34 +529,25 @@ const useEditorChat = () => {
 		} catch (restoreError) {
 			console.error("Error restoring changes:", restoreError);
 		}
-	};
+	}, [wsMessages, wsSetMessages]);
 
 	/**
 	 * Stop the current request
 	 */
-	const handleStopRequest = () => {
-		if (abortControllerRef.current) {
-			abortControllerRef.current.abort();
-		}
-
-		setMessages((prev) =>
-			prev.map((msg) => (msg.isStreaming ? { ...msg, isStreaming: false } : msg))
-		);
-
-		setIsLoading(false);
-		setStatus(null);
-		setError(null);
-	};
-
-	// Warn when prompt tokens exceed 27K — conversation is getting large
-	const contextLimitWarning = tokenUsage?.prompt_tokens > 27000;
+	const handleStopRequest = useCallback(() => {
+		wsStopRequest();
+		setActiveToolCall(null);
+		setToolProgress(null);
+		setPendingTools([]);
+		setLocalStatusOverride(null);
+	}, [wsStopRequest]);
 
 	return {
-		messages,
+		messages: displayMessages,
 		isLoading,
 		sessionId,
 		error,
-		status,
+		status: effectiveStatus,
 		isSaving,
 		mcpConnectionStatus,
 		tools,
@@ -648,9 +555,7 @@ const useEditorChat = () => {
 		toolProgress,
 		executedTools,
 		pendingTools,
-		reasoningContent,
-		tokenUsage,
-		contextLimitWarning,
+		connectionState,
 		handleSendMessage,
 		handleNewChat,
 		handleAcceptChanges,
