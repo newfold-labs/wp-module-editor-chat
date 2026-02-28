@@ -86,6 +86,7 @@ final class ChatEditor {
 					'wpVer'          => \esc_html( \get_bloginfo( 'version' ) ),
 					'nfdChatVersion' => \esc_html( NFD_EDITOR_CHAT_VERSION ),
 					'agentsConfigUrl' => \esc_url_raw( \rest_url( 'nfd-agents/chat/v1/config' ) ),
+					'site'            => self::get_site_context(),
 				)
 			);
 
@@ -133,6 +134,23 @@ final class ChatEditor {
 		}
 
 		return $classes;
+	}
+
+	/**
+	 * Get site context data for the AI assistant.
+	 *
+	 * @return array
+	 */
+	private static function get_site_context() {
+		$onboarding = \get_option( 'nfd_module_onboarding_state_input', array() );
+
+		return array(
+			'title'          => \get_bloginfo( 'name' ),
+			'description'    => ! empty( $onboarding['prompt'] ) ? $onboarding['prompt'] : \get_bloginfo( 'description' ),
+			'siteType'       => $onboarding['siteType'] ?? '',
+			'locale'         => \get_locale(),
+			'classification' => \get_option( 'nfd-ai-site-gen-siteclassification', '' ),
+		);
 	}
 
 	/**

@@ -137,9 +137,21 @@ export const buildEditorContext = () => {
 	const pageTitle = getCurrentPageTitle();
 	const pageId = getCurrentPageId();
 
+	const site = window.nfdEditorChat?.site || {};
 	const siteUrl = window.location.origin;
 
-	let context = `Site: ${siteUrl}\nPage: "${pageTitle}" (ID: ${pageId})\n\n`;
+	let context = `Site: ${site.title || ""}`;
+	if (site.description) {
+		context += ` — ${site.description}`;
+	}
+	context += `\nURL: ${siteUrl}`;
+	if (site.siteType) {
+		context += `\nType: ${site.siteType}`;
+	}
+	if (site.locale) {
+		context += `\nLocale: ${site.locale}`;
+	}
+	context += `\nPage: "${pageTitle}" (ID: ${pageId})\n\n`;
 	context += "Block tree:\n";
 	context += buildCompactBlockTree(blocks, selectedClientIds, {
 		collapseUnselected: selectedBlocks.length > 0,
