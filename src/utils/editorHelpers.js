@@ -5,10 +5,8 @@
  * selection state, and block markup. Template-part entity CRUD lives in
  * services/templatePartEditor.js.
  */
-import { select, resolveSelect } from "@wordpress/data";
+import { select } from "@wordpress/data";
 import { serialize } from "@wordpress/blocks";
-
-import { fetchTemplatePartContent } from "../services/templatePartEditor";
 
 /**
  * Build a compact text representation of the block tree for AI context.
@@ -150,77 +148,6 @@ export const getBlockMarkup = (clientId) => {
 };
 
 /**
- * Get the current page content (body blocks + template part contents).
- *
- * @return {Promise<Object>} The page content with template parts
- */
-export const getCurrentPageContent = async () => {
-	const postContent = getPostContent();
-	const templatePartBlocks = getAllTemplatePartBlocks();
-	const templatePartsMap = await buildTemplatePartsMap(templatePartBlocks);
-
-	return { page_content: postContent, ...templatePartsMap };
-};
-
-// ── Private helpers ──────────────────────────────────────────────────
-
-const getPostContent = () => {
-	const blockEditor = select("core/block-editor");
-	const blocks = blockEditor.getBlocks();
-
-	const postContentBlock = blocks.find((block) => block.name === "core/post-content");
-
-	if (!postContentBlock) {
-		return blocks.map((block) => ({
-			clientId: block.clientId,
-			content: serialize(block),
-		}));
-	}
-
-	const innerBlocks = blockEditor.getBlocks(postContentBlock.clientId);
-
-	return innerBlocks.map((block) => ({
-		clientId: block.clientId,
-		content: serialize(block),
-	}));
-};
-
-const getAllTemplatePartBlocks = () => {
-	const blockEditor = select("core/block-editor");
-	const blocks = blockEditor.getBlocks();
-	return blocks.filter((b) => b.name === "core/template-part");
-};
-
-const pickTemplatePartKey = (attrs, index) => {
-	return (
-		attrs.slug || (attrs.ref ? String(attrs.ref) : null) || attrs.area || `template_part_${index}`
-	);
-};
-
-const buildTemplatePartsMap = async (templatePartBlocks) => {
-	const coreResolve = resolveSelect("core");
-
-	const result = {};
-	for (let i = 0; i < templatePartBlocks.length; i++) {
-		const block = templatePartBlocks[i];
-		const attrs = block.attributes || {};
-		const html = await fetchTemplatePartContent(block, coreResolve);
-
-		const key = pickTemplatePartKey(attrs, i);
-		if (key && !result[key]) {
-			result[key] = {
-				clientId: block.clientId,
-				content: html,
-			};
-		}
-	}
-
-	return result;
-};
-
-// ── Public read-only helpers ─────────────────────────────────────────
-
-/**
  * Get the current page blocks (with inner blocks resolved for post-content / template parts).
  *
  * @return {Array} Processed block list
@@ -280,12 +207,3 @@ export const getSelectedBlocks = () => {
 	return single ? [single] : [];
 };
 
-/**
- * Get a single selected block (legacy helper).
- *
- * @return {Object|null} The selected block or null
- */
-export const getSelectedBlock = () => {
-	const blocks = getSelectedBlocks();
-	return blocks.length > 0 ? blocks[0] : null;
-};
