@@ -206,4 +206,3 @@ export const getSelectedBlocks = () => {
 	const single = blockEditor.getSelectedBlock();
 	return single ? [single] : [];
 };
-

@@ -86,7 +86,10 @@ export const validateBlockMarkup = (blockContent) => {
 
 			if (stillInvalid.length === 0) {
 				// eslint-disable-next-line no-console
-				console.log("[blockValidator] Auto-corrected markup for:", [...new Set(invalidBlockNames)].join(", "));
+				console.log(
+					"[blockValidator] Auto-corrected markup for:",
+					[...new Set(invalidBlockNames)].join(", ")
+				);
 				return { valid: true, blocks: reParsed, correctedContent };
 			}
 		} catch (e) {

@@ -10,7 +10,12 @@ import { CHAT_STATUS } from "@newfold-labs/wp-module-ai-chat";
 import { createBlock, serialize } from "@wordpress/blocks";
 import { __ } from "@wordpress/i18n";
 
-import { handleRewriteAction, handleDeleteAction, handleAddAction, handleMoveAction } from "./actionExecutor";
+import {
+	handleRewriteAction,
+	handleDeleteAction,
+	handleAddAction,
+	handleMoveAction,
+} from "./actionExecutor";
 import { getCurrentGlobalStyles, updateGlobalStyles } from "./globalStylesService";
 import patternLibrary from "./patternLibrary";
 import { getBlockMarkup } from "../utils/editorHelpers";
@@ -155,8 +160,7 @@ function innerBlockStructureMatches(original, parsed) {
 		return false;
 	}
 	return origInner.every(
-		(orig, i) =>
-			orig.name === newInner[i].name && innerBlockStructureMatches(orig, newInner[i])
+		(orig, i) => orig.name === newInner[i].name && innerBlockStructureMatches(orig, newInner[i])
 	);
 }
 
@@ -210,7 +214,7 @@ function deepMergeStyle(original, aiStyle) {
  * (color scheme changes). Adds any new classes from the AI.
  *
  * @param {string} originalClassName The original className.
- * @param {string} aiClassName      The AI's className.
+ * @param {string} aiClassName       The AI's className.
  * @return {string} Merged className.
  */
 function mergeClassNames(originalClassName, aiClassName) {
@@ -307,7 +311,10 @@ function buildSafeBlockTree(originalBlock, newParsed) {
 		return cloneBlockTree(origChild);
 	});
 
-	const mergedAttrs = mergeBlockAttributes(originalBlock.attributes || {}, newParsed.attributes || {});
+	const mergedAttrs = mergeBlockAttributes(
+		originalBlock.attributes || {},
+		newParsed.attributes || {}
+	);
 	return createBlock(originalBlock.name, mergedAttrs, mergedInner);
 }
 
@@ -502,9 +509,7 @@ async function handleAddSection(toolCall, args, ctx) {
 	await ctx.updateProgress(__("Adding new section…", "wp-module-editor-chat"), 400);
 	try {
 		const afterClientId = args.after_client_id || null;
-		const addResult = await handleAddAction(afterClientId, [
-			{ block_content: sectionContent },
-		]);
+		const addResult = await handleAddAction(afterClientId, [{ block_content: sectionContent }]);
 		await ctx.updateProgress(__("Section added successfully", "wp-module-editor-chat"), 500);
 
 		return {
@@ -564,11 +569,7 @@ async function handleDeleteBlock(toolCall, args, ctx) {
 async function handleMoveBlock(toolCall, args, ctx) {
 	await ctx.updateProgress(__("Moving block…", "wp-module-editor-chat"), 400);
 	try {
-		const moveResult = await handleMoveAction(
-			args.client_id,
-			args.target_client_id,
-			args.position
-		);
+		const moveResult = await handleMoveAction(args.client_id, args.target_client_id, args.position);
 		await ctx.updateProgress(__("Block moved successfully", "wp-module-editor-chat"), 500);
 		return {
 			id: toolCall.id,
@@ -658,7 +659,12 @@ async function handleSearchPatterns(toolCall, args, ctx) {
 						count: results.length,
 						totalMatches,
 					})
-				: JSON.stringify({ patterns: [], count: 0, totalMatches: 0, message: "No matching patterns found" });
+				: JSON.stringify({
+						patterns: [],
+						count: 0,
+						totalMatches: 0,
+						message: "No matching patterns found",
+					});
 		return {
 			id: toolCall.id,
 			result: [{ type: "text", text: resultText }],
@@ -734,8 +740,8 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 
 	ctx.setStatus(CHAT_STATUS.TOOL_CALL);
 	ctx.setActiveToolCall({
-		id: 'preparing',
-		name: 'preparing',
+		id: "preparing",
+		name: "preparing",
 		index: 0,
 		total: toolCalls.length,
 	});
@@ -901,11 +907,14 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 				try {
 					const lastResult = toolResults[toolResults.length - 1];
 					const backendToolName = toolName.replace("blu-", "blu/");
-					const payload = lastResult?.result?.[0]?.text
-						? JSON.parse(lastResult.result[0].text)
-						: lastResult?.error
-						  ? { success: false, error: lastResult.error }
-						  : { success: !lastResult?.isError };
+					let payload;
+					if (lastResult?.result?.[0]?.text) {
+						payload = JSON.parse(lastResult.result[0].text);
+					} else if (lastResult?.error) {
+						payload = { success: false, error: lastResult.error };
+					} else {
+						payload = { success: !lastResult?.isError };
+					}
 					ctx.sendToolResult(toolCall.id, backendToolName, payload);
 				} catch (sendErr) {
 					console.warn("[toolExecutor] Failed to send tool result:", sendErr);
@@ -960,13 +969,11 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 	// reasoning landmark keeps the correct visual order.
 	if (compositeUndoData || completedToolsList.length > 0) {
 		const toolExecMsg = {
-			id: `tool-exec-${ Date.now() }`,
-			role: 'assistant',
-			type: 'tool_execution',
-			executedTools: [ ...completedToolsList ],
-			...( compositeUndoData
-				? { hasActions: true, undoData: compositeUndoData }
-				: {} ),
+			id: `tool-exec-${Date.now()}`,
+			role: "assistant",
+			type: "tool_execution",
+			executedTools: [...completedToolsList],
+			...(compositeUndoData ? { hasActions: true, undoData: compositeUndoData } : {}),
 			timestamp: new Date(),
 		};
 
@@ -975,7 +982,7 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 			// (messageHandler adds the "-reasoning" suffix to its ID).
 			let insertIdx = -1;
 			for (let i = prev.length - 1; i >= 0; i--) {
-				if (prev[i].id?.endsWith('-reasoning')) {
+				if (prev[i].id?.endsWith("-reasoning")) {
 					insertIdx = i + 1;
 					break;
 				}
@@ -983,7 +990,7 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 			// Fallback: insert after the last user message
 			if (insertIdx === -1) {
 				for (let i = prev.length - 1; i >= 0; i--) {
-					if (prev[i].role === 'user') {
+					if (prev[i].role === "user") {
 						insertIdx = i + 1;
 						break;
 					}
@@ -991,13 +998,9 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 			}
 			// Last resort: append at end
 			if (insertIdx === -1) {
-				return [ ...prev, toolExecMsg ];
+				return [...prev, toolExecMsg];
 			}
-			return [
-				...prev.slice(0, insertIdx),
-				toolExecMsg,
-				...prev.slice(insertIdx),
-			];
+			return [...prev.slice(0, insertIdx), toolExecMsg, ...prev.slice(insertIdx)];
 		});
 	}
 

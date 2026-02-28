@@ -337,9 +337,7 @@ export async function handleAddAction(clientId, changes) {
 		insertBlocks(parsedBlocksList, insertIndex, context.parentClientId || undefined);
 	}
 
-	const insertedClientIds = parsedBlocksList
-		.map((b) => b.clientId || null)
-		.filter(Boolean);
+	const insertedClientIds = parsedBlocksList.map((b) => b.clientId || null).filter(Boolean);
 
 	return {
 		clientId: clientId || "root",
@@ -403,9 +401,7 @@ export async function restoreBlocks(undoData) {
 							errors.push(`Template part entity restore failed: ${updateResult.message}`);
 						}
 
-						const restoredInnerBlocks = originalBlocks.map((inner) =>
-							createBlockFromParsed(inner)
-						);
+						const restoredInnerBlocks = originalBlocks.map((inner) => createBlockFromParsed(inner));
 						replaceInnerBlocks(clientId, restoredInnerBlocks);
 					} else {
 						// eslint-disable-next-line no-console

@@ -124,7 +124,10 @@ const useEditorChat = () => {
 		autoLoadHistory: true,
 		onToolCall: (...args) => handleToolCallRef.current?.(...args),
 		getConnectionFailedFallbackMessage: () =>
-			__("I couldn't connect to the server. Please try again in a moment.", "wp-module-editor-chat"),
+			__(
+				"I couldn't connect to the server. Please try again in a moment.",
+				"wp-module-editor-chat"
+			),
 	});
 
 	// Keep a ref to messages for callbacks
@@ -307,11 +310,7 @@ const useEditorChat = () => {
 		if (wsMessages.length >= 2) {
 			const last = wsMessages[wsMessages.length - 1];
 			const prev = wsMessages[wsMessages.length - 2];
-			if (
-				last.role === "assistant" &&
-				prev.role === "assistant" &&
-				last.content === prev.content
-			) {
+			if (last.role === "assistant" && prev.role === "assistant" && last.content === prev.content) {
 				wsSetMessages((msgs) => msgs.slice(0, -1));
 			}
 		}
@@ -358,7 +357,10 @@ const useEditorChat = () => {
 			// message after the user message (e.g. on connection failure).
 			wsSetMessages((prev) => {
 				for (let i = prev.length - 1; i >= 0; i--) {
-					const hasContext = prev[i].role === "user" && (prev[i].content?.includes("<editor_context>") || prev[i].content?.includes("<system_instructions>"));
+					const hasContext =
+						prev[i].role === "user" &&
+						(prev[i].content?.includes("<editor_context>") ||
+							prev[i].content?.includes("<system_instructions>"));
 					if (hasContext) {
 						return [
 							...prev.slice(0, i),
