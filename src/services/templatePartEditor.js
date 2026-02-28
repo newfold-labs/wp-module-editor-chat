@@ -123,7 +123,11 @@ export const fetchTemplatePartContent = async (tplBlock, coreResolve = null) => 
 };
 
 /**
- * Update template part content — edit the entity record and save to DB.
+ * Update template part content — edit the entity record (pending edit).
+ *
+ * Does NOT save to the database — the user saves manually via the editor's
+ * "Save" button, matching the standard WordPress editing flow. This also
+ * keeps Accept/Revert working correctly.
  *
  * @param {Object} tplBlock           The template part block.
  * @param {Array}  updatedInnerBlocks The updated inner blocks.
@@ -144,17 +148,10 @@ export const updateTemplatePartContent = async (tplBlock, updatedInnerBlocks) =>
 			content: updatedContent,
 		});
 
-		const savedRecord = await coreDispatch.saveEditedEntityRecord(
-			"postType",
-			"wp_template_part",
-			entityId
-		);
-
 		return {
 			success: true,
 			message: "Template part updated successfully",
 			entityId,
-			savedRecord,
 		};
 	} catch (error) {
 		// eslint-disable-next-line no-console
@@ -309,11 +306,16 @@ export function insertBlocksAtPath(blocks, path, newBlocks) {
 // ────────────────────────────────────────────────────────────────────
 
 /**
- * Modify a template part's entity content, update the editor, and save to DB.
+ * Modify a template part's entity content and update the editor.
+ *
+ * Template parts use "controlled inner blocks" — the entity is the source of
+ * truth. We update the entity FIRST so the controlled-blocks mechanism syncs
+ * to the new content, then also call replaceInnerBlocks as an immediate
+ * visual fallback.
  *
  * @param {Object}   templatePartBlock The template part block.
  * @param {Function} modifyFn          Takes parsed blocks, returns modified blocks.
- * @return {Promise<Object>} Save result.
+ * @return {Promise<Object>} Update result.
  */
 export async function modifyTemplatePartEntity(templatePartBlock, modifyFn) {
 	const entityContent = await fetchTemplatePartContent(templatePartBlock);
@@ -326,10 +328,14 @@ export async function modifyTemplatePartEntity(templatePartBlock, modifyFn) {
 	const modifiedBlocks = modifyFn(parsedBlocks);
 
 	const updatedInnerBlocks = modifiedBlocks.map((b) => createBlockFromParsed(b));
+
+	// 1. Update the entity FIRST — controlled inner blocks read from here
+	const result = await updateTemplatePartContent(templatePartBlock, updatedInnerBlocks);
+
+	// 2. Then force-set inner blocks as an immediate visual update
 	const { replaceInnerBlocks } = dispatch("core/block-editor");
 	replaceInnerBlocks(templatePartBlock.clientId, updatedInnerBlocks);
 
-	const result = await updateTemplatePartContent(templatePartBlock, updatedInnerBlocks);
 	return result;
 }
 
@@ -374,16 +380,19 @@ export async function applyTemplatePartRewrite(clientId, block, blockContent) {
 		throw new Error("Failed to parse block_content into blocks");
 	}
 
-	const { replaceInnerBlocks } = dispatch("core/block-editor");
 	const updatedInnerBlocks = updatedBlocks.map((parsedBlock) => createBlockFromParsed(parsedBlock));
-	replaceInnerBlocks(clientId, updatedInnerBlocks);
 
+	// Update entity FIRST — controlled inner blocks read from here
 	const entityUpdateResult = await updateTemplatePartContent(block, updatedInnerBlocks);
 
 	if (!entityUpdateResult.success) {
 		// eslint-disable-next-line no-console
 		console.warn("Template part entity update failed:", entityUpdateResult.message);
 	}
+
+	// Then force-set inner blocks as an immediate visual update
+	const { replaceInnerBlocks } = dispatch("core/block-editor");
+	replaceInnerBlocks(clientId, updatedInnerBlocks);
 
 	return {
 		clientId,
@@ -459,16 +468,19 @@ export async function applyTemplatePartChanges(clientId, block, changes) {
 		throw new Error("Failed to parse updated template part content into blocks");
 	}
 
-	const { replaceInnerBlocks } = dispatch("core/block-editor");
 	const updatedInnerBlocks = updatedBlocks.map((parsedBlock) => createBlockFromParsed(parsedBlock));
-	replaceInnerBlocks(clientId, updatedInnerBlocks);
 
+	// Update entity FIRST — controlled inner blocks read from here
 	const entityUpdateResult = await updateTemplatePartContent(block, updatedInnerBlocks);
 
 	if (!entityUpdateResult.success) {
 		// eslint-disable-next-line no-console
 		console.warn("Template part entity update failed:", entityUpdateResult.message);
 	}
+
+	// Then force-set inner blocks as an immediate visual update
+	const { replaceInnerBlocks } = dispatch("core/block-editor");
+	replaceInnerBlocks(clientId, updatedInnerBlocks);
 
 	return {
 		clientId,

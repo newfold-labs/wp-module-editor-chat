@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { parse } from "@wordpress/blocks";
+import { parse, serialize, createBlock } from "@wordpress/blocks";
 
 /**
  * Validate that a string is valid WordPress block markup.
@@ -40,6 +40,64 @@ export const validateBlockMarkup = (blockContent) => {
 		return {
 			valid: false,
 			error: "No valid blocks found — markup parsed only to freeform/null blocks",
+		};
+	}
+
+	// Check that parsed blocks are structurally valid (save content matches block schema).
+	// Catches mangled self-closing blocks (e.g. social-link expanded into open/close pairs).
+	const invalidBlockNames = [];
+	const checkBlockValidity = (blocks) => {
+		for (const block of blocks) {
+			if (block.isValid === false && block.name && block.name !== "core/freeform") {
+				invalidBlockNames.push(block.name);
+			}
+			if (block.innerBlocks?.length > 0) {
+				checkBlockValidity(block.innerBlocks);
+			}
+		}
+	};
+	checkBlockValidity(parsed);
+	if (invalidBlockNames.length > 0) {
+		// Auto-correct: re-create blocks from parsed attributes and re-serialize.
+		// WordPress's createBlock + serialize produces correct HTML (class order,
+		// meta-classes like has-text-color/has-background) from the JSON attributes.
+		try {
+			const recreate = (block) => {
+				const innerBlocks = (block.innerBlocks || []).map(recreate);
+				return createBlock(block.name, block.attributes || {}, innerBlocks);
+			};
+			const correctedBlocks = parsed.map(recreate);
+			const correctedContent = serialize(correctedBlocks);
+
+			// Verify the corrected content is actually valid
+			const reParsed = parse(correctedContent);
+			const stillInvalid = [];
+			const recheck = (blocks) => {
+				for (const b of blocks) {
+					if (b.isValid === false && b.name && b.name !== "core/freeform") {
+						stillInvalid.push(b.name);
+					}
+					if (b.innerBlocks?.length > 0) {
+						recheck(b.innerBlocks);
+					}
+				}
+			};
+			recheck(reParsed);
+
+			if (stillInvalid.length === 0) {
+				// eslint-disable-next-line no-console
+				console.log("[blockValidator] Auto-corrected markup for:", [...new Set(invalidBlockNames)].join(", "));
+				return { valid: true, blocks: reParsed, correctedContent };
+			}
+		} catch (e) {
+			// eslint-disable-next-line no-console
+			console.warn("[blockValidator] Auto-correction failed:", e);
+		}
+
+		const uniqueNames = [...new Set(invalidBlockNames)];
+		return {
+			valid: false,
+			error: `Block validation failed for: ${uniqueNames.join(", ")}. The markup structure does not match what WordPress expects. Common causes: (1) self-closing blocks like social-link, navigation, site-logo must use <!-- wp:block-name {attrs} /--> syntax (NOT open/close pairs with HTML), (2) inner block content was rewritten instead of preserved exactly. Re-read the original markup with blu/get-block-markup and only change the specific attributes requested.`,
 		};
 	}
 
