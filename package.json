@@ -26,22 +26,22 @@
 		"lint:js:fix": "wp-scripts lint-js ./src --fix"
 	},
 	"devDependencies": {
-		"@wordpress/eslint-plugin": "^22.18.0",
+		"@wordpress/eslint-plugin": "^24.2.0",
 		"@wordpress/prettier-config": "^4.32.0",
 		"@wordpress/scripts": "^31.3.0",
 		"autoprefixer": "^10.4.21",
 		"baseline-browser-mapping": "^2.9.16",
 		"concurrently": "^9.2.1",
-		"cssnano": "^7.1.1",
-		"esbuild": "^0.25.10",
-		"eslint": "^8.57.1",
-		"eslint-plugin-prettier": "^5.5.4",
+		"cssnano": "^7.1.2",
+		"esbuild": "^0.27.3",
+		"eslint": "^10.0.2",
+		"eslint-plugin-prettier": "^5.5.5",
 		"eslit": "^6.0.0",
 		"postcss": "^8.5.6",
 		"postcss-cli": "^11.0.1",
 		"postcss-import": "^16.1.1",
 		"postcss-safe-important": "^2.0.1",
-		"prettier": "^3.6.2",
+		"prettier": "^3.8.1",
 		"webpack-merge": "^6.0.1"
 	},
 	"dependencies": {
