@@ -7,7 +7,6 @@
  * helpers it needs — no direct React dependency.
  */
 import { CHAT_STATUS } from "@newfold-labs/wp-module-ai-chat";
-import { createBlock, serialize } from "@wordpress/blocks";
 import { __ } from "@wordpress/i18n";
 
 import {
@@ -29,6 +28,45 @@ const BLOCK_TOOL_NAMES = [
 	"blu-delete-block",
 	"blu-move-block",
 ];
+
+
+/** Max retry attempts for sending tool results back to the gateway. */
+const SEND_RESULT_MAX_RETRIES = 3;
+/** Base delay (ms) between retries — multiplied by attempt number. */
+const SEND_RESULT_RETRY_DELAY = 800;
+
+/**
+ * Send a tool result back to the gateway with retry.
+ *
+ * The gateway blocks for up to 15 s waiting for this result. If the
+ * WebSocket is momentarily disconnected (e.g. brief network glitch),
+ * retrying prevents a false "editor is unresponsive" timeout.
+ *
+ * @param {Object} ctx       Shared context from useEditorChat
+ * @param {string} toolCallId  The tool call ID
+ * @param {string} toolName    The backend-format tool name (e.g. "blu/edit-block")
+ * @param {Object} payload     The result payload to send
+ * @return {Promise<boolean>}  Whether the result was successfully sent
+ */
+async function sendToolResultWithRetry(ctx, toolCallId, toolName, payload) {
+	for (let attempt = 1; attempt <= SEND_RESULT_MAX_RETRIES; attempt++) {
+		const sent = ctx.sendToolResult(toolCallId, toolName, payload);
+		if (sent) {
+			return true;
+		}
+		if (attempt < SEND_RESULT_MAX_RETRIES) {
+			const delay = SEND_RESULT_RETRY_DELAY * attempt;
+			console.warn(
+				`[toolExecutor] Tool result send failed (attempt ${attempt}/${SEND_RESULT_MAX_RETRIES}), retrying in ${delay}ms…`
+			);
+			await new Promise((resolve) => setTimeout(resolve, delay));
+		}
+	}
+	console.error(
+		`[toolExecutor] Failed to send tool result for "${toolName}" after ${SEND_RESULT_MAX_RETRIES} attempts — gateway will time out.`
+	);
+	return false;
+}
 
 // ────────────────────────────────────────────────────────────────────
 // Individual tool handlers
@@ -145,179 +183,6 @@ function countInnerBlocks(block) {
 	return block.innerBlocks.reduce((sum, ib) => sum + 1 + countInnerBlocks(ib), 0);
 }
 
-/**
- * Recursively check if two block trees have the same structure
- * (same block names at every level, same nesting depth).
- *
- * @param {Object} original The live block from the editor.
- * @param {Object} parsed   The parsed block from the AI's markup.
- * @return {boolean} True if inner-block structure matches.
- */
-function innerBlockStructureMatches(original, parsed) {
-	const origInner = original.innerBlocks || [];
-	const newInner = parsed.innerBlocks || [];
-	if (origInner.length !== newInner.length) {
-		return false;
-	}
-	return origInner.every(
-		(orig, i) => orig.name === newInner[i].name && innerBlockStructureMatches(orig, newInner[i])
-	);
-}
-
-/**
- * Deep-clone a live block tree using createBlock.
- *
- * @param {Object} block A block from the editor store.
- * @return {Object} A fresh block object (new clientId).
- */
-function cloneBlockTree(block) {
-	const innerBlocks = (block.innerBlocks || []).map(cloneBlockTree);
-	return createBlock(block.name, { ...(block.attributes || {}) }, innerBlocks);
-}
-
-/**
- * Deep-merge two style objects. AI's values overlay originals.
- *
- * @param {Object} original The original style object.
- * @param {Object} aiStyle  The AI's style object.
- * @return {Object} Merged style.
- */
-function deepMergeStyle(original, aiStyle) {
-	if (!original) {
-		return aiStyle;
-	}
-	if (!aiStyle) {
-		return original;
-	}
-	const merged = { ...original };
-	for (const key of Object.keys(aiStyle)) {
-		if (
-			typeof aiStyle[key] === "object" &&
-			aiStyle[key] !== null &&
-			typeof merged[key] === "object" &&
-			merged[key] !== null
-		) {
-			merged[key] = deepMergeStyle(merged[key], aiStyle[key]);
-		} else {
-			merged[key] = aiStyle[key];
-		}
-	}
-	return merged;
-}
-
-/**
- * Merge className strings conservatively.
- *
- * Preserves nfd-* utility classes (except nfd-theme-*) and responsive
- * variants (md:nfd-*) from the original, even if the AI dropped them.
- * Allows intentional removal of is-style-nfd-theme-* and nfd-theme-*
- * (color scheme changes). Adds any new classes from the AI.
- *
- * @param {string} originalClassName The original className.
- * @param {string} aiClassName       The AI's className.
- * @return {string} Merged className.
- */
-function mergeClassNames(originalClassName, aiClassName) {
-	const origClasses = (originalClassName || "").split(/\s+/).filter(Boolean);
-	const aiClasses = new Set((aiClassName || "").split(/\s+/).filter(Boolean));
-
-	// Preserve original classes the AI likely dropped accidentally
-	const preserved = origClasses.filter((cls) => {
-		if (aiClasses.has(cls)) {
-			return true;
-		}
-		// Preserve nfd-* utility classes (except theme classes — those are intentionally removable)
-		if (cls.startsWith("nfd-") && !cls.startsWith("nfd-theme-")) {
-			return true;
-		}
-		// Preserve responsive nfd variants
-		if (cls.startsWith("md:nfd-")) {
-			return true;
-		}
-		// Preserve is-style- classes EXCEPT is-style-nfd-theme- (intentional color change)
-		if (cls.startsWith("is-style-") && !cls.startsWith("is-style-nfd-theme-")) {
-			return true;
-		}
-		// AI dropped it and it's not in the preserve list — let it go
-		return false;
-	});
-
-	// Add new classes from the AI that aren't already in the list
-	for (const cls of aiClasses) {
-		if (!preserved.includes(cls)) {
-			preserved.push(cls);
-		}
-	}
-
-	return preserved.join(" ");
-}
-
-/**
- * Conservatively merge block attributes: start with the original,
- * overlay only what the AI explicitly changed.
- *
- * - Attributes the AI didn't include are kept from the original
- *   (e.g., align, layout, metadata).
- * - className is merged at the class level (preserves nfd-* classes).
- * - style is deep-merged (preserves spacing/typography if AI only changed color).
- * - Other AI-provided attributes override the original.
- *
- * @param {Object} originalAttrs The original block attributes.
- * @param {Object} aiAttrs       The AI's parsed block attributes.
- * @return {Object} Merged attributes.
- */
-function mergeBlockAttributes(originalAttrs, aiAttrs) {
-	const merged = { ...originalAttrs };
-
-	for (const key of Object.keys(aiAttrs || {})) {
-		if (key === "className") {
-			merged.className = mergeClassNames(originalAttrs.className, aiAttrs.className);
-		} else if (key === "style") {
-			merged.style = deepMergeStyle(originalAttrs.style, aiAttrs.style);
-		} else if (key === "layout") {
-			// Layout is structural — in the safe merge path (same inner-block
-			// structure), keep the original layout. Layout type changes
-			// (constrained → flex) come with structural changes that would
-			// take the full-replacement path instead.
-		} else {
-			merged[key] = aiAttrs[key];
-		}
-	}
-
-	return merged;
-}
-
-/**
- * Build a safe block tree: conservatively merge AI's attribute changes
- * onto the original block structure (names, nesting, inner-block order).
- *
- * This guarantees inner blocks are preserved AND original attributes
- * (layouts, nfd classes, metadata) are kept — only explicitly changed
- * attributes from the AI are applied.
- *
- * @param {Object} originalBlock The live block from the editor.
- * @param {Object} newParsed     The parsed block from the AI's markup.
- * @return {Object} A new block tree safe to serialize and apply.
- */
-function buildSafeBlockTree(originalBlock, newParsed) {
-	const origInner = originalBlock.innerBlocks || [];
-	const newInner = newParsed.innerBlocks || [];
-
-	const mergedInner = origInner.map((origChild, i) => {
-		if (i < newInner.length && origChild.name === newInner[i].name) {
-			return buildSafeBlockTree(origChild, newInner[i]);
-		}
-		// No matching AI block at this position — keep original unchanged
-		return cloneBlockTree(origChild);
-	});
-
-	const mergedAttrs = mergeBlockAttributes(
-		originalBlock.attributes || {},
-		newParsed.attributes || {}
-	);
-	return createBlock(originalBlock.name, mergedAttrs, mergedInner);
-}
-
 async function handleEditBlock(toolCall, args, ctx) {
 	await ctx.updateProgress(__("Validating block markup…", "wp-module-editor-chat"), 300);
 
@@ -344,15 +209,27 @@ async function handleEditBlock(toolCall, args, ctx) {
 	if (originalBlock && originalBlock.innerBlocks.length > 0 && validation.blocks?.length >= 1) {
 		const newTopBlock = validation.blocks[0];
 
-		if (innerBlockStructureMatches(originalBlock, newTopBlock)) {
-			// Structure matches → safe merge: AI's attributes + original structure
-			const safeTree = buildSafeBlockTree(originalBlock, newTopBlock);
-			finalContent = serialize(safeTree);
+		// ── Wrapper/child mismatch recovery ──
+		// The AI may target a wrapper block (e.g., core/buttons) but send
+		// content for an inner block (e.g., core/button). When the original
+		// has exactly one inner block matching the AI's block type, redirect
+		// the edit to that inner block to avoid replacing the wrapper.
+		if (
+			newTopBlock.name !== originalBlock.name &&
+			originalBlock.innerBlocks.length === 1 &&
+			originalBlock.innerBlocks[0].name === newTopBlock.name
+		) {
+			const innerBlock = originalBlock.innerBlocks[0];
 			console.log(
-				"[handleEditBlock] Safe attribute-merge path for",
+				"[handleEditBlock] Redirecting edit from wrapper",
 				originalBlock.name,
-				"— inner blocks preserved"
+				"to inner block",
+				innerBlock.name,
+				innerBlock.clientId
 			);
+			args.client_id = innerBlock.clientId;
+			// Inner block has no further inner blocks — skip safe merge, use
+			// full replacement path below.
 		} else {
 			// Structure changed — reject if inner blocks were lost
 			const origCount = countInnerBlocks(originalBlock);
@@ -719,6 +596,25 @@ async function handleGetPatternMarkup(toolCall, args, ctx) {
  * @param {Object} ctx       Shared context object (same shape as useEditorChat's buildToolCtx)
  */
 export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
+	// Filter out server-side-only tools (discovery, site listing, etc.).
+	// These are already executed by Semantic Kernel on the backend —
+	// the frontend only needs to handle client-side editor tools (blu-*).
+	const clientToolCalls = toolCalls.filter((tc) => {
+		const name = tc.name || "";
+		if (!name.startsWith("blu-")) {
+			console.log(`[toolExecutor] Skipping server-side tool: ${name}`);
+			return false;
+		}
+		return true;
+	});
+
+	if (clientToolCalls.length === 0) {
+		return;
+	}
+
+	// Replace toolCalls with the filtered list for the rest of this function
+	toolCalls = clientToolCalls;
+
 	const toolResults = [];
 	const completedToolsList = [];
 	let globalStylesUndoData = null;
@@ -902,8 +798,13 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 				ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: false }]);
 			}
 
-			// ── Send result back to the backend to unblock the MCP server ──
-			if (ctx.sendToolResult) {
+			// ── Send result back to the backend ──
+			// Only for client-side tools (blu-* prefix). Server-side tools like
+			// get_available_wordpress_actions are already executed by Semantic
+			// Kernel — sending a stub result causes the backend to misinterpret
+			// it as a new user message, creating an infinite loop.
+			const isClientSideTool = toolName.startsWith("blu-");
+			if (isClientSideTool && ctx.sendToolResult) {
 				try {
 					const lastResult = toolResults[toolResults.length - 1];
 					const backendToolName = toolName.replace("blu-", "blu/");
@@ -915,7 +816,7 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 					} else {
 						payload = { success: !lastResult?.isError };
 					}
-					ctx.sendToolResult(toolCall.id, backendToolName, payload);
+					await sendToolResultWithRetry(ctx, toolCall.id, backendToolName, payload);
 				} catch (sendErr) {
 					console.warn("[toolExecutor] Failed to send tool result:", sendErr);
 				}
@@ -933,11 +834,15 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 				{ ...toolCall, isError: true, errorMessage: err.message },
 			]);
 
-			// Send error back to unblock the backend
-			if (ctx.sendToolResult) {
+			// Send error back to unblock the backend (only for client-side tools)
+			const errToolName = toolCall.name || "";
+			if (errToolName.startsWith("blu-") && ctx.sendToolResult) {
 				try {
-					const backendToolName = (toolCall.name || "").replace("blu-", "blu/");
-					ctx.sendToolResult(toolCall.id, backendToolName, { success: false, error: err.message });
+					const backendToolName = errToolName.replace("blu-", "blu/");
+					await sendToolResultWithRetry(ctx, toolCall.id, backendToolName, {
+						success: false,
+						error: err.message,
+					});
 				} catch (sendErr) {
 					console.warn("[toolExecutor] Failed to send tool error:", sendErr);
 				}
