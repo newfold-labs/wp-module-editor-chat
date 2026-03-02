@@ -111,7 +111,6 @@ const useEditorChat = () => {
 		currentResponse,
 		connectionState,
 		sendMessage: wsSendMessage,
-		sendToolResult,
 		stopRequest: wsStopRequest,
 		clearChatHistory: wsClearChatHistory,
 		getSessionId,
@@ -155,9 +154,8 @@ const useEditorChat = () => {
 			getMessages: () => wsMessagesRef.current,
 			updateProgress,
 			wait,
-			sendToolResult,
 		}),
-		[wsSetMessages, sendToolResult]
+		[wsSetMessages]
 	);
 
 	/**

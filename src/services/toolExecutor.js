@@ -30,44 +30,6 @@ const BLOCK_TOOL_NAMES = [
 ];
 
 
-/** Max retry attempts for sending tool results back to the gateway. */
-const SEND_RESULT_MAX_RETRIES = 3;
-/** Base delay (ms) between retries — multiplied by attempt number. */
-const SEND_RESULT_RETRY_DELAY = 800;
-
-/**
- * Send a tool result back to the gateway with retry.
- *
- * The gateway blocks for up to 15 s waiting for this result. If the
- * WebSocket is momentarily disconnected (e.g. brief network glitch),
- * retrying prevents a false "editor is unresponsive" timeout.
- *
- * @param {Object} ctx       Shared context from useEditorChat
- * @param {string} toolCallId  The tool call ID
- * @param {string} toolName    The backend-format tool name (e.g. "blu/edit-block")
- * @param {Object} payload     The result payload to send
- * @return {Promise<boolean>}  Whether the result was successfully sent
- */
-async function sendToolResultWithRetry(ctx, toolCallId, toolName, payload) {
-	for (let attempt = 1; attempt <= SEND_RESULT_MAX_RETRIES; attempt++) {
-		const sent = ctx.sendToolResult(toolCallId, toolName, payload);
-		if (sent) {
-			return true;
-		}
-		if (attempt < SEND_RESULT_MAX_RETRIES) {
-			const delay = SEND_RESULT_RETRY_DELAY * attempt;
-			console.warn(
-				`[toolExecutor] Tool result send failed (attempt ${attempt}/${SEND_RESULT_MAX_RETRIES}), retrying in ${delay}ms…`
-			);
-			await new Promise((resolve) => setTimeout(resolve, delay));
-		}
-	}
-	console.error(
-		`[toolExecutor] Failed to send tool result for "${toolName}" after ${SEND_RESULT_MAX_RETRIES} attempts — gateway will time out.`
-	);
-	return false;
-}
-
 // ────────────────────────────────────────────────────────────────────
 // Individual tool handlers
 // ────────────────────────────────────────────────────────────────────
@@ -798,29 +760,11 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 				ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: false }]);
 			}
 
-			// ── Send result back to the backend ──
-			// Only for client-side tools (blu-* prefix). Server-side tools like
-			// get_available_wordpress_actions are already executed by Semantic
-			// Kernel — sending a stub result causes the backend to misinterpret
-			// it as a new user message, creating an infinite loop.
-			const isClientSideTool = toolName.startsWith("blu-");
-			if (isClientSideTool && ctx.sendToolResult) {
-				try {
-					const lastResult = toolResults[toolResults.length - 1];
-					const backendToolName = toolName.replace("blu-", "blu/");
-					let payload;
-					if (lastResult?.result?.[0]?.text) {
-						payload = JSON.parse(lastResult.result[0].text);
-					} else if (lastResult?.error) {
-						payload = { success: false, error: lastResult.error };
-					} else {
-						payload = { success: !lastResult?.isError };
-					}
-					await sendToolResultWithRetry(ctx, toolCall.id, backendToolName, payload);
-				} catch (sendErr) {
-					console.warn("[toolExecutor] Failed to send tool result:", sendErr);
-				}
-			}
+			// NOTE: We do NOT send tool_result back to the backend.
+			// Semantic Kernel already auto-invoked the tool server-side
+			// (returning a stub for client-side tools). The backend's
+			// _handle_tool_result misparses our result as a new user
+			// message, causing the AI to generate an extra response.
 		} catch (err) {
 			console.error(`Tool call ${toolCall.name} failed:`, err);
 			await ctx.updateProgress(
@@ -834,19 +778,6 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 				{ ...toolCall, isError: true, errorMessage: err.message },
 			]);
 
-			// Send error back to unblock the backend (only for client-side tools)
-			const errToolName = toolCall.name || "";
-			if (errToolName.startsWith("blu-") && ctx.sendToolResult) {
-				try {
-					const backendToolName = errToolName.replace("blu-", "blu/");
-					await sendToolResultWithRetry(ctx, toolCall.id, backendToolName, {
-						success: false,
-						error: err.message,
-					});
-				} catch (sendErr) {
-					console.warn("[toolExecutor] Failed to send tool error:", sendErr);
-				}
-			}
 		}
 	}
 
