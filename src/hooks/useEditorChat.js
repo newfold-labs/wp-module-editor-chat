@@ -304,6 +304,23 @@ const useEditorChat = () => {
 		return () => window.removeEventListener("beforeunload", handleBeforeUnload);
 	}, [getSessionId]);
 
+	// Reset isFirstMessageRef on WebSocket reconnection so the next
+	// message includes the system prompt and editor context. Without
+	// this, a reconnection mid-conversation would send messages without
+	// <system_instructions>, causing the backend to fall back to a
+	// generic (non-editor) greeting.
+	const prevConnectionState = useRef(connectionState);
+	useEffect(() => {
+		const wasDisconnected =
+			prevConnectionState.current === "reconnecting" ||
+			prevConnectionState.current === "disconnected" ||
+			prevConnectionState.current === "failed";
+		if (connectionState === "connected" && wasDisconnected && wsMessages.length > 0) {
+			isFirstMessageRef.current = true;
+		}
+		prevConnectionState.current = connectionState;
+	}, [connectionState, wsMessages.length]);
+
 	// Remove duplicate consecutive error messages (the WS hook may add
 	// a fallback from both its connectionState watcher and sendMessage)
 	useEffect(() => {
