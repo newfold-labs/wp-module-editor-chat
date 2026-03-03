@@ -760,11 +760,7 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 				ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: false }]);
 			}
 
-			// NOTE: We do NOT send tool_result back to the backend.
-			// Semantic Kernel already auto-invoked the tool server-side
-			// (returning a stub for client-side tools). The backend's
-			// _handle_tool_result misparses our result as a new user
-			// message, causing the AI to generate an extra response.
+			// Tool results are sent back after the loop completes (see below).
 		} catch (err) {
 			console.error(`Tool call ${toolCall.name} failed:`, err);
 			await ctx.updateProgress(
@@ -782,6 +778,27 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 	}
 
 	const hasChanges = toolResults.some((r) => r.hasChanges);
+
+	// Send actual tool results back to the backend so the LLM knows what
+	// really happened (success/failure) instead of relying on stubs.
+	if (ctx.sendToolResult) {
+		const resultPayload = toolResults
+			.filter((r) => r.id)
+			.map((r) => ({
+				tool_call_id: r.id,
+				tool_name:
+					toolCalls.find((tc) => tc.id === r.id)?.name || "unknown",
+				success: !r.isError,
+				summary: r.isError
+					? r.error
+					: r.hasChanges
+						? "Applied successfully"
+						: "No changes needed",
+			}));
+		if (resultPayload.length > 0) {
+			ctx.sendToolResult(JSON.stringify(resultPayload));
+		}
+	}
 
 	// Build composite undo data from both block snapshot and global styles
 	let compositeUndoData = null;
