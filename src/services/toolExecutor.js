@@ -17,7 +17,8 @@ import {
 } from "./actionExecutor";
 import { getCurrentGlobalStyles, updateGlobalStyles } from "./globalStylesService";
 import patternLibrary from "./patternLibrary";
-import { getBlockMarkup } from "../utils/editorHelpers";
+import { customizePatternContent } from "./patternCustomizer";
+import { getBlockMarkup, getCurrentPageTitle } from "../utils/editorHelpers";
 import { validateBlockMarkup } from "../utils/blockValidator";
 import { snapshotBlocks } from "../utils/editorContext";
 
@@ -205,7 +206,7 @@ async function handleEditBlock(toolCall, args, ctx) {
 							type: "text",
 							text: JSON.stringify({
 								success: false,
-								error: `STRUCTURAL ERROR: The replacement markup has 0 inner blocks but the original has ${origCount}. You MUST preserve all inner blocks when editing. To change only wrapper attributes (background color, text color, spacing), modify ONLY the opening block comment JSON and the outermost HTML tag classes — copy ALL inner blocks byte-for-byte from the original markup.`,
+								error: `STRUCTURAL ERROR: The replacement markup has 0 inner blocks but the original has ${origCount}. You MUST preserve all inner blocks when editing a wrapper block. To change only wrapper attributes, modify the block comment JSON and copy all inner blocks from the original markup.`,
 							}),
 						},
 					],
@@ -221,7 +222,7 @@ async function handleEditBlock(toolCall, args, ctx) {
 							type: "text",
 							text: JSON.stringify({
 								success: false,
-								error: `STRUCTURAL ERROR: The replacement markup has ${newCount} inner blocks but the original has ${origCount}. You appear to have lost inner blocks. Preserve all inner blocks exactly — only change what the user asked for.`,
+								error: `STRUCTURAL ERROR: The replacement markup has ${newCount} inner blocks but the original has ${origCount}. You appear to have lost inner blocks. Preserve all inner blocks — only change what the user asked for.`,
 							}),
 						},
 					],
@@ -264,13 +265,30 @@ async function handleEditBlock(toolCall, args, ctx) {
 }
 
 async function handleAddSection(toolCall, args, ctx) {
-	// When pattern_slug is provided, fetch markup directly from the library
+	// Track whether a pattern was used so we can inform the AI in the result
+	let usedPatternTitle = null;
+
+	// When pattern_slug is provided, fetch markup, customize text via backend AI, then insert.
 	if (args.pattern_slug && !args.block_content) {
 		await ctx.updateProgress(__("Fetching pattern from library…", "wp-module-editor-chat"), 400);
 		try {
 			const pattern = await patternLibrary.getMarkup(args.pattern_slug);
 			if (pattern && pattern.content) {
-				args.block_content = pattern.content;
+				usedPatternTitle = pattern.title || args.pattern_slug;
+				// Customize text via the backend AI before inserting
+				await ctx.updateProgress(__("Customizing content for your site…", "wp-module-editor-chat"), 500);
+				try {
+					const lastUserMsg = ctx.getMessages?.()
+						?.filter((m) => m.role === "user")
+						?.pop()?.content || "";
+					args.block_content = await customizePatternContent(pattern.content, {
+						pageTitle: getCurrentPageTitle(),
+						userMessage: lastUserMsg,
+					});
+				} catch (customizeErr) {
+					console.warn("[handleAddSection] Customization failed, using original:", customizeErr);
+					args.block_content = pattern.content;
+				}
 			} else {
 				return {
 					id: toolCall.id,
@@ -351,16 +369,24 @@ async function handleAddSection(toolCall, args, ctx) {
 		const addResult = await handleAddAction(afterClientId, [{ block_content: sectionContent }]);
 		await ctx.updateProgress(__("Section added successfully", "wp-module-editor-chat"), 500);
 
+		const resultData = {
+			success: true,
+			message: addResult.message,
+			blocksAdded: addResult.blocksAdded,
+		};
+		if (usedPatternTitle) {
+			resultData.patternUsed = usedPatternTitle;
+			resultData.note =
+				`A matching design "${usedPatternTitle}" was found in the pattern library and the text was automatically customized to fit the site. ` +
+				"Tell the user you found a matching design in the library and customized the content for their site.";
+		}
+
 		return {
 			id: toolCall.id,
 			result: [
 				{
 					type: "text",
-					text: JSON.stringify({
-						success: true,
-						message: addResult.message,
-						blocksAdded: addResult.blocksAdded,
-					}),
+					text: JSON.stringify(resultData),
 				},
 			],
 			isError: false,
@@ -784,17 +810,19 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 	if (ctx.sendToolResult) {
 		const resultPayload = toolResults
 			.filter((r) => r.id)
-			.map((r) => ({
-				tool_call_id: r.id,
-				tool_name:
-					toolCalls.find((tc) => tc.id === r.id)?.name || "unknown",
-				success: !r.isError,
-				summary: r.isError
-					? r.error
-					: r.hasChanges
-						? "Applied successfully"
-						: "No changes needed",
-			}));
+			.map((r) => {
+				return {
+					tool_call_id: r.id,
+					tool_name:
+						toolCalls.find((tc) => tc.id === r.id)?.name || "unknown",
+					success: !r.isError,
+					summary: r.isError
+						? r.error
+						: r.hasChanges
+							? "Applied successfully"
+							: "No changes needed",
+				};
+			});
 		if (resultPayload.length > 0) {
 			ctx.sendToolResult(JSON.stringify(resultPayload));
 		}
