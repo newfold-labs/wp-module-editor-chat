@@ -96,12 +96,29 @@ class WonderBlocksProvider {
 				return { ...p, _score: score };
 			})
 			.filter((p) => p._score > 0)
-			.sort((a, b) => b._score - a._score || Math.random() - 0.5);
+			.sort((a, b) => b._score - a._score);
 
-		const totalMatches = scored.length;
+		// Shuffle patterns within the same score tier for variety
+		const shuffled = [];
+		let i = 0;
+		while (i < scored.length) {
+			let j = i;
+			while (j < scored.length && scored[j]._score === scored[i]._score) {
+				j++;
+			}
+			const tier = scored.slice(i, j);
+			for (let k = tier.length - 1; k > 0; k--) {
+				const r = Math.floor(Math.random() * (k + 1));
+				[tier[k], tier[r]] = [tier[r], tier[k]];
+			}
+			shuffled.push(...tier);
+			i = j;
+		}
+
+		const totalMatches = shuffled.length;
 
 		return {
-			results: scored.slice(0, limit).map(({ _score, ...rest }) => rest),
+			results: shuffled.slice(0, limit).map(({ _score, ...rest }) => rest),
 			totalMatches,
 		};
 	}

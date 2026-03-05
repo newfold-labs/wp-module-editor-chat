@@ -1,4 +1,4 @@
-/* eslint-disable no-undef, no-console */
+/* eslint-disable no-undef */
 /**
  * Pattern content customization via the backend AI.
  *
@@ -42,6 +42,16 @@ function getBlockName(block) {
  */
 function getBlockHTML(block) {
 	return block.innerHTML || block.originalContent || "";
+}
+
+/**
+ * Strip HTML tags and return plain text (preserves entities as-is).
+ *
+ * @param {string} html HTML string.
+ * @return {string} Plain text.
+ */
+function stripTags(html) {
+	return html.replace(/<[^>]+>/g, "").trim();
 }
 
 /**
@@ -238,55 +248,118 @@ export async function customizePatternContent(patternMarkup, ctx) {
 		return patternMarkup;
 	}
 
-	// Build items for AI — send trimmed HTML so the AI works with clean snippets
+	// Build items for AI — send plain text only (no HTML) to keep the
+	// response small and avoid truncation from the backend model.
 	const textItems = textBlocks.map((block, idx) => ({
 		id: idx,
 		type: getBlockName(block).replace("core/", ""),
-		html: getBlockHTML(block).trim(),
+		text: stripTags(getBlockHTML(block)),
 	}));
 
 	const site = window.nfdEditorChat?.site || {};
 
 	try {
 		const prompt =
-			"You rewrite website pattern text. The blocks below are from a template with generic placeholder content. " +
-			"Rewrite ALL text so it fits the website and page described below. " +
-			"Keep every HTML tag, class, attribute, and href value identical — change ONLY the text between/inside tags. " +
-			"Keep approximately the same length and tone for each block. " +
-			"Return ONLY a JSON array with `id` and `html` fields. No explanation, no markdown fences.\n\n" +
+			"Rewrite ALL text below to fit the website and page context. " +
+			"Keep approximately the same length and tone. " +
+			"Return ONLY a compact JSON array with `id` and `text` fields. " +
+			"No HTML tags, no explanation, no markdown fences.\n\n" +
 			`Site: "${site.title || ""}"\n` +
 			(site.description ? `Description: "${site.description}"\n` : "") +
 			(site.siteType ? `Type: ${site.siteType}\n` : "") +
 			`Page: "${ctx.pageTitle || ""}"\n` +
 			(ctx.userMessage ? `User request: "${ctx.userMessage}"\n` : "") +
-			`\nText blocks:\n${JSON.stringify(textItems, null, 2)}`;
+			`\nText blocks:\n${JSON.stringify(textItems)}`;
 
 		const raw = await requestBackendCompletion(prompt);
 		if (!raw) {
 			return patternMarkup;
 		}
 
-		const jsonMatch = raw.match(/\[[\s\S]*\]/);
+		// Strip markdown fences if present
+		let cleaned = raw.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+
+		const jsonMatch = cleaned.match(/\[[\s\S]*\]/);
 		if (!jsonMatch) {
 			return patternMarkup;
 		}
 
-		const customized = JSON.parse(jsonMatch[0]);
+		let jsonStr = jsonMatch[0];
+
+		let customized;
+		try {
+			customized = JSON.parse(jsonStr);
+		} catch {
+
+			// Try sanitizing control characters (literal newlines/tabs in strings)
+			try {
+				let sanitized = "";
+				let inStr = false;
+				let esc = false;
+				for (let i = 0; i < jsonStr.length; i++) {
+					const ch = jsonStr[i];
+					if (esc) { sanitized += ch; esc = false; continue; }
+					if (ch === "\\" && inStr) { sanitized += ch; esc = true; continue; }
+					if (ch === '"') { inStr = !inStr; sanitized += ch; continue; }
+					if (inStr && ch.charCodeAt(0) < 0x20) {
+						if (ch === "\n") { sanitized += "\\n"; continue; }
+						if (ch === "\r") { sanitized += "\\r"; continue; }
+						if (ch === "\t") { sanitized += "\\t"; continue; }
+						continue;
+					}
+					sanitized += ch;
+				}
+				customized = JSON.parse(sanitized);
+			} catch {
+				// Last resort: extract id and text pairs individually
+				customized = [];
+				try {
+					const items = jsonStr.replace(/^\[/, "").replace(/\]$/, "").split(/\},\s*\{/);
+					for (const item of items) {
+						const fixed = (item.startsWith("{") ? item : "{" + item) + (item.endsWith("}") ? "" : "}");
+						try {
+							customized.push(JSON.parse(fixed));
+						} catch {
+							const idMatch = fixed.match(/"id"\s*:\s*(\d+)/);
+							const textMatch = fixed.match(/"text"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+							if (idMatch && textMatch) {
+								customized.push({
+									id: parseInt(idMatch[1], 10),
+									text: textMatch[1].replace(/\\"/g, '"').replace(/\\n/g, "\n"),
+								});
+							}
+						}
+					}
+				} catch {
+					// ignore
+				}
+
+				if (customized.length === 0) {
+					return patternMarkup;
+				}
+			}
+		}
 
 		// Apply replacements to the original markup via string substitution.
-		// Each block's HTML is an exact substring of the original markup, so indexOf works.
+		// For each text block, find the old plain text inside the block's HTML
+		// and replace it with the new text — all HTML tags/classes stay intact.
 		let result = patternMarkup;
 		let searchFrom = 0;
 
 		for (const item of customized) {
 			const block = textBlocks[item.id];
-			if (!block || !item.html) {
+			if (!block || !item.text) {
 				continue;
 			}
 
 			const oldInner = getBlockHTML(block);
-			// Preserve the original leading/trailing whitespace, swap only the trimmed content
-			const newInner = oldInner.replace(oldInner.trim(), item.html.trim());
+			const oldText = stripTags(oldInner);
+			if (!oldText) {
+				continue;
+			}
+
+			// Replace the plain text inside the HTML, preserving all tags and whitespace
+			const newInner = oldInner.replace(oldText, item.text.trim());
 
 			const pos = result.indexOf(oldInner, searchFrom);
 			if (pos !== -1) {
@@ -297,8 +370,7 @@ export async function customizePatternContent(patternMarkup, ctx) {
 		}
 
 		return result;
-	} catch (err) {
-		console.warn("[customizePatternContent] Backend customization failed, using original:", err);
+	} catch {
 		return patternMarkup;
 	}
 }
