@@ -1,4 +1,4 @@
-/* eslint-disable no-undef, no-console */
+/* eslint-disable no-undef */
 /**
  * Tool executor — handles MCP/client-side tool calls from the AI.
  *
@@ -28,8 +28,79 @@ const BLOCK_TOOL_NAMES = [
 	"blu-add-section",
 	"blu-delete-block",
 	"blu-move-block",
+	"blu-rewrite-text",
+	"blu-update-block-attrs",
+	"blu-replace-image",
+	"blu-update-text",
+	"blu-duplicate-block",
+	"blu-batch-update-attrs",
+	"blu-insert-block",
 ];
 
+
+/**
+ * Replace image URLs in pattern markup with provided URLs (e.g. from search_images).
+ *
+ * Collects all unique image URLs from the pattern (block comment attrs, img src,
+ * background-image) and replaces them in order with the provided URLs.
+ * Works for core/image, core/cover, and any block with image URLs.
+ */
+function replacePatternImages(markup, imageUrls) {
+	if (!imageUrls || imageUrls.length === 0) return markup;
+
+	const existingUrls = [];
+	const seen = new Set();
+	const IMAGE_BLOCKS = new Set(["core/image", "core/cover", "core/media-text"]);
+
+	// 1. Parse blocks and extract "url" from image-bearing block attrs only.
+	//    This avoids social-link, navigation-link, embed, etc.
+	try {
+		const blocks = wp.blocks.parse(markup);
+		(function walk(list) {
+			for (const b of list) {
+				if (IMAGE_BLOCKS.has(b.blockName || b.name)) {
+					const url = (b.attrs || b.attributes || {}).url;
+					if (url && !seen.has(url)) {
+						seen.add(url);
+						existingUrls.push(url);
+					}
+				}
+				if (b.innerBlocks?.length) walk(b.innerBlocks);
+			}
+		})(blocks);
+	} catch {
+		// Parse failed — rely on regex below
+	}
+
+	// 2. Collect <img src="..."> URLs (always image-specific)
+	let match;
+	const srcRegex = /\bsrc="([^"]+)"/g;
+	while ((match = srcRegex.exec(markup)) !== null) {
+		const url = match[1];
+		if (url && !seen.has(url) && (url.startsWith("http") || url.startsWith("//"))) {
+			seen.add(url);
+			existingUrls.push(url);
+		}
+	}
+
+	// 3. Collect background-image: url(...) (CSS backgrounds)
+	const bgRegex = /background-image:\s*url\(([^)]+)\)/g;
+	while ((match = bgRegex.exec(markup)) !== null) {
+		const url = match[1];
+		if (url && !seen.has(url) && (url.startsWith("http") || url.startsWith("//"))) {
+			seen.add(url);
+			existingUrls.push(url);
+		}
+	}
+
+	// Replace each existing URL with the corresponding new one
+	let result = markup;
+	for (let i = 0; i < Math.min(existingUrls.length, imageUrls.length); i++) {
+		result = result.replaceAll(existingUrls[i], imageUrls[i]);
+	}
+
+	return result;
+}
 
 // ────────────────────────────────────────────────────────────────────
 // Individual tool handlers
@@ -37,6 +108,19 @@ const BLOCK_TOOL_NAMES = [
 
 async function handleUpdateGlobalStyles(toolCall, args, ctx) {
 	await ctx.updateProgress(__("Reading current styles…", "wp-module-editor-chat"), 500);
+
+	// Validate palette items — filter out corrupt entries from truncated responses
+	try {
+		for (const key of ["theme", "custom"]) {
+			const palette = args.settings?.color?.palette?.[key];
+			if (Array.isArray(palette)) {
+				const cleaned = palette.filter((p) => p && p.slug && p.color);
+				if (cleaned.length < palette.length) {
+					args.settings.color.palette[key] = cleaned;
+				}
+			}
+		}
+	} catch { /* non-critical */ }
 
 	try {
 		await ctx.updateProgress(
@@ -69,8 +153,7 @@ async function handleUpdateGlobalStyles(toolCall, args, ctx) {
 			};
 		}
 		await ctx.updateProgress(__("Retrying with alternative method…", "wp-module-editor-chat"), 400);
-	} catch (jsError) {
-		console.error("JS update threw error:", jsError);
+	} catch {
 		await ctx.updateProgress(__("Retrying with alternative method…", "wp-module-editor-chat"), 400);
 	}
 
@@ -111,8 +194,7 @@ async function handleGetGlobalStyles(toolCall, ctx) {
 			};
 		}
 		await ctx.updateProgress(__("Checking WordPress database…", "wp-module-editor-chat"), 400);
-	} catch (jsError) {
-		console.error("JS get styles threw error:", jsError);
+	} catch {
 		await ctx.updateProgress(__("Checking WordPress database…", "wp-module-editor-chat"), 400);
 	}
 
@@ -144,6 +226,354 @@ function countInnerBlocks(block) {
 		return 0;
 	}
 	return block.innerBlocks.reduce((sum, ib) => sum + 1 + countInnerBlocks(ib), 0);
+}
+
+/**
+ * Deep-merge source into target. Null values remove the key.
+ * Arrays and non-plain-objects are replaced, not merged.
+ */
+function deepMerge(target, source) {
+	const result = { ...target };
+	for (const key of Object.keys(source)) {
+		if (source[key] === null || source[key] === undefined) {
+			delete result[key];
+		} else if (
+			typeof source[key] === "object" &&
+			!Array.isArray(source[key]) &&
+			typeof result[key] === "object" &&
+			result[key] !== null &&
+			!Array.isArray(result[key])
+		) {
+			result[key] = deepMerge(result[key], source[key]);
+		} else {
+			result[key] = source[key];
+		}
+	}
+	return result;
+}
+
+async function handleUpdateBlockAttrs(toolCall, args, ctx) {
+	const { select: wpSelect, dispatch: wpDispatch } = wp.data;
+	const blockEditor = wpSelect("core/block-editor");
+	const block = blockEditor.getBlock(args.client_id);
+
+	if (!block) {
+		return {
+			id: toolCall.id,
+			result: [{ type: "text", text: JSON.stringify({ success: false, error: "Block not found" }) }],
+			isError: true,
+		};
+	}
+
+	try {
+		// Deep-merge new attributes into existing ones (null removes keys)
+		const merged = deepMerge(block.attributes, args.attributes);
+		wpDispatch("core/block-editor").updateBlockAttributes(args.client_id, merged);
+
+		return {
+			id: toolCall.id,
+			result: [{ type: "text", text: JSON.stringify({ success: true, message: "Attributes updated" }) }],
+			isError: false,
+			hasChanges: true,
+		};
+	} catch (err) {
+		return {
+			id: toolCall.id,
+			result: [{ type: "text", text: JSON.stringify({ success: false, error: err.message }) }],
+			isError: true,
+		};
+	}
+}
+
+async function handleReplaceImage(toolCall, args, ctx) {
+	const { select: wpSelect, dispatch: wpDispatch } = wp.data;
+	const block = wpSelect("core/block-editor").getBlock(args.client_id);
+
+	if (!block) {
+		return {
+			id: toolCall.id,
+			result: [{ type: "text", text: JSON.stringify({ success: false, error: "Block not found" }) }],
+			isError: true,
+		};
+	}
+
+	try {
+		const newAttrs = { url: args.url };
+		if (args.alt !== undefined) {
+			newAttrs.alt = args.alt;
+		}
+
+		// For core/image, also set id to 0 to indicate an external image
+		if (block.name === "core/image") {
+			newAttrs.id = 0;
+		}
+
+		wpDispatch("core/block-editor").updateBlockAttributes(args.client_id, newAttrs);
+
+		return {
+			id: toolCall.id,
+			result: [{ type: "text", text: JSON.stringify({ success: true, message: "Image replaced" }) }],
+			isError: false,
+			hasChanges: true,
+		};
+	} catch (err) {
+		return {
+			id: toolCall.id,
+			result: [{ type: "text", text: JSON.stringify({ success: false, error: err.message }) }],
+			isError: true,
+		};
+	}
+}
+
+async function handleUpdateText(toolCall, args, ctx) {
+	const { select: wpSelect } = wp.data;
+	const block = wpSelect("core/block-editor").getBlock(args.client_id);
+
+	if (!block) {
+		return {
+			id: toolCall.id,
+			result: [{ type: "text", text: JSON.stringify({ success: false, error: "Block not found" }) }],
+			isError: true,
+		};
+	}
+
+	try {
+		// Serialize the block to get its current markup
+		const { serialize, parse } = wp.blocks;
+		const currentMarkup = serialize(block);
+
+		// Strip HTML tags to get old text, then replace in the original markup
+		const stripTags = (html) => html.replace(/<[^>]+>/g, "").trim();
+		const oldText = stripTags(currentMarkup);
+		if (!oldText) {
+			return {
+				id: toolCall.id,
+				result: [{ type: "text", text: JSON.stringify({ success: false, error: "Block has no text content" }) }],
+				isError: true,
+			};
+		}
+
+		const newMarkup = currentMarkup.replace(oldText, args.text.trim());
+
+		// Apply via rewrite action
+		const editResult = await handleRewriteAction(args.client_id, newMarkup);
+
+		return {
+			id: toolCall.id,
+			result: [{ type: "text", text: JSON.stringify(editResult) }],
+			isError: !editResult.success,
+			hasChanges: editResult.success,
+		};
+	} catch (err) {
+		return {
+			id: toolCall.id,
+			result: [{ type: "text", text: JSON.stringify({ success: false, error: err.message }) }],
+			isError: true,
+		};
+	}
+}
+
+async function handleDuplicateBlock(toolCall, args, ctx) {
+	const { select: wpSelect, dispatch: wpDispatch } = wp.data;
+	const blockEditor = wpSelect("core/block-editor");
+	const block = blockEditor.getBlock(args.client_id);
+
+	if (!block) {
+		return {
+			id: toolCall.id,
+			result: [{ type: "text", text: JSON.stringify({ success: false, error: "Block not found" }) }],
+			isError: true,
+		};
+	}
+
+	try {
+		const { serialize, parse } = wp.blocks;
+		// Serialize and re-parse to create a deep clone with fresh clientIds
+		const markup = serialize(block);
+		const clonedBlocks = parse(markup);
+
+		if (!clonedBlocks || clonedBlocks.length === 0) {
+			return {
+				id: toolCall.id,
+				result: [{ type: "text", text: JSON.stringify({ success: false, error: "Failed to clone block" }) }],
+				isError: true,
+			};
+		}
+
+		// Find the position to insert after the original
+		const rootClientId = blockEditor.getBlockRootClientId(args.client_id);
+		const blockIndex = blockEditor.getBlockIndex(args.client_id);
+
+		wpDispatch("core/block-editor").insertBlocks(
+			clonedBlocks,
+			blockIndex + 1,
+			rootClientId
+		);
+
+		return {
+			id: toolCall.id,
+			result: [{ type: "text", text: JSON.stringify({ success: true, message: "Block duplicated" }) }],
+			isError: false,
+			hasChanges: true,
+		};
+	} catch (err) {
+		return {
+			id: toolCall.id,
+			result: [{ type: "text", text: JSON.stringify({ success: false, error: err.message }) }],
+			isError: true,
+		};
+	}
+}
+
+async function handleBatchUpdateAttrs(toolCall, args, ctx) {
+	const { select: wpSelect, dispatch: wpDispatch } = wp.data;
+	const blockEditor = wpSelect("core/block-editor");
+	const results = [];
+
+	try {
+		for (const update of args.updates) {
+			const block = blockEditor.getBlock(update.client_id);
+			if (!block) {
+				results.push({ client_id: update.client_id, success: false, error: "Block not found" });
+				continue;
+			}
+			const merged = deepMerge(block.attributes, update.attributes);
+			wpDispatch("core/block-editor").updateBlockAttributes(update.client_id, merged);
+			results.push({ client_id: update.client_id, success: true });
+		}
+
+		const allOk = results.every((r) => r.success);
+		return {
+			id: toolCall.id,
+			result: [{ type: "text", text: JSON.stringify({ success: allOk, results }) }],
+			isError: false,
+			hasChanges: true,
+		};
+	} catch (err) {
+		return {
+			id: toolCall.id,
+			result: [{ type: "text", text: JSON.stringify({ success: false, error: err.message }) }],
+			isError: true,
+		};
+	}
+}
+
+async function handleInsertBlock(toolCall, args, ctx) {
+	const { select: wpSelect, dispatch: wpDispatch } = wp.data;
+	const blockEditor = wpSelect("core/block-editor");
+
+	try {
+		const { createBlock } = wp.blocks;
+		const attrs = args.attributes || {};
+
+		// For text blocks, set content attribute
+		if (args.content) {
+			const textAttrMap = {
+				"core/heading": "content",
+				"core/paragraph": "content",
+				"core/button": "text",
+				"core/list-item": "content",
+				"core/verse": "content",
+				"core/preformatted": "content",
+				"core/code": "content",
+				"core/pullquote": "value",
+			};
+			const contentAttr = textAttrMap[args.block_name];
+			if (contentAttr) {
+				attrs[contentAttr] = args.content;
+			}
+		}
+
+		const newBlock = createBlock(args.block_name, attrs);
+		if (!newBlock) {
+			return {
+				id: toolCall.id,
+				result: [{ type: "text", text: JSON.stringify({ success: false, error: `Unknown block type: ${args.block_name}` }) }],
+				isError: true,
+			};
+		}
+
+		// Determine insertion position
+		let rootClientId = "";
+		let insertIndex;
+
+		const refId = args.after_client_id || args.before_client_id;
+		if (refId) {
+			rootClientId = blockEditor.getBlockRootClientId(refId) || "";
+			const refIndex = blockEditor.getBlockIndex(refId);
+			insertIndex = args.after_client_id ? refIndex + 1 : refIndex;
+		}
+
+		wpDispatch("core/block-editor").insertBlocks(
+			[newBlock],
+			insertIndex,
+			rootClientId
+		);
+
+		return {
+			id: toolCall.id,
+			result: [{ type: "text", text: JSON.stringify({ success: true, message: "Block inserted", client_id: newBlock.clientId }) }],
+			isError: false,
+			hasChanges: true,
+		};
+	} catch (err) {
+		return {
+			id: toolCall.id,
+			result: [{ type: "text", text: JSON.stringify({ success: false, error: err.message }) }],
+			isError: true,
+		};
+	}
+}
+
+async function handleRewriteText(toolCall, args, ctx) {
+	await ctx.updateProgress(__("Rewriting text…", "wp-module-editor-chat"), 300);
+
+	const clientId = args.client_id;
+	const instructions = args.instructions;
+
+	// Get the block's full markup (including inner blocks)
+	const mkData = getBlockMarkup(clientId);
+	if (!mkData) {
+		return {
+			id: toolCall.id,
+			result: [{ type: "text", text: JSON.stringify({ success: false, error: "Block not found" }) }],
+			isError: true,
+		};
+	}
+
+	const originalMarkup = mkData.block_content;
+	const pageTitle = getCurrentPageTitle();
+
+	try {
+		const rewritten = await customizePatternContent(originalMarkup, {
+			pageTitle,
+			userMessage: instructions,
+		});
+
+		if (rewritten === originalMarkup) {
+			return {
+				id: toolCall.id,
+				result: [{ type: "text", text: JSON.stringify({ success: true, message: "No text changes needed" }) }],
+				isError: false,
+			};
+		}
+
+		// Apply the rewritten markup back to the block
+		const editResult = await handleRewriteAction(clientId, rewritten);
+
+		return {
+			id: toolCall.id,
+			result: [{ type: "text", text: JSON.stringify(editResult) }],
+			isError: !editResult.success,
+			hasChanges: editResult.success,
+		};
+	} catch (err) {
+		return {
+			id: toolCall.id,
+			result: [{ type: "text", text: JSON.stringify({ success: false, error: err.message }) }],
+			isError: true,
+		};
+	}
 }
 
 async function handleEditBlock(toolCall, args, ctx) {
@@ -183,13 +613,6 @@ async function handleEditBlock(toolCall, args, ctx) {
 			originalBlock.innerBlocks[0].name === newTopBlock.name
 		) {
 			const innerBlock = originalBlock.innerBlocks[0];
-			console.log(
-				"[handleEditBlock] Redirecting edit from wrapper",
-				originalBlock.name,
-				"to inner block",
-				innerBlock.name,
-				innerBlock.clientId
-			);
 			args.client_id = innerBlock.clientId;
 			// Inner block has no further inner blocks — skip safe merge, use
 			// full replacement path below.
@@ -275,19 +698,26 @@ async function handleAddSection(toolCall, args, ctx) {
 			const pattern = await patternLibrary.getMarkup(args.pattern_slug);
 			if (pattern && pattern.content) {
 				usedPatternTitle = pattern.title || args.pattern_slug;
+
+				let markup = pattern.content;
+
+				// Replace placeholder images with search_images URLs if provided
+				if (args.image_urls && Array.isArray(args.image_urls) && args.image_urls.length > 0) {
+					markup = replacePatternImages(markup, args.image_urls);
+				}
+
 				// Customize text via the backend AI before inserting
 				await ctx.updateProgress(__("Customizing content for your site…", "wp-module-editor-chat"), 500);
 				try {
 					const lastUserMsg = ctx.getMessages?.()
 						?.filter((m) => m.role === "user")
 						?.pop()?.content || "";
-					args.block_content = await customizePatternContent(pattern.content, {
+					args.block_content = await customizePatternContent(markup, {
 						pageTitle: getCurrentPageTitle(),
 						userMessage: lastUserMsg,
 					});
-				} catch (customizeErr) {
-					console.warn("[handleAddSection] Customization failed, using original:", customizeErr);
-					args.block_content = pattern.content;
+				} catch {
+					args.block_content = markup;
 				}
 			} else {
 				return {
@@ -315,6 +745,13 @@ async function handleAddSection(toolCall, args, ctx) {
 				],
 				isError: true,
 			};
+		}
+	}
+
+	// Replace __IMG_N__ placeholders with real URLs from image_urls (for AI-generated markup)
+	if (args.image_urls && Array.isArray(args.image_urls) && args.image_urls.length > 0) {
+		for (let i = 0; i < args.image_urls.length; i++) {
+			args.block_content = args.block_content.replaceAll(`__IMG_${i + 1}__`, args.image_urls[i]);
 		}
 	}
 
@@ -359,8 +796,8 @@ async function handleAddSection(toolCall, args, ctx) {
 				}
 			}
 		}
-	} catch (layoutErr) {
-		console.warn("Failed to enforce constrained layout:", layoutErr);
+	} catch {
+		// Non-critical — proceed without constrained layout
 	}
 
 	await ctx.updateProgress(__("Adding new section…", "wp-module-editor-chat"), 400);
@@ -561,8 +998,8 @@ async function handleGetPatternMarkup(toolCall, args, ctx) {
 				isError: false,
 			};
 		}
-	} catch (err) {
-		console.warn("Client-side pattern fetch failed, falling back to MCP:", err);
+	} catch {
+		// Fall through to MCP path
 	}
 	// Fall through — caller will hit the default MCP path
 	return null;
@@ -590,7 +1027,6 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 	const clientToolCalls = toolCalls.filter((tc) => {
 		const name = tc.name || "";
 		if (!name.startsWith("blu-")) {
-			console.log(`[toolExecutor] Skipping server-side tool: ${name}`);
 			return false;
 		}
 		return true;
@@ -653,10 +1089,39 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 
 		try {
 			const toolName = toolCall.name || "";
-			const args = toolCall.arguments || {};
-
-			// Log invoked tool with its data
-			console.log(`[tool] ${toolName}`, args);
+			let args = toolCall.arguments || {};
+			if (typeof args === "string") {
+				try {
+					args = JSON.parse(args);
+				} catch (e) {
+					// Trailing junk after valid JSON — extract the first complete {} object
+					let recovered = false;
+					let depth = 0;
+					let inStr = false;
+					let esc = false;
+					for (let ci = 0; ci < args.length; ci++) {
+						const ch = args[ci];
+						if (esc) { esc = false; continue; }
+						if (ch === "\\" && inStr) { esc = true; continue; }
+						if (ch === '"') { inStr = !inStr; continue; }
+						if (inStr) continue;
+						if (ch === "{") depth++;
+						if (ch === "}") {
+							depth--;
+							if (depth === 0) {
+								try {
+									args = JSON.parse(args.substring(0, ci + 1));
+									recovered = true;
+								} catch { /* ignore */ }
+								break;
+							}
+						}
+					}
+					if (!recovered) {
+						args = {};
+					}
+				}
+			}
 
 			// ── blu/update-global-styles ──
 			if (toolName === "blu-update-global-styles" && args.settings) {
@@ -749,6 +1214,83 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 				ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: hlResult.isError }]);
 			}
 
+			// ── blu/update-block-attrs ──
+			else if (toolName === "blu-update-block-attrs" && args.client_id && args.attributes) {
+				const attrResult = await handleUpdateBlockAttrs(toolCall, args, ctx);
+				if (!attrResult.isError && attrResult.hasChanges) {
+					hasBlockEdits = true;
+				}
+				toolResults.push(attrResult);
+				completedToolsList.push({ ...toolCall, isError: attrResult.isError });
+				ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: attrResult.isError }]);
+			}
+
+			// ── blu/replace-image ──
+			else if (toolName === "blu-replace-image" && args.client_id && args.url) {
+				const imgResult = await handleReplaceImage(toolCall, args, ctx);
+				if (!imgResult.isError && imgResult.hasChanges) {
+					hasBlockEdits = true;
+				}
+				toolResults.push(imgResult);
+				completedToolsList.push({ ...toolCall, isError: imgResult.isError });
+				ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: imgResult.isError }]);
+			}
+
+			// ── blu/update-text ──
+			else if (toolName === "blu-update-text" && args.client_id && args.text !== undefined) {
+				const utResult = await handleUpdateText(toolCall, args, ctx);
+				if (!utResult.isError && utResult.hasChanges) {
+					hasBlockEdits = true;
+				}
+				toolResults.push(utResult);
+				completedToolsList.push({ ...toolCall, isError: utResult.isError });
+				ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: utResult.isError }]);
+			}
+
+			// ── blu/duplicate-block ──
+			else if (toolName === "blu-duplicate-block" && args.client_id) {
+				const dupResult = await handleDuplicateBlock(toolCall, args, ctx);
+				if (!dupResult.isError && dupResult.hasChanges) {
+					hasBlockEdits = true;
+				}
+				toolResults.push(dupResult);
+				completedToolsList.push({ ...toolCall, isError: dupResult.isError });
+				ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: dupResult.isError }]);
+			}
+
+			// ── blu/batch-update-attrs ──
+			else if (toolName === "blu-batch-update-attrs" && args.updates) {
+				const batchResult = await handleBatchUpdateAttrs(toolCall, args, ctx);
+				if (!batchResult.isError && batchResult.hasChanges) {
+					hasBlockEdits = true;
+				}
+				toolResults.push(batchResult);
+				completedToolsList.push({ ...toolCall, isError: batchResult.isError });
+				ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: batchResult.isError }]);
+			}
+
+			// ── blu/insert-block ──
+			else if (toolName === "blu-insert-block" && args.block_name) {
+				const ibResult = await handleInsertBlock(toolCall, args, ctx);
+				if (!ibResult.isError && ibResult.hasChanges) {
+					hasBlockEdits = true;
+				}
+				toolResults.push(ibResult);
+				completedToolsList.push({ ...toolCall, isError: ibResult.isError });
+				ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: ibResult.isError }]);
+			}
+
+			// ── blu/rewrite-text ──
+			else if (toolName === "blu-rewrite-text" && args.client_id && args.instructions) {
+				const rwResult = await handleRewriteText(toolCall, args, ctx);
+				if (!rwResult.isError && rwResult.hasChanges) {
+					hasBlockEdits = true;
+				}
+				toolResults.push(rwResult);
+				completedToolsList.push({ ...toolCall, isError: rwResult.isError });
+				ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: rwResult.isError }]);
+			}
+
 			// ── blu/search-patterns ──
 			else if (toolName === "blu-search-patterns" && args.query) {
 				const spResult = await handleSearchPatterns(toolCall, args, ctx);
@@ -788,7 +1330,6 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 
 			// Tool results are sent back after the loop completes (see below).
 		} catch (err) {
-			console.error(`Tool call ${toolCall.name} failed:`, err);
 			await ctx.updateProgress(
 				__("Action failed:", "wp-module-editor-chat") + " " + err.message,
 				1000
