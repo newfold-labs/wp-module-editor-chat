@@ -25,8 +25,8 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	 * @return void
 	 */
 	public function test_allowed_referrers() {
-		$ref    = new \ReflectionClass( ChatEditor::class );
-		$prop   = $ref->getProperty( 'allowed_referrers' );
+		$ref  = new \ReflectionClass( ChatEditor::class );
+		$prop = $ref->getProperty( 'allowed_referrers' );
 		$prop->setAccessible( true );
 		$allowed = $prop->getValue();
 		$this->assertIsArray( $allowed );
@@ -129,6 +129,7 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	 */
 	public function test_enqueue_site_editor_assets_returns_early_when_not_site_editor() {
 		global $pagenow;
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 		$pagenow = 'post.php';
 
 		ChatEditor::enqueue_site_editor_assets();
@@ -137,6 +138,7 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 			has_filter( 'admin_body_class', array( ChatEditor::class, 'add_admin_body_class' ) )
 		);
 
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 		$pagenow = null;
 	}
 
@@ -147,6 +149,7 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	 */
 	public function test_enqueue_site_editor_assets_returns_early_when_no_referrer() {
 		global $pagenow;
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 		$pagenow = 'site-editor.php';
 		unset( $_GET['referrer'] );
 
@@ -159,6 +162,7 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 			has_filter( 'admin_body_class', array( ChatEditor::class, 'add_admin_body_class' ) )
 		);
 
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 		$pagenow = null;
 	}
 
@@ -169,8 +173,9 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	 */
 	public function test_enqueue_site_editor_assets_returns_early_when_wrong_referrer() {
 		global $pagenow;
-		$pagenow            = 'site-editor.php';
-		$_GET['referrer']   = 'some-other-referrer';
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$pagenow          = 'site-editor.php';
+		$_GET['referrer'] = 'some-other-referrer';
 
 		remove_all_filters( 'admin_body_class' );
 
@@ -180,6 +185,7 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 			has_filter( 'admin_body_class', array( ChatEditor::class, 'add_admin_body_class' ) )
 		);
 
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 		$pagenow = null;
 	}
 
@@ -190,8 +196,9 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	 */
 	public function test_enqueue_site_editor_assets_proceeds_with_valid_conditions() {
 		global $pagenow;
-		$pagenow            = 'site-editor.php';
-		$_GET['referrer']   = 'nfd-editor-chat';
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$pagenow          = 'site-editor.php';
+		$_GET['referrer'] = 'nfd-editor-chat';
 
 		remove_all_filters( 'admin_body_class' );
 
@@ -201,18 +208,19 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 			has_filter( 'admin_body_class', array( ChatEditor::class, 'add_admin_body_class' ) )
 		);
 
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 		$pagenow = null;
 	}
 
 	// ── get_site_context via Reflection ────────────────────────────────
 
 	/**
-	 * get_site_context returns the expected keys.
+	 * Returns the expected keys from get_site_context.
 	 *
 	 * @return void
 	 */
 	public function test_get_site_context_returns_expected_keys() {
-		$ref    = new \ReflectionMethod( ChatEditor::class, 'get_site_context' );
+		$ref = new \ReflectionMethod( ChatEditor::class, 'get_site_context' );
 		$ref->setAccessible( true );
 		$result = $ref->invoke( null );
 
@@ -225,14 +233,14 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	}
 
 	/**
-	 * description falls back to bloginfo when no onboarding prompt.
+	 * Description falls back to bloginfo when no onboarding prompt.
 	 *
 	 * @return void
 	 */
 	public function test_get_site_context_description_fallback_to_bloginfo() {
 		delete_option( 'nfd_module_onboarding_state_input' );
 
-		$ref    = new \ReflectionMethod( ChatEditor::class, 'get_site_context' );
+		$ref = new \ReflectionMethod( ChatEditor::class, 'get_site_context' );
 		$ref->setAccessible( true );
 		$result = $ref->invoke( null );
 
@@ -240,14 +248,14 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	}
 
 	/**
-	 * description uses onboarding prompt when present.
+	 * Description uses onboarding prompt when present.
 	 *
 	 * @return void
 	 */
 	public function test_get_site_context_description_uses_onboarding_prompt() {
 		update_option( 'nfd_module_onboarding_state_input', array( 'prompt' => 'My AI prompt' ) );
 
-		$ref    = new \ReflectionMethod( ChatEditor::class, 'get_site_context' );
+		$ref = new \ReflectionMethod( ChatEditor::class, 'get_site_context' );
 		$ref->setAccessible( true );
 		$result = $ref->invoke( null );
 
@@ -257,14 +265,14 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	}
 
 	/**
-	 * siteType defaults to empty string when missing from onboarding.
+	 * Site type defaults to empty string when missing from onboarding.
 	 *
 	 * @return void
 	 */
 	public function test_get_site_context_site_type_defaults_to_empty_string() {
 		update_option( 'nfd_module_onboarding_state_input', array( 'prompt' => 'test' ) );
 
-		$ref    = new \ReflectionMethod( ChatEditor::class, 'get_site_context' );
+		$ref = new \ReflectionMethod( ChatEditor::class, 'get_site_context' );
 		$ref->setAccessible( true );
 		$result = $ref->invoke( null );
 

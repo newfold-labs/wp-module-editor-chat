@@ -39,7 +39,7 @@ class ApplicationWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	}
 
 	/**
-	 * initialize_chat_editor creates ChatEditor for an editor-capable user.
+	 * Creates ChatEditor when user has editor capabilities.
 	 *
 	 * @return void
 	 */
@@ -61,7 +61,7 @@ class ApplicationWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	}
 
 	/**
-	 * initialize_chat_editor does nothing for a subscriber (no edit_pages).
+	 * Does nothing for a subscriber (no edit_pages).
 	 *
 	 * @return void
 	 */
@@ -82,7 +82,7 @@ class ApplicationWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	}
 
 	/**
-	 * initialize_chat_editor does nothing when logged out.
+	 * Does nothing when user is logged out.
 	 *
 	 * @return void
 	 */
