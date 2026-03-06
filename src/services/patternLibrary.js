@@ -177,7 +177,7 @@ class PatternLibrary {
 	 * @return {boolean} True if the index is loaded and ready for search.
 	 */
 	isReady() {
-		return this.provider?.index !== null;
+		return !!this.provider?.index;
 	}
 
 	/**
