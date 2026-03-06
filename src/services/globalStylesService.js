@@ -21,7 +21,7 @@ function getWPData() {
  * Get the global styles ID from the current site editor context
  * @return {number|null} Global styles post ID or null
  */
-export function getGlobalStylesId() {
+function getGlobalStylesId() {
 	const data = getWPData();
 	if (!data) {
 		console.warn("WordPress data store not available");
@@ -346,28 +346,3 @@ function mergeBySlug(target, source) {
 	return [...merged, ...newItems];
 }
 
-/**
- * Check if we're in an environment where global styles can be edited
- * @return {boolean} True if global styles editing is available
- */
-export function isGlobalStylesAvailable() {
-	const data = getWPData();
-	if (!data) {
-		return false;
-	}
-
-	try {
-		// Check if we have access to the core store and global styles
-		const coreStore = data.select("core");
-		return typeof coreStore.getEditedEntityRecord === "function";
-	} catch {
-		return false;
-	}
-}
-
-export default {
-	getGlobalStylesId,
-	getCurrentGlobalStyles,
-	updateGlobalStyles,
-	isGlobalStylesAvailable,
-};

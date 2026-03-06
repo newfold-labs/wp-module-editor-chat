@@ -9,7 +9,7 @@
 import { dispatch, select, resolveSelect } from "@wordpress/data";
 import { serialize, parse } from "@wordpress/blocks";
 
-import { createBlockFromParsed, normalizeHtml } from "../utils/blockUtils";
+import { createBlockFromParsed } from "../utils/blockUtils";
 
 // ────────────────────────────────────────────────────────────────────
 // Template part identity & entity helpers
@@ -69,7 +69,7 @@ export const getTemplatePartEntity = async (tplBlock) => {
  * @param {Object} tplBlock The template part block.
  * @return {Promise<string|number|null>} The entity record ID.
  */
-export const getTemplatePartEntityId = async (tplBlock) => {
+const getTemplatePartEntityId = async (tplBlock) => {
 	if (tplBlock?.attributes?.ref) {
 		return tplBlock.attributes.ref;
 	}
@@ -85,7 +85,7 @@ export const getTemplatePartEntityId = async (tplBlock) => {
  * @param {Object} coreResolve Optional core resolve selector.
  * @return {Promise<string>}   The template part content as HTML string.
  */
-export const fetchTemplatePartContent = async (tplBlock, coreResolve = null) => {
+const fetchTemplatePartContent = async (tplBlock, coreResolve = null) => {
 	if (!tplBlock || !tplBlock.attributes) {
 		return "";
 	}
@@ -466,95 +466,6 @@ export async function applyTemplatePartRewrite(clientId, block, blockContent) {
 		clientId,
 		blockName: block.name,
 		message: `Template part content rewritten successfully`,
-		originalBlock,
-		isTemplatePart: true,
-		entityUpdateResult,
-	};
-}
-
-/**
- * Apply find/replace changes to a template part's content.
- *
- * @param {string} clientId The template part's client ID.
- * @param {Object} block    The template part block.
- * @param {Array}  changes  Array of { find, replace } objects.
- * @return {Promise<Object>} Result of the changes.
- */
-export async function applyTemplatePartChanges(clientId, block, changes) {
-	const coreResolve = resolveSelect("core");
-
-	const originalEntity = await getTemplatePartEntity(block);
-
-	const originalBlock = {
-		clientId,
-		name: block.name,
-		attributes: { ...block.attributes },
-		innerBlocks: block.innerBlocks ? [...block.innerBlocks] : [],
-		isTemplatePart: true,
-		entityContent: originalEntity ? originalEntity.content : null,
-	};
-
-	const templatePartContent = await fetchTemplatePartContent(block, coreResolve);
-	if (!templatePartContent) {
-		throw new Error("Template part has no content to modify");
-	}
-
-	let updatedContent = templatePartContent;
-	let changesApplied = 0;
-
-	for (const change of changes) {
-		const { find, replace } = change;
-
-		if (typeof find !== "string" || typeof replace !== "string") {
-			throw new Error("Change must have find and replace as strings");
-		}
-
-		const normalizedContent = normalizeHtml(updatedContent);
-		const normalizedFind = normalizeHtml(find);
-		const normalizedReplace = normalizeHtml(replace);
-
-		if (normalizedContent.includes(normalizedFind)) {
-			updatedContent = normalizedContent.replace(normalizedFind, normalizedReplace);
-			changesApplied++;
-		}
-	}
-
-	if (changesApplied === 0) {
-		return {
-			clientId,
-			blockName: block.name,
-			changesApplied: 0,
-			message: `No matching content found in template part`,
-			originalBlock,
-			isTemplatePart: true,
-		};
-	}
-
-	const updatedBlocks = parse(updatedContent);
-
-	if (!updatedBlocks || updatedBlocks.length === 0) {
-		throw new Error("Failed to parse updated template part content into blocks");
-	}
-
-	const updatedInnerBlocks = updatedBlocks.map((parsedBlock) => createBlockFromParsed(parsedBlock));
-
-	// Update entity FIRST — controlled inner blocks read from here
-	const entityUpdateResult = await updateTemplatePartContent(block, updatedInnerBlocks);
-
-	if (!entityUpdateResult.success) {
-		// eslint-disable-next-line no-console
-		console.warn("Template part entity update failed:", entityUpdateResult.message);
-	}
-
-	// Then force-set inner blocks as an immediate visual update
-	const { replaceInnerBlocks } = dispatch("core/block-editor");
-	replaceInnerBlocks(clientId, updatedInnerBlocks);
-
-	return {
-		clientId,
-		blockName: block.name,
-		changesApplied,
-		message: `Template part content updated successfully`,
 		originalBlock,
 		isTemplatePart: true,
 		entityUpdateResult,
