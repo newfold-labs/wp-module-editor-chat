@@ -3,17 +3,21 @@
  */
 import { useDispatch } from "@wordpress/data";
 import { PluginSidebar, PluginSidebarMoreMenuItem } from "@wordpress/editor";
-import { useEffect } from "@wordpress/element";
+import { useEffect, useMemo } from "@wordpress/element";
 import { __ } from "@wordpress/i18n";
 import { store as interfaceStore } from "@wordpress/interface";
 
 /**
+ * External dependencies - from wp-module-ai-chat
+ */
+import { ChatMessages } from "@newfold-labs/wp-module-ai-chat";
+
+/**
  * Internal dependencies
  */
-import useChat from "../hooks/useChat";
+import useEditorChat from "../hooks/useEditorChat";
 import ActionButtons from "./chat/ActionButtons";
 import ChatInput from "./chat/ChatInput";
-import ChatMessages from "./chat/ChatMessages";
 import WelcomeScreen from "./chat/WelcomeScreen";
 import SidebarHeader from "./sidebar/SidebarHeader";
 import AILogo from "./ui/AILogo";
@@ -34,7 +38,7 @@ const ChatEditor = () => {
 		handleAcceptChanges,
 		handleDeclineChanges,
 		handleStopRequest,
-	} = useChat();
+	} = useEditorChat();
 
 	useEffect(() => {
 		enableComplementaryArea(SIDEBAR_SCOPE, SIDEBAR_NAME);
@@ -46,6 +50,14 @@ const ChatEditor = () => {
 
 	// Disable new chat button when there are no messages (brand new chat)
 	const isNewChatDisabled = messages.length === 0;
+
+	// Filter out internal message types from rendering
+	// - notification: system context for the AI, not user-facing
+	// - tool_execution: tool progress tracked internally, not shown in chat
+	const visibleMessages = useMemo(
+		() => messages.filter((msg) => msg.type !== "notification" && msg.type !== "tool_execution"),
+		[messages]
+	);
 
 	return (
 		<>
@@ -67,10 +79,17 @@ const ChatEditor = () => {
 				header={<SidebarHeader onNewChat={handleNewChat} isNewChatDisabled={isNewChatDisabled} />}
 			>
 				<div className="nfd-editor-chat-sidebar__content">
-					{messages.length === 0 ? (
+					{visibleMessages.length === 0 ? (
 						<WelcomeScreen onSendMessage={handleSendMessage} />
 					) : (
-						<ChatMessages messages={messages} isLoading={isLoading} error={error} status={status} />
+						<ChatMessages
+							messages={visibleMessages}
+							isLoading={isLoading}
+							error={error}
+							status={status}
+							textDomain="wp-module-editor-chat"
+							messageBubbleStyle="minimal"
+						/>
 					)}
 					{hasPendingActions && (
 						<ActionButtons

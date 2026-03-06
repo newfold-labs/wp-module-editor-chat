@@ -1,5 +1,6 @@
-// Error alert component
-.nfd-editor-chat-error-alert {
+// Error alert component - support both editor-chat and ai-chat class names
+.nfd-editor-chat-error-alert,
+.nfd-ai-chat-error-alert {
 	display: flex;
 	align-items: flex-start;
 	gap: 8px;
@@ -8,11 +9,12 @@
 	border: 1px solid #fecaca;
 	border-radius: 12px;
 	color: #dc2626;
-	font-size: var(--nfd-editor-chat-font-size-base);
+	font-size: var(--nfd-editor-chat-font-size-base, 14px);
 	line-height: 1.5;
 }
 
-.nfd-editor-chat-error-alert__icon {
+.nfd-editor-chat-error-alert__icon,
+.nfd-ai-chat-error-alert__icon {
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -24,7 +26,8 @@
 	fill: none;
 }
 
-.nfd-editor-chat-error-alert__content {
+.nfd-editor-chat-error-alert__content,
+.nfd-ai-chat-error-alert__content {
 	flex: 1;
 	display: flex;
 	flex-direction: column;
