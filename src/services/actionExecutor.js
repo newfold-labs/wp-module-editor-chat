@@ -209,11 +209,24 @@ export async function handleMoveAction(clientId, targetClientId, position) {
 
 				let modified = removeBlockAtPath(blocks, sourcePath);
 
+				// After removing the source, adjust target path if source was in the
+				// same parent and at a lower index (indices shift down by 1).
+				const adjustedTarget = [...targetPath];
+				const srcParent = sourcePath.slice(0, -1);
+				const tgtParent = targetPath.slice(0, -1);
+				if (
+					srcParent.length === tgtParent.length &&
+					srcParent.every((v, i) => v === tgtParent[i]) &&
+					sourcePath[sourcePath.length - 1] < targetPath[targetPath.length - 1]
+				) {
+					adjustedTarget[adjustedTarget.length - 1] -= 1;
+				}
+
 				if (position === "after") {
-					modified = insertBlocksAtPath(modified, targetPath, [movedBlock]);
+					modified = insertBlocksAtPath(modified, adjustedTarget, [movedBlock]);
 				} else {
-					const parentPath = targetPath.slice(0, -1);
-					const targetIdx = targetPath[targetPath.length - 1];
+					const parentPath = adjustedTarget.slice(0, -1);
+					const targetIdx = adjustedTarget[adjustedTarget.length - 1];
 					const insertAt = [...parentPath, Math.max(0, targetIdx - 1)];
 					modified = insertBlocksAtPath(modified, insertAt, [movedBlock]);
 				}

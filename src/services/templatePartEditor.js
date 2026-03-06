@@ -301,6 +301,74 @@ export function insertBlocksAtPath(blocks, path, newBlocks) {
 	});
 }
 
+/**
+ * Insert blocks before a given index path in a parsed block tree.
+ *
+ * @param {Array}         blocks    Parsed block tree.
+ * @param {Array<number>} path      Index path of the block to insert before.
+ * @param {Array}         newBlocks Blocks to insert.
+ * @return {Array} New block tree with blocks inserted.
+ */
+export function insertBlocksBeforePath(blocks, path, newBlocks) {
+	if (!path || path.length === 0) {
+		return blocks;
+	}
+
+	const [index, ...rest] = path;
+
+	if (rest.length === 0) {
+		return [...blocks.slice(0, index), ...newBlocks, ...blocks.slice(index)];
+	}
+
+	return blocks.map((block, i) => {
+		if (i !== index) {
+			return block;
+		}
+		return {
+			...block,
+			innerBlocks: insertBlocksBeforePath(block.innerBlocks || [], rest, newBlocks),
+		};
+	});
+}
+
+/**
+ * Append blocks as the last children of the block at the given path.
+ *
+ * @param {Array}         blocks    Parsed block tree.
+ * @param {Array<number>} path      Index path to the parent block.
+ * @param {Array}         newBlocks Blocks to append as children.
+ * @return {Array} New block tree with blocks appended.
+ */
+export function appendBlocksAsChildAtPath(blocks, path, newBlocks) {
+	if (!path || path.length === 0) {
+		return blocks;
+	}
+
+	const [index, ...rest] = path;
+
+	if (rest.length === 0) {
+		return blocks.map((block, i) => {
+			if (i !== index) {
+				return block;
+			}
+			return {
+				...block,
+				innerBlocks: [...(block.innerBlocks || []), ...newBlocks],
+			};
+		});
+	}
+
+	return blocks.map((block, i) => {
+		if (i !== index) {
+			return block;
+		}
+		return {
+			...block,
+			innerBlocks: appendBlocksAsChildAtPath(block.innerBlocks || [], rest, newBlocks),
+		};
+	});
+}
+
 // ────────────────────────────────────────────────────────────────────
 // Entity-level operations
 // ────────────────────────────────────────────────────────────────────

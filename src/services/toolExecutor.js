@@ -15,12 +15,29 @@ import {
 	handleAddAction,
 	handleMoveAction,
 } from "./actionExecutor";
+import {
+	findAncestorTemplatePart,
+	getBlockPathInTemplatePart,
+	modifyTemplatePartEntity,
+	insertBlocksAtPath,
+	insertBlocksBeforePath,
+	appendBlocksAsChildAtPath,
+} from "./templatePartEditor";
 import { getCurrentGlobalStyles, updateGlobalStyles } from "./globalStylesService";
 import patternLibrary from "./patternLibrary";
 import { customizePatternContent } from "./patternCustomizer";
 import { getBlockMarkup, getCurrentPageTitle } from "../utils/editorHelpers";
 import { validateBlockMarkup } from "../utils/blockValidator";
 import { snapshotBlocks } from "../utils/editorContext";
+
+/**
+ * Module-level tracker for the last successful pattern search results.
+ * Used by code-level enforcement: when the AI calls blu-edit-block or
+ * blu-add-section with its own block_content instead of pattern_slug,
+ * we auto-substitute the top search result's slug so the pattern library
+ * markup is used (with text customization) instead of broken AI-generated HTML.
+ */
+let lastPatternSearchResults = null;
 
 /** Block-mutating tool names that require a snapshot for undo. */
 const BLOCK_TOOL_NAMES = [
@@ -494,21 +511,64 @@ async function handleInsertBlock(toolCall, args, ctx) {
 		}
 
 		// Determine insertion position
-		let rootClientId = "";
-		let insertIndex;
-
 		const refId = args.after_client_id || args.before_client_id;
-		if (refId) {
-			rootClientId = blockEditor.getBlockRootClientId(refId) || "";
-			const refIndex = blockEditor.getBlockIndex(refId);
-			insertIndex = args.after_client_id ? refIndex + 1 : refIndex;
-		}
+		const isAfter = !!args.after_client_id;
 
-		wpDispatch("core/block-editor").insertBlocks(
-			[newBlock],
-			insertIndex,
-			rootClientId
-		);
+		// Detect column-into-columns nesting: when inserting core/column and
+		// the reference block is core/columns, append as a child instead of
+		// inserting as a sibling (which would place it outside the columns).
+		const refBlock = refId ? blockEditor.getBlock(refId) : null;
+		const shouldAppendAsChild =
+			args.block_name === "core/column" &&
+			refBlock?.name === "core/columns";
+
+		// Check if the reference block is inside a template part (header/footer)
+		const ancestorTP = refId ? findAncestorTemplatePart(refId) : null;
+
+		if (ancestorTP) {
+			// Template part insertion — use entity-level editing
+			const path = getBlockPathInTemplatePart(ancestorTP.clientId, refId);
+			if (!path) {
+				return {
+					id: toolCall.id,
+					result: [{ type: "text", text: JSON.stringify({ success: false, error: "Could not locate block inside template part" }) }],
+					isError: true,
+				};
+			}
+			const serialized = wp.blocks.serialize(newBlock);
+			const parsed = wp.blocks.parse(serialized);
+			await modifyTemplatePartEntity(ancestorTP, (blocks) => {
+				if (shouldAppendAsChild) {
+					return appendBlocksAsChildAtPath(blocks, path, parsed);
+				}
+				return isAfter
+					? insertBlocksAtPath(blocks, path, parsed)
+					: insertBlocksBeforePath(blocks, path, parsed);
+			});
+		} else {
+			if (shouldAppendAsChild) {
+				// Insert as last child of the columns block
+				const childCount = refBlock.innerBlocks?.length || 0;
+				wpDispatch("core/block-editor").insertBlocks(
+					[newBlock],
+					childCount,
+					refId
+				);
+			} else {
+				let rootClientId = "";
+				let insertIndex;
+				if (refId) {
+					rootClientId = blockEditor.getBlockRootClientId(refId) || "";
+					const refIndex = blockEditor.getBlockIndex(refId);
+					insertIndex = isAfter ? refIndex + 1 : refIndex;
+				}
+				wpDispatch("core/block-editor").insertBlocks(
+					[newBlock],
+					insertIndex,
+					rootClientId
+				);
+			}
+		}
 
 		return {
 			id: toolCall.id,
@@ -577,10 +637,80 @@ async function handleRewriteText(toolCall, args, ctx) {
 }
 
 async function handleEditBlock(toolCall, args, ctx) {
+	// When pattern_slug is provided, fetch markup from the library first.
+	if (args.pattern_slug && !args.block_content) {
+		await ctx.updateProgress(__("Fetching pattern from library…", "wp-module-editor-chat"), 400);
+		try {
+			const pattern = await patternLibrary.getMarkup(args.pattern_slug);
+			if (pattern && pattern.content) {
+				let markup = pattern.content;
+
+				// Replace placeholder images with provided URLs if any
+				if (args.image_urls && Array.isArray(args.image_urls) && args.image_urls.length > 0) {
+					markup = replacePatternImages(markup, args.image_urls);
+				}
+
+				// Customize text via the backend AI before inserting
+				await ctx.updateProgress(__("Customizing content for your site…", "wp-module-editor-chat"), 500);
+				try {
+					const lastUserMsg = ctx.getMessages?.()
+						?.filter((m) => m.role === "user")
+						?.pop()?.content || "";
+					args.block_content = await customizePatternContent(markup, {
+						pageTitle: getCurrentPageTitle(),
+						userMessage: lastUserMsg,
+					});
+				} catch {
+					args.block_content = markup;
+				}
+			} else {
+				return {
+					id: toolCall.id,
+					result: [{ type: "text", text: JSON.stringify({ success: false, error: `Pattern "${args.pattern_slug}" not found` }) }],
+					isError: true,
+				};
+			}
+		} catch (fetchErr) {
+			return {
+				id: toolCall.id,
+				result: [{ type: "text", text: JSON.stringify({ success: false, error: fetchErr.message }) }],
+				isError: true,
+			};
+		}
+	}
+
 	await ctx.updateProgress(__("Validating block markup…", "wp-module-editor-chat"), 300);
 
 	// Strip escaped quotes the LLM may copy from JSON-encoded tool results
 	args.block_content = args.block_content.replace(/\\"/g, '"');
+
+	// ── Guard: reject full-section rewrites on complex blocks ──
+	// When the model sends huge markup targeting a block with many inner blocks,
+	// it almost always produces truncated/broken HTML. Reject early and guide
+	// the model to use targeted tools (blu-rewrite-text, blu-update-block-attrs).
+	{
+		const { select: wpSel } = wp.data;
+		const targetBlock = wpSel("core/block-editor").getBlock(args.client_id);
+		if (targetBlock) {
+			const innerCount = countInnerBlocks(targetBlock);
+			if (innerCount >= 5 && args.block_content.length > 2000) {
+				console.warn(
+					`[ToolExecutor] Rejecting large edit-block rewrite: ${args.block_content.length} chars targeting block with ${innerCount} inner blocks`
+				);
+				return {
+					id: toolCall.id,
+					result: [{
+						type: "text",
+						text: JSON.stringify({
+							success: false,
+							error: `This block has ${innerCount} inner blocks — rewriting the entire markup will break it. Instead, call blu-rewrite-text with the client_id of the specific child block you want to change (from the page context) and an "instructions" string describing the change. blu-rewrite-text reads the block content automatically and rewrites it. Do NOT call blu-get-block-markup first — just call blu-rewrite-text directly.`,
+						}),
+					}],
+					isError: true,
+				};
+			}
+		}
+	}
 
 	const validation = validateBlockMarkup(args.block_content);
 	if (!validation.valid) {
@@ -954,6 +1084,18 @@ async function handleSearchPatterns(toolCall, args, ctx) {
 			category: args.category,
 			limit: args.limit || 15,
 		});
+
+		// Track successful search results for code-level enforcement.
+		// When the model later calls edit-block/add-section with block_content
+		// instead of pattern_slug, we auto-substitute the top result.
+		if (results.length > 0) {
+			lastPatternSearchResults = {
+				results,
+				query: args.query,
+				timestamp: Date.now(),
+			};
+		}
+
 		const resultText =
 			results.length > 0
 				? JSON.stringify({
@@ -1024,15 +1166,19 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 	// Filter out server-side-only tools (discovery, site listing, etc.).
 	// These are already executed by Semantic Kernel on the backend —
 	// the frontend only needs to handle client-side editor tools (blu-*).
+	console.log("[ToolExecutor] Received tool calls:", toolCalls.map((tc) => ({ name: tc.name, args: tc.arguments })));
+
 	const clientToolCalls = toolCalls.filter((tc) => {
 		const name = tc.name || "";
 		if (!name.startsWith("blu-")) {
+			console.log(`[ToolExecutor] Skipping non-client tool: ${name}`);
 			return false;
 		}
 		return true;
 	});
 
 	if (clientToolCalls.length === 0) {
+		console.log("[ToolExecutor] No client-side tools to execute");
 		return;
 	}
 
@@ -1088,7 +1234,8 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 		});
 
 		try {
-			const toolName = toolCall.name || "";
+			let toolName = toolCall.name || "";
+			console.log(`[ToolExecutor] Executing ${toolIndex}/${totalTools}: ${toolName}`, toolCall.arguments);
 			let args = toolCall.arguments || {};
 			if (typeof args === "string") {
 				try {
@@ -1123,11 +1270,34 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 				}
 			}
 
+			// ── Pattern enforcement: prefer library patterns over AI-generated markup ──
+			if (
+				(toolName === "blu-edit-block" || toolName === "blu-add-section") &&
+				args.block_content && !args.pattern_slug &&
+				lastPatternSearchResults &&
+				(Date.now() - lastPatternSearchResults.timestamp) < 120000 &&
+				lastPatternSearchResults.results.length > 0
+			) {
+				const topPattern = lastPatternSearchResults.results[0];
+				console.log(`[ToolExecutor] Auto-correcting: using pattern_slug "${topPattern.slug}" instead of AI-generated block_content`);
+				args.pattern_slug = topPattern.slug;
+				delete args.block_content;
+				lastPatternSearchResults = null;
+			}
+
+			// edit-block without client_id → treat as add-section
+			if (toolName === "blu-edit-block" && !args.client_id && (args.block_content || args.pattern_slug)) {
+				console.log(`[ToolExecutor] Redirecting blu-edit-block → blu-add-section (no client_id)`);
+				toolName = "blu-add-section";
+			}
+
 			// ── blu/update-global-styles ──
 			if (toolName === "blu-update-global-styles" && args.settings) {
+				console.log(`[ToolExecutor] update-global-styles args.settings:`, JSON.stringify(args.settings));
 				const gsResult = await handleUpdateGlobalStyles(toolCall, args, ctx);
-				toolResults.push(gsResult.toolResult);
 				const isError = gsResult.toolResult.isError;
+				console.log(`[ToolExecutor] update-global-styles result:`, { isError, result: gsResult.toolResult.result });
+				toolResults.push(gsResult.toolResult);
 				completedToolsList.push({ ...toolCall, isError });
 				ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError }]);
 				if (gsResult.globalStylesUndoData) {
@@ -1138,6 +1308,7 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 			// ── blu/get-global-styles ──
 			else if (toolName === "blu-get-global-styles") {
 				const gsResult = await handleGetGlobalStyles(toolCall, ctx);
+				console.log(`[ToolExecutor] get-global-styles result:`, gsResult ? "ok" : "null");
 				if (gsResult) {
 					toolResults.push(gsResult);
 					completedToolsList.push({ ...toolCall, isError: false });
@@ -1150,8 +1321,9 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 			}
 
 			// ── blu/edit-block ──
-			else if (toolName === "blu-edit-block" && args.client_id && args.block_content) {
+			else if (toolName === "blu-edit-block" && args.client_id && (args.block_content || args.pattern_slug)) {
 				const editResult = await handleEditBlock(toolCall, args, ctx);
+				console.log(`[ToolExecutor] edit-block result:`, { isError: editResult.isError, hasChanges: editResult.hasChanges });
 				if (!editResult.isError && editResult.hasChanges) {
 					hasBlockEdits = true;
 				}
@@ -1162,7 +1334,9 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 
 			// ── blu/add-section ──
 			else if (toolName === "blu-add-section" && (args.block_content || args.pattern_slug)) {
+				console.log(`[ToolExecutor] add-section args:`, { pattern_slug: args.pattern_slug, has_block_content: !!args.block_content, image_urls: args.image_urls });
 				const addResult = await handleAddSection(toolCall, args, ctx);
+				console.log(`[ToolExecutor] add-section result:`, { isError: addResult.isError, hasChanges: addResult.hasChanges });
 				if (!addResult.isError && addResult.hasChanges) {
 					hasBlockEdits = true;
 				}
@@ -1174,6 +1348,7 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 			// ── blu/delete-block ──
 			else if (toolName === "blu-delete-block" && args.client_id) {
 				const delResult = await handleDeleteBlock(toolCall, args, ctx);
+				console.log(`[ToolExecutor] delete-block result:`, { isError: delResult.isError, hasChanges: delResult.hasChanges, client_id: args.client_id });
 				if (!delResult.isError && delResult.hasChanges) {
 					hasBlockEdits = true;
 				}
@@ -1190,6 +1365,7 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 				args.position
 			) {
 				const mvResult = await handleMoveBlock(toolCall, args, ctx);
+				console.log(`[ToolExecutor] move-block result:`, { isError: mvResult.isError, hasChanges: mvResult.hasChanges });
 				if (!mvResult.isError && mvResult.hasChanges) {
 					hasBlockEdits = true;
 				}
@@ -1201,6 +1377,7 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 			// ── blu/get-block-markup ──
 			else if (toolName === "blu-get-block-markup" && args.client_id) {
 				const mkResult = await handleGetBlockMarkup(toolCall, args, ctx);
+				console.log(`[ToolExecutor] get-block-markup result:`, { isError: mkResult.isError, client_id: args.client_id });
 				toolResults.push(mkResult);
 				completedToolsList.push({ ...toolCall, isError: mkResult.isError });
 				ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: mkResult.isError }]);
@@ -1209,6 +1386,7 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 			// ── blu/highlight-block ──
 			else if (toolName === "blu-highlight-block" && args.client_id) {
 				const hlResult = await handleHighlightBlock(toolCall, args, ctx);
+				console.log(`[ToolExecutor] highlight-block result:`, { isError: hlResult.isError, client_id: args.client_id });
 				toolResults.push(hlResult);
 				completedToolsList.push({ ...toolCall, isError: hlResult.isError });
 				ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: hlResult.isError }]);
@@ -1217,6 +1395,7 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 			// ── blu/update-block-attrs ──
 			else if (toolName === "blu-update-block-attrs" && args.client_id && args.attributes) {
 				const attrResult = await handleUpdateBlockAttrs(toolCall, args, ctx);
+				console.log(`[ToolExecutor] update-block-attrs result:`, { isError: attrResult.isError, hasChanges: attrResult.hasChanges, client_id: args.client_id });
 				if (!attrResult.isError && attrResult.hasChanges) {
 					hasBlockEdits = true;
 				}
@@ -1228,6 +1407,7 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 			// ── blu/replace-image ──
 			else if (toolName === "blu-replace-image" && args.client_id && args.url) {
 				const imgResult = await handleReplaceImage(toolCall, args, ctx);
+				console.log(`[ToolExecutor] replace-image result:`, { isError: imgResult.isError, hasChanges: imgResult.hasChanges });
 				if (!imgResult.isError && imgResult.hasChanges) {
 					hasBlockEdits = true;
 				}
@@ -1239,6 +1419,7 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 			// ── blu/update-text ──
 			else if (toolName === "blu-update-text" && args.client_id && args.text !== undefined) {
 				const utResult = await handleUpdateText(toolCall, args, ctx);
+				console.log(`[ToolExecutor] update-text result:`, { isError: utResult.isError, hasChanges: utResult.hasChanges, client_id: args.client_id });
 				if (!utResult.isError && utResult.hasChanges) {
 					hasBlockEdits = true;
 				}
@@ -1250,6 +1431,7 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 			// ── blu/duplicate-block ──
 			else if (toolName === "blu-duplicate-block" && args.client_id) {
 				const dupResult = await handleDuplicateBlock(toolCall, args, ctx);
+				console.log(`[ToolExecutor] duplicate-block result:`, { isError: dupResult.isError, hasChanges: dupResult.hasChanges });
 				if (!dupResult.isError && dupResult.hasChanges) {
 					hasBlockEdits = true;
 				}
@@ -1261,6 +1443,7 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 			// ── blu/batch-update-attrs ──
 			else if (toolName === "blu-batch-update-attrs" && args.updates) {
 				const batchResult = await handleBatchUpdateAttrs(toolCall, args, ctx);
+				console.log(`[ToolExecutor] batch-update-attrs result:`, { isError: batchResult.isError, hasChanges: batchResult.hasChanges, count: args.updates?.length });
 				if (!batchResult.isError && batchResult.hasChanges) {
 					hasBlockEdits = true;
 				}
@@ -1272,6 +1455,7 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 			// ── blu/insert-block ──
 			else if (toolName === "blu-insert-block" && args.block_name) {
 				const ibResult = await handleInsertBlock(toolCall, args, ctx);
+				console.log(`[ToolExecutor] insert-block result:`, { isError: ibResult.isError, hasChanges: ibResult.hasChanges, block_name: args.block_name });
 				if (!ibResult.isError && ibResult.hasChanges) {
 					hasBlockEdits = true;
 				}
@@ -1283,6 +1467,7 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 			// ── blu/rewrite-text ──
 			else if (toolName === "blu-rewrite-text" && args.client_id && args.instructions) {
 				const rwResult = await handleRewriteText(toolCall, args, ctx);
+				console.log(`[ToolExecutor] rewrite-text result:`, { isError: rwResult.isError, hasChanges: rwResult.hasChanges });
 				if (!rwResult.isError && rwResult.hasChanges) {
 					hasBlockEdits = true;
 				}
@@ -1294,6 +1479,7 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 			// ── blu/search-patterns ──
 			else if (toolName === "blu-search-patterns" && args.query) {
 				const spResult = await handleSearchPatterns(toolCall, args, ctx);
+				console.log(`[ToolExecutor] search-patterns result:`, { query: args.query, found: !!spResult });
 				if (spResult) {
 					toolResults.push(spResult);
 					completedToolsList.push({ ...toolCall, isError: false });
@@ -1308,6 +1494,7 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 			// ── blu/get-pattern-markup ──
 			else if (toolName === "blu-get-pattern-markup" && args.slug) {
 				const pmResult = await handleGetPatternMarkup(toolCall, args, ctx);
+				console.log(`[ToolExecutor] get-pattern-markup result:`, { slug: args.slug, found: !!pmResult });
 				if (pmResult) {
 					toolResults.push(pmResult);
 					completedToolsList.push({ ...toolCall, isError: false });
@@ -1323,6 +1510,7 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 			// The gateway executes all tools server-side via MCP.
 			// Only editor-specific tools (block editing, styles) need client-side execution.
 			else {
+				console.warn(`[ToolExecutor] Unrecognized client tool, skipping: ${toolName}`, args);
 				toolResults.push({ id: toolCall.id, result: null, isError: false });
 				completedToolsList.push({ ...toolCall, isError: false });
 				ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: false }]);
@@ -1330,6 +1518,7 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 
 			// Tool results are sent back after the loop completes (see below).
 		} catch (err) {
+			console.error(`[ToolExecutor] Error executing ${toolCall.name}:`, err);
 			await ctx.updateProgress(
 				__("Action failed:", "wp-module-editor-chat") + " " + err.message,
 				1000
@@ -1349,19 +1538,27 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 	// Send actual tool results back to the backend so the LLM knows what
 	// really happened (success/failure) instead of relying on stubs.
 	if (ctx.sendToolResult) {
+		// Tools that return data the model needs (read-only tools).
+		const READ_TOOLS = new Set(["blu-get-block-markup", "blu-get-global-styles", "blu-search-patterns", "blu-get-pattern-markup", "blu-highlight-block"]);
+
 		const resultPayload = toolResults
 			.filter((r) => r.id)
 			.map((r) => {
+				const toolName_ = toolCalls.find((tc) => tc.id === r.id)?.name || "unknown";
+				// For read-only tools, send actual result data back so the model can act on it
+				let summary;
+				if (r.isError) {
+					summary = r.error || r.result?.[0]?.text || "Tool failed";
+				} else if (READ_TOOLS.has(toolName_) && r.result?.[0]?.text) {
+					summary = r.result[0].text;
+				} else {
+					summary = r.hasChanges ? "Applied successfully" : "No changes needed";
+				}
 				return {
 					tool_call_id: r.id,
-					tool_name:
-						toolCalls.find((tc) => tc.id === r.id)?.name || "unknown",
+					tool_name: toolName_,
 					success: !r.isError,
-					summary: r.isError
-						? r.error
-						: r.hasChanges
-							? "Applied successfully"
-							: "No changes needed",
+					summary,
 				};
 			});
 		if (resultPayload.length > 0) {
