@@ -1314,9 +1314,13 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 					completedToolsList.push({ ...toolCall, isError: false });
 					ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: false }]);
 				} else {
-					toolResults.push({ id: toolCall.id, result: null, isError: false });
-					completedToolsList.push({ ...toolCall, isError: false });
-					ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: false }]);
+					toolResults.push({
+						id: toolCall.id,
+						result: [{ type: "text", text: JSON.stringify({ error: "Client-side global styles unavailable" }) }],
+						isError: true,
+					});
+					completedToolsList.push({ ...toolCall, isError: true });
+					ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: true }]);
 				}
 			}
 
@@ -1485,9 +1489,13 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 					completedToolsList.push({ ...toolCall, isError: false });
 					ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: false }]);
 				} else {
-					toolResults.push({ id: toolCall.id, result: null, isError: false });
-					completedToolsList.push({ ...toolCall, isError: false });
-					ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: false }]);
+					toolResults.push({
+						id: toolCall.id,
+						result: [{ type: "text", text: JSON.stringify({ error: "Pattern library index not available" }) }],
+						isError: true,
+					});
+					completedToolsList.push({ ...toolCall, isError: true });
+					ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: true }]);
 				}
 			}
 
@@ -1500,9 +1508,13 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 					completedToolsList.push({ ...toolCall, isError: false });
 					ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: false }]);
 				} else {
-					toolResults.push({ id: toolCall.id, result: null, isError: false });
-					completedToolsList.push({ ...toolCall, isError: false });
-					ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: false }]);
+					toolResults.push({
+						id: toolCall.id,
+						result: [{ type: "text", text: JSON.stringify({ error: `Pattern "${args.slug}" not found or has no content` }) }],
+						isError: true,
+					});
+					completedToolsList.push({ ...toolCall, isError: true });
+					ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: true }]);
 				}
 			}
 
