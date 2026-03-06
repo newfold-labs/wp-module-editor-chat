@@ -215,8 +215,13 @@ async function handleGetGlobalStyles(toolCall, ctx) {
 		await ctx.updateProgress(__("Checking WordPress database…", "wp-module-editor-chat"), 400);
 	}
 
-	// Fall through — caller will hit the default MCP path
-	return null;
+	// Fallback to MCP
+	const result = await ctx.mcpClient.callTool(toolCall.name, toolCall.arguments);
+	return {
+		id: toolCall.id,
+		result: result.content,
+		isError: result.isError,
+	};
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -1115,8 +1120,13 @@ async function handleSearchPatterns(toolCall, args, ctx) {
 			isError: false,
 		};
 	}
-	// Fall through — caller will hit the default MCP path
-	return null;
+	// Fallback to MCP
+	const result = await ctx.mcpClient.callTool(toolCall.name, toolCall.arguments);
+	return {
+		id: toolCall.id,
+		result: result.content,
+		isError: result.isError,
+	};
 }
 
 async function handleGetPatternMarkup(toolCall, args, ctx) {
@@ -1143,8 +1153,13 @@ async function handleGetPatternMarkup(toolCall, args, ctx) {
 	} catch {
 		// Fall through to MCP path
 	}
-	// Fall through — caller will hit the default MCP path
-	return null;
+	// Fallback to MCP
+	const result = await ctx.mcpClient.callTool(toolCall.name, toolCall.arguments);
+	return {
+		id: toolCall.id,
+		result: result.content,
+		isError: result.isError,
+	};
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -1308,20 +1323,11 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 			// ── blu/get-global-styles ──
 			else if (toolName === "blu-get-global-styles") {
 				const gsResult = await handleGetGlobalStyles(toolCall, ctx);
-				console.log(`[ToolExecutor] get-global-styles result:`, gsResult ? "ok" : "null");
-				if (gsResult) {
-					toolResults.push(gsResult);
-					completedToolsList.push({ ...toolCall, isError: false });
-					ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: false }]);
-				} else {
-					toolResults.push({
-						id: toolCall.id,
-						result: [{ type: "text", text: JSON.stringify({ error: "Client-side global styles unavailable" }) }],
-						isError: true,
-					});
-					completedToolsList.push({ ...toolCall, isError: true });
-					ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: true }]);
-				}
+				const isError = gsResult.isError ?? false;
+				console.log(`[ToolExecutor] get-global-styles result:`, { isError });
+				toolResults.push(gsResult);
+				completedToolsList.push({ ...toolCall, isError });
+				ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError }]);
 			}
 
 			// ── blu/edit-block ──
@@ -1483,39 +1489,21 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 			// ── blu/search-patterns ──
 			else if (toolName === "blu-search-patterns" && args.query) {
 				const spResult = await handleSearchPatterns(toolCall, args, ctx);
-				console.log(`[ToolExecutor] search-patterns result:`, { query: args.query, found: !!spResult });
-				if (spResult) {
-					toolResults.push(spResult);
-					completedToolsList.push({ ...toolCall, isError: false });
-					ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: false }]);
-				} else {
-					toolResults.push({
-						id: toolCall.id,
-						result: [{ type: "text", text: JSON.stringify({ error: "Pattern library index not available" }) }],
-						isError: true,
-					});
-					completedToolsList.push({ ...toolCall, isError: true });
-					ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: true }]);
-				}
+				const isError = spResult.isError ?? false;
+				console.log(`[ToolExecutor] search-patterns result:`, { query: args.query, isError });
+				toolResults.push(spResult);
+				completedToolsList.push({ ...toolCall, isError });
+				ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError }]);
 			}
 
 			// ── blu/get-pattern-markup ──
 			else if (toolName === "blu-get-pattern-markup" && args.slug) {
 				const pmResult = await handleGetPatternMarkup(toolCall, args, ctx);
-				console.log(`[ToolExecutor] get-pattern-markup result:`, { slug: args.slug, found: !!pmResult });
-				if (pmResult) {
-					toolResults.push(pmResult);
-					completedToolsList.push({ ...toolCall, isError: false });
-					ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: false }]);
-				} else {
-					toolResults.push({
-						id: toolCall.id,
-						result: [{ type: "text", text: JSON.stringify({ error: `Pattern "${args.slug}" not found or has no content` }) }],
-						isError: true,
-					});
-					completedToolsList.push({ ...toolCall, isError: true });
-					ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: true }]);
-				}
+				const isError = pmResult.isError ?? false;
+				console.log(`[ToolExecutor] get-pattern-markup result:`, { slug: args.slug, isError });
+				toolResults.push(pmResult);
+				completedToolsList.push({ ...toolCall, isError });
+				ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError }]);
 			}
 
 			// ── Default: skip unrecognized tools ──
