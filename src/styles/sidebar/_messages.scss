@@ -289,7 +289,7 @@
 		justify-content: flex-start;
 
 		.nfd-editor-chat-message__content,
-	.nfd-ai-chat-message__content {
+		.nfd-ai-chat-message__content {
 			flex: 1;
 			width: 100%;
 			line-height: 1.6;
@@ -299,7 +299,8 @@
 			border-radius: 0;
 			white-space: pre-wrap;
 
-			// Rich content (markdown/HTML) - don't preserve whitespace for formatted content
+			// Rich content (markdown/HTML) —
+			// don't preserve whitespace for formatted content
 			&--rich {
 				white-space: normal;
 
@@ -342,7 +343,7 @@
 		}
 
 		.nfd-editor-chat-message__content,
-	.nfd-ai-chat-message__content {
+		.nfd-ai-chat-message__content {
 			background: var(--nfd-editor-chat-color-background);
 			padding: 8px 16px;
 			border-radius: 12px;
@@ -371,8 +372,9 @@
 
 	// Streaming message state
 	&--streaming {
+
 		.nfd-editor-chat-message__content,
-	.nfd-ai-chat-message__content {
+		.nfd-ai-chat-message__content {
 			position: relative;
 		}
 	}
@@ -409,10 +411,12 @@
 }
 
 @keyframes nfd-cursor-blink {
+
 	0%,
 	50% {
 		opacity: 1;
 	}
+
 	50.01%,
 	100% {
 		opacity: 0;
@@ -420,9 +424,11 @@
 }
 
 @keyframes nfd-spin {
+
 	from {
 		transform: rotate(0deg);
 	}
+
 	to {
 		transform: rotate(360deg);
 	}

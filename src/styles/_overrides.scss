@@ -10,8 +10,9 @@
 	}
 }
 
-// Override ai-chat CSS variables within editor sidebar context
-// This ensures ai-chat components use editor-chat styling when rendered in the sidebar
+// Override ai-chat CSS variables within editor sidebar
+// context — ensures ai-chat components use
+// editor-chat styling when rendered in the sidebar
 .nfd-editor-chat-sidebar {
 	// Map ai-chat CSS variables to editor-chat variables
 	--nfd-ai-chat-color-primary: var(--nfd-editor-chat-color-primary);
