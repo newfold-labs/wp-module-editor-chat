@@ -30,7 +30,7 @@ const ChatInput = ({ onSendMessage, onStopRequest, disabled = false }) => {
 	const [message, setMessage] = useState("");
 	const textareaRef = useRef(null);
 	const selectedBlocks = useSelectedBlock();
-	const { clearSelectedBlock } = useDispatch("core/block-editor");
+	const { clearSelectedBlock, selectBlock, multiSelect } = useDispatch("core/block-editor");
 
 	// Auto-resize textarea as user types
 	useEffect(() => {
@@ -90,7 +90,19 @@ const ChatInput = ({ onSendMessage, onStopRequest, disabled = false }) => {
 								key={block.clientId}
 								block={block}
 								onRemove={() => {
-									clearSelectedBlock();
+									const remaining = selectedBlocks.filter(
+										(b) => b.clientId !== block.clientId
+									);
+									if (remaining.length === 0) {
+										clearSelectedBlock();
+									} else if (remaining.length === 1) {
+										selectBlock(remaining[0].clientId);
+									} else {
+										multiSelect(
+											remaining[0].clientId,
+											remaining[remaining.length - 1].clientId
+										);
+									}
 								}}
 							/>
 						))}
