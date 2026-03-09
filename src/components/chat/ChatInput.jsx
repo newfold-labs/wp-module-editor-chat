@@ -90,18 +90,13 @@ const ChatInput = ({ onSendMessage, onStopRequest, disabled = false }) => {
 								key={block.clientId}
 								block={block}
 								onRemove={() => {
-									const remaining = selectedBlocks.filter(
-										(b) => b.clientId !== block.clientId
-									);
+									const remaining = selectedBlocks.filter((b) => b.clientId !== block.clientId);
 									if (remaining.length === 0) {
 										clearSelectedBlock();
 									} else if (remaining.length === 1) {
 										selectBlock(remaining[0].clientId);
 									} else {
-										multiSelect(
-											remaining[0].clientId,
-											remaining[remaining.length - 1].clientId
-										);
+										multiSelect(remaining[0].clientId, remaining[remaining.length - 1].clientId);
 									}
 								}}
 							/>

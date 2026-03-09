@@ -104,7 +104,7 @@ async function getGatewayConfig() {
 /**
  * Build a WebSocket URL for a temporary backend connection.
  *
- * @param {Object} config  Gateway config from getGatewayConfig().
+ * @param {Object} config    Gateway config from getGatewayConfig().
  * @param {string} sessionId Unique session ID for this connection.
  * @return {string} Full WebSocket URL.
  */
@@ -150,7 +150,9 @@ async function requestBackendCompletion(prompt, timeoutMs = 30000) {
 		let sessionReady = false;
 
 		const finish = (fn, value) => {
-			if (settled) return;
+			if (settled) {
+				return;
+			}
 			settled = true;
 			clearTimeout(timer);
 			try {
@@ -277,20 +279,22 @@ export async function customizePatternContent(patternMarkup, ctx) {
 		}
 
 		// Strip markdown fences if present
-		let cleaned = raw.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+		const cleaned = raw
+			.replace(/```json\s*/g, "")
+			.replace(/```\s*/g, "")
+			.trim();
 
 		const jsonMatch = cleaned.match(/\[[\s\S]*\]/);
 		if (!jsonMatch) {
 			return patternMarkup;
 		}
 
-		let jsonStr = jsonMatch[0];
+		const jsonStr = jsonMatch[0];
 
 		let customized;
 		try {
 			customized = JSON.parse(jsonStr);
 		} catch {
-
 			// Try sanitizing control characters (literal newlines/tabs in strings)
 			try {
 				let sanitized = "";
@@ -298,13 +302,34 @@ export async function customizePatternContent(patternMarkup, ctx) {
 				let esc = false;
 				for (let i = 0; i < jsonStr.length; i++) {
 					const ch = jsonStr[i];
-					if (esc) { sanitized += ch; esc = false; continue; }
-					if (ch === "\\" && inStr) { sanitized += ch; esc = true; continue; }
-					if (ch === '"') { inStr = !inStr; sanitized += ch; continue; }
+					if (esc) {
+						sanitized += ch;
+						esc = false;
+						continue;
+					}
+					if (ch === "\\" && inStr) {
+						sanitized += ch;
+						esc = true;
+						continue;
+					}
+					if (ch === '"') {
+						inStr = !inStr;
+						sanitized += ch;
+						continue;
+					}
 					if (inStr && ch.charCodeAt(0) < 0x20) {
-						if (ch === "\n") { sanitized += "\\n"; continue; }
-						if (ch === "\r") { sanitized += "\\r"; continue; }
-						if (ch === "\t") { sanitized += "\\t"; continue; }
+						if (ch === "\n") {
+							sanitized += "\\n";
+							continue;
+						}
+						if (ch === "\r") {
+							sanitized += "\\r";
+							continue;
+						}
+						if (ch === "\t") {
+							sanitized += "\\t";
+							continue;
+						}
 						continue;
 					}
 					sanitized += ch;
@@ -314,9 +339,13 @@ export async function customizePatternContent(patternMarkup, ctx) {
 				// Last resort: extract id and text pairs individually
 				customized = [];
 				try {
-					const items = jsonStr.replace(/^\[/, "").replace(/\]$/, "").split(/\},\s*\{/);
+					const items = jsonStr
+						.replace(/^\[/, "")
+						.replace(/\]$/, "")
+						.split(/\},\s*\{/);
 					for (const item of items) {
-						const fixed = (item.startsWith("{") ? item : "{" + item) + (item.endsWith("}") ? "" : "}");
+						const fixed =
+							(item.startsWith("{") ? item : "{" + item) + (item.endsWith("}") ? "" : "}");
 						try {
 							customized.push(JSON.parse(fixed));
 						} catch {
@@ -363,8 +392,7 @@ export async function customizePatternContent(patternMarkup, ctx) {
 
 			const pos = result.indexOf(oldInner, searchFrom);
 			if (pos !== -1) {
-				result =
-					result.substring(0, pos) + newInner + result.substring(pos + oldInner.length);
+				result = result.substring(0, pos) + newInner + result.substring(pos + oldInner.length);
 				searchFrom = pos + newInner.length;
 			}
 		}

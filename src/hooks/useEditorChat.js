@@ -155,8 +155,7 @@ const useEditorChat = () => {
 			getMessages: () => wsMessagesRef.current,
 			updateProgress,
 			wait,
-			sendToolResult: (resultJson) =>
-				wsSendToolResult?.("batch", "batch", resultJson),
+			sendToolResult: (resultJson) => wsSendToolResult?.("batch", "batch", resultJson),
 		}),
 		[wsSetMessages, wsSendToolResult]
 	);
@@ -269,7 +268,7 @@ const useEditorChat = () => {
 			wsSetMessages((prev) =>
 				prev.map((msg) => {
 					if (msg.hasActions) {
-						const { hasActions, undoData, ...rest } = msg;
+						const { hasActions: _hasActions, undoData: _undoData, ...rest } = msg;
 						return rest;
 					}
 					return msg;
@@ -530,7 +529,7 @@ const useEditorChat = () => {
 			wsSetMessages((prev) => [
 				...prev.map((msg) => {
 					if (msg.hasActions) {
-						const { hasActions, undoData: msgUndoData, ...rest } = msg;
+						const { hasActions: _hasActions, undoData: _msgUndoData, ...rest } = msg;
 						return rest;
 					}
 					return msg;
