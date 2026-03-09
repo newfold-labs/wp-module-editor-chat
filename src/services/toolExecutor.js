@@ -1536,19 +1536,31 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 			}
 
 			// ── blu/update-block-attrs ──
-			else if (toolName === "blu-update-block-attrs" && args.client_id && args.attributes) {
-				const attrResult = await handleUpdateBlockAttrs(toolCall, args, ctx);
-				console.log(`[ToolExecutor] update-block-attrs result:`, {
-					isError: attrResult.isError,
-					hasChanges: attrResult.hasChanges,
-					client_id: args.client_id,
-				});
-				if (!attrResult.isError && attrResult.hasChanges) {
-					hasBlockEdits = true;
+			else if (toolName === "blu-update-block-attrs" && args.client_id) {
+				// Auto-wrap: if the model sent properties at the top level instead of
+				// nesting them under `attributes`, wrap them so the handler can proceed.
+				if (!args.attributes) {
+					const { client_id, ...rest } = args;
+					if (Object.keys(rest).length > 0) {
+						console.warn(`[ToolExecutor] Auto-wrapping loose properties into attributes for blu-update-block-attrs`, rest);
+						args = { client_id, attributes: rest };
+					}
 				}
-				toolResults.push(attrResult);
-				completedToolsList.push({ ...toolCall, isError: attrResult.isError });
-				ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: attrResult.isError }]);
+
+				if (args.attributes) {
+					const attrResult = await handleUpdateBlockAttrs(toolCall, args, ctx);
+					console.log(`[ToolExecutor] update-block-attrs result:`, {
+						isError: attrResult.isError,
+						hasChanges: attrResult.hasChanges,
+						client_id: args.client_id,
+					});
+					if (!attrResult.isError && attrResult.hasChanges) {
+						hasBlockEdits = true;
+					}
+					toolResults.push(attrResult);
+					completedToolsList.push({ ...toolCall, isError: attrResult.isError });
+					ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: attrResult.isError }]);
+				}
 			}
 
 			// ── blu/replace-image ──
