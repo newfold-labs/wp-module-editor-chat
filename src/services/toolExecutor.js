@@ -534,7 +534,15 @@ async function handleInsertBlock(toolCall, args, _ctx) {
 			}
 		}
 
-		const newBlock = createBlock(args.block_name, attrs);
+		// When block_content is provided, parse it into inner blocks so the
+		// model can create a container (e.g. core/column) with its full content
+		// in a single call instead of needing multiple insert-block calls.
+		let innerBlocks = [];
+		if (args.block_content) {
+			innerBlocks = wp.blocks.parse(args.block_content).filter(Boolean);
+		}
+
+		const newBlock = createBlock(args.block_name, attrs, innerBlocks);
 		if (!newBlock) {
 			return {
 				id: toolCall.id,
