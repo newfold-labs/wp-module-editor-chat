@@ -577,8 +577,6 @@ const useEditorChat = () => {
 		connectionState,
 		handleSendMessage,
 		handleNewChat,
-		handleAcceptChanges,
-		handleDeclineChanges,
 		handleStopRequest,
 	};
 };

@@ -16,7 +16,6 @@ import { ChatMessages } from "@newfold-labs/wp-module-ai-chat";
  * Internal dependencies
  */
 import useEditorChat from "../hooks/useEditorChat";
-import ActionButtons from "./chat/ActionButtons";
 import ChatInput from "./chat/ChatInput";
 import WelcomeScreen from "./chat/WelcomeScreen";
 import SidebarHeader from "./sidebar/SidebarHeader";
@@ -32,21 +31,14 @@ const ChatEditor = () => {
 		isLoading,
 		error,
 		status,
-		isSaving,
 		handleSendMessage,
 		handleNewChat,
-		handleAcceptChanges,
-		handleDeclineChanges,
 		handleStopRequest,
 	} = useEditorChat();
 
 	useEffect(() => {
 		enableComplementaryArea(SIDEBAR_SCOPE, SIDEBAR_NAME);
 	}, [enableComplementaryArea]);
-
-	// Check if there are any messages with pending actions and count them
-	const pendingActionsCount = messages.filter((msg) => msg.hasActions).length;
-	const hasPendingActions = pendingActionsCount > 0;
 
 	// Disable new chat button when there are no messages (brand new chat)
 	const isNewChatDisabled = messages.length === 0;
@@ -91,15 +83,7 @@ const ChatEditor = () => {
 							messageBubbleStyle="minimal"
 						/>
 					)}
-					{hasPendingActions && (
-						<ActionButtons
-							pendingCount={pendingActionsCount}
-							onAccept={handleAcceptChanges}
-							onDecline={handleDeclineChanges}
-							isSaving={isSaving}
-						/>
-					)}
-					<ChatInput
+						<ChatInput
 						onSendMessage={handleSendMessage}
 						onStopRequest={handleStopRequest}
 						disabled={isLoading}
