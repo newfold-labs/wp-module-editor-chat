@@ -29,8 +29,8 @@ import ContextTag from "../ui/ContextTag";
 const ChatInput = ({ onSendMessage, onStopRequest, disabled = false }) => {
 	const [message, setMessage] = useState("");
 	const textareaRef = useRef(null);
-	const selectedBlock = useSelectedBlock();
-	const { clearSelectedBlock } = useDispatch("core/block-editor");
+	const selectedBlocks = useSelectedBlock();
+	const { clearSelectedBlock, selectBlock, multiSelect } = useDispatch("core/block-editor");
 
 	// Auto-resize textarea as user types
 	useEffect(() => {
@@ -84,14 +84,23 @@ const ChatInput = ({ onSendMessage, onStopRequest, disabled = false }) => {
 					disabled={disabled}
 				/>
 				<div className="nfd-editor-chat-input__actions">
-					{selectedBlock && (
-						<ContextTag
-							block={selectedBlock}
-							onRemove={(clientId) => {
-								clearSelectedBlock(clientId);
-							}}
-						/>
-					)}
+					{selectedBlocks.length > 0 &&
+						selectedBlocks.map((block) => (
+							<ContextTag
+								key={block.clientId}
+								block={block}
+								onRemove={() => {
+									const remaining = selectedBlocks.filter((b) => b.clientId !== block.clientId);
+									if (remaining.length === 0) {
+										clearSelectedBlock();
+									} else if (remaining.length === 1) {
+										selectBlock(remaining[0].clientId);
+									} else {
+										multiSelect(remaining[0].clientId, remaining[remaining.length - 1].clientId);
+									}
+								}}
+							/>
+						))}
 					{disabled ? (
 						<Button
 							icon={<CircleStop width={16} height={16} />}
