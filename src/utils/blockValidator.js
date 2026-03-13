@@ -46,6 +46,31 @@ export const validateBlockMarkup = (blockContent) => {
 		};
 	}
 
+	// ── Auto-wrap blocks that require a parent wrapper ──
+	// core/button must be inside core/buttons, core/list-item inside core/list.
+	// The AI often sends bare child blocks without the required parent.
+	const PARENT_WRAPPERS = {
+		"core/button": "core/buttons",
+		"core/list-item": "core/list",
+	};
+	for (let i = 0; i < parsed.length; i++) {
+		const wrapper = PARENT_WRAPPERS[parsed[i].name];
+		if (wrapper) {
+			// Check if already wrapped (e.g., button inside buttons)
+			const alreadyWrapped = parsed.some(
+				(b, idx) => idx !== i && b.name === wrapper && b.innerBlocks?.some((ib) => ib.name === parsed[i].name)
+			);
+			if (!alreadyWrapped) {
+				// eslint-disable-next-line no-console
+				console.log(`[blockValidator] Auto-wrapping ${parsed[i].name} in ${wrapper}`);
+				const wrappedBlock = createBlock(wrapper, {}, [
+					createBlock(parsed[i].name, parsed[i].attributes || {}, parsed[i].innerBlocks || []),
+				]);
+				parsed.splice(i, 1, wrappedBlock);
+			}
+		}
+	}
+
 	// ── Always normalize ──
 	// Recreate every block via createBlock() + serialize() so the HTML is
 	// exactly what WordPress's save() function produces.  The AI only needs

@@ -31,6 +31,10 @@ const ChatEditor = () => {
 		isLoading,
 		error,
 		status,
+		activeToolCall,
+		toolProgress,
+		executedTools,
+		pendingTools,
 		handleSendMessage,
 		handleNewChat,
 		handleStopRequest,
@@ -47,7 +51,7 @@ const ChatEditor = () => {
 	// - notification: system context for the AI, not user-facing
 	// - tool_execution: tool progress tracked internally, not shown in chat
 	const visibleMessages = useMemo(
-		() => messages.filter((msg) => msg.type !== "notification" && msg.type !== "tool_execution"),
+		() => messages.filter((msg) => msg.type !== "notification"),
 		[messages]
 	);
 
@@ -79,6 +83,10 @@ const ChatEditor = () => {
 							isLoading={isLoading}
 							error={error}
 							status={status}
+							activeToolCall={activeToolCall}
+							toolProgress={toolProgress}
+							executedTools={executedTools}
+							pendingTools={pendingTools}
 							textDomain="wp-module-editor-chat"
 							messageBubbleStyle="minimal"
 						/>
