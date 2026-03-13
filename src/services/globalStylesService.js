@@ -6,6 +6,8 @@
  * Changes made through this service are immediately reflected in the Site Editor.
  */
 
+import { deepMergeStyles as deepMerge } from "../utils/deepMerge";
+
 /**
  * Get the WordPress data module
  * @return {Object|null} WordPress data object or null if not available
@@ -279,69 +281,4 @@ export async function updateGlobalStyles(settings, styles = null) {
 	}
 }
 
-/**
- * Deep merge two objects
- *
- * Arrays of objects with a "slug" property (e.g., palette.custom) are merged
- * by slug: matching entries are updated, unmatched are preserved, new ones appended.
- * All other arrays are replaced outright.
- *
- * @param {Object} target Target object
- * @param {Object} source Source object to merge
- * @return {Object} Merged object
- */
-function deepMerge(target, source) {
-	const output = { ...target };
-
-	for (const key of Object.keys(source)) {
-		const srcVal = source[key];
-		const tgtVal = target[key];
-
-		if (Array.isArray(srcVal) && Array.isArray(tgtVal) && isSlugArray(srcVal)) {
-			// Merge arrays by slug: update existing, keep untouched, append new
-			output[key] = mergeBySlug(tgtVal, srcVal);
-		} else if (srcVal && typeof srcVal === "object" && !Array.isArray(srcVal)) {
-			if (tgtVal && typeof tgtVal === "object" && !Array.isArray(tgtVal)) {
-				output[key] = deepMerge(tgtVal, srcVal);
-			} else {
-				output[key] = { ...srcVal };
-			}
-		} else {
-			output[key] = srcVal;
-		}
-	}
-
-	return output;
-}
-
-/**
- * Check if an array consists of objects that each have a "slug" property
- * @param {Array} arr Array to check
- * @return {boolean} True if every item has a slug
- */
-function isSlugArray(arr) {
-	return (
-		arr.length > 0 &&
-		arr.every((item) => item && typeof item === "object" && typeof item.slug === "string")
-	);
-}
-
-/**
- * Merge two arrays of slug-keyed objects.
- * Items in source update matching target items by slug.
- * Target items with no matching source slug are preserved.
- * Source items with no matching target slug are appended.
- *
- * @param {Array} target Existing array
- * @param {Array} source Incoming array
- * @return {Array} Merged array
- */
-function mergeBySlug(target, source) {
-	const sourceMap = new Map(source.map((item) => [item.slug, item]));
-	const merged = target.map((item) =>
-		sourceMap.has(item.slug) ? { ...item, ...sourceMap.get(item.slug) } : item
-	);
-	const existingSlugs = new Set(target.map((item) => item.slug));
-	const newItems = source.filter((item) => !existingSlugs.has(item.slug));
-	return [...merged, ...newItems];
-}
+// deepMerge and slug-array helpers moved to utils/deepMerge.js

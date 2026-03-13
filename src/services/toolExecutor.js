@@ -39,6 +39,91 @@ import { snapshotBlocks } from "../utils/editorContext";
  */
 let lastPatternSearchResults = null;
 
+/**
+ * Clear the cached pattern search results.
+ * Called at the start of each new user turn so stale results from a
+ * previous request (e.g. testimonial search) don't contaminate the
+ * next request (e.g. header edit).
+ */
+export function resetPatternSearchCache() {
+	lastPatternSearchResults = null;
+}
+
+/**
+ * Create or replace the single tool_execution message for the current turn.
+ * Caller passes the COMPLETE list of tools; any existing message is replaced
+ * (not appended) so duplicates are impossible across multi-round calls.
+ *
+ * @param {Function} setMessages React state setter for messages
+ * @param {Array}    tools       Complete list of tool objects for this turn
+ * @param {Object}   [undoData]  Optional undo data for accept/decline
+ */
+export function upsertToolExecMsg(setMessages, tools, undoData) {
+	if (!tools || tools.length === 0) {
+		return;
+	}
+
+	setMessages((prev) => {
+		// Scope: only merge with a tool_execution after the last user message
+		let lastUserIdx = -1;
+		for (let i = prev.length - 1; i >= 0; i--) {
+			if (prev[i].role === "user") {
+				lastUserIdx = i;
+				break;
+			}
+		}
+
+		// Find existing tool_execution message in the current turn
+		let existingIdx = -1;
+		for (let i = prev.length - 1; i > lastUserIdx; i--) {
+			if (prev[i].type === "tool_execution") {
+				existingIdx = i;
+				break;
+			}
+		}
+
+		if (existingIdx !== -1) {
+			const existing = prev[existingIdx];
+			const updated = {
+				...existing,
+				executedTools: [...tools],
+				...(undoData ? { hasActions: true, undoData } : {}),
+			};
+			return [
+				...prev.slice(0, existingIdx),
+				updated,
+				...prev.slice(existingIdx + 1),
+			];
+		}
+
+		// Create new — insert after reasoning or after last user message
+		const toolExecMsg = {
+			id: `tool-exec-${Date.now()}`,
+			role: "assistant",
+			type: "tool_execution",
+			executedTools: [...tools],
+			...(undoData ? { hasActions: true, undoData } : {}),
+			timestamp: new Date(),
+		};
+
+		let insertIdx = -1;
+		for (let i = prev.length - 1; i > lastUserIdx; i--) {
+			if (prev[i].id?.endsWith("-reasoning")) {
+				insertIdx = i + 1;
+				break;
+			}
+		}
+		if (insertIdx === -1) {
+			insertIdx = Math.max(lastUserIdx + 1, 0);
+		}
+		return [
+			...prev.slice(0, insertIdx),
+			toolExecMsg,
+			...prev.slice(insertIdx),
+		];
+	});
+}
+
 /** Block-mutating tool names that require a snapshot for undo. */
 const BLOCK_TOOL_NAMES = [
 	"blu-edit-block",
@@ -257,31 +342,9 @@ function countInnerBlocks(block) {
 	return block.innerBlocks.reduce((sum, ib) => sum + 1 + countInnerBlocks(ib), 0);
 }
 
-/**
- * Deep-merge source into target. Null values remove the key.
- * Arrays and non-plain-objects are replaced, not merged.
- * @param {Object} target
- * @param {Object} source
- */
-function deepMerge(target, source) {
-	const result = { ...target };
-	for (const key of Object.keys(source)) {
-		if (source[key] === null || source[key] === undefined) {
-			delete result[key];
-		} else if (
-			typeof source[key] === "object" &&
-			!Array.isArray(source[key]) &&
-			typeof result[key] === "object" &&
-			result[key] !== null &&
-			!Array.isArray(result[key])
-		) {
-			result[key] = deepMerge(result[key], source[key]);
-		} else {
-			result[key] = source[key];
-		}
-	}
-	return result;
-}
+// deepMerge for block attributes — null values remove the key.
+// Shared implementation lives in utils/deepMerge.js
+import { deepMergeAttrs as deepMerge } from "../utils/deepMerge";
 
 async function handleUpdateBlockAttrs(toolCall, args, _ctx) {
 	const { select: wpSelect, dispatch: wpDispatch } = wp.data;
@@ -325,10 +388,12 @@ async function handleReplaceImage(toolCall, args, _ctx) {
 	const block = wpSelect("core/block-editor").getBlock(args.client_id);
 
 	if (!block) {
+		// eslint-disable-next-line no-console
+		console.warn(`[ToolExecutor] replace-image: block not found for clientId=${args.client_id}`);
 		return {
 			id: toolCall.id,
 			result: [
-				{ type: "text", text: JSON.stringify({ success: false, error: "Block not found" }) },
+				{ type: "text", text: JSON.stringify({ success: false, error: `Block not found (clientId: ${args.client_id}). Use exact clientIds from the block tree — do not fabricate or modify them.` }) },
 			],
 			isError: true,
 		};
@@ -340,8 +405,8 @@ async function handleReplaceImage(toolCall, args, _ctx) {
 			newAttrs.alt = args.alt;
 		}
 
-		// For core/image, also set id to 0 to indicate an external image
-		if (block.name === "core/image") {
+		// Clear media library ID so WordPress doesn't re-resolve the old URL
+		if (block.name === "core/image" || block.name === "core/cover" || block.name === "core/media-text") {
 			newAttrs.id = 0;
 		}
 
@@ -407,8 +472,8 @@ async function handleUpdateText(toolCall, args, _ctx) {
 		return {
 			id: toolCall.id,
 			result: [{ type: "text", text: JSON.stringify(editResult) }],
-			isError: !editResult.success,
-			hasChanges: editResult.success,
+			isError: false,
+			hasChanges: true,
 		};
 	} catch (err) {
 		return {
@@ -542,7 +607,7 @@ async function handleInsertBlock(toolCall, args, _ctx) {
 			innerBlocks = wp.blocks.parse(args.block_content).filter(Boolean);
 		}
 
-		const newBlock = createBlock(args.block_name, attrs, innerBlocks);
+		let newBlock = createBlock(args.block_name, attrs, innerBlocks);
 		if (!newBlock) {
 			return {
 				id: toolCall.id,
@@ -557,6 +622,17 @@ async function handleInsertBlock(toolCall, args, _ctx) {
 				],
 				isError: true,
 			};
+		}
+
+		// Blocks that require a parent wrapper to render correctly.
+		// WordPress won't display them as standalone top-level blocks.
+		const wrapperMap = {
+			"core/button": "core/buttons",
+			"core/list-item": "core/list",
+		};
+		const wrapperName = wrapperMap[args.block_name];
+		if (wrapperName) {
+			newBlock = createBlock(wrapperName, {}, [newBlock]);
 		}
 
 		// Determine insertion position
@@ -687,8 +763,8 @@ async function handleRewriteText(toolCall, args, ctx) {
 		return {
 			id: toolCall.id,
 			result: [{ type: "text", text: JSON.stringify(editResult) }],
-			isError: !editResult.success,
-			hasChanges: editResult.success,
+			isError: false,
+			hasChanges: true,
 		};
 	} catch (err) {
 		return {
@@ -762,18 +838,19 @@ async function handleEditBlock(toolCall, args, ctx) {
 	// Strip escaped quotes the LLM may copy from JSON-encoded tool results
 	args.block_content = args.block_content.replace(/\\"/g, '"');
 
-	// ── Guard: reject full-section rewrites on complex blocks ──
-	// When the model sends huge markup targeting a block with many inner blocks,
-	// it almost always produces truncated/broken HTML. Reject early and guide
-	// the model to use targeted tools (blu-rewrite-text, blu-update-block-attrs).
+	// ── Guard: reject extremely large rewrites on very complex blocks ──
+	// For moderate structural edits (e.g. splitting columns into rows),
+	// we let the edit through — the validation + safe merge path below
+	// catches broken markup and lost inner blocks. Only block truly
+	// massive rewrites that are almost certainly truncated AI output.
 	{
 		const { select: wpSel } = wp.data;
 		const targetBlock = wpSel("core/block-editor").getBlock(args.client_id);
 		if (targetBlock) {
 			const innerCount = countInnerBlocks(targetBlock);
-			if (innerCount >= 5 && args.block_content.length > 2000) {
+			if (innerCount >= 40 && args.block_content.length > 12000) {
 				console.warn(
-					`[ToolExecutor] Rejecting large edit-block rewrite: ${args.block_content.length} chars targeting block with ${innerCount} inner blocks`
+					`[ToolExecutor] Rejecting very large edit-block rewrite: ${args.block_content.length} chars targeting block with ${innerCount} inner blocks`
 				);
 				return {
 					id: toolCall.id,
@@ -782,7 +859,7 @@ async function handleEditBlock(toolCall, args, ctx) {
 							type: "text",
 							text: JSON.stringify({
 								success: false,
-								error: `This block has ${innerCount} inner blocks — rewriting the entire markup will break it. Instead, call blu-rewrite-text with the client_id of the specific child block you want to change (from the page context) and an "instructions" string describing the change. blu-rewrite-text reads the block content automatically and rewrites it. Do NOT call blu-get-block-markup first — just call blu-rewrite-text directly.`,
+								error: `This block has ${innerCount} inner blocks — rewriting ${args.block_content.length} chars of markup at once risks broken output. Break the edit into smaller steps: (1) use blu-add-section to create a new empty container, (2) use blu-move-block with as_child_of to move existing blocks into it, (3) use blu-delete-block to clean up. For text-only changes, use blu-rewrite-text with an "instructions" string.`,
 							}),
 						},
 					],
@@ -869,6 +946,24 @@ async function handleEditBlock(toolCall, args, ctx) {
 
 	// ── Apply the edit ──
 	await ctx.updateProgress(__("Editing block content…", "wp-module-editor-chat"), 400);
+
+	// Debug: log original vs replacement content to diagnose no-op edits
+	{
+		const { serialize } = wp.blocks;
+		const origBlock = wpSelect("core/block-editor").getBlock(args.client_id);
+		const origContent = origBlock ? serialize(origBlock) : "(not found)";
+		// eslint-disable-next-line no-console
+		console.log("[ToolExecutor] edit-block applying to:", args.client_id, origBlock?.name);
+		// eslint-disable-next-line no-console
+		console.log("[ToolExecutor] edit-block ORIGINAL attrs:", JSON.stringify(origBlock?.attributes));
+		// eslint-disable-next-line no-console
+		console.log("[ToolExecutor] edit-block REPLACEMENT content (first 500):", finalContent.substring(0, 500));
+		if (origContent === finalContent) {
+			// eslint-disable-next-line no-console
+			console.warn("[ToolExecutor] edit-block: REPLACEMENT IS IDENTICAL TO ORIGINAL — no-op edit");
+		}
+	}
+
 	try {
 		const editResult = await handleRewriteAction(args.client_id, finalContent);
 		await ctx.updateProgress(__("Block updated successfully", "wp-module-editor-chat"), 500);
@@ -1086,7 +1181,12 @@ async function handleDeleteBlock(toolCall, args, ctx) {
 async function handleMoveBlock(toolCall, args, ctx) {
 	await ctx.updateProgress(__("Moving block…", "wp-module-editor-chat"), 400);
 	try {
-		const moveResult = await handleMoveAction(args.client_id, args.target_client_id, args.position);
+		const moveResult = await handleMoveAction(
+			args.client_id,
+			args.target_client_id || null,
+			args.position || null,
+			args.as_child_of || null
+		);
 		await ctx.updateProgress(__("Block moved successfully", "wp-module-editor-chat"), 500);
 		return {
 			id: toolCall.id,
@@ -1266,14 +1366,47 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 		toolCalls.map((tc) => ({ name: tc.name, args: tc.arguments }))
 	);
 
-	const clientToolCalls = toolCalls.filter((tc) => {
+	// Internal/silent tools that should never appear in the tool execution list.
+	// These are backend discovery calls, not user-facing actions.
+	const SILENT_TOOLS = new Set([
+		"get_available_wordpress_actions",
+		"WordPressPlugin-get_available_wordpress_actions",
+		"get_wordpress_sites",
+		"WordPressPlugin-get_wordpress_sites",
+	]);
+
+	// Separate server-side (already executed by backend) and client-side tools
+	const serverToolCalls = [];
+	const clientToolCalls = [];
+	for (const tc of toolCalls) {
 		const name = tc.name || "";
-		if (!name.startsWith("blu-")) {
-			console.log(`[ToolExecutor] Skipping non-client tool: ${name}`);
-			return false;
+		// Skip silent/internal tools entirely — don't show or track them
+		if (SILENT_TOOLS.has(name)) {
+			console.log(`[ToolExecutor] Silent tool (hidden from UI): ${name}`);
+			continue;
 		}
-		return true;
-	});
+		if (name.startsWith("blu-")) {
+			clientToolCalls.push(tc);
+		} else {
+			console.log(`[ToolExecutor] Server-side tool (already executed): ${name}`);
+			serverToolCalls.push(tc);
+		}
+	}
+
+	const serverCompleted = serverToolCalls.map((tc, idx) => ({
+		id: tc.id || `server-tool-${Date.now()}-${idx}`,
+		name: tc.name,
+		arguments: tc.arguments,
+		isError: false,
+	}));
+
+	// Track server-side tools in state for TypingIndicator display.
+	// The persistent tool_execution message is created only AFTER execution
+	// finishes (or via useEffect for server-only rounds) so there's a single
+	// unified tool list — never two separate windows.
+	if (serverCompleted.length > 0) {
+		ctx.setExecutedTools((prev) => [...prev, ...serverCompleted]);
+	}
 
 	if (clientToolCalls.length === 0) {
 		console.log("[ToolExecutor] No client-side tools to execute");
@@ -1331,6 +1464,9 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 			total: totalTools,
 		});
 
+		// Yield to let React render the active tool state before executing
+		await new Promise((r) => requestAnimationFrame(r));
+
 		try {
 			let toolName = toolCall.name || "";
 			console.log(
@@ -1383,6 +1519,21 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 					if (!recovered) {
 						args = {};
 					}
+				}
+			}
+
+			// ── Normalize common alt param names ──
+			// The AI sometimes uses camelCase or alternate names.
+			if (!args.client_id && args.clientId) {
+				args.client_id = args.clientId;
+			}
+			if (
+				(toolName === "blu-edit-block" || toolName === "blu-add-section") &&
+				!args.block_content
+			) {
+				const alt = args.content || args.markup || args.html || args.block_markup;
+				if (alt) {
+					args.block_content = alt;
 				}
 			}
 
@@ -1503,8 +1654,7 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 			else if (
 				toolName === "blu-move-block" &&
 				args.client_id &&
-				args.target_client_id &&
-				args.position
+				((args.target_client_id && args.position) || args.as_child_of)
 			) {
 				const mvResult = await handleMoveBlock(toolCall, args, ctx);
 				console.log(`[ToolExecutor] move-block result:`, {
@@ -1618,7 +1768,27 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 			}
 
 			// ── blu/batch-update-attrs ──
-			else if (toolName === "blu-batch-update-attrs" && args.updates) {
+			else if (toolName === "blu-batch-update-attrs") {
+				// Auto-normalize: the AI sometimes sends the array directly
+				// instead of wrapping in {updates: [...]}
+				if (!args.updates && Array.isArray(args)) {
+					args = { updates: args };
+				} else if (!args.updates) {
+					// Try to find any array property that looks like updates
+					const arrayKey = Object.keys(args).find((k) => Array.isArray(args[k]));
+					if (arrayKey) {
+						args = { updates: args[arrayKey] };
+					}
+				}
+				if (!args.updates || !Array.isArray(args.updates) || args.updates.length === 0) {
+					toolResults.push({
+						id: toolCall.id,
+						result: [{ type: "text", text: JSON.stringify({ success: false, error: "updates array is required" }) }],
+						isError: true,
+					});
+					completedToolsList.push({ ...toolCall, isError: true });
+					ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: true }]);
+				} else {
 				const batchResult = await handleBatchUpdateAttrs(toolCall, args, ctx);
 				console.log(`[ToolExecutor] batch-update-attrs result:`, {
 					isError: batchResult.isError,
@@ -1631,6 +1801,7 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 				toolResults.push(batchResult);
 				completedToolsList.push({ ...toolCall, isError: batchResult.isError });
 				ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: batchResult.isError }]);
+				}
 			}
 
 			// ── blu/insert-block ──
@@ -1764,51 +1935,28 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 		}
 	}
 
-	// Insert a dedicated tool_execution message right after the reasoning
-	// message so it appears between reasoning and the result.  The backend
-	// streams result chunks while client-side tools are still running, so
-	// result messages may already be in the array — splicing after the
-	// reasoning landmark keeps the correct visual order.
-	if (compositeUndoData || completedToolsList.length > 0) {
-		const toolExecMsg = {
-			id: `tool-exec-${Date.now()}`,
-			role: "assistant",
-			type: "tool_execution",
-			executedTools: [...completedToolsList],
-			...(compositeUndoData ? { hasActions: true, undoData: compositeUndoData } : {}),
-			timestamp: new Date(),
-		};
-
-		ctx.setMessages((prev) => {
-			// Find the reasoning message flushed by the tool_call handler
-			// (messageHandler adds the "-reasoning" suffix to its ID).
-			let insertIdx = -1;
-			for (let i = prev.length - 1; i >= 0; i--) {
-				if (prev[i].id?.endsWith("-reasoning")) {
-					insertIdx = i + 1;
-					break;
-				}
-			}
-			// Fallback: insert after the last user message
-			if (insertIdx === -1) {
-				for (let i = prev.length - 1; i >= 0; i--) {
-					if (prev[i].role === "user") {
-						insertIdx = i + 1;
-						break;
-					}
-				}
-			}
-			// Last resort: append at end
-			if (insertIdx === -1) {
-				return [...prev, toolExecMsg];
-			}
-			return [...prev.slice(0, insertIdx), toolExecMsg, ...prev.slice(insertIdx)];
-		});
+	// Gather ALL completed tools across rounds: previous rounds (from ref) +
+	// current round's server + client tools.  Deduplicate by id so the
+	// persistent message always has the complete, correct list.
+	const refTools = ctx.executedToolsRef.current || [];
+	const seenIds = new Set();
+	const allCompletedTools = [];
+	for (const t of [...refTools, ...serverCompleted, ...completedToolsList]) {
+		if (!seenIds.has(t.id)) {
+			seenIds.add(t.id);
+			allCompletedTools.push(t);
+		}
 	}
 
-	// Persist ref for SUMMARIZING status, then clear state to remove TypingIndicator duplicate
-	if (completedToolsList.length > 0) {
-		ctx.executedToolsRef.current = [...completedToolsList];
+	// Create / replace the single persistent tool_execution message.
+	if (compositeUndoData || allCompletedTools.length > 0) {
+		upsertToolExecMsg(ctx.setMessages, allCompletedTools, compositeUndoData);
+	}
+
+	// Persist ref for SUMMARIZING status, then clear state so the
+	// TypingIndicator disappears (the message is the permanent record).
+	if (allCompletedTools.length > 0) {
+		ctx.executedToolsRef.current = [...allCompletedTools];
 		ctx.setExecutedTools([]);
 	}
 

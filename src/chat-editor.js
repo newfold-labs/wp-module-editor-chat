@@ -1,7 +1,7 @@
 /**
  * Editor Chat - Entry Point
  *
- * This module provides the editor-specific chat interface,
+ * Provides the editor-specific chat interface,
  * building on the shared wp-module-ai-chat foundation.
  */
 

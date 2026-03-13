@@ -158,14 +158,19 @@ export async function handleDeleteAction(clientId) {
 }
 
 /**
- * Move a block to a new position relative to another block.
+ * Move a block to a new position.
  *
- * @param {string} clientId       The block to move.
- * @param {string} targetClientId The target block to position relative to.
- * @param {string} position       "before" or "after" the target block.
+ * Supports two modes:
+ * 1. Sibling mode (target_client_id + position): place before/after another block.
+ * 2. Child mode (asChildOf): move INTO a container block as its last child.
+ *
+ * @param {string}      clientId       The block to move.
+ * @param {string|null} targetClientId Sibling mode: the reference block. Null in child mode.
+ * @param {string|null} position       Sibling mode: "before" or "after". Null in child mode.
+ * @param {string|null} asChildOf      Child mode: container block clientId to move into.
  * @return {Promise<Object>} Result of the move, including original position for undo.
  */
-export async function handleMoveAction(clientId, targetClientId, position) {
+export async function handleMoveAction(clientId, targetClientId, position, asChildOf = null) {
 	const { getBlock, getBlockRootClientId, getBlockIndex } = select("core/block-editor");
 
 	const block = getBlock(clientId);
@@ -173,13 +178,37 @@ export async function handleMoveAction(clientId, targetClientId, position) {
 		throw new Error(`Block with clientId ${clientId} not found`);
 	}
 
+	const originalRootClientId = getBlockRootClientId(clientId) || "";
+	const originalIndex = getBlockIndex(clientId);
+
+	// ── Child mode: move block inside a container ──
+	if (asChildOf) {
+		const containerBlock = getBlock(asChildOf);
+		if (!containerBlock) {
+			throw new Error(`Container block with clientId ${asChildOf} not found`);
+		}
+
+		// Append as last child of the container
+		const childCount = containerBlock.innerBlocks?.length || 0;
+		const { moveBlockToPosition } = dispatch("core/block-editor");
+		moveBlockToPosition(clientId, originalRootClientId, asChildOf, childCount);
+
+		return {
+			clientId,
+			blockName: block.name,
+			message: `Block ${block.name} moved into ${containerBlock.name} as child`,
+			originalPosition: {
+				rootClientId: originalRootClientId,
+				index: originalIndex,
+			},
+		};
+	}
+
+	// ── Sibling mode: move before/after a target block ──
 	const targetBlock = getBlock(targetClientId);
 	if (!targetBlock) {
 		throw new Error(`Target block with clientId ${targetClientId} not found`);
 	}
-
-	const originalRootClientId = getBlockRootClientId(clientId) || "";
-	const originalIndex = getBlockIndex(clientId);
 
 	const sourceAncestor = findAncestorTemplatePart(clientId);
 	const targetAncestor = findAncestorTemplatePart(targetClientId);
@@ -308,6 +337,19 @@ export async function handleAddAction(clientId, changes) {
 		throw new Error("No valid blocks to insert");
 	}
 
+	// Convert raw parse() output to proper block editor instances.
+	// parse() returns objects that may lack clientId and use different
+	// property names (blockName/attrs vs name/attributes).  The template-
+	// part path converts inside modifyTemplatePartEntity, but the direct
+	// insertBlocks() path needs blocks created via createBlock().
+	const blockInstances = parsedBlocksList
+		.filter((b) => b.name || b.blockName)
+		.map((b) => createBlockFromParsed(b));
+
+	if (blockInstances.length === 0) {
+		throw new Error("No valid blocks to insert (all freeform/null)");
+	}
+
 	const ancestorTemplatePart = clientId ? findAncestorTemplatePart(clientId) : null;
 
 	if (ancestorTemplatePart) {
@@ -322,17 +364,17 @@ export async function handleAddAction(clientId, changes) {
 		const effectiveRoot = getEffectiveRootBlocks();
 		if (effectiveRoot.blocks.length > 0) {
 			if (effectiveRoot.parentClientId) {
-				insertBlocks(parsedBlocksList, 0, effectiveRoot.parentClientId);
+				insertBlocks(blockInstances, 0, effectiveRoot.parentClientId);
 			} else {
-				insertBlocks(parsedBlocksList, 0, effectiveRoot.blocks[0].clientId);
+				insertBlocks(blockInstances, 0, effectiveRoot.blocks[0].clientId);
 			}
 		} else {
 			const rootBlocks = getBlocks();
 			const postContentBlock = rootBlocks.find((b) => b.name === "core/post-content");
 			if (postContentBlock) {
-				insertBlocks(parsedBlocksList, 0, postContentBlock.clientId);
+				insertBlocks(blockInstances, 0, postContentBlock.clientId);
 			} else {
-				insertBlocks(parsedBlocksList, 0);
+				insertBlocks(blockInstances, 0);
 			}
 		}
 	} else {
@@ -347,10 +389,10 @@ export async function handleAddAction(clientId, changes) {
 		}
 
 		const insertIndex = context.index + 1;
-		insertBlocks(parsedBlocksList, insertIndex, context.parentClientId || undefined);
+		insertBlocks(blockInstances, insertIndex, context.parentClientId || undefined);
 	}
 
-	const insertedClientIds = parsedBlocksList.map((b) => b.clientId || null).filter(Boolean);
+	const insertedClientIds = blockInstances.map((b) => b.clientId || null).filter(Boolean);
 
 	return {
 		clientId: clientId || "root",
