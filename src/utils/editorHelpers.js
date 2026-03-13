@@ -68,7 +68,7 @@ export const buildCompactBlockTree = (
 		return null;
 	};
 
-	const walkBlocks = (blockList, prefix = "", depth = 0) => {
+	const walkBlocks = (blockList, prefix = "", depth = 0, insideSelected = false) => {
 		blockList.forEach((block, index) => {
 			const indexPath = prefix ? `${prefix}.${index}` : `${index}`;
 			const isSelected = selectedSet.has(block.clientId);
@@ -97,16 +97,19 @@ export const buildCompactBlockTree = (
 			line += selectedMarker;
 			lines.push(line);
 
-			// Recurse into inner blocks
+			// Recurse into inner blocks.
+			// Always expand children of selected blocks so the AI can see
+			// all descendant clientIds (needed for tools like replace-image).
 			if (block.innerBlocks && block.innerBlocks.length > 0) {
+				const expandChildren = isSelected || insideSelected;
 				if (
 					hasSelection &&
-					!selectedSet.has(block.clientId) &&
+					!expandChildren &&
 					!subtreeHasSelected(block.innerBlocks)
 				) {
 					lines.push(`${"  ".repeat(depth + 1)}... (${block.innerBlocks.length} inner blocks)`);
 				} else {
-					walkBlocks(block.innerBlocks, indexPath, depth + 1);
+					walkBlocks(block.innerBlocks, indexPath, depth + 1, expandChildren);
 				}
 			}
 		});
