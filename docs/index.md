@@ -1,3 +1,10 @@
+---
+name: wp-module-editor-chat
+title: Documentation index
+description: Table of contents and quick links.
+updated: 2025-03-18
+---
+
 # wp-module-editor-chat – Documentation index
 
 | Document | Description |
