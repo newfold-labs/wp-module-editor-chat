@@ -47,6 +47,6 @@
 		"@wordpress/interface": "^9.27.0",
 		"classnames": "^2.5.1",
 		"dompurify": "^3.3.3",
-		"lucide-react": "^0.577.0"
+		"lucide-react": "^1.6.0"
 	}
 }
