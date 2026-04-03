@@ -3,7 +3,7 @@
  */
 import { useDispatch } from "@wordpress/data";
 import { PluginSidebar, PluginSidebarMoreMenuItem } from "@wordpress/editor";
-import { useEffect } from "@wordpress/element";
+import { useEffect, useState } from "@wordpress/element";
 import { __ } from "@wordpress/i18n";
 import { store as interfaceStore } from "@wordpress/interface";
 
@@ -11,6 +11,8 @@ import { store as interfaceStore } from "@wordpress/interface";
  * Internal dependencies
  */
 import useChat from "../hooks/useChat";
+import useEditorControls from "../hooks/useEditorControls";
+import { enableZoomOut } from "../utils/editorSetup";
 import ActionButtons from "./chat/ActionButtons";
 import ChatInput from "./chat/ChatInput";
 import ChatMessages from "./chat/ChatMessages";
@@ -23,6 +25,9 @@ const SIDEBAR_SCOPE = "core";
 
 const ChatEditor = () => {
 	const { enableComplementaryArea } = useDispatch(interfaceStore);
+	const { setShowTemplate } = useEditorControls();
+	const [templateLocked, setTemplateLocked] = useState(false);
+
 	const {
 		messages,
 		isLoading,
@@ -36,9 +41,21 @@ const ChatEditor = () => {
 		handleStopRequest,
 	} = useChat();
 
+	// Phase 1: Enable template mode (show header & footer)
 	useEffect(() => {
-		enableComplementaryArea(SIDEBAR_SCOPE, SIDEBAR_NAME);
-	}, [enableComplementaryArea]);
+		const didShowTemplate = setShowTemplate();
+		if (didShowTemplate) {
+			setTemplateLocked(true);
+		}
+	}, [setShowTemplate]);
+
+	// Phase 2: After template is locked, enable zoom out and open sidebar
+	useEffect(() => {
+		if (templateLocked) {
+			enableZoomOut();
+			enableComplementaryArea(SIDEBAR_SCOPE, SIDEBAR_NAME);
+		}
+	}, [templateLocked, enableComplementaryArea]);
 
 	// Check if there are any messages with pending actions and count them
 	const pendingActionsCount = messages.filter((msg) => msg.hasActions).length;
