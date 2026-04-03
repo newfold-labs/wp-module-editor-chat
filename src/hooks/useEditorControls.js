@@ -3,6 +3,7 @@
  */
 import { useDispatch, useSelect } from "@wordpress/data";
 import { store as editorStore } from "@wordpress/editor";
+import { useCallback } from "@wordpress/element";
 
 /**
  * Custom hook to manage editor rendering mode.
@@ -17,15 +18,15 @@ const useEditorControls = () => {
 		return editor?.getRenderingMode ? editor.getRenderingMode() : null;
 	}, []);
 
-	return {
-		setShowTemplate: () => {
-			if (setRenderingMode && renderingMode !== "template-locked") {
-				setRenderingMode("template-locked");
-				return true;
-			}
-			return false;
-		},
-	};
+	const setShowTemplate = useCallback(() => {
+		if (setRenderingMode && renderingMode !== "template-locked") {
+			setRenderingMode("template-locked");
+			return true;
+		}
+		return false;
+	}, [setRenderingMode, renderingMode]);
+
+	return { setShowTemplate };
 };
 
 export default useEditorControls;
