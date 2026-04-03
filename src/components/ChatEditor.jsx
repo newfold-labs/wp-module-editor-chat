@@ -43,8 +43,10 @@ const ChatEditor = () => {
 
 	// Phase 1: Enable template mode (show header & footer)
 	useEffect(() => {
-		setShowTemplate();
-		setTemplateLocked(true);
+		const didShowTemplate = setShowTemplate();
+		if (didShowTemplate) {
+			setTemplateLocked(true);
+		}
 	}, [setShowTemplate]);
 
 	// Phase 2: After template is locked, enable zoom out and open sidebar
