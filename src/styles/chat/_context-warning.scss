@@ -1,0 +1,34 @@
+.nfd-editor-chat-context-warning {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	padding: 12px;
+	margin: 0 12px;
+	background-color: #fef3c7;
+	border: 1px solid #f59e0b;
+	border-radius: 12px;
+	font-size: var(--nfd-editor-chat-font-size-base, 14px);
+	line-height: 1.5;
+	color: #92400e;
+
+	p {
+		margin: 0;
+		flex: 1;
+	}
+
+	&__btn {
+		flex-shrink: 0;
+		padding: 4px 10px;
+		border: 1px solid #d97706;
+		border-radius: 4px;
+		background: #fff;
+		color: #92400e;
+		font-size: var(--nfd-editor-chat-font-size-base, 14px);
+		cursor: pointer;
+		white-space: nowrap;
+
+		&:hover {
+			background: #fef3c7;
+		}
+	}
+}

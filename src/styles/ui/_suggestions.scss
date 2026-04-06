@@ -9,7 +9,7 @@
 }
 
 // Individual suggestion button
-.nfd-editor-chat-suggestion {
+.nfd-ai-chat-suggestion {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
@@ -57,7 +57,7 @@
 }
 
 // Suggestion icon
-.nfd-editor-chat-suggestion__icon {
+.nfd-ai-chat-suggestion__icon {
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -68,7 +68,7 @@
 }
 
 // Suggestion text
-.nfd-editor-chat-suggestion__text {
+.nfd-ai-chat-suggestion__text {
 	font-size: var(--nfd-editor-chat-font-size-base);
 	line-height: 1.3;
 	font-weight: 400;

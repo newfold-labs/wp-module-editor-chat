@@ -6,13 +6,13 @@ import { __ } from "@wordpress/i18n";
 /**
  * External dependencies
  */
-import { Edit3, FilePlus, Layers, Palette } from "lucide-react";
+import { ArrowUpDown, Edit3, Layers, Palette } from "lucide-react";
+import { SuggestionButton } from "@newfold-labs/wp-module-ai-chat";
 
 /**
  * Internal dependencies
  */
 import AILogo from "../ui/AILogo";
-import SuggestionButton from "../ui/SuggestionButton";
 
 /**
  * WelcomeScreen Component
@@ -26,24 +26,24 @@ import SuggestionButton from "../ui/SuggestionButton";
 const WelcomeScreen = ({ onSendMessage }) => {
 	const suggestions = [
 		{
-			icon: <Edit3 width={16} height={16} />,
-			text: __("Add a new section", "wp-module-editor-chat"),
-			action: () => onSendMessage("Add a new section"),
+			icon: <Layers width={16} height={16} />,
+			text: __("Add a section", "wp-module-editor-chat"),
+			action: () => onSendMessage("Add a section"),
 		},
 		{
 			icon: <Palette width={16} height={16} />,
-			text: __("Update color scheme", "wp-module-editor-chat"),
-			action: () => onSendMessage("Update color scheme"),
+			text: __("Change colors", "wp-module-editor-chat"),
+			action: () => onSendMessage("Change colors"),
 		},
 		{
-			icon: <FilePlus width={16} height={16} />,
-			text: __("Create new page", "wp-module-editor-chat"),
-			action: () => onSendMessage("Create new page"),
+			icon: <Edit3 width={16} height={16} />,
+			text: __("Rewrite content", "wp-module-editor-chat"),
+			action: () => onSendMessage("Rewrite content"),
 		},
 		{
-			icon: <Layers width={16} height={16} />,
-			text: __("Edit content", "wp-module-editor-chat"),
-			action: () => onSendMessage("Edit content"),
+			icon: <ArrowUpDown width={16} height={16} />,
+			text: __("Rearrange layout", "wp-module-editor-chat"),
+			action: () => onSendMessage("Rearrange layout"),
 		},
 	];
 
@@ -66,15 +66,14 @@ const WelcomeScreen = ({ onSendMessage }) => {
 				</div>
 			</div>
 			<div className="nfd-editor-chat-suggestions">
-				{false &&
-					suggestions.map((suggestion, index) => (
-						<SuggestionButton
-							key={index}
-							icon={suggestion.icon}
-							text={suggestion.text}
-							onClick={suggestion.action}
-						/>
-					))}
+				{suggestions.map((suggestion, index) => (
+					<SuggestionButton
+						key={index}
+						icon={suggestion.icon}
+						text={suggestion.text}
+						onClick={suggestion.action}
+					/>
+				))}
 			</div>
 		</div>
 	);
