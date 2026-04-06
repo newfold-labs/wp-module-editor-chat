@@ -91,7 +91,7 @@ const ChatEditor = () => {
 							messageBubbleStyle="minimal"
 						/>
 					)}
-						<ChatInput
+					<ChatInput
 						onSendMessage={handleSendMessage}
 						onStopRequest={handleStopRequest}
 						disabled={isLoading}

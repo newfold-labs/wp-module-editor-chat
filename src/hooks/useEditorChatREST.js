@@ -23,8 +23,12 @@ import { createMCPClient, archiveConversation } from "@newfold-labs/wp-module-ai
  */
 import { restoreBlocks, restoreGlobalStyles } from "../services/actionExecutor";
 import patternLibrary from "../services/patternLibrary";
-import { executeToolCallsForREST, upsertToolExecMsg, resetPatternSearchCache } from "../services/toolExecutor";
-import { EDITOR_SYSTEM_PROMPT, buildEditorContext, snapshotBlocks } from "../utils/editorContext";
+import {
+	executeToolCallsForREST,
+	upsertToolExecMsg,
+	resetPatternSearchCache,
+} from "../services/toolExecutor";
+import { EDITOR_SYSTEM_PROMPT, buildEditorContext } from "../utils/editorContext";
 
 const EDITOR_CHAT_CONSUMER = "editor_chat";
 const MAX_TOOL_ITERATIONS = 10;
@@ -42,7 +46,7 @@ const CHAT_STATUS = {
  * Check if conversation has at least one meaningful user message.
  *
  * @param {Array} messages Messages array
- * @return {boolean}
+ * @return {boolean} True if at least one user message has non-empty content.
  */
 function hasMeaningfulUserMessage(messages) {
 	return messages.some(
@@ -78,7 +82,7 @@ const mcpClient = createMCPClient({ configKey: "nfdEditorChat" });
 const useEditorChatREST = () => {
 	// ── Config / connection state ──
 	const [configStatus, setConfigStatus] = useState("idle"); // idle | loading | ready | error
-	const [mcpConnectionStatus, setMcpConnectionStatus] = useState("disconnected");
+	const [_mcpStatus, setMcpConnectionStatus] = useState("disconnected");
 	const [openaiTools, setOpenaiTools] = useState([]);
 
 	// ── Chat state ──
@@ -129,17 +133,20 @@ const useEditorChatREST = () => {
 	// ── Helpers ──
 	const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-	const updateProgress = async (message, minTime = 400) => {
+	// eslint-disable-next-line react-hooks/exhaustive-deps -- stable: only uses state setter and wait
+	const updateProgress = useCallback(async (message, minTime = 400) => {
 		setToolProgress(message);
 		await wait(minTime);
-	};
+	}, []);
 
 	// ─────────────────────────────────────────────────────────
 	// Initialization: config fetch + MCP + pattern library
 	// ─────────────────────────────────────────────────────────
 
 	const initialize = useCallback(async () => {
-		if (hasInitializedRef.current) return;
+		if (hasInitializedRef.current) {
+			return;
+		}
 		hasInitializedRef.current = true;
 
 		// Fetch config and MCP tools in parallel
@@ -206,11 +213,15 @@ const useEditorChatREST = () => {
 
 	useEffect(() => {
 		const config = sessionConfigRef.current;
-		if (!config || !config.expiresAt) return;
+		if (!config || !config.expiresAt) {
+			return;
+		}
 
 		// Refresh at 80% of expiry
 		const refreshAt = config.expiresAt - Date.now() - (config.expiresAt - Date.now()) * 0.2;
-		if (refreshAt <= 0) return;
+		if (refreshAt <= 0) {
+			return;
+		}
 
 		const timer = setTimeout(async () => {
 			try {
@@ -258,7 +269,7 @@ const useEditorChatREST = () => {
 			updateProgress,
 			wait,
 		}),
-		[]
+		[updateProgress]
 	);
 
 	// ─────────────────────────────────────────────────────────
@@ -276,7 +287,9 @@ const useEditorChatREST = () => {
 	 */
 	const streamCompletion = useCallback(async (msgs, tools, options = {}) => {
 		const client = openaiClientRef.current;
-		if (!client) throw new Error("OpenAI client not initialized");
+		if (!client) {
+			throw new Error("OpenAI client not initialized");
+		}
 
 		const model = options.model || window.nfdEditorChat?.model || "gpt-4o-mini";
 		const controller = new AbortController();
@@ -399,9 +412,7 @@ const useEditorChatREST = () => {
 						!m.id?.includes("-reasoning") &&
 						m.content
 					) {
-						const names = failedTools.map((t) =>
-							(t.name || "unknown").replace(/^blu-/, "")
-						);
+						const names = failedTools.map((t) => (t.name || "unknown").replace(/^blu-/, ""));
 						const notice =
 							failedTools.length === 1
 								? `\n\n> **Note:** The **${names[0]}** action failed and was not applied.`
@@ -438,19 +449,22 @@ const useEditorChatREST = () => {
 		if (hasToolActivity) {
 			let lastUserIdx = -1;
 			for (let i = msgs.length - 1; i >= 0; i--) {
-				if (msgs[i].role === "user") { lastUserIdx = i; break; }
+				if (msgs[i].role === "user") {
+					lastUserIdx = i;
+					break;
+				}
 			}
 			let toolExecIdx = -1;
 			for (let i = msgs.length - 1; i > lastUserIdx; i--) {
-				if (msgs[i].type === "tool_execution") { toolExecIdx = i; break; }
+				if (msgs[i].type === "tool_execution") {
+					toolExecIdx = i;
+					break;
+				}
 			}
 
-			const msgTools = toolExecIdx !== -1 ? (msgs[toolExecIdx].executedTools || []) : [];
+			const msgTools = toolExecIdx !== -1 ? msgs[toolExecIdx].executedTools || [] : [];
 			const stateIds = new Set(executedTools.map((t) => t.id));
-			const allExecuted = [
-				...msgTools.filter((t) => !stateIds.has(t.id)),
-				...executedTools,
-			];
+			const allExecuted = [...msgTools.filter((t) => !stateIds.has(t.id)), ...executedTools];
 
 			const augmented = {
 				id: toolExecIdx !== -1 ? msgs[toolExecIdx].id : "tool-exec-live",
@@ -471,7 +485,10 @@ const useEditorChatREST = () => {
 			} else {
 				let insertIdx = msgs.length;
 				for (let i = msgs.length - 1; i >= 0; i--) {
-					if (msgs[i].role === "user") { insertIdx = i + 1; break; }
+					if (msgs[i].role === "user") {
+						insertIdx = i + 1;
+						break;
+					}
 				}
 				msgs = [...msgs.slice(0, insertIdx), augmented, ...msgs.slice(insertIdx)];
 			}
@@ -497,7 +514,11 @@ const useEditorChatREST = () => {
 	// Derived state
 	// ─────────────────────────────────────────────────────────
 
-	const isLoading = status === CHAT_STATUS.GENERATING || status === CHAT_STATUS.TOOL_CALL || status === CHAT_STATUS.SUMMARIZING || configStatus === "loading";
+	const isLoading =
+		status === CHAT_STATUS.GENERATING ||
+		status === CHAT_STATUS.TOOL_CALL ||
+		status === CHAT_STATUS.SUMMARIZING ||
+		configStatus === "loading";
 
 	// ─────────────────────────────────────────────────────────
 	// Keep executedTools ref in sync
@@ -578,9 +599,7 @@ const useEditorChatREST = () => {
 
 			// First message: include system prompt
 			if (isFirstMessageRef.current) {
-				conversationHistoryRef.current = [
-					{ role: "system", content: EDITOR_SYSTEM_PROMPT },
-				];
+				conversationHistoryRef.current = [{ role: "system", content: EDITOR_SYSTEM_PROMPT }];
 				isFirstMessageRef.current = false;
 			}
 
@@ -645,9 +664,8 @@ const useEditorChatREST = () => {
 							type: "function",
 							function: {
 								name: tc.name,
-								arguments: typeof tc.arguments === "string"
-									? tc.arguments
-									: JSON.stringify(tc.arguments),
+								arguments:
+									typeof tc.arguments === "string" ? tc.arguments : JSON.stringify(tc.arguments),
 							},
 						})),
 					});
@@ -744,6 +762,7 @@ const useEditorChatREST = () => {
 	// Accept / Decline changes (ported from useEditorChat)
 	// ─────────────────────────────────────────────────────────
 
+	// eslint-disable-next-line no-unused-vars -- wired up via ChatMessages action buttons
 	const handleAcceptChanges = useCallback(async () => {
 		setIsSaving(true);
 
@@ -801,6 +820,7 @@ const useEditorChatREST = () => {
 		savePost,
 	]);
 
+	// eslint-disable-next-line no-unused-vars -- wired up via ChatMessages action buttons
 	const handleDeclineChanges = useCallback(async () => {
 		const firstActionMessage = messages.find((msg) => msg.hasActions && msg.undoData);
 
