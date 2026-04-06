@@ -15,7 +15,7 @@ import { ChatMessages } from "@newfold-labs/wp-module-ai-chat";
 /**
  * Internal dependencies
  */
-import useEditorChat from "../hooks/useEditorChat";
+import useEditorChatREST from "../hooks/useEditorChatREST";
 import ChatInput from "./chat/ChatInput";
 import WelcomeScreen from "./chat/WelcomeScreen";
 import SidebarHeader from "./sidebar/SidebarHeader";
@@ -38,7 +38,7 @@ const ChatEditor = () => {
 		handleSendMessage,
 		handleNewChat,
 		handleStopRequest,
-	} = useEditorChat();
+	} = useEditorChatREST();
 
 	useEffect(() => {
 		enableComplementaryArea(SIDEBAR_SCOPE, SIDEBAR_NAME);

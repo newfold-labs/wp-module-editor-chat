@@ -1966,3 +1966,349 @@ export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
 	ctx.setPendingTools([]);
 	// Don't set isLoading = false or status = null — WebSocket hook manages those
 }
+
+// ─────────────────────────────────────────────────────────────
+// REST-based tool execution (for CF AI Gateway / OpenAI function calling)
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Tools that return data the model needs (read-only tools).
+ * For these, we send the actual result content back to the AI.
+ * For write tools, we just send "Applied successfully" / error.
+ */
+const READ_TOOLS = new Set([
+	"blu-get-block-markup",
+	"blu-get-global-styles",
+	"blu-search-patterns",
+	"blu-get-pattern-markup",
+	"blu-highlight-block",
+]);
+
+/**
+ * Execute tool calls for the REST function-calling loop.
+ *
+ * Unlike executeToolCallsFromWebSocket, this function:
+ * - RETURNS results (for appending to conversation as tool messages)
+ * - Executes server-side tools via mcpClient.callTool()
+ * - Does NOT call sendToolResult (no WebSocket)
+ *
+ * @param {Array}  toolCalls Tool calls from the OpenAI streaming response
+ * @param {Object} ctx       Shared context object with clients, state setters, refs, helpers
+ * @return {Promise<Array>}  Array of { tool_call_id, content, isError } for the conversation
+ */
+export async function executeToolCallsForREST(toolCalls, ctx) {
+	console.log(
+		"[ToolExecutor:REST] Received tool calls:",
+		toolCalls.map((tc) => ({ name: tc.name, args: tc.arguments }))
+	);
+
+	const toolResults = [];
+	const completedToolsList = [];
+	let globalStylesUndoData = null;
+	let hasBlockEdits = false;
+
+	// Separate client-side (blu-*) and server-side tools
+	const clientToolCalls = [];
+	const serverToolCalls = [];
+	for (const tc of toolCalls) {
+		const name = tc.name || "";
+		if (name.startsWith("blu-")) {
+			clientToolCalls.push(tc);
+		} else {
+			serverToolCalls.push(tc);
+		}
+	}
+
+	// Execute server-side tools via MCP
+	for (const tc of serverToolCalls) {
+		const mcpName = (tc.name || "").replace(/-/g, "/");
+		console.log(`[ToolExecutor:REST] Server-side tool via MCP: ${mcpName}`);
+		try {
+			const mcpResult = await ctx.mcpClient.callTool(mcpName, tc.arguments || {});
+			const content = typeof mcpResult === "string" ? mcpResult : JSON.stringify(mcpResult);
+			toolResults.push({
+				tool_call_id: tc.id,
+				content,
+				isError: false,
+			});
+			completedToolsList.push({ ...tc, isError: false });
+			ctx.setExecutedTools((prev) => [...prev, { ...tc, isError: false }]);
+		} catch (err) {
+			console.error(`[ToolExecutor:REST] MCP tool failed: ${mcpName}`, err);
+			toolResults.push({
+				tool_call_id: tc.id,
+				content: JSON.stringify({ error: err.message }),
+				isError: true,
+			});
+			completedToolsList.push({ ...tc, isError: true, errorMessage: err.message });
+			ctx.setExecutedTools((prev) => [...prev, { ...tc, isError: true, errorMessage: err.message }]);
+		}
+	}
+
+	if (clientToolCalls.length === 0) {
+		console.log("[ToolExecutor:REST] No client-side tools to execute");
+		return toolResults;
+	}
+
+	// Capture block snapshot before any tool execution for atomic undo
+	const hasBlockTools = clientToolCalls.some((tc) => BLOCK_TOOL_NAMES.includes(tc.name || ""));
+	if (hasBlockTools && !ctx.blockSnapshotRef.current) {
+		const { select: wpSelect } = wp.data;
+		const allBlocks = wpSelect("core/block-editor").getBlocks();
+		ctx.blockSnapshotRef.current = snapshotBlocks(allBlocks);
+	}
+
+	await ctx.wait(300);
+	ctx.setStatus(CHAT_STATUS.TOOL_CALL);
+	ctx.setActiveToolCall({
+		id: "preparing",
+		name: "preparing",
+		index: 0,
+		total: clientToolCalls.length,
+	});
+	ctx.setPendingTools(
+		clientToolCalls.map((tc, idx) => ({
+			...tc,
+			id: tc.id || `tool-${idx}`,
+		}))
+	);
+
+	// Execute client-side tools sequentially (same logic as WebSocket version)
+	for (let i = 0; i < clientToolCalls.length; i++) {
+		const toolCall = clientToolCalls[i];
+		const toolIndex = i + 1;
+		const totalTools = clientToolCalls.length;
+
+		ctx.setPendingTools((prev) => prev.filter((_, idx) => idx !== 0));
+		ctx.setActiveToolCall({
+			id: toolCall.id || `tool-${i}`,
+			name: toolCall.name,
+			arguments: toolCall.arguments,
+			index: toolIndex,
+			total: totalTools,
+		});
+
+		await new Promise((r) => requestAnimationFrame(r));
+
+		try {
+			let toolName = toolCall.name || "";
+			console.log(
+				`[ToolExecutor:REST] Executing ${toolIndex}/${totalTools}: ${toolName}`,
+				toolCall.arguments
+			);
+			let args = toolCall.arguments || {};
+			if (typeof args === "string") {
+				try {
+					args = JSON.parse(args);
+				} catch (e) {
+					// Trailing junk after valid JSON — extract first complete {} object
+					let recovered = false;
+					let depth = 0;
+					let inStr = false;
+					let esc = false;
+					for (let ci = 0; ci < args.length; ci++) {
+						const ch = args[ci];
+						if (esc) { esc = false; continue; }
+						if (ch === "\\" && inStr) { esc = true; continue; }
+						if (ch === '"') { inStr = !inStr; continue; }
+						if (inStr) continue;
+						if (ch === "{") depth++;
+						if (ch === "}") {
+							depth--;
+							if (depth === 0) {
+								try {
+									args = JSON.parse(args.substring(0, ci + 1));
+									recovered = true;
+								} catch { /* ignore */ }
+								break;
+							}
+						}
+					}
+					if (!recovered) args = {};
+				}
+			}
+
+			// Normalize alt param names
+			if (!args.client_id && args.clientId) {
+				args.client_id = args.clientId;
+			}
+			if (
+				(toolName === "blu-edit-block" || toolName === "blu-add-section") &&
+				!args.block_content
+			) {
+				const alt = args.content || args.markup || args.html || args.block_markup;
+				if (alt) args.block_content = alt;
+			}
+
+			// Pattern enforcement
+			if (
+				(toolName === "blu-edit-block" || toolName === "blu-add-section") &&
+				args.block_content &&
+				!args.pattern_slug &&
+				lastPatternSearchResults &&
+				Date.now() - lastPatternSearchResults.timestamp < 120000 &&
+				lastPatternSearchResults.results.length > 0
+			) {
+				const topPattern = lastPatternSearchResults.results[0];
+				console.log(`[ToolExecutor:REST] Auto-correcting: using pattern_slug "${topPattern.slug}"`);
+				args.pattern_slug = topPattern.slug;
+				delete args.block_content;
+				lastPatternSearchResults = null;
+			}
+
+			// edit-block without client_id → treat as add-section
+			if (toolName === "blu-edit-block" && !args.client_id && (args.block_content || args.pattern_slug)) {
+				console.log(`[ToolExecutor:REST] Redirecting blu-edit-block → blu-add-section (no client_id)`);
+				toolName = "blu-add-section";
+			}
+
+			let result;
+
+			// Dispatch to existing handlers (same as WebSocket version)
+			if (toolName === "blu-update-global-styles" && args.settings) {
+				const gsResult = await handleUpdateGlobalStyles(toolCall, args, ctx);
+				result = gsResult.toolResult;
+				if (gsResult.globalStylesUndoData) globalStylesUndoData = gsResult.globalStylesUndoData;
+			} else if (toolName === "blu-get-global-styles") {
+				result = await handleGetGlobalStyles(toolCall, ctx);
+			} else if (toolName === "blu-edit-block" && args.client_id && (args.block_content || args.pattern_slug)) {
+				result = await handleEditBlock(toolCall, args, ctx);
+				if (!result.isError && result.hasChanges) hasBlockEdits = true;
+			} else if (toolName === "blu-add-section" && (args.block_content || args.pattern_slug)) {
+				result = await handleAddSection(toolCall, args, ctx);
+				if (!result.isError && result.hasChanges) hasBlockEdits = true;
+			} else if (toolName === "blu-delete-block" && args.client_id) {
+				result = await handleDeleteBlock(toolCall, args, ctx);
+				if (!result.isError && result.hasChanges) hasBlockEdits = true;
+			} else if (toolName === "blu-move-block" && args.client_id && ((args.target_client_id && args.position) || args.as_child_of)) {
+				result = await handleMoveBlock(toolCall, args, ctx);
+				if (!result.isError && result.hasChanges) hasBlockEdits = true;
+			} else if (toolName === "blu-get-block-markup" && args.client_id) {
+				result = await handleGetBlockMarkup(toolCall, args, ctx);
+			} else if (toolName === "blu-highlight-block" && args.client_id) {
+				result = await handleHighlightBlock(toolCall, args, ctx);
+			} else if (toolName === "blu-update-block-attrs" && args.client_id) {
+				if (!args.attributes) {
+					const { client_id, ...rest } = args;
+					if (Object.keys(rest).length > 0) {
+						console.warn(`[ToolExecutor:REST] Auto-wrapping loose properties into attributes`, rest);
+						args = { client_id, attributes: rest };
+					}
+				}
+				if (args.attributes) {
+					result = await handleUpdateBlockAttrs(toolCall, args, ctx);
+					if (!result.isError && result.hasChanges) hasBlockEdits = true;
+				}
+			} else if (toolName === "blu-replace-image" && args.client_id && args.url) {
+				result = await handleReplaceImage(toolCall, args, ctx);
+				if (!result.isError && result.hasChanges) hasBlockEdits = true;
+			} else if (toolName === "blu-update-text" && args.client_id && args.text !== undefined) {
+				result = await handleUpdateText(toolCall, args, ctx);
+				if (!result.isError && result.hasChanges) hasBlockEdits = true;
+			} else if (toolName === "blu-duplicate-block" && args.client_id) {
+				result = await handleDuplicateBlock(toolCall, args, ctx);
+				if (!result.isError && result.hasChanges) hasBlockEdits = true;
+			} else if (toolName === "blu-batch-update-attrs") {
+				if (!args.updates && Array.isArray(args)) {
+					args = { updates: args };
+				} else if (!args.updates) {
+					const arrayKey = Object.keys(args).find((k) => Array.isArray(args[k]));
+					if (arrayKey) args = { updates: args[arrayKey] };
+				}
+				if (!args.updates || !Array.isArray(args.updates) || args.updates.length === 0) {
+					result = { id: toolCall.id, result: [{ type: "text", text: JSON.stringify({ success: false, error: "updates array is required" }) }], isError: true };
+				} else {
+					result = await handleBatchUpdateAttrs(toolCall, args, ctx);
+					if (!result.isError && result.hasChanges) hasBlockEdits = true;
+				}
+			} else if (toolName === "blu-insert-block" && args.block_name) {
+				result = await handleInsertBlock(toolCall, args, ctx);
+				if (!result.isError && result.hasChanges) hasBlockEdits = true;
+			} else if (toolName === "blu-rewrite-text" && args.client_id && args.instructions) {
+				result = await handleRewriteText(toolCall, args, ctx);
+				if (!result.isError && result.hasChanges) hasBlockEdits = true;
+			} else if (toolName === "blu-search-patterns" && args.query) {
+				result = await handleSearchPatterns(toolCall, args, ctx);
+			} else if (toolName === "blu-get-pattern-markup" && args.slug) {
+				result = await handleGetPatternMarkup(toolCall, args, ctx);
+			} else {
+				console.warn(`[ToolExecutor:REST] Unrecognized client tool: ${toolName}`, args);
+				result = { id: toolCall.id, result: null, isError: false };
+			}
+
+			// Build tool result for conversation
+			const isError = result?.isError ?? false;
+			let content;
+			if (isError) {
+				content = result.error || result.result?.[0]?.text || "Tool failed";
+			} else if (READ_TOOLS.has(toolName) && result?.result?.[0]?.text) {
+				content = result.result[0].text;
+			} else {
+				content = result?.hasChanges ? "Applied successfully" : "No changes needed";
+			}
+
+			toolResults.push({ tool_call_id: toolCall.id, content, isError });
+			completedToolsList.push({ ...toolCall, isError });
+			ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError }]);
+		} catch (err) {
+			console.error(`[ToolExecutor:REST] Error executing ${toolCall.name}:`, err);
+			await ctx.updateProgress(
+				__("Action failed:", "wp-module-editor-chat") + " " + err.message,
+				1000
+			);
+			toolResults.push({
+				tool_call_id: toolCall.id,
+				content: JSON.stringify({ error: err.message }),
+				isError: true,
+			});
+			completedToolsList.push({ ...toolCall, isError: true, errorMessage: err.message });
+			ctx.setExecutedTools((prev) => [
+				...prev,
+				{ ...toolCall, isError: true, errorMessage: err.message },
+			]);
+		}
+	}
+
+	// Build composite undo data
+	const hasChanges = toolResults.some((r) => !r.isError && r.content?.includes?.("Applied"));
+	let compositeUndoData = null;
+	if (hasChanges || hasBlockEdits) {
+		const undoParts = {};
+		if (hasBlockEdits && ctx.blockSnapshotRef.current) {
+			undoParts.blocks = ctx.blockSnapshotRef.current;
+		}
+		if (globalStylesUndoData) {
+			undoParts.globalStyles = globalStylesUndoData;
+		}
+		if (Object.keys(undoParts).length > 0) {
+			compositeUndoData = undoParts;
+		}
+	}
+
+	// Persist tool execution as display message
+	const refTools = ctx.executedToolsRef.current || [];
+	const seenIds = new Set();
+	const allCompletedTools = [];
+	for (const t of [...refTools, ...completedToolsList]) {
+		if (!seenIds.has(t.id)) {
+			seenIds.add(t.id);
+			allCompletedTools.push(t);
+		}
+	}
+
+	if (compositeUndoData || allCompletedTools.length > 0) {
+		upsertToolExecMsg(ctx.setMessages, allCompletedTools, compositeUndoData);
+	}
+
+	if (allCompletedTools.length > 0) {
+		ctx.executedToolsRef.current = [...allCompletedTools];
+		ctx.setExecutedTools([]);
+	}
+
+	// Clear tool execution UI state
+	ctx.setActiveToolCall(null);
+	ctx.setToolProgress(null);
+	ctx.setPendingTools([]);
+
+	return toolResults;
+}
