@@ -28,7 +28,8 @@ import {
 	upsertToolExecMsg,
 	resetPatternSearchCache,
 } from "../services/toolExecutor";
-import { EDITOR_SYSTEM_PROMPT, buildEditorContext } from "../utils/editorContext";
+import { EDITOR_SYSTEM_PROMPT, REASONING_INSTRUCTION, EXECUTE_NUDGE, buildEditorContext } from "../utils/editorContext";
+import { safeParseJSON } from "../utils/jsonUtils";
 
 const EDITOR_CHAT_CONSUMER = "editor_chat";
 const MAX_TOOL_ITERATIONS = 10;
@@ -41,6 +42,128 @@ const CHAT_STATUS = {
 	COMPLETED: "completed",
 	ERROR: "error",
 };
+
+/**
+ * Parse the reasoning response to detect [PLAN] prefix.
+ * Returns { isPlan, content } where content has the prefix stripped.
+ *
+ * @param {string} text Raw response text
+ * @return {{ isPlan: boolean, content: string }}
+ */
+function parseReasoningResponse(text) {
+	const trimmed = (text || "").trim();
+	if (trimmed.startsWith("[PLAN]")) {
+		let content = trimmed.slice("[PLAN]".length).trim();
+
+		// The model sometimes hallucinates function calls in the reasoning pass
+		// (where tools are disabled).  Truncate at the first sign of tool-call
+		// leakage so the user only sees the natural-language plan.
+		const junkPatterns = [
+			/\bto=functions\./i,
+			/\{\s*"client_id"/,
+			/\{\s*"block_content"/,
+			/<!--\s*wp:/,
+			/\{\s*"after_client_id"/,
+		];
+		for (const pattern of junkPatterns) {
+			const match = content.search(pattern);
+			if (match !== -1) {
+				content = content.slice(0, match).trim();
+				break;
+			}
+		}
+
+		return { isPlan: true, content };
+	}
+	return { isPlan: false, content: trimmed };
+}
+
+/**
+ * Truncate tool result content to keep conversation history lean.
+ * Preserves enough for the AI to understand what happened.
+ *
+ * @param {string} content Raw tool result content
+ * @param {number} maxLen  Maximum characters to keep
+ * @return {string} Possibly truncated content
+ */
+function truncateToolResult(content, maxLen = 500) {
+	if (!content || content.length <= maxLen) {
+		return content;
+	}
+	return content.slice(0, maxLen) + "\n...[truncated]";
+}
+
+/**
+ * Compress conversation history to reduce token usage on subsequent API calls.
+ *
+ * Keeps the system prompt and current exchange (from last user message onward)
+ * intact. For older messages:
+ * - Strips embedded <editor_context> from legacy user messages
+ * - Replaces tool_call arguments with compact stubs
+ * - Aggressively truncates old tool result content
+ *
+ * @param {Array} history Conversation history array
+ * @return {Array} Compressed history
+ */
+function compressConversationHistory(history) {
+	if (history.length <= 6) {
+		return history;
+	}
+
+	// Find last user message — everything from there onward is "current"
+	let lastUserIdx = -1;
+	for (let i = history.length - 1; i >= 0; i--) {
+		if (history[i].role === "user") {
+			lastUserIdx = i;
+			break;
+		}
+	}
+
+	if (lastUserIdx <= 1) {
+		return history;
+	}
+
+	const compressed = [];
+	for (let i = 0; i < history.length; i++) {
+		const msg = history[i];
+
+		// Keep system prompt (idx 0) and current exchange intact
+		if (i === 0 || i >= lastUserIdx) {
+			compressed.push(msg);
+			continue;
+		}
+
+		if (msg.role === "user" && msg.content) {
+			// Strip embedded editor context from older user messages
+			const stripped = msg.content
+				.replace(/<editor_context>[\s\S]*?<\/editor_context>\s*/g, "")
+				.trim();
+			compressed.push({ ...msg, content: stripped || msg.content });
+		} else if (msg.role === "assistant" && msg.tool_calls) {
+			// Strip detailed tool_call arguments (keep names for context)
+			compressed.push({
+				...msg,
+				tool_calls: msg.tool_calls.map((tc) => ({
+					...tc,
+					function: {
+						...tc.function,
+						arguments: "{}",
+					},
+				})),
+			});
+		} else if (msg.role === "tool") {
+			// Aggressively truncate older tool results
+			compressed.push({
+				...msg,
+				content: truncateToolResult(msg.content, 150),
+			});
+		} else {
+			compressed.push(msg);
+		}
+	}
+
+	return compressed;
+}
 
 /**
  * Check if conversation has at least one meaningful user message.
@@ -60,6 +183,40 @@ function hasMeaningfulUserMessage(messages) {
  * @param {Array} mcpTools Tools from mcpClient.listTools()
  * @return {Array} OpenAI tools array
  */
+/**
+ * Core block-editing tools. Non-editor tools (posts, media, users, etc.)
+ * are only sent to the model when its reasoning plan indicates they're needed.
+ */
+const EDITOR_TOOLS = new Set([
+	"blu-edit-block",
+	"blu-add-section",
+	"blu-delete-block",
+	"blu-move-block",
+	"blu-get-block-markup",
+	"blu-highlight-block",
+	"blu-rewrite-text",
+	"blu-update-block-attrs",
+	"blu-update-global-styles",
+	// blu-generate-image intentionally excluded — image generation is handled
+	// internally via image_prompts on blu-add-section (for new sections) and
+	// image_prompt on blu-update-block-attrs (for existing images).
+	// This prevents the AI from looping on generate-image calls.
+]);
+
+/**
+ * Check if the user's message requires site management tools.
+ * Uses the raw user message (not the AI's plan, which always mentions "page").
+ * Matches explicit action + noun patterns to avoid false positives.
+ */
+function messageNeedsSiteTools(userMessage) {
+	const msg = (userMessage || "").toLowerCase();
+	return /\b(create|write|publish|draft|make)\b.{0,15}\b(post|article|blog)\b/.test(msg)
+		|| /\b(create|make)\b.{0,10}\b(new\s+)?page\b/.test(msg)
+		|| /\b(upload|manage)\b.{0,10}\b(media|image|file)\b/.test(msg)
+		|| /\b(add|create|manage|update|delete)\b.{0,10}\b(user|product|setting)\b/.test(msg)
+		|| /\bwoocommerce\b/.test(msg);
+}
+
 function mcpToolsToOpenAI(mcpTools) {
 	return mcpTools.map((tool) => ({
 		type: "function",
@@ -291,7 +448,9 @@ const useEditorChatREST = () => {
 			throw new Error("OpenAI client not initialized");
 		}
 
-		const model = options.model || window.nfdEditorChat?.model || "gpt-4o-mini";
+		// Model is controlled by the Worker's DEFAULT_MODEL env var.
+		// Only override if explicitly set via wp-config NFD_EDITOR_CHAT_MODEL.
+		const model = options.model || window.nfdEditorChat?.model || undefined;
 		const controller = new AbortController();
 		abortControllerRef.current = controller;
 
@@ -304,7 +463,7 @@ const useEditorChatREST = () => {
 				stream: true,
 				stream_options: { include_usage: true },
 				temperature: options.temperature ?? 0.7,
-				max_tokens: options.max_tokens,
+				max_completion_tokens: options.max_completion_tokens,
 			},
 			{ signal: controller.signal }
 		);
@@ -312,6 +471,11 @@ const useEditorChatREST = () => {
 		let fullMessage = "";
 		let finishReason = null;
 		const toolCallsInProgress = {};
+
+		// Prefix stripping: buffer early chars to hide [PLAN] from the UI
+		const stripPrefix = options.stripPrefix || null;
+		let prefixBuffer = "";
+		let prefixResolved = !stripPrefix; // skip buffering if no prefix to strip
 
 		for await (const chunk of stream) {
 			const delta = chunk.choices?.[0]?.delta;
@@ -328,7 +492,31 @@ const useEditorChatREST = () => {
 			// Text content
 			if (delta.content) {
 				fullMessage += delta.content;
-				setCurrentResponse((prev) => prev + delta.content);
+
+				// Silent mode: accumulate content but don't stream to UI
+				if (options.silent) {
+					continue;
+				}
+
+				if (!prefixResolved) {
+					prefixBuffer += delta.content;
+					if (prefixBuffer.length >= stripPrefix.length) {
+						prefixResolved = true;
+						if (prefixBuffer.startsWith(stripPrefix)) {
+							// Strip prefix, stream the remainder
+							const remainder = prefixBuffer.slice(stripPrefix.length);
+							if (remainder) {
+								setCurrentResponse((prev) => prev + remainder);
+							}
+						} else {
+							// Not a match, flush entire buffer
+							setCurrentResponse((prev) => prev + prefixBuffer);
+						}
+					}
+					// Still buffering — don't update UI yet
+				} else {
+					setCurrentResponse((prev) => prev + delta.content);
+				}
 			}
 
 			// Tool call deltas
@@ -362,14 +550,27 @@ const useEditorChatREST = () => {
 			}
 		}
 
+		// Flush any unresolved prefix buffer (response shorter than prefix length)
+		if (!prefixResolved && prefixBuffer) {
+			setCurrentResponse((prev) => prev + prefixBuffer);
+		}
+
 		abortControllerRef.current = null;
 
-		// Parse accumulated tool calls
-		const finalToolCalls = Object.values(toolCallsInProgress).map((tc) => ({
-			id: tc.id,
-			name: tc.function.name,
-			arguments: tc.function.arguments ? JSON.parse(tc.function.arguments) : {},
-		}));
+		// Parse accumulated tool calls (with recovery for truncated JSON)
+		const finalToolCalls = Object.values(toolCallsInProgress).map((tc) => {
+			if (!tc.function.arguments) {
+				return { id: tc.id, name: tc.function.name, arguments: {} };
+			}
+			const { value, recovered } = safeParseJSON(tc.function.arguments);
+			const isTruncated = recovered && Object.keys(value).length === 0;
+			return {
+				id: tc.id,
+				name: tc.function.name,
+				arguments: value,
+				_truncated: isTruncated,
+			};
+		});
 
 		return {
 			content: fullMessage,
@@ -594,19 +795,16 @@ const useEditorChatREST = () => {
 			setError(null);
 			resetPatternSearchCache();
 
-			// Build editor context
-			const editorContext = buildEditorContext();
-
 			// First message: include system prompt
 			if (isFirstMessageRef.current) {
 				conversationHistoryRef.current = [{ role: "system", content: EDITOR_SYSTEM_PROMPT }];
 				isFirstMessageRef.current = false;
 			}
 
-			// Append user message with editor context
+			// Store clean user message — editor context is injected per-request, not persisted
 			conversationHistoryRef.current.push({
 				role: "user",
-				content: `<editor_context>\n${editorContext}\n</editor_context>\n\n${messageContent}`,
+				content: messageContent,
 			});
 
 			// Add clean user message to display
@@ -614,22 +812,114 @@ const useEditorChatREST = () => {
 				...prev,
 				{
 					id: `user-${Date.now()}`,
+					type: "user",
 					role: "user",
 					content: messageContent,
 					timestamp: new Date(),
 				},
 			]);
 
-			// Function calling loop
+			// Function calling loop with reasoning first-pass
 			let iterations = 0;
+			let isReasoningPass = true;
+			const currentUserMessage = messageContent; // used to select tools for pass 2
+			const toolNameCounts = new Map(); // per-name counter across iterations (counts iterations, not individual calls)
+			const MAX_SAME_TOOL_RETRIES = 1; // block on 2nd iteration of the same write tool
+			let retryLimitHit = false; // true after first retry detection — break on second
+			const READ_ONLY_TOOLS = new Set([
+				"blu-get-block-markup", "blu-get-global-styles", "blu-get-active-global-styles",
+				"blu-search-patterns", "blu-highlight-block", "blu-generate-image",
+			]);
 			try {
 				while (iterations++ < MAX_TOOL_ITERATIONS) {
+					// Fresh editor context each iteration (reflects tool changes)
+					const editorContext = buildEditorContext();
+					const editorContextMsg = {
+						role: "system",
+						content: `<editor_context>\n${editorContext}\n</editor_context>`,
+					};
+
 					setStatus(CHAT_STATUS.GENERATING);
 					setCurrentResponse("");
 
+					if (isReasoningPass) {
+						// ── Pass 1: reasoning call — no tools, [PLAN] prefix stripped ──
+						isReasoningPass = false;
+
+						const reasoningMessages = [
+							...conversationHistoryRef.current,
+							editorContextMsg,
+							{ role: "system", content: REASONING_INSTRUCTION },
+						];
+
+						const { content: rawReasoning } = await streamCompletion(
+							reasoningMessages,
+							[],
+							{ max_completion_tokens: 200, stripPrefix: "[PLAN]" }
+						);
+
+						const { isPlan, content: reasoning } = parseReasoningResponse(rawReasoning);
+
+						if (!isPlan) {
+							// Conversational response — final answer, no tools needed
+							conversationHistoryRef.current.push({
+								role: "assistant",
+								content: reasoning,
+							});
+							setCurrentResponse("");
+							setMessages((prev) => [
+								...prev,
+								{
+									id: `assistant-${Date.now()}`,
+									type: "assistant",
+									role: "assistant",
+									content: reasoning,
+									timestamp: new Date(),
+								},
+							]);
+							break;
+						}
+
+						// It's a plan — persist reasoning as a visible message
+						conversationHistoryRef.current.push({
+							role: "assistant",
+							content: reasoning,
+						});
+						setCurrentResponse("");
+						setMessages((prev) => [
+							...prev,
+							{
+								id: `assistant-${Date.now()}-reasoning`,
+								type: "assistant",
+								role: "assistant",
+								content: reasoning,
+								timestamp: new Date(),
+							},
+						]);
+
+						// Continue to next iteration which will call with tools
+						continue;
+					}
+
+					// ── Pass 2+: call with tools ──
+					// Dynamically select tools based on the user's message:
+					// editor tasks → only block-editing tools (prevents search-media, get-function-details, etc.)
+					// site management tasks (create post, upload media, etc.) → all tools
+					const toolsForPass = messageNeedsSiteTools(currentUserMessage)
+						? openaiTools
+						: openaiTools.filter((t) => EDITOR_TOOLS.has(t.function.name));
+
+					// Editor context + execute nudge injected per-request, NOT persisted
+					const toolMessages = [
+						...conversationHistoryRef.current,
+						editorContextMsg,
+						{ role: "system", content: EXECUTE_NUDGE },
+					];
+
 					const { content, toolCalls } = await streamCompletion(
-						conversationHistoryRef.current,
-						openaiTools
+						toolMessages,
+						toolsForPass,
+						{ silent: true }
 					);
 
 					if (!toolCalls || toolCalls.length === 0) {
@@ -643,6 +933,7 @@ const useEditorChatREST = () => {
 							...prev,
 							{
 								id: `assistant-${Date.now()}`,
+								type: "assistant",
 								role: "assistant",
 								content,
 								timestamp: new Date(),
@@ -654,6 +945,57 @@ const useEditorChatREST = () => {
 					// Tool calls — execute them
 					setCurrentResponse("");
 					setStatus(CHAT_STATUS.TOOL_CALL);
+
+					// Retry detection: count iterations per tool name (not individual calls)
+					// Skip read-only tools — reading blocks is a prerequisite for editing
+					const writeToolsInBatch = new Set();
+					for (const tc of toolCalls) {
+						if (!READ_ONLY_TOOLS.has(tc.name)) {
+							writeToolsInBatch.add(tc.name);
+						}
+					}
+					for (const name of writeToolsInBatch) {
+						toolNameCounts.set(name, (toolNameCounts.get(name) || 0) + 1);
+					}
+					const allRetried = writeToolsInBatch.size > 0 && [...writeToolsInBatch].every(
+						(name) => toolNameCounts.get(name) > MAX_SAME_TOOL_RETRIES
+					);
+
+					if (allRetried) {
+						// Second trigger → stop immediately
+						if (retryLimitHit) {
+							console.warn("[EditorChat] Retry loop — breaking (AI ignored RETRY LIMIT)");
+							break;
+						}
+						retryLimitHit = true;
+						console.warn(
+							"[EditorChat] Retry loop detected — all tool calls have been repeated",
+							toolCalls.map((tc) => `${tc.name} (${toolNameCounts.get(tc.name)}x)`)
+						);
+						// Append the assistant message so the conversation stays valid
+						conversationHistoryRef.current.push({
+							role: "assistant",
+							content: content || null,
+							tool_calls: toolCalls.map((tc) => ({
+								id: tc.id,
+								type: "function",
+								function: {
+									name: tc.name,
+									arguments:
+										typeof tc.arguments === "string" ? tc.arguments : JSON.stringify(tc.arguments),
+								},
+							})),
+						});
+						// Inject synthetic tool results — give AI one chance to summarize
+						for (const tc of toolCalls) {
+							conversationHistoryRef.current.push({
+								role: "tool",
+								tool_call_id: tc.id,
+								content: "RETRY LIMIT: This tool has already been called multiple times. The edit is already applied. Do NOT call any more tools — respond to the user with a brief summary.",
+							});
+						}
+						continue;
+					}
 
 					// Append assistant message with tool_calls to conversation
 					conversationHistoryRef.current.push({
@@ -670,21 +1012,53 @@ const useEditorChatREST = () => {
 						})),
 					});
 
-					// Execute tools
-					const results = await executeToolCallsForREST(toolCalls, buildToolCtx());
+					// Handle truncated tool calls — skip execution, return error
+					const truncated = toolCalls.filter((tc) => tc._truncated);
+					if (truncated.length > 0) {
+						for (const tc of truncated) {
+							conversationHistoryRef.current.push({
+								role: "tool",
+								tool_call_id: tc.id,
+								content: "ERROR: Tool arguments were truncated and could not be parsed. Try again with shorter content or fewer changes at once.",
+							});
+						}
+					}
 
-					// Append tool results to conversation
+					// Execute non-truncated tools only
+					const executableCalls = toolCalls.filter((tc) => !tc._truncated);
+					const results = executableCalls.length > 0
+						? await executeToolCallsForREST(executableCalls, buildToolCtx())
+						: [];
+
+					// Append tool results to conversation (truncated to limit token growth)
 					for (const r of results) {
+						const rawContent = typeof r.content === "string" ? r.content : JSON.stringify(r.content);
 						conversationHistoryRef.current.push({
 							role: "tool",
 							tool_call_id: r.tool_call_id,
-							content: typeof r.content === "string" ? r.content : JSON.stringify(r.content),
+							content: truncateToolResult(rawContent),
+						});
+					}
+
+					// If all tools succeeded, nudge the AI to summarize rather than retry.
+					// The AI can still chain different tools if needed (e.g., generate-image
+					// then update-block-attrs) — it just shouldn't repeat the same operation.
+					const allSucceeded = results.every((r) => !r.isError);
+					if (allSucceeded && results.length > 0) {
+						conversationHistoryRef.current.push({
+							role: "system",
+							content: "All actions completed successfully. If the user's request is fully handled, respond with a brief summary. Only call more tools if additional DIFFERENT steps are needed to complete the request.",
 						});
 					}
 
 					setStatus(CHAT_STATUS.SUMMARIZING);
 					// Loop continues — next iteration will get the AI's response
 				}
+
+				// Compress older exchanges to keep history lean for next turn
+				conversationHistoryRef.current = compressConversationHistory(
+					conversationHistoryRef.current
+				);
 
 				setStatus(CHAT_STATUS.COMPLETED);
 				// After a brief pause, return to idle
@@ -702,6 +1076,7 @@ const useEditorChatREST = () => {
 					...prev,
 					{
 						id: `error-${Date.now()}`,
+						type: "assistant",
 						role: "assistant",
 						content: __("Something went wrong. Please try again.", "wp-module-editor-chat"),
 						timestamp: new Date(),
