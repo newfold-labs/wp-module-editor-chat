@@ -15,36 +15,176 @@
 // editor-chat styling when rendered in the sidebar
 .nfd-editor-chat-sidebar {
 
-	// Tool execution: match assistant text styling
+	// ═══════════════════════════════════════════════════════
+	// Tool execution list overrides
+	// Covers: executing, completed, failed, between-batches,
+	// pending, progress, collapsed/expanded
+	// ═══════════════════════════════════════════════════════
 	.nfd-ai-chat-tool-execution {
 		background: none;
 		border: none;
 		border-radius: 0;
+		width: 100%;
 
+		// ── Collapsible header ──
 		&__header {
-			padding: 8px;
-			font-size: var(--nfd-editor-chat-font-size-base);
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			padding: 6px 8px;
+			border-radius: 6px;
+			font-size: 13px;
+			font-weight: 500;
 			color: var(--nfd-editor-chat-color-text);
+			transition: background 0.15s ease;
+
+			&:hover {
+				background: var(--nfd-editor-chat-color-primary-light-8);
+			}
 		}
 
+		&__header-count {
+			color: var(--nfd-editor-chat-color-grey-medium);
+			font-weight: 400;
+		}
+
+		// ── Chevron rotation via parent ──
+		&__chevron {
+			flex-shrink: 0;
+			color: var(--nfd-editor-chat-color-grey-medium);
+			transition: transform 0.2s ease;
+		}
+
+		// ── Item list ──
 		&__list {
-			padding: 4px 8px 8px;
+			display: flex;
+			flex-direction: column;
+			padding: 2px 8px 6px;
 		}
 
+		// ── Individual tool item ──
+		&__item {
+			display: flex;
+			flex-direction: column;
+			gap: 2px;
+			padding: 5px 0;
+
+			& + & {
+				border-top: 1px solid var(--nfd-editor-chat-color-background);
+			}
+
+			// Active item: subtle left accent
+			&--active {
+				.nfd-ai-chat-tool-execution__item-header {
+					gap: 8px;
+				}
+			}
+
+			// Completed item
+			&--complete {
+				.nfd-ai-chat-tool-execution__item-title {
+					color: var(--nfd-editor-chat-color-text);
+				}
+			}
+
+			// Error item
+			&--error {
+				.nfd-ai-chat-tool-execution__item-title {
+					color: var(--nfd-editor-chat-color-text-secondary);
+				}
+			}
+		}
+
+		&__item-header {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		// ── Icons ──
+		&__icon {
+			flex-shrink: 0;
+			width: 14px;
+			height: 14px;
+
+			&--active {
+				color: var(--nfd-editor-chat-color-primary);
+				animation: nfd-refined-spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+			}
+
+			&--success {
+				color: #16a34a;
+			}
+
+			&--error {
+				color: var(--nfd-editor-chat-color-error);
+			}
+
+			&--pending {
+				color: var(--nfd-editor-chat-color-grey-light);
+			}
+		}
+
+		// ── Title ──
 		&__item-title {
-			font-size: var(--nfd-editor-chat-font-size-base);
+			font-size: 13px;
+			font-weight: 400;
 			color: var(--nfd-editor-chat-color-text);
+			flex: 1;
+			min-width: 0;
 		}
 
+		// ── Params badge ──
 		&__item-params {
-			font-size: var(--nfd-editor-chat-font-size-base);
+			font-size: 12px;
+			color: var(--nfd-editor-chat-color-grey-medium);
+			background: var(--nfd-editor-chat-color-background);
+			padding: 1px 6px;
+			border-radius: 3px;
+			flex-shrink: 0;
 		}
 
-		&__item-progress,
+		// ── Progress message ──
+		&__item-progress {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			padding: 2px 0 0 22px;
+			font-size: 12px;
+			font-weight: 450;
+			color: var(--nfd-editor-chat-color-primary);
+
+			// Pulsing dot before progress text
+			&::before {
+				content: "";
+				width: 5px;
+				height: 5px;
+				border-radius: 50%;
+				background: var(--nfd-editor-chat-color-primary);
+				flex-shrink: 0;
+				animation: nfd-pulse-dot 1.5s ease-in-out infinite;
+			}
+		}
+
+		// ── Summary text (below completed items) ──
 		&__item-summary {
-			font-size: var(--nfd-editor-chat-font-size-base);
+			font-size: 12px;
+			color: var(--nfd-editor-chat-color-grey-medium);
+			padding-left: 22px;
+			margin-top: 1px;
 		}
 	}
+
+	@keyframes nfd-refined-spin {
+		from { transform: rotate(0deg); }
+		to { transform: rotate(360deg); }
+	}
+
+	@keyframes nfd-pulse-dot {
+		0%, 100% { opacity: 1; transform: scale(1); }
+		50% { opacity: 0.4; transform: scale(0.85); }
+	}
+
 	// Map ai-chat CSS variables to editor-chat variables
 	--nfd-ai-chat-color-primary: var(--nfd-editor-chat-color-primary);
 	--nfd-ai-chat-color-primary-hover: var(--nfd-editor-chat-color-primary-hover);

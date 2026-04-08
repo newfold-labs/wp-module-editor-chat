@@ -215,7 +215,7 @@ final class ChatEditor {
 					'homeUrl'        => \esc_url( \get_home_url() ),
 					'wpVer'          => \esc_html( \get_bloginfo( 'version' ) ),
 					'nfdChatVersion' => \esc_html( NFD_EDITOR_CHAT_VERSION ),
-					'model'          => defined( 'NFD_EDITOR_CHAT_MODEL' ) ? \NFD_EDITOR_CHAT_MODEL : 'gpt-4o-mini',
+					'model'          => defined( 'NFD_EDITOR_CHAT_MODEL' ) ? \NFD_EDITOR_CHAT_MODEL : '',
 					'site'           => self::get_site_context(),
 				)
 			);
