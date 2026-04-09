@@ -90,7 +90,13 @@ export async function streamCompletion(msgs, tools, options = {}, deps) {
 				}
 				// Still buffering — don't update UI yet
 			} else {
-				setCurrentResponse((prev) => prev + delta.content);
+				// Strip duplicate [PLAN] markers and tool-call leakage from streaming display
+				const cleaned = stripPrefix
+					? delta.content.replace(/\[PLAN\]/g, "").replace(/=fn\.\S*/g, "")
+					: delta.content;
+				if (cleaned) {
+					setCurrentResponse((prev) => prev + cleaned);
+				}
 			}
 		}
 

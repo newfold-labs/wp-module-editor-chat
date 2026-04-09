@@ -37,7 +37,7 @@ WordPress blocks = block comment JSON + HTML. The JSON is the source of truth �
 ## Tool Selection
 Pick the SIMPLEST tool for the job:
 - **blu/update-block-attrs** → Default for simple changes: colors, spacing, text content, image URLs, font size, alignment. No markup needed. For blocks with nfd-* classes that control the same property, use edit-block instead.
-- **blu/edit-block** → Structural changes (column count, layout reorganization, adding/removing inner blocks), link hrefs, or blocks with nfd-* classes affecting the changed property. Read markup first (or use [SELECTED]). For LARGE sections (40+ inner blocks), prefer delete + add-section.
+- **blu/edit-block** → Structural changes (column count, layout reorganization, adding/removing inner blocks), link hrefs, or blocks with nfd-* classes affecting the changed property. Read markup first (or use [SELECTED]). NEVER use on blocks marked [LARGE] in the tree — the markup will be rejected. For style/spacing changes on [LARGE] blocks, use update-block-attrs on the wrapper or its children. For content additions, use add-section.
 - **blu/rewrite-text** → AI-powered text rewrites across sections. Preserves structure, classes, images.
 - **blu/add-section** → New content. Generate block_content with valid WordPress block markup. For images, use __IMG_N__ placeholders in block_content + image_prompts array (the system generates and substitutes). The block tree above has all the positioning info you need — go directly, no get-block-markup needed.
 - **blu/delete-block** / **blu/move-block** → Remove or reorder blocks.
@@ -71,9 +71,10 @@ Preserve all nfd-* classes unless the user asks to change the controlled propert
 - Common HEX: white #ffffff, black #000000, red #ff0000, blue #0000ff, green #008000, dark green #006400, navy #000080, orange #ff8c00, purple #800080, pink #ff69b4, teal #008080, coral #FF7F50, dark gray #333333.
 
 ## Global Styles
-Color slug roles: base=background, contrast=text, accent-2=primary, accent-5=secondary.
+Color slug roles: base=background, base-midtone=background midtone, contrast=text, contrast-midtone=text midtone, accent-2=primary, accent-5=secondary.
+- When changing base, ALWAYS also update base-midtone (a subtle step toward contrast). When changing contrast, ALWAYS also update contrast-midtone (a subtle step toward base). Light example: base=#ffffff, base-midtone=#f4f4f4, contrast=#000000, contrast-midtone=#323232. Dark example: base=#181818, base-midtone=#1C1C1C, contrast=#FFFFFF, contrast-midtone=#DADADA.
 - Accent changes → ALL 6 shades via HSL: accent-1(-24%), accent-2(base), accent-3(+18%), accent-4(+28%), accent-5(+56%), accent-6(+63%)
-- Dark/light mode → ONLY base + contrast. Never modify accents.
+- Dark/light mode → ONLY base + base-midtone + contrast + contrast-midtone. Never modify accents.
 - Only include slugs you're changing — others are preserved.
 - When user asks to change palette WITHOUT specifying colors, ask what they have in mind first.
 

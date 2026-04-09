@@ -68,11 +68,19 @@ export const buildCompactBlockTree = (
 		return null;
 	};
 
+	// Recursive inner block count (all levels)
+	const countInnerBlocks = (block) => {
+		if (!block.innerBlocks || block.innerBlocks.length === 0) return 0;
+		return block.innerBlocks.reduce((sum, ib) => sum + 1 + countInnerBlocks(ib), 0);
+	};
+
 	const walkBlocks = (blockList, prefix = "", depth = 0, insideSelected = false) => {
 		blockList.forEach((block, index) => {
 			const indexPath = prefix ? `${prefix}.${index}` : `${index}`;
 			const isSelected = selectedSet.has(block.clientId);
 			const selectedMarker = isSelected ? " [SELECTED]" : "";
+			const innerCount = countInnerBlocks(block);
+			const largeMarker = innerCount >= 40 ? " [LARGE]" : "";
 
 			let line = `${"  ".repeat(depth)}[${indexPath}] ${block.name} (id:${block.clientId})`;
 
@@ -94,7 +102,7 @@ export const buildCompactBlockTree = (
 				line += ` → "${preview}"`;
 			}
 
-			line += selectedMarker;
+			line += largeMarker + selectedMarker;
 			lines.push(line);
 
 			// Recurse into inner blocks.

@@ -16,11 +16,19 @@ export function parseReasoningResponse(text) {
 	if (trimmed.startsWith("[PLAN]")) {
 		let content = trimmed.slice("[PLAN]".length).trim();
 
+		// Some models emit [PLAN] more than once — keep only the text after
+		// the last marker so the user doesn't see a duplicated plan.
+		const lastPlan = content.lastIndexOf("[PLAN]");
+		if (lastPlan !== -1) {
+			content = content.slice(lastPlan + "[PLAN]".length).trim();
+		}
+
 		// The model sometimes hallucinates function calls in the reasoning pass
 		// (where tools are disabled).  Truncate at the first sign of tool-call
 		// leakage so the user only sees the natural-language plan.
 		const junkPatterns = [
 			/\bto=functions\./i,
+			/=fn\./,
 			/\{\s*"client_id"/,
 			/\{\s*"block_content"/,
 			/<!--\s*wp:/,
