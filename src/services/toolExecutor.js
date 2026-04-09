@@ -708,7 +708,7 @@ async function handleEditBlock(toolCall, args, ctx) {
 							type: "text",
 							text: JSON.stringify({
 								success: false,
-								error: `This block has ${innerCount} inner blocks — rewriting ${args.block_content.length} chars of markup at once risks broken output. Break the edit into smaller steps: (1) use blu-add-section to create a new empty container, (2) use blu-move-block with as_child_of to move existing blocks into it, (3) use blu-delete-block to clean up. For text-only changes, use blu-rewrite-text with an "instructions" string.`,
+								error: `This block has ${innerCount} inner blocks — rewriting ${args.block_content.length} chars of markup at once risks broken output. Use a smaller tool instead: (1) For style/spacing/color changes, use blu-update-block-attrs on this block or its children — no markup needed. (2) For text changes, use blu-rewrite-text with an "instructions" string. (3) For adding new content, use blu-add-section with before/after_client_id. (4) For structural reorganization, use blu-move-block and blu-delete-block.`,
 							}),
 						},
 					],
@@ -1803,7 +1803,7 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 
 	// Execute server-side tools via MCP
 	for (const tc of serverToolCalls) {
-		const mcpName = (tc.name || "").replace(/-/g, "/");
+		const mcpName = (tc.name || "").replace(/-/, "/");
 		console.log(`[ToolExecutor:REST] Server-side tool via MCP: ${mcpName}`);
 		try {
 			const mcpResult = await ctx.mcpClient.callTool(mcpName, tc.arguments || {});
@@ -2029,7 +2029,7 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 					: "No changes needed";
 			}
 
-			toolResults.push({ tool_call_id: toolCall.id, content, isError });
+			toolResults.push({ tool_call_id: toolCall.id, content, isError, hasChanges: result?.hasChanges || false });
 			completedToolsList.push({ ...toolCall, isError });
 			ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError }]);
 		} catch (err) {
@@ -2052,7 +2052,7 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 	}
 
 	// Build composite undo data
-	const hasChanges = toolResults.some((r) => !r.isError && r.content?.includes?.("Applied"));
+	const hasChanges = toolResults.some((r) => r.hasChanges);
 	let compositeUndoData = null;
 	if (hasChanges || hasBlockEdits) {
 		const undoParts = {};

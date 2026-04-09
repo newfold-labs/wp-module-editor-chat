@@ -16,6 +16,7 @@ import {
 	modifyTemplatePartEntity,
 	replaceBlockAtPath,
 	insertBlocksAtPath,
+	insertBlocksBeforePath,
 	removeBlockAtPath,
 	applyTemplatePartRewrite,
 	handleDeleteTemplatePart,
@@ -254,10 +255,7 @@ export async function handleMoveAction(clientId, targetClientId, position, asChi
 				if (position === "after") {
 					modified = insertBlocksAtPath(modified, adjustedTarget, [movedBlock]);
 				} else {
-					const parentPath = adjustedTarget.slice(0, -1);
-					const targetIdx = adjustedTarget[adjustedTarget.length - 1];
-					const insertAt = [...parentPath, Math.max(0, targetIdx - 1)];
-					modified = insertBlocksAtPath(modified, insertAt, [movedBlock]);
+					modified = insertBlocksBeforePath(modified, adjustedTarget, [movedBlock]);
 				}
 
 				return modified;
