@@ -30,6 +30,7 @@ const useSessionConfig = () => {
 	const sessionConfigRef = useRef(null);
 	const abortControllerRef = useRef(null);
 	const hasInitializedRef = useRef(false);
+	const refreshTimerRef = useRef(null);
 
 	// ── Initialization: config fetch + MCP + pattern library ──
 
@@ -98,20 +99,26 @@ const useSessionConfig = () => {
 	}, [initialize]);
 
 	// ── Session token refresh ──
+	// Self-rescheduling: after each successful refresh, scheduleRefresh is
+	// called again with the new expiry so the timer keeps running.
 
-	useEffect(() => {
+	const scheduleRefresh = useCallback(() => {
+		if (refreshTimerRef.current) {
+			clearTimeout(refreshTimerRef.current);
+		}
+
 		const config = sessionConfigRef.current;
 		if (!config || !config.expiresAt) {
 			return;
 		}
 
-		// Refresh at 80% of expiry
-		const refreshAt = config.expiresAt - Date.now() - (config.expiresAt - Date.now()) * 0.2;
-		if (refreshAt <= 0) {
+		// Refresh at 80% of TTL
+		const delay = (config.expiresAt - Date.now()) * 0.8;
+		if (delay <= 0) {
 			return;
 		}
 
-		const timer = setTimeout(async () => {
+		refreshTimerRef.current = setTimeout(async () => {
 			try {
 				const configUrl = window.nfdEditorChat?.configEndpoint || "";
 				const newConfig = await apiFetch({ url: configUrl });
@@ -127,14 +134,24 @@ const useSessionConfig = () => {
 						dangerouslyAllowBrowser: true,
 					});
 					console.log("[EditorChat] Session token refreshed");
+					scheduleRefresh();
 				}
 			} catch (err) {
 				console.error("Failed to refresh session token:", err);
 			}
-		}, refreshAt);
+		}, delay);
+	}, []);
 
-		return () => clearTimeout(timer);
-	}, [configStatus]);
+	useEffect(() => {
+		if (configStatus === "ready") {
+			scheduleRefresh();
+		}
+		return () => {
+			if (refreshTimerRef.current) {
+				clearTimeout(refreshTimerRef.current);
+			}
+		};
+	}, [configStatus, scheduleRefresh]);
 
 	return {
 		configStatus,
