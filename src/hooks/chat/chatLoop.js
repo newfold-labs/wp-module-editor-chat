@@ -38,6 +38,7 @@ export async function runChatLoop(userMessage, deps) {
 		openaiTools,
 		streamCompletion,
 		buildToolCtx,
+		abortControllerRef,
 	} = deps;
 
 	// First message: include system prompt
@@ -53,10 +54,11 @@ export async function runChatLoop(userMessage, deps) {
 	});
 
 	// Add clean user message to display
+	const ts = Date.now();
 	setMessages((prev) => [
 		...prev,
 		{
-			id: `user-${Date.now()}`,
+			id: `user-${ts}`,
 			type: "user",
 			role: "user",
 			content: userMessage,
@@ -67,9 +69,15 @@ export async function runChatLoop(userMessage, deps) {
 	// Function calling loop with reasoning first-pass
 	let iterations = 0;
 	let isReasoningPass = true;
+	let msgSeq = 0;
 	const retryTracker = createRetryTracker();
 
 	while (iterations++ < MAX_TOOL_ITERATIONS) {
+		// Check if user aborted between iterations (e.g. during tool execution)
+		if (abortControllerRef?.current?.signal?.aborted) {
+			break;
+		}
+
 		// Fresh editor context each iteration (reflects tool changes)
 		const editorContext = buildEditorContext();
 		const editorContextMsg = {
@@ -84,10 +92,12 @@ export async function runChatLoop(userMessage, deps) {
 			// ── Pass 1: reasoning call — no tools, [PLAN] prefix stripped ──
 			isReasoningPass = false;
 
+			// Use "user" role for injected context so the conversation always ends
+			// on a user turn. Some providers (e.g. Anthropic via OpenRouter) strip
+			// system messages, which can leave an assistant message last → prefill error.
 			const reasoningMessages = [
 				...conversationHistoryRef.current,
-				editorContextMsg,
-				{ role: "system", content: REASONING_INSTRUCTION },
+				{ role: "user", content: editorContextMsg.content + "\n\n" + REASONING_INSTRUCTION },
 			];
 
 			const { content: rawReasoning } = await streamCompletion(reasoningMessages, [], {
@@ -107,7 +117,7 @@ export async function runChatLoop(userMessage, deps) {
 				setMessages((prev) => [
 					...prev,
 					{
-						id: `assistant-${Date.now()}`,
+						id: `assistant-${ts}-${msgSeq++}`,
 						type: "assistant",
 						role: "assistant",
 						content: reasoning,
@@ -126,7 +136,7 @@ export async function runChatLoop(userMessage, deps) {
 			setMessages((prev) => [
 				...prev,
 				{
-					id: `assistant-${Date.now()}-reasoning`,
+					id: `assistant-${ts}-${msgSeq++}`,
 					type: "assistant",
 					role: "assistant",
 					content: reasoning,
@@ -146,11 +156,11 @@ export async function runChatLoop(userMessage, deps) {
 			? openaiTools
 			: openaiTools.filter((t) => EDITOR_TOOLS.has(t.function.name));
 
-		// Editor context + execute nudge injected per-request, NOT persisted
+		// Editor context + execute nudge injected per-request, NOT persisted.
+		// Use "user" role so the conversation ends on a user turn (see reasoning pass comment).
 		const toolMessages = [
 			...conversationHistoryRef.current,
-			editorContextMsg,
-			{ role: "system", content: EXECUTE_NUDGE },
+			{ role: "user", content: editorContextMsg.content + "\n\n" + EXECUTE_NUDGE },
 		];
 
 		const { content, toolCalls } = await streamCompletion(toolMessages, toolsForPass, {
@@ -167,7 +177,7 @@ export async function runChatLoop(userMessage, deps) {
 			setMessages((prev) => [
 				...prev,
 				{
-					id: `assistant-${Date.now()}`,
+					id: `assistant-${ts}-${msgSeq++}`,
 					type: "assistant",
 					role: "assistant",
 					content,

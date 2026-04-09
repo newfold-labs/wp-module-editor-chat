@@ -179,6 +179,7 @@ const useEditorChatREST = () => {
 					openaiTools,
 					streamCompletion,
 					buildToolCtx,
+					abortControllerRef,
 				});
 
 				setStatus(CHAT_STATUS.COMPLETED);
@@ -218,6 +219,7 @@ const useEditorChatREST = () => {
 		archiveConversation(messagesRef.current, null, null, EDITOR_CHAT_CONSUMER);
 
 		// Reset everything
+		resetPatternSearchCache();
 		setMessages([]);
 		conversationHistoryRef.current = [];
 		isFirstMessageRef.current = true;
