@@ -32,6 +32,28 @@ import { safeParseJSON } from "../utils/jsonUtils";
 import { snapshotBlocks } from "../utils/editorContext";
 
 /**
+ * Build a completion function that uses the OpenAI client (CF Worker).
+ * Returns null if no client is available.
+ *
+ * @param {Object} ctx Tool context with openaiClientRef.
+ * @return {Function|null} Async completion function or null.
+ */
+function buildCompletionFn(ctx) {
+	const client = ctx.openaiClientRef?.current;
+	if (!client) {
+		return null;
+	}
+	return async (prompt) => {
+		const response = await client.chat.completions.create({
+			messages: [{ role: "user", content: prompt }],
+			temperature: 0.7,
+			max_completion_tokens: 2000,
+		});
+		return response.choices?.[0]?.message?.content || "";
+	};
+}
+
+/**
  * Module-level tracker for the last successful pattern search results.
  * Used by code-level enforcement: when the AI calls blu-edit-block or
  * blu-add-section with its own block_content instead of pattern_slug,
@@ -579,7 +601,7 @@ async function handleRewriteText(toolCall, args, ctx) {
 		const rewritten = await customizePatternContent(originalMarkup, {
 			pageTitle,
 			userMessage: instructions,
-		});
+		}, buildCompletionFn(ctx));
 
 		if (rewritten === originalMarkup) {
 			return {
@@ -640,7 +662,7 @@ async function handleEditBlock(toolCall, args, ctx) {
 					args.block_content = await customizePatternContent(markup, {
 						pageTitle: getCurrentPageTitle(),
 						userMessage: lastUserMsg,
-					});
+					}, buildCompletionFn(ctx));
 				} catch {
 					args.block_content = markup;
 				}
@@ -667,6 +689,61 @@ async function handleEditBlock(toolCall, args, ctx) {
 				],
 				isError: true,
 			};
+		}
+	}
+
+	// ── Image placeholder resolution (mirrors add-section) ──
+	const imgPlaceholders = args.block_content.match(/__IMG_\d+__/g) || [];
+	const uniquePlaceholders = [...new Set(imgPlaceholders)];
+
+	if (uniquePlaceholders.length > 0) {
+		if (args.image_prompts && Array.isArray(args.image_prompts) && args.image_prompts.length > 0) {
+			const promptCount = Math.min(args.image_prompts.length, uniquePlaceholders.length);
+			console.log(`[ToolExecutor] edit-block: generating ${promptCount} images from image_prompts`);
+
+			const imageUrls = [];
+			for (let i = 0; i < promptCount; i++) {
+				const prompt = args.image_prompts[i];
+				const imgArgs = typeof prompt === "string"
+					? { prompt }
+					: { prompt: prompt.prompt, ...prompt };
+
+				await ctx.updateProgress(
+					__("Generating image…", "wp-module-editor-chat") + ` (${i + 1}/${promptCount})`,
+					500
+				);
+				try {
+					const mcpResult = await ctx.mcpClient.callTool("blu-generate-image", imgArgs);
+					if (!mcpResult.isError && mcpResult.content?.[0]?.text) {
+						const parsed = JSON.parse(mcpResult.content[0].text);
+						const url = parsed?.message?.url || parsed?.url;
+						if (url) {
+							imageUrls.push(url);
+							generatedImageUrls.push(url);
+						}
+					}
+				} catch (err) {
+					console.warn(`[ToolExecutor] edit-block: image generation ${i + 1} failed:`, err.message);
+				}
+			}
+
+			for (let i = 0; i < imageUrls.length; i++) {
+				args.block_content = args.block_content.replaceAll(`__IMG_${i + 1}__`, imageUrls[i]);
+			}
+			console.log(`[ToolExecutor] edit-block: resolved ${imageUrls.length}/${uniquePlaceholders.length} image placeholders`);
+		} else if (args.image_urls && Array.isArray(args.image_urls) && args.image_urls.length > 0) {
+			for (let i = 0; i < args.image_urls.length; i++) {
+				args.block_content = args.block_content.replaceAll(`__IMG_${i + 1}__`, args.image_urls[i]);
+			}
+		} else if (generatedImageUrls.length > 0) {
+			for (let i = 0; i < Math.min(generatedImageUrls.length, uniquePlaceholders.length); i++) {
+				args.block_content = args.block_content.replaceAll(`__IMG_${i + 1}__`, generatedImageUrls[i]);
+			}
+		}
+
+		const unresolved = (args.block_content.match(/__IMG_\d+__/g) || []);
+		if (unresolved.length > 0) {
+			console.warn(`[ToolExecutor] edit-block: ${unresolved.length} image placeholders unresolved:`, unresolved);
 		}
 	}
 
@@ -874,7 +951,7 @@ async function handleAddSection(toolCall, args, ctx) {
 					args.block_content = await customizePatternContent(markup, {
 						pageTitle: getCurrentPageTitle(),
 						userMessage: lastUserMsg,
-					});
+					}, buildCompletionFn(ctx));
 				} catch {
 					args.block_content = markup;
 				}
@@ -1229,528 +1306,8 @@ async function handleSearchPatterns(toolCall, args, ctx) {
 	};
 }
 
-// ────────────────────────────────────────────────────────────────────
-// WebSocket entry point (no follow-up AI call — Jarvis handles it)
-// ────────────────────────────────────────────────────────────────────
-
-/**
- * Execute tool calls received from the Jarvis WebSocket gateway.
- *
- * This function does NOT send a follow-up AI completion — Jarvis runs
- * tools server-side and generates the summary automatically. This
- * function only handles the client-side visual updates (block editing,
- * section adding, style changes, etc.).
- *
- * @param {Array}  toolCalls Tool calls parsed from the WebSocket `tool_call` event
- * @param {Object} ctx       Shared context object (same shape as useEditorChat's buildToolCtx)
- */
-export async function executeToolCallsFromWebSocket(toolCalls, ctx) {
-	// Filter out server-side-only tools (discovery, site listing, etc.).
-	// These are already executed by Semantic Kernel on the backend —
-	// the frontend only needs to handle client-side editor tools (blu-*).
-	console.log(
-		"[ToolExecutor] Received tool calls:",
-		toolCalls.map((tc) => ({ name: tc.name, args: tc.arguments }))
-	);
-
-	// Internal/silent tools that should never appear in the tool execution list.
-	// These are backend discovery calls, not user-facing actions.
-	const SILENT_TOOLS = new Set([
-		"get_available_wordpress_actions",
-		"WordPressPlugin-get_available_wordpress_actions",
-		"get_wordpress_sites",
-		"WordPressPlugin-get_wordpress_sites",
-	]);
-
-	// Separate server-side (already executed by backend) and client-side tools
-	const serverToolCalls = [];
-	const clientToolCalls = [];
-	for (const tc of toolCalls) {
-		const name = tc.name || "";
-		// Skip silent/internal tools entirely — don't show or track them
-		if (SILENT_TOOLS.has(name)) {
-			console.log(`[ToolExecutor] Silent tool (hidden from UI): ${name}`);
-			continue;
-		}
-		if (name.startsWith("blu-")) {
-			clientToolCalls.push(tc);
-		} else {
-			console.log(`[ToolExecutor] Server-side tool (already executed): ${name}`);
-			serverToolCalls.push(tc);
-		}
-	}
-
-	const serverCompleted = serverToolCalls.map((tc, idx) => ({
-		id: tc.id || `server-tool-${Date.now()}-${idx}`,
-		name: tc.name,
-		arguments: tc.arguments,
-		isError: false,
-	}));
-
-	// Track server-side tools in state for TypingIndicator display.
-	// The persistent tool_execution message is created only AFTER execution
-	// finishes (or via useEffect for server-only rounds) so there's a single
-	// unified tool list — never two separate windows.
-	if (serverCompleted.length > 0) {
-		ctx.setExecutedTools((prev) => [...prev, ...serverCompleted]);
-	}
-
-	if (clientToolCalls.length === 0) {
-		console.log("[ToolExecutor] No client-side tools to execute");
-		return;
-	}
-
-	// Replace toolCalls with the filtered list for the rest of this function
-	toolCalls = clientToolCalls;
-
-	const toolResults = [];
-	const completedToolsList = [];
-	let globalStylesUndoData = null;
-	let hasBlockEdits = false;
-
-	// Capture block snapshot before any tool execution for atomic undo
-	const hasBlockTools = toolCalls.some((tc) => BLOCK_TOOL_NAMES.includes(tc.name || ""));
-	if (hasBlockTools && !ctx.blockSnapshotRef.current) {
-		const { select: wpSelect } = wp.data;
-		const allBlocks = wpSelect("core/block-editor").getBlocks();
-		ctx.blockSnapshotRef.current = snapshotBlocks(allBlocks);
-	}
-
-	// Brief pause before activating tool mode so the "Thinking…" indicator
-	// stays visible between the reasoning text and the tool execution
-	// accordion.  isTyping is kept true by the messageHandler so isLoading
-	// remains true during this wait (no gap in the indicator).
-	await ctx.wait(300);
-
-	ctx.setStatus(CHAT_STATUS.TOOL_CALL);
-	ctx.setActiveToolCall({
-		id: "preparing",
-		name: "preparing",
-		index: 0,
-		total: toolCalls.length,
-	});
-
-	ctx.setPendingTools(
-		toolCalls.map((tc, idx) => ({
-			...tc,
-			id: tc.id || `tool-${idx}`,
-		}))
-	);
-
-	for (let i = 0; i < toolCalls.length; i++) {
-		const toolCall = toolCalls[i];
-		const toolIndex = i + 1;
-		const totalTools = toolCalls.length;
-
-		ctx.setPendingTools((prev) => prev.filter((_, idx) => idx !== 0));
-		ctx.setActiveToolCall({
-			id: toolCall.id || `tool-${i}`,
-			name: toolCall.name,
-			arguments: toolCall.arguments,
-			index: toolIndex,
-			total: totalTools,
-		});
-
-		// Yield to let React render the active tool state before executing
-		await new Promise((r) => requestAnimationFrame(r));
-
-		try {
-			let toolName = toolCall.name || "";
-			console.log(
-				`[ToolExecutor] Executing ${toolIndex}/${totalTools}: ${toolName}`,
-				toolCall.arguments
-			);
-			let args = toolCall.arguments || {};
-			if (typeof args === "string") {
-				try {
-					args = JSON.parse(args);
-				} catch (e) {
-					// Trailing junk after valid JSON — extract the first complete {} object
-					let recovered = false;
-					let depth = 0;
-					let inStr = false;
-					let esc = false;
-					for (let ci = 0; ci < args.length; ci++) {
-						const ch = args[ci];
-						if (esc) {
-							esc = false;
-							continue;
-						}
-						if (ch === "\\" && inStr) {
-							esc = true;
-							continue;
-						}
-						if (ch === '"') {
-							inStr = !inStr;
-							continue;
-						}
-						if (inStr) {
-							continue;
-						}
-						if (ch === "{") {
-							depth++;
-						}
-						if (ch === "}") {
-							depth--;
-							if (depth === 0) {
-								try {
-									args = JSON.parse(args.substring(0, ci + 1));
-									recovered = true;
-								} catch {
-									/* ignore */
-								}
-								break;
-							}
-						}
-					}
-					if (!recovered) {
-						args = {};
-					}
-				}
-			}
-
-			// ── Normalize common alt param names ──
-			// The AI sometimes uses camelCase or alternate names.
-			if (!args.client_id && args.clientId) {
-				args.client_id = args.clientId;
-			}
-			if (
-				(toolName === "blu-edit-block" || toolName === "blu-add-section") &&
-				!args.block_content
-			) {
-				const alt = args.content || args.markup || args.html || args.block_markup;
-				if (alt) {
-					args.block_content = alt;
-				}
-			}
-
-			// ── Pattern enforcement: prefer library patterns over AI-generated markup ──
-			if (
-				(toolName === "blu-edit-block" || toolName === "blu-add-section") &&
-				args.block_content &&
-				!args.pattern_slug &&
-				lastPatternSearchResults &&
-				Date.now() - lastPatternSearchResults.timestamp < 120000 &&
-				lastPatternSearchResults.results.length > 0
-			) {
-				const topPattern = lastPatternSearchResults.results[0];
-				console.log(
-					`[ToolExecutor] Auto-correcting: using pattern_slug "${topPattern.slug}" instead of AI-generated block_content`
-				);
-				args.pattern_slug = topPattern.slug;
-				delete args.block_content;
-				lastPatternSearchResults = null;
-			}
-
-			// edit-block without client_id → treat as add-section
-			if (
-				toolName === "blu-edit-block" &&
-				!args.client_id &&
-				(args.block_content || args.pattern_slug)
-			) {
-				console.log(`[ToolExecutor] Redirecting blu-edit-block → blu-add-section (no client_id)`);
-				toolName = "blu-add-section";
-			}
-
-			// ── blu/update-global-styles ──
-			if (toolName === "blu-update-global-styles" && args.settings) {
-				console.log(
-					`[ToolExecutor] update-global-styles args.settings:`,
-					JSON.stringify(args.settings)
-				);
-				const gsResult = await handleUpdateGlobalStyles(toolCall, args, ctx);
-				const isError = gsResult.toolResult.isError;
-				console.log(`[ToolExecutor] update-global-styles result:`, {
-					isError,
-					result: gsResult.toolResult.result,
-				});
-				toolResults.push(gsResult.toolResult);
-				completedToolsList.push({ ...toolCall, isError });
-				ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError }]);
-				if (gsResult.globalStylesUndoData) {
-					globalStylesUndoData = gsResult.globalStylesUndoData;
-				}
-			}
-
-			// ── blu/get-global-styles ──
-			else if (toolName === "blu-get-global-styles" || toolName === "blu-get-active-global-styles") {
-				const gsResult = await handleGetGlobalStyles(toolCall, ctx);
-				const isError = gsResult.isError ?? false;
-				console.log(`[ToolExecutor] get-global-styles result:`, { isError });
-				toolResults.push(gsResult);
-				completedToolsList.push({ ...toolCall, isError });
-				ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError }]);
-			}
-
-			// ── blu/edit-block ──
-			else if (
-				toolName === "blu-edit-block" &&
-				args.client_id &&
-				(args.block_content || args.pattern_slug)
-			) {
-				const editResult = await handleEditBlock(toolCall, args, ctx);
-				console.log(`[ToolExecutor] edit-block result:`, {
-					isError: editResult.isError,
-					hasChanges: editResult.hasChanges,
-				});
-				if (!editResult.isError && editResult.hasChanges) {
-					hasBlockEdits = true;
-				}
-				toolResults.push(editResult);
-				completedToolsList.push({ ...toolCall, isError: editResult.isError });
-				ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: editResult.isError }]);
-			}
-
-			// ── blu/add-section ──
-			else if (toolName === "blu-add-section" && (args.block_content || args.pattern_slug)) {
-				console.log(`[ToolExecutor] add-section args:`, {
-					pattern_slug: args.pattern_slug,
-					has_block_content: !!args.block_content,
-					image_urls: args.image_urls,
-				});
-				const addResult = await handleAddSection(toolCall, args, ctx);
-				console.log(`[ToolExecutor] add-section result:`, {
-					isError: addResult.isError,
-					hasChanges: addResult.hasChanges,
-				});
-				if (!addResult.isError && addResult.hasChanges) {
-					hasBlockEdits = true;
-				}
-				toolResults.push(addResult);
-				completedToolsList.push({ ...toolCall, isError: addResult.isError });
-				ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: addResult.isError }]);
-			}
-
-			// ── blu/delete-block ──
-			else if (toolName === "blu-delete-block" && args.client_id) {
-				const delResult = await handleDeleteBlock(toolCall, args, ctx);
-				console.log(`[ToolExecutor] delete-block result:`, {
-					isError: delResult.isError,
-					hasChanges: delResult.hasChanges,
-					client_id: args.client_id,
-				});
-				if (!delResult.isError && delResult.hasChanges) {
-					hasBlockEdits = true;
-				}
-				toolResults.push(delResult);
-				completedToolsList.push({ ...toolCall, isError: delResult.isError });
-				ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: delResult.isError }]);
-			}
-
-			// ── blu/move-block ──
-			else if (
-				toolName === "blu-move-block" &&
-				args.client_id &&
-				((args.target_client_id && args.position) || args.as_child_of)
-			) {
-				const mvResult = await handleMoveBlock(toolCall, args, ctx);
-				console.log(`[ToolExecutor] move-block result:`, {
-					isError: mvResult.isError,
-					hasChanges: mvResult.hasChanges,
-				});
-				if (!mvResult.isError && mvResult.hasChanges) {
-					hasBlockEdits = true;
-				}
-				toolResults.push(mvResult);
-				completedToolsList.push({ ...toolCall, isError: mvResult.isError });
-				ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: mvResult.isError }]);
-			}
-
-			// ── blu/get-block-markup ──
-			else if (toolName === "blu-get-block-markup" && args.client_id) {
-				const mkResult = await handleGetBlockMarkup(toolCall, args, ctx);
-				console.log(`[ToolExecutor] get-block-markup result:`, {
-					isError: mkResult.isError,
-					client_id: args.client_id,
-				});
-				toolResults.push(mkResult);
-				completedToolsList.push({ ...toolCall, isError: mkResult.isError });
-				ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: mkResult.isError }]);
-			}
-
-			// ── blu/highlight-block ──
-			else if (toolName === "blu-highlight-block" && args.client_id) {
-				const hlResult = await handleHighlightBlock(toolCall, args, ctx);
-				console.log(`[ToolExecutor] highlight-block result:`, {
-					isError: hlResult.isError,
-					client_id: args.client_id,
-				});
-				toolResults.push(hlResult);
-				completedToolsList.push({ ...toolCall, isError: hlResult.isError });
-				ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: hlResult.isError }]);
-			}
-
-			// ── blu/update-block-attrs ──
-			else if (toolName === "blu-update-block-attrs" && args.client_id) {
-				// Auto-wrap: if the model sent properties at the top level instead of
-				// nesting them under `attributes`, wrap them so the handler can proceed.
-				// Preserve handler-level params (image_prompt) that aren't block attributes.
-				if (!args.attributes) {
-					const { client_id, image_prompt, ...rest } = args;
-					if (Object.keys(rest).length > 0) {
-						console.warn(`[ToolExecutor] Auto-wrapping loose properties into attributes for blu-update-block-attrs`, rest);
-						args = { client_id, attributes: rest };
-					} else {
-						args = { client_id, attributes: {} };
-					}
-					if (image_prompt) args.image_prompt = image_prompt;
-				}
-
-				if (args.attributes || args.image_prompt) {
-					const attrResult = await handleUpdateBlockAttrs(toolCall, args, ctx);
-					console.log(`[ToolExecutor] update-block-attrs result:`, {
-						isError: attrResult.isError,
-						hasChanges: attrResult.hasChanges,
-						client_id: args.client_id,
-					});
-					if (!attrResult.isError && attrResult.hasChanges) {
-						hasBlockEdits = true;
-					}
-					toolResults.push(attrResult);
-					completedToolsList.push({ ...toolCall, isError: attrResult.isError });
-					ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: attrResult.isError }]);
-				}
-			}
-
-			// ── blu/rewrite-text ──
-			else if (toolName === "blu-rewrite-text" && args.client_id && args.instructions) {
-				const rwResult = await handleRewriteText(toolCall, args, ctx);
-				console.log(`[ToolExecutor] rewrite-text result:`, {
-					isError: rwResult.isError,
-					hasChanges: rwResult.hasChanges,
-				});
-				if (!rwResult.isError && rwResult.hasChanges) {
-					hasBlockEdits = true;
-				}
-				toolResults.push(rwResult);
-				completedToolsList.push({ ...toolCall, isError: rwResult.isError });
-				ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: rwResult.isError }]);
-			}
-
-			// ── blu/search-patterns ──
-			else if (toolName === "blu-search-patterns" && args.query) {
-				const spResult = await handleSearchPatterns(toolCall, args, ctx);
-				const isError = spResult.isError ?? false;
-				console.log(`[ToolExecutor] search-patterns result:`, { query: args.query, isError });
-				toolResults.push(spResult);
-				completedToolsList.push({ ...toolCall, isError });
-				ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError }]);
-			}
-
-			// ── Default: skip unrecognized tools ──
-			// The gateway executes all tools server-side via MCP.
-			// Only editor-specific tools (block editing, styles) need client-side execution.
-			else {
-				console.warn(`[ToolExecutor] Unrecognized client tool, skipping: ${toolName}`, args);
-				toolResults.push({ id: toolCall.id, result: null, isError: false });
-				completedToolsList.push({ ...toolCall, isError: false });
-				ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError: false }]);
-			}
-
-			// Tool results are sent back after the loop completes (see below).
-		} catch (err) {
-			console.error(`[ToolExecutor] Error executing ${toolCall.name}:`, err);
-			await ctx.updateProgress(
-				__("Action failed:", "wp-module-editor-chat") + " " + err.message,
-				1000
-			);
-			toolResults.push({ id: toolCall.id, result: null, error: err.message });
-			completedToolsList.push({ ...toolCall, isError: true, errorMessage: err.message });
-			ctx.setExecutedTools((prev) => [
-				...prev,
-				{ ...toolCall, isError: true, errorMessage: err.message },
-			]);
-		}
-	}
-
-	const hasChanges = toolResults.some((r) => r.hasChanges);
-
-	// Send actual tool results back to the backend so the LLM knows what
-	// really happened (success/failure) instead of relying on stubs.
-	if (ctx.sendToolResult) {
-		// Tools that return data the model needs (read-only tools).
-		const READ_TOOLS = new Set([
-			"blu-get-block-markup",
-			"blu-get-global-styles",
-			"blu-search-patterns",
-			"blu-highlight-block",
-			"blu-generate-image",
-		]);
-
-		const resultPayload = toolResults
-			.filter((r) => r.id)
-			.map((r) => {
-				const toolName_ = toolCalls.find((tc) => tc.id === r.id)?.name || "unknown";
-				// For read-only tools, send actual result data back so the model can act on it
-				let summary;
-				if (r.isError) {
-					summary = r.error || r.result?.[0]?.text || "Tool failed";
-				} else if (READ_TOOLS.has(toolName_) && r.result?.[0]?.text) {
-					summary = r.result[0].text;
-				} else {
-					summary = r.hasChanges ? "Applied successfully" : "No changes needed";
-				}
-				return {
-					tool_call_id: r.id,
-					tool_name: toolName_,
-					success: !r.isError,
-					summary,
-				};
-			});
-		if (resultPayload.length > 0) {
-			ctx.sendToolResult(JSON.stringify(resultPayload));
-		}
-	}
-
-	// Build composite undo data from both block snapshot and global styles
-	let compositeUndoData = null;
-	if (hasChanges) {
-		const undoParts = {};
-		if (hasBlockEdits && ctx.blockSnapshotRef.current) {
-			undoParts.blocks = ctx.blockSnapshotRef.current;
-		}
-		if (globalStylesUndoData) {
-			undoParts.globalStyles = globalStylesUndoData;
-		}
-		if (Object.keys(undoParts).length > 0) {
-			compositeUndoData = undoParts;
-		}
-	}
-
-	// Gather ALL completed tools across rounds: previous rounds (from ref) +
-	// current round's server + client tools.  Deduplicate by id so the
-	// persistent message always has the complete, correct list.
-	const refTools = ctx.executedToolsRef.current || [];
-	const seenIds = new Set();
-	const allCompletedTools = [];
-	for (const t of [...refTools, ...serverCompleted, ...completedToolsList]) {
-		if (!seenIds.has(t.id)) {
-			seenIds.add(t.id);
-			allCompletedTools.push(t);
-		}
-	}
-
-	// Create / replace the single persistent tool_execution message.
-	if (compositeUndoData || allCompletedTools.length > 0) {
-		upsertToolExecMsg(ctx.setMessages, allCompletedTools, compositeUndoData);
-	}
-
-	// Persist ref for SUMMARIZING status, then clear state so the
-	// TypingIndicator disappears (the message is the permanent record).
-	if (allCompletedTools.length > 0) {
-		ctx.executedToolsRef.current = [...allCompletedTools];
-		ctx.setExecutedTools([]);
-	}
-
-	// Clear tool execution UI state
-	ctx.setActiveToolCall(null);
-	ctx.setToolProgress(null);
-	ctx.setPendingTools([]);
-	// Don't set isLoading = false or status = null — WebSocket hook manages those
-}
-
 // ─────────────────────────────────────────────────────────────
-// REST-based tool execution (for CF AI Gateway / OpenAI function calling)
+// Tool execution (for CF AI Gateway / OpenAI function calling)
 // ─────────────────────────────────────────────────────────────
 
 /**
@@ -1767,12 +1324,10 @@ const READ_TOOLS = new Set([
 ]);
 
 /**
- * Execute tool calls for the REST function-calling loop.
+ * Execute tool calls for the function-calling loop.
  *
- * Unlike executeToolCallsFromWebSocket, this function:
  * - RETURNS results (for appending to conversation as tool messages)
  * - Executes server-side tools via mcpClient.callTool()
- * - Does NOT call sendToolResult (no WebSocket)
  *
  * @param {Array}  toolCalls Tool calls from the OpenAI streaming response
  * @param {Object} ctx       Shared context object with clients, state setters, refs, helpers
@@ -1855,7 +1410,7 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 		}))
 	);
 
-	// Execute client-side tools sequentially (same logic as WebSocket version)
+	// Execute client-side tools sequentially
 	for (let i = 0; i < clientToolCalls.length; i++) {
 		const toolCall = clientToolCalls[i];
 		const toolIndex = i + 1;
@@ -1919,7 +1474,7 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 
 			let result;
 
-			// Dispatch to existing handlers (same as WebSocket version)
+			// Dispatch to tool handlers
 			if (toolName === "blu-update-global-styles" && args.settings) {
 				const gsResult = await handleUpdateGlobalStyles(toolCall, args, ctx);
 				result = gsResult.toolResult;
