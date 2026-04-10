@@ -91,6 +91,7 @@ const useEditorChatREST = () => {
 	const buildToolCtx = useCallback(
 		() => ({
 			mcpClient,
+			openaiClientRef,
 			setMessages,
 			setStatus,
 			setExecutedTools,
@@ -105,7 +106,7 @@ const useEditorChatREST = () => {
 			updateProgress,
 			wait,
 		}),
-		[mcpClient, updateProgress]
+		[mcpClient, openaiClientRef, updateProgress]
 	);
 
 	// ── Streaming (bind deps to plain function) ──
