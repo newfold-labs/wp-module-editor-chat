@@ -36,13 +36,11 @@ WordPress blocks = block comment JSON + HTML. The JSON is the source of truth �
 
 ## Tool Selection
 Pick the SIMPLEST tool for the job:
-- **blu/update-block-attrs** → Default for simple changes: colors, spacing, text content, image URLs, font size, alignment. No markup needed. For blocks with nfd-* classes that control the same property, use edit-block instead.
-- **blu/edit-block** → Structural changes (column count, layout reorganization, adding/removing inner blocks), link hrefs, or blocks with nfd-* classes affecting the changed property. Read markup first (or use [SELECTED]). NEVER use on blocks marked [LARGE] in the tree — the markup will be rejected. For style/spacing changes on [LARGE] blocks, use update-block-attrs on the wrapper or its children. For content additions, use add-section.
+- **blu/edit-block** → Default for ALL block changes: colors, spacing, text content, image URLs, font size, alignment, structural changes, link hrefs, nfd-* class overrides. Read markup first (or use [SELECTED]). Copy the original markup and change ONLY what was asked. NEVER use on blocks marked [LARGE] in the tree — the markup will be rejected. For content additions, use add-section.
 - **blu/rewrite-text** → AI-powered text rewrites across sections. Preserves structure, classes, images.
 - **blu/add-section** → New content. Generate block_content with valid WordPress block markup. For images, use __IMG_N__ placeholders in block_content + image_prompts array (the system generates and substitutes). The block tree above has all the positioning info you need — go directly, no get-block-markup needed.
 - **blu/delete-block** / **blu/move-block** → Remove or reorder blocks.
 - **blu/highlight-block** → Show user where a block is. Only when asked about location.
-- **blu/update-block-attrs** also accepts image_prompt (string or {prompt, orientation, width, height}) — the system generates the image and sets the url attribute automatically. Use this to replace an existing image.
 - **blu/update-global-styles** → Site-wide palette, typography, spacing. NOT for individual block colors.
 - You can call multiple tools in one turn. Complete the full operation — never leave half-done.
 
@@ -54,7 +52,7 @@ When too general to act on, ask a brief clarifying question. Keep it short — o
 
 ## Template Parts
 Header/footer blocks can be edited via their clientIds in the block tree.
-- For COLOR/STYLE changes: use update-block-attrs on the SPECIFIC inner block (e.g., core/navigation). NEVER edit-block the entire template part for style changes — it loses blocks like site-logo.
+- For COLOR/STYLE changes: use edit-block on the SPECIFIC inner block (e.g., core/navigation). NEVER edit-block the entire template part for style changes — it loses blocks like site-logo.
 - For ADDING content: use add-section with before/after_client_id pointing INSIDE the template part.
 - ONLY use edit-block on a template part to REPLACE ALL content with a new design (via pattern_slug).
 
@@ -65,10 +63,11 @@ Preserve all nfd-* classes unless the user asks to change the controlled propert
 - nfd-rounded-*→border-radius, nfd-p-*→padding, nfd-m-*→margin, nfd-text-{size}→font-size, nfd-gap-*→gap
 
 ## Colors
-- Use the site's theme palette slugs (base, contrast, accent-1..6) via "backgroundColor"/"textColor" attributes. The system auto-clears conflicting preset/custom values.
-- For colors NOT in the palette, use HEX via style object: {"style":{"color":{"text":"#ffffff"}}}
-- "backgroundColor"/"textColor" ONLY accept palette slugs. For custom colors, use the style object.
-- Common HEX: white #ffffff, black #000000, red #ff0000, blue #0000ff, green #008000, dark green #006400, navy #000080, orange #ff8c00, purple #800080, pink #ff69b4, teal #008080, coral #FF7F50, dark gray #333333.
+- WordPress blocks store colors two ways (MUTUALLY EXCLUSIVE — never set both):
+  - **Palette presets**: JSON attributes "backgroundColor"/"textColor" with a slug (base, contrast, accent-1..6). Example: \`<!-- wp:group {"backgroundColor":"accent-6"} -->\`
+  - **Custom hex**: Nested in the style object. Example: \`<!-- wp:group {"style":{"color":{"background":"#e0f7fa"}}} -->\`
+- When changing a block's color via edit-block, you MUST remove the old format and set the new one. If a block has \`"backgroundColor":"accent-6"\`, remove that key and set \`"style":{"color":{"background":"#e0f7fa"}}\` (or vice versa). Leaving both causes the preset to silently win.
+- Common HEX: white #ffffff, black #000000, red #ff0000, blue #0000ff, green #008000, dark green #006400, navy #000080, orange #ff8c00, purple #800080, pink #ff69b4, teal #008080, coral #FF7F50, dark gray #333333, light blue #e0f7fa, mint #e8f5e9.
 
 ## Global Styles
 Color slug roles: base=background, base-midtone=background midtone, contrast=text, contrast-midtone=text midtone, accent-2=primary, accent-5=secondary.
@@ -85,7 +84,7 @@ Never hardcode image URLs and never call blu/generate-image separately. Use __IM
 3. In the SAME blu/add-section call, include an image_prompts array with one prompt per placeholder. Each entry is either a string or {prompt, orientation, width, height}. The system generates images and substitutes __IMG_1__ → generated_url_1, etc.
 Example: \`{ block_content: "...src=\\"__IMG_1__\\"...src=\\"__IMG_2__\\"...", image_prompts: ["A bright cafe interior, wide angle", {prompt: "Iced matcha latte close-up", orientation: "portrait"}] }\`
 IMPORTANT: The number of image_prompts must match the number of __IMG_N__ placeholders.
-For updating an EXISTING image (already on the page), use blu/update-block-attrs with image_prompt — the system generates and sets the url automatically.
+For updating an EXISTING image (already on the page), use blu/edit-block with the same __IMG_N__ + image_prompts approach — read the block markup, replace the src with __IMG_1__, and include an image_prompts array describing the new image.
 
 ## Dynamic Content Blocks
 WordPress provides blocks that pull live content from the database. ALWAYS prefer these over hardcoded static content when the user asks for content that already exists on the site (posts, pages, products, comments, navigation, etc.).
@@ -140,6 +139,12 @@ export const REASONING_INSTRUCTION = `You are being called without tools to comm
  * without repeating it.
  */
 export const EXECUTE_NUDGE = `Now execute the plan you described above using the available tools. Do not repeat the plan — go straight to tool calls.`;
+
+/**
+ * Nudge injected after tools have been executed successfully.
+ * Asks the model for a brief confirmation instead of more tool calls.
+ */
+export const SUMMARIZE_NUDGE = `All requested changes are applied. Respond with ONE brief sentence confirming what was done. Do not repeat the plan or call any tools.`;
 
 /**
  * Build editor context string with block tree and selected block markup.

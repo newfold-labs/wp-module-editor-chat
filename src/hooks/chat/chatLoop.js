@@ -18,6 +18,7 @@ import {
 	EDITOR_SYSTEM_PROMPT,
 	REASONING_INSTRUCTION,
 	EXECUTE_NUDGE,
+	SUMMARIZE_NUDGE,
 	buildEditorContext,
 } from "../../utils/editorContext";
 import { executeToolCallsForREST } from "../../services/toolExecutor";
@@ -70,6 +71,7 @@ export async function runChatLoop(userMessage, deps) {
 	let iterations = 0;
 	let isReasoningPass = true;
 	let msgSeq = 0;
+	let toolsJustExecuted = false;
 	const retryTracker = createRetryTracker();
 
 	while (iterations++ < MAX_TOOL_ITERATIONS) {
@@ -136,7 +138,7 @@ export async function runChatLoop(userMessage, deps) {
 			setMessages((prev) => [
 				...prev,
 				{
-					id: `assistant-${ts}-${msgSeq++}`,
+					id: `assistant-${ts}-${msgSeq++}-reasoning`,
 					type: "assistant",
 					role: "assistant",
 					content: reasoning,
@@ -156,11 +158,14 @@ export async function runChatLoop(userMessage, deps) {
 			? openaiTools
 			: openaiTools.filter((t) => EDITOR_TOOLS.has(t.function.name));
 
-		// Editor context + execute nudge injected per-request, NOT persisted.
+		// Editor context + nudge injected per-request, NOT persisted.
 		// Use "user" role so the conversation ends on a user turn (see reasoning pass comment).
+		// After tools have run, use SUMMARIZE_NUDGE so the AI confirms instead of re-executing.
+		const nudge = toolsJustExecuted ? SUMMARIZE_NUDGE : EXECUTE_NUDGE;
+		toolsJustExecuted = false;
 		const toolMessages = [
 			...conversationHistoryRef.current,
-			{ role: "user", content: editorContextMsg.content + "\n\n" + EXECUTE_NUDGE },
+			{ role: "user", content: editorContextMsg.content + "\n\n" + nudge },
 		];
 
 		const { content, toolCalls } = await streamCompletion(toolMessages, toolsForPass, {
@@ -282,10 +287,11 @@ export async function runChatLoop(userMessage, deps) {
 			conversationHistoryRef.current.push({
 				role: "system",
 				content:
-					"All actions completed successfully. If the user's request is fully handled, respond with a brief summary. Only call more tools if additional DIFFERENT steps are needed to complete the request.",
+					"All tool calls above succeeded.",
 			});
 		}
 
+		toolsJustExecuted = true;
 		setStatus(CHAT_STATUS.SUMMARIZING);
 		// Loop continues — next iteration will get the AI's response
 	}

@@ -122,14 +122,9 @@ export function buildDisplayMessages(
 		if (toolExecIdx !== -1) {
 			msgs = [...msgs.slice(0, toolExecIdx), augmented, ...msgs.slice(toolExecIdx + 1)];
 		} else {
-			let insertIdx = msgs.length;
-			for (let i = msgs.length - 1; i >= 0; i--) {
-				if (msgs[i].role === "user") {
-					insertIdx = i + 1;
-					break;
-				}
-			}
-			msgs = [...msgs.slice(0, insertIdx), augmented, ...msgs.slice(insertIdx)];
+			// Insert after the last message (before streaming overlay).
+			// This ensures reasoning messages stay above the tool execution widget.
+			msgs = [...msgs, augmented];
 		}
 	}
 

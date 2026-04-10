@@ -51,6 +51,7 @@ export async function streamCompletion(msgs, tools, options = {}, deps) {
 	const stripPrefix = options.stripPrefix || null;
 	let prefixBuffer = "";
 	let prefixResolved = !stripPrefix; // skip buffering if no prefix to strip
+	let needsTrimStart = false; // trim leading space on first chunk after prefix resolution
 
 	for await (const chunk of stream) {
 		const delta = chunk.choices?.[0]?.delta;
@@ -78,9 +79,11 @@ export async function streamCompletion(msgs, tools, options = {}, deps) {
 				if (prefixBuffer.length >= stripPrefix.length) {
 					prefixResolved = true;
 					if (prefixBuffer.startsWith(stripPrefix)) {
-						// Strip prefix, stream the remainder
-						const remainder = prefixBuffer.slice(stripPrefix.length);
+						// Strip prefix, stream the remainder (trim leading space left by "[PLAN] …")
+						needsTrimStart = true;
+						const remainder = prefixBuffer.slice(stripPrefix.length).trimStart();
 						if (remainder) {
+							needsTrimStart = false;
 							setCurrentResponse((prev) => prev + remainder);
 						}
 					} else {
@@ -91,9 +94,13 @@ export async function streamCompletion(msgs, tools, options = {}, deps) {
 				// Still buffering — don't update UI yet
 			} else {
 				// Strip duplicate [PLAN] markers and tool-call leakage from streaming display
-				const cleaned = stripPrefix
+				let cleaned = stripPrefix
 					? delta.content.replace(/\[PLAN\]/g, "").replace(/=fn\.\S*/g, "")
 					: delta.content;
+				if (needsTrimStart) {
+					cleaned = cleaned.trimStart();
+					needsTrimStart = false;
+				}
 				if (cleaned) {
 					setCurrentResponse((prev) => prev + cleaned);
 				}
