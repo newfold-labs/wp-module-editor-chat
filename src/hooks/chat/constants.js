@@ -5,6 +5,8 @@
 export const EDITOR_CHAT_CONSUMER = "editor_chat";
 export const MAX_TOOL_ITERATIONS = 10;
 export const MAX_SAME_TOOL_RETRIES = 1;
+export const MAX_HISTORY_MESSAGES = 30;
+export const MAX_HISTORY_CHARS = 16000;
 
 export const CHAT_STATUS = {
 	IDLE: "idle",
@@ -27,11 +29,11 @@ export const EDITOR_TOOLS = new Set([
 	"blu-get-block-markup",
 	"blu-highlight-block",
 	"blu-rewrite-text",
-	"blu-update-block-attrs",
 	"blu-update-global-styles",
+	// blu-update-block-attrs intentionally excluded — unreliable for preset/custom
+	// attribute swaps (e.g. colors). Use blu-edit-block instead.
 	// blu-generate-image intentionally excluded — image generation is handled
-	// internally via image_prompts on blu-add-section (for new sections) and
-	// image_prompt on blu-update-block-attrs (for existing images).
+	// internally via image_prompts on blu-add-section (for new sections).
 	// This prevents the AI from looping on generate-image calls.
 ]);
 

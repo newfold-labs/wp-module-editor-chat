@@ -2,7 +2,12 @@
  * Pure utility functions for conversation management.
  * No React dependencies — all functions are stateless and testable.
  */
-import { MAX_SAME_TOOL_RETRIES, READ_ONLY_TOOLS } from "./constants";
+import {
+	MAX_SAME_TOOL_RETRIES,
+	MAX_HISTORY_MESSAGES,
+	MAX_HISTORY_CHARS,
+	READ_ONLY_TOOLS,
+} from "./constants";
 
 /**
  * Parse the reasoning response to detect [PLAN] prefix.
@@ -65,11 +70,13 @@ export function truncateToolResult(content, maxLen = 500) {
 /**
  * Compress conversation history to reduce token usage on subsequent API calls.
  *
- * Keeps the system prompt and current exchange (from last user message onward)
- * intact. For older messages:
- * - Strips embedded <editor_context> from legacy user messages
- * - Replaces tool_call arguments with compact stubs
- * - Aggressively truncates old tool result content
+ * Phase 1 (light): Keeps system prompt (idx 0) and current exchange intact.
+ * For older messages: strips editor context, truncates tool results, stubs
+ * tool_call args, and drops intermediate system messages.
+ *
+ * Phase 2 (aggressive): If still over message-count or char budget, collapses
+ * old exchanges into compact user + assistant-summary pairs and drops the
+ * oldest when necessary.
  *
  * @param {Array} history Conversation history array
  * @return {Array} Compressed history
@@ -92,6 +99,7 @@ export function compressConversationHistory(history) {
 		return history;
 	}
 
+	// Phase 1: Light compression + drop old intermediate system messages
 	const compressed = [];
 	for (let i = 0; i < history.length; i++) {
 		const msg = history[i];
@@ -99,6 +107,11 @@ export function compressConversationHistory(history) {
 		// Keep system prompt (idx 0) and current exchange intact
 		if (i === 0 || i >= lastUserIdx) {
 			compressed.push(msg);
+			continue;
+		}
+
+		// Drop old intermediate system messages (e.g. "All tool calls above succeeded.")
+		if (msg.role === "system") {
 			continue;
 		}
 
@@ -131,7 +144,110 @@ export function compressConversationHistory(history) {
 		}
 	}
 
+	// Phase 2: If still over budget, collapse old exchanges aggressively
+	if (
+		compressed.length > MAX_HISTORY_MESSAGES ||
+		estimateHistoryChars(compressed) > MAX_HISTORY_CHARS
+	) {
+		return collapseOldExchanges(compressed);
+	}
+
 	return compressed;
+}
+
+/**
+ * Collapse old exchanges into compact user + assistant-summary pairs.
+ * Drops tool_calls, tool results, and keeps only the final text response
+ * per exchange. Drops oldest pairs first if the result is still over budget.
+ *
+ * @param {Array} history Already light-compressed history
+ * @return {Array} Aggressively collapsed history
+ */
+function collapseOldExchanges(history) {
+	let lastUserIdx = -1;
+	for (let i = history.length - 1; i >= 0; i--) {
+		if (history[i].role === "user") {
+			lastUserIdx = i;
+			break;
+		}
+	}
+
+	const systemPrompt = history[0];
+	const currentExchange = history.slice(lastUserIdx);
+	const oldMessages = history.slice(1, lastUserIdx);
+
+	// Walk old messages and keep only user + last text-only assistant per exchange
+	const collapsed = [];
+	let i = 0;
+	while (i < oldMessages.length) {
+		if (oldMessages[i].role === "user") {
+			const userContent = oldMessages[i].content || "";
+			collapsed.push({
+				role: "user",
+				content:
+					userContent.length > 200 ? userContent.slice(0, 200) + "..." : userContent,
+			});
+
+			// Scan forward for the last text-only assistant response in this exchange
+			let lastSummary = "";
+			let j = i + 1;
+			while (j < oldMessages.length && oldMessages[j].role !== "user") {
+				if (
+					oldMessages[j].role === "assistant" &&
+					!oldMessages[j].tool_calls &&
+					oldMessages[j].content
+				) {
+					lastSummary = oldMessages[j].content;
+				}
+				j++;
+			}
+			if (lastSummary) {
+				collapsed.push({
+					role: "assistant",
+					content:
+						lastSummary.length > 200
+							? lastSummary.slice(0, 200) + "..."
+							: lastSummary,
+				});
+			}
+			i = j;
+		} else {
+			i++;
+		}
+	}
+
+	let result = [systemPrompt, ...collapsed, ...currentExchange];
+
+	// Drop oldest collapsed pairs if still over char budget
+	while (estimateHistoryChars(result) > MAX_HISTORY_CHARS && collapsed.length >= 2) {
+		// Remove oldest pair (user + optional assistant)
+		const drop = collapsed[1]?.role === "assistant" ? 2 : 1;
+		collapsed.splice(0, drop);
+		result = [systemPrompt, ...collapsed, ...currentExchange];
+	}
+
+	// eslint-disable-next-line no-console
+	console.log(
+		`[EditorChat] History collapsed: ${history.length} → ${result.length} messages`
+	);
+	return result;
+}
+
+/**
+ * Estimate total character count of a message array.
+ * Counts message content and serialized tool_calls.
+ *
+ * @param {Array} messages Conversation messages
+ * @return {number} Approximate character count
+ */
+function estimateHistoryChars(messages) {
+	return messages.reduce((sum, m) => {
+		let chars = m.content ? m.content.length : 0;
+		if (m.tool_calls) {
+			chars += JSON.stringify(m.tool_calls).length;
+		}
+		return sum + chars;
+	}, 0);
 }
 
 /**
