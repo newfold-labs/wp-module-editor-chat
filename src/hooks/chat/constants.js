@@ -30,11 +30,11 @@ export const EDITOR_TOOLS = new Set([
 	"blu-highlight-block",
 	"blu-rewrite-text",
 	"blu-update-global-styles",
-	// blu-update-block-attrs intentionally excluded — unreliable for preset/custom
-	// attribute swaps (e.g. colors). Use blu-edit-block instead.
-	// blu-generate-image intentionally excluded — image generation is handled
-	// internally via image_prompts on blu-add-section (for new sections).
-	// This prevents the AI from looping on generate-image calls.
+	// Gateway tools — the MCP server exposes abilities through these 3 generic
+	// tools instead of individual ones. They must always be available.
+	"blu-list-abilities",
+	"blu-get-ability-schema",
+	"blu-call-ability",
 ]);
 
 /**

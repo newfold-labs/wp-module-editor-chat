@@ -24,7 +24,6 @@ import {
 	appendBlocksAsChildAtPath,
 } from "./templatePartEditor";
 import { getCurrentGlobalStyles, updateGlobalStyles } from "./globalStylesService";
-import patternLibrary from "./patternLibrary";
 import { customizePatternContent } from "./patternCustomizer";
 import { getBlockMarkup, getCurrentPageTitle } from "../utils/editorHelpers";
 import { validateBlockMarkup } from "../utils/blockValidator";
@@ -54,15 +53,6 @@ function buildCompletionFn(ctx) {
 }
 
 /**
- * Module-level tracker for the last successful pattern search results.
- * Used by code-level enforcement: when the AI calls blu-edit-block or
- * blu-add-section with its own block_content instead of pattern_slug,
- * we auto-substitute the top search result's slug so the pattern library
- * markup is used (with text customization) instead of broken AI-generated HTML.
- */
-let lastPatternSearchResults = null;
-
-/**
  * Module-level tracker for image URLs generated during this user turn.
  * Populated by blu-generate-image results, consumed by handleAddSection
  * and handleEditBlock for deduplication.
@@ -70,13 +60,11 @@ let lastPatternSearchResults = null;
 let generatedImageUrls = [];
 
 /**
- * Clear the cached pattern search results and generated image tracker.
+ * Clear the generated image tracker.
  * Called at the start of each new user turn so stale results from a
- * previous request (e.g. testimonial search) don't contaminate the
- * next request (e.g. header edit).
+ * previous request don't contaminate the next request.
  */
 export function resetPatternSearchCache() {
-	lastPatternSearchResults = null;
 	generatedImageUrls = [];
 }
 
@@ -635,62 +623,6 @@ async function handleRewriteText(toolCall, args, ctx) {
 }
 
 async function handleEditBlock(toolCall, args, ctx) {
-	// When pattern_slug is provided, fetch markup from the library first.
-	if (args.pattern_slug && !args.block_content) {
-		await ctx.updateProgress(__("Fetching pattern from library…", "wp-module-editor-chat"), 400);
-		try {
-			const pattern = await patternLibrary.getMarkup(args.pattern_slug);
-			if (pattern && pattern.content) {
-				let markup = pattern.content;
-
-				// Replace placeholder images with provided URLs if any
-				if (args.image_urls && Array.isArray(args.image_urls) && args.image_urls.length > 0) {
-					markup = replacePatternImages(markup, args.image_urls);
-				}
-
-				// Customize text via the backend AI before inserting
-				await ctx.updateProgress(
-					__("Customizing content for your site…", "wp-module-editor-chat"),
-					500
-				);
-				try {
-					const lastUserMsg =
-						ctx
-							.getMessages?.()
-							?.filter((m) => m.role === "user")
-							?.pop()?.content || "";
-					args.block_content = await customizePatternContent(markup, {
-						pageTitle: getCurrentPageTitle(),
-						userMessage: lastUserMsg,
-					}, buildCompletionFn(ctx));
-				} catch {
-					args.block_content = markup;
-				}
-			} else {
-				return {
-					id: toolCall.id,
-					result: [
-						{
-							type: "text",
-							text: JSON.stringify({
-								success: false,
-								error: `Pattern "${args.pattern_slug}" not found`,
-							}),
-						},
-					],
-					isError: true,
-				};
-			}
-		} catch (fetchErr) {
-			return {
-				id: toolCall.id,
-				result: [
-					{ type: "text", text: JSON.stringify({ success: false, error: fetchErr.message }) },
-				],
-				isError: true,
-			};
-		}
-	}
 
 	// ── Image placeholder resolution (mirrors add-section) ──
 	const imgPlaceholders = args.block_content.match(/__IMG_\d+__/g) || [];
@@ -919,70 +851,6 @@ async function handleEditBlock(toolCall, args, ctx) {
 }
 
 async function handleAddSection(toolCall, args, ctx) {
-	// Track whether a pattern was used so we can inform the AI in the result
-	let usedPatternTitle = null;
-
-	// When pattern_slug is provided, fetch markup, customize text via backend AI, then insert.
-	if (args.pattern_slug && !args.block_content) {
-		await ctx.updateProgress(__("Fetching pattern from library…", "wp-module-editor-chat"), 400);
-		try {
-			const pattern = await patternLibrary.getMarkup(args.pattern_slug);
-			if (pattern && pattern.content) {
-				usedPatternTitle = pattern.title || args.pattern_slug;
-
-				let markup = pattern.content;
-
-				// Replace placeholder images with search_images URLs if provided
-				if (args.image_urls && Array.isArray(args.image_urls) && args.image_urls.length > 0) {
-					markup = replacePatternImages(markup, args.image_urls);
-				}
-
-				// Customize text via the backend AI before inserting
-				await ctx.updateProgress(
-					__("Customizing content for your site…", "wp-module-editor-chat"),
-					500
-				);
-				try {
-					const lastUserMsg =
-						ctx
-							.getMessages?.()
-							?.filter((m) => m.role === "user")
-							?.pop()?.content || "";
-					args.block_content = await customizePatternContent(markup, {
-						pageTitle: getCurrentPageTitle(),
-						userMessage: lastUserMsg,
-					}, buildCompletionFn(ctx));
-				} catch {
-					args.block_content = markup;
-				}
-			} else {
-				return {
-					id: toolCall.id,
-					result: [
-						{
-							type: "text",
-							text: JSON.stringify({
-								success: false,
-								error: `Pattern "${args.pattern_slug}" not found`,
-							}),
-						},
-					],
-					isError: true,
-				};
-			}
-		} catch (fetchErr) {
-			return {
-				id: toolCall.id,
-				result: [
-					{
-						type: "text",
-						text: JSON.stringify({ success: false, error: fetchErr.message }),
-					},
-				],
-				isError: true,
-			};
-		}
-	}
 
 	// ── Image placeholder resolution ──
 	// Count __IMG_N__ placeholders in the markup
@@ -1118,12 +986,6 @@ async function handleAddSection(toolCall, args, ctx) {
 			message: addResult.message,
 			blocksAdded: addResult.blocksAdded,
 		};
-		if (usedPatternTitle) {
-			resultData.patternUsed = usedPatternTitle;
-			resultData.note =
-				`A matching design "${usedPatternTitle}" was found in the pattern library and the text was automatically customized to fit the site. ` +
-				"Tell the user you found a matching design in the library and customized the content for their site.";
-		}
 
 		return {
 			id: toolCall.id,
@@ -1261,43 +1123,6 @@ async function handleHighlightBlock(toolCall, args, ctx) {
 
 async function handleSearchPatterns(toolCall, args, ctx) {
 	await ctx.updateProgress(__("Searching pattern library…", "wp-module-editor-chat"), 300);
-	if (patternLibrary.isReady()) {
-		const { results, totalMatches } = patternLibrary.search(args.query, {
-			category: args.category,
-			limit: args.limit || 15,
-		});
-
-		// Track successful search results for code-level enforcement.
-		// When the model later calls edit-block/add-section with block_content
-		// instead of pattern_slug, we auto-substitute the top result.
-		if (results.length > 0) {
-			lastPatternSearchResults = {
-				results,
-				query: args.query,
-				timestamp: Date.now(),
-			};
-		}
-
-		const resultText =
-			results.length > 0
-				? JSON.stringify({
-						patterns: results,
-						count: results.length,
-						totalMatches,
-					})
-				: JSON.stringify({
-						patterns: [],
-						count: 0,
-						totalMatches: 0,
-						message: "No matching patterns found",
-					});
-		return {
-			id: toolCall.id,
-			result: [{ type: "text", text: resultText }],
-			isError: false,
-		};
-	}
-	// Fallback to MCP
 	const result = await ctx.mcpClient.callTool(toolCall.name, toolCall.arguments);
 	return {
 		id: toolCall.id,
@@ -1358,7 +1183,7 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 
 	// Execute server-side tools via MCP
 	for (const tc of serverToolCalls) {
-		const mcpName = (tc.name || "").replace(/-/, "/");
+		const mcpName = tc.name || "";
 		console.log(`[ToolExecutor:REST] Server-side tool via MCP: ${mcpName}`);
 		try {
 			const mcpResult = await ctx.mcpClient.callTool(mcpName, tc.arguments || {});
@@ -1412,7 +1237,7 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 
 	// Execute client-side tools sequentially
 	for (let i = 0; i < clientToolCalls.length; i++) {
-		const toolCall = clientToolCalls[i];
+		let toolCall = clientToolCalls[i];
 		const toolIndex = i + 1;
 		const totalTools = clientToolCalls.length;
 
@@ -1438,6 +1263,15 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 				args = safeParseJSON(args).value;
 			}
 
+			// Unwrap gateway calls: blu-call-ability wraps an inner ability name
+			// and parameters. Extract them so client-side handlers can execute,
+			// and so the UI shows the real ability name (e.g. "Delete Block").
+			if (toolName === "blu-call-ability" && args.ability_name) {
+				toolName = args.ability_name;
+				args = args.parameters || {};
+				toolCall = { ...toolCall, name: toolName };
+			}
+
 			// Normalize alt param names
 			if (!args.client_id && args.clientId) {
 				args.client_id = args.clientId;
@@ -1448,22 +1282,6 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 			) {
 				const alt = args.content || args.markup || args.html || args.block_markup;
 				if (alt) args.block_content = alt;
-			}
-
-			// Pattern enforcement
-			if (
-				(toolName === "blu-edit-block" || toolName === "blu-add-section") &&
-				args.block_content &&
-				!args.pattern_slug &&
-				lastPatternSearchResults &&
-				Date.now() - lastPatternSearchResults.timestamp < 120000 &&
-				lastPatternSearchResults.results.length > 0
-			) {
-				const topPattern = lastPatternSearchResults.results[0];
-				console.log(`[ToolExecutor:REST] Auto-correcting: using pattern_slug "${topPattern.slug}"`);
-				args.pattern_slug = topPattern.slug;
-				delete args.block_content;
-				lastPatternSearchResults = null;
 			}
 
 			// edit-block without client_id → treat as add-section
@@ -1549,9 +1367,7 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 				// Server-side MCP tool — forward to MCP server for execution
 				console.log(`[ToolExecutor:REST] Forwarding to MCP: ${toolName}`, args);
 				try {
-					// Only replace first hyphen (namespace separator): blu-add-post → blu/add-post
-					const mcpName = toolName.replace(/-/, "/");
-					const mcpResult = await ctx.mcpClient.callTool(mcpName, args);
+					const mcpResult = await ctx.mcpClient.callTool(toolName, args);
 					result = {
 						id: toolCall.id,
 						result: mcpResult.content,
