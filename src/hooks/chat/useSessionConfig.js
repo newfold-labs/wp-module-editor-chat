@@ -3,10 +3,10 @@
  * useSessionConfig — Manages OpenAI client initialization, MCP connection,
  * and session token refresh.
  */
-import { useCallback, useEffect, useRef, useState } from "@wordpress/element";
-import apiFetch from "@wordpress/api-fetch";
-import OpenAI from "openai";
 import { createMCPClient } from "@newfold-labs/wp-module-ai-chat";
+import apiFetch from "@wordpress/api-fetch";
+import { useCallback, useEffect, useRef, useState } from "@wordpress/element";
+import OpenAI from "openai";
 
 import { mcpToolsToOpenAI } from "./conversationUtils";
 

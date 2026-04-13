@@ -9,26 +9,18 @@
 import { CHAT_STATUS } from "@newfold-labs/wp-module-ai-chat";
 import { __ } from "@wordpress/i18n";
 
+import { validateBlockMarkup } from "../utils/blockValidator";
+import { snapshotBlocks } from "../utils/editorContext";
+import { getBlockMarkup, getCurrentPageTitle } from "../utils/editorHelpers";
+import { safeParseJSON } from "../utils/jsonUtils";
 import {
-	handleRewriteAction,
-	handleDeleteAction,
 	handleAddAction,
+	handleDeleteAction,
 	handleMoveAction,
+	handleRewriteAction,
 } from "./actionExecutor";
-import {
-	findAncestorTemplatePart,
-	getBlockPathInTemplatePart,
-	modifyTemplatePartEntity,
-	insertBlocksAtPath,
-	insertBlocksBeforePath,
-	appendBlocksAsChildAtPath,
-} from "./templatePartEditor";
 import { getCurrentGlobalStyles, updateGlobalStyles } from "./globalStylesService";
 import { customizePatternContent } from "./patternCustomizer";
-import { getBlockMarkup, getCurrentPageTitle } from "../utils/editorHelpers";
-import { validateBlockMarkup } from "../utils/blockValidator";
-import { safeParseJSON } from "../utils/jsonUtils";
-import { snapshotBlocks } from "../utils/editorContext";
 
 /**
  * Build a completion function that uses the OpenAI client (CF Worker).
