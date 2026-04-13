@@ -21,7 +21,7 @@ import AILogo from "../ui/AILogo";
  *
  * @param {Object}   props               - The component props.
  * @param {Function} props.onSendMessage - The function to call when a suggestion is clicked.
- * @return {JSX.Element} The WelcomeScreen component.
+ * @return {Element} The WelcomeScreen component.
  */
 const WelcomeScreen = ({ onSendMessage }) => {
 	const suggestions = [

@@ -17,7 +17,7 @@ import { Plus, Sparkles } from "lucide-react";
  * @param {Object}   props                   Component props
  * @param {Function} props.onNewChat         Function to call when new chat is requested
  * @param {boolean}  props.isNewChatDisabled Whether the new chat button should be disabled
- * @return {JSX.Element} The SidebarHeader component.
+ * @return {Element} The SidebarHeader component.
  */
 const SidebarHeader = ({ onNewChat, isNewChatDisabled = false }) => {
 	return (
