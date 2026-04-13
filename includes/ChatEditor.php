@@ -58,7 +58,7 @@ final class ChatEditor {
 	public static function get_config() {
 		$worker_url = defined( 'NFD_EDITOR_CHAT_WORKER_URL' )
 			? \NFD_EDITOR_CHAT_WORKER_URL
-			: '';
+			: 'https://cf-worker-ai-chat.bluehost.workers.dev';
 
 		if ( empty( $worker_url ) ) {
 			return new \WP_Error(
