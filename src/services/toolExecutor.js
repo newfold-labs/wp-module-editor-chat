@@ -218,6 +218,7 @@ const BLOCK_TOOL_NAMES = [
  * Collects all unique image URLs from the pattern (block comment attrs, img src,
  * background-image) and replaces them in order with the provided URLs.
  * Works for core/image, core/cover, and any block with image URLs.
+ *
  * @param {string} markup
  * @param {Array}  imageUrls
  */
@@ -684,7 +685,6 @@ async function handleEditBlock(toolCall, args, ctx) {
 				);
 			}
 		}
-
 	}
 
 	await ctx.updateProgress(__("Validating block markup…", "wp-module-editor-chat"), 300);

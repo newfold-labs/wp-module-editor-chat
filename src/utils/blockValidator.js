@@ -170,9 +170,6 @@ export const validateBlockMarkup = (blockContent) => {
 		};
 	}
 
-	// Snapshot block count before normalization for later comparison
-	const preNormCount = deepBlockCount(parsed);
-
 	// ── Auto-wrap blocks that require a parent wrapper ──
 	// core/button must be inside core/buttons, core/list-item inside core/list.
 	// The AI often sends bare child blocks without the required parent.
@@ -239,6 +236,7 @@ export const validateBlockMarkup = (blockContent) => {
 		// original markup was structurally broken in a way the tag-balance
 		// check didn't catch.  Reject instead of silently inserting
 		// incomplete content.
+		const preNormCount = deepBlockCount(parsed);
 		const postNormCount = deepBlockCount(reParsed);
 		if (preNormCount > 0 && postNormCount < preNormCount) {
 			const lost = preNormCount - postNormCount;

@@ -260,6 +260,7 @@ export function hasMeaningfulUserMessage(messages) {
  * Check if the user's message requires site management tools.
  * Uses the raw user message (not the AI's plan, which always mentions "page").
  * Matches explicit action + noun patterns to avoid false positives.
+ *
  * @param {string} userMessage The raw user message text
  * @return {boolean} True if message requires site management tools
  */
