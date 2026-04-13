@@ -286,8 +286,7 @@ export async function runChatLoop(userMessage, deps) {
 		if (allSucceeded && results.length > 0) {
 			conversationHistoryRef.current.push({
 				role: "system",
-				content:
-					"All tool calls above succeeded.",
+				content: "All tool calls above succeeded.",
 			});
 		}
 

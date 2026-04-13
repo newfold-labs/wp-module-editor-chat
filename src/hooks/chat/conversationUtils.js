@@ -184,8 +184,7 @@ function collapseOldExchanges(history) {
 			const userContent = oldMessages[i].content || "";
 			collapsed.push({
 				role: "user",
-				content:
-					userContent.length > 200 ? userContent.slice(0, 200) + "..." : userContent,
+				content: userContent.length > 200 ? userContent.slice(0, 200) + "..." : userContent,
 			});
 
 			// Scan forward for the last text-only assistant response in this exchange
@@ -204,10 +203,7 @@ function collapseOldExchanges(history) {
 			if (lastSummary) {
 				collapsed.push({
 					role: "assistant",
-					content:
-						lastSummary.length > 200
-							? lastSummary.slice(0, 200) + "..."
-							: lastSummary,
+					content: lastSummary.length > 200 ? lastSummary.slice(0, 200) + "..." : lastSummary,
 				});
 			}
 			i = j;
@@ -227,9 +223,7 @@ function collapseOldExchanges(history) {
 	}
 
 	// eslint-disable-next-line no-console
-	console.log(
-		`[EditorChat] History collapsed: ${history.length} → ${result.length} messages`
-	);
+	console.log(`[EditorChat] History collapsed: ${history.length} → ${result.length} messages`);
 	return result;
 }
 
