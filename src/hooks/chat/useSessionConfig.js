@@ -1,14 +1,13 @@
 /* eslint-disable no-undef, no-console */
 /**
  * useSessionConfig — Manages OpenAI client initialization, MCP connection,
- * pattern library setup, and session token refresh.
+ * and session token refresh.
  */
 import { useCallback, useEffect, useRef, useState } from "@wordpress/element";
 import apiFetch from "@wordpress/api-fetch";
 import OpenAI from "openai";
 import { createMCPClient } from "@newfold-labs/wp-module-ai-chat";
 
-import patternLibrary from "../../services/patternLibrary";
 import { mcpToolsToOpenAI } from "./conversationUtils";
 
 // Module-level MCP client (created once at import time)
@@ -82,9 +81,6 @@ const useSessionConfig = () => {
 				const availableTools = await mcpClient.listTools();
 				setOpenaiTools(mcpToolsToOpenAI(availableTools));
 				setMcpConnectionStatus("connected");
-
-				const providerName = window.nfdEditorChat?.patternProvider || "wonderblocks";
-				patternLibrary.initialize(providerName).catch(console.warn);
 			} catch (err) {
 				console.error("Failed to initialize MCP:", err);
 				setMcpConnectionStatus("disconnected");
