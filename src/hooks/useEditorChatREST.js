@@ -7,22 +7,22 @@
  * - streamCompletion: OpenAI streaming
  * - useDisplayMessages: message transformation for display
  * - chatLoop: function-calling loop (reasoning → tools → summarize)
- * - useChatSideEffects: ref syncing, archiving, save watching
+ * - useChatSideEffects: ref syncing, save watching, active-chat persistence
  * - useChangeActions: accept/decline change handlers
  */
 import { store as coreStore } from "@wordpress/core-data";
 import { useDispatch, useSelect } from "@wordpress/data";
 import { useCallback, useEffect, useRef, useState } from "@wordpress/element";
 import { __ } from "@wordpress/i18n";
-import { archiveConversation } from "@newfold-labs/wp-module-ai-chat";
 
-import { CHAT_STATUS, EDITOR_CHAT_CONSUMER } from "./chat/constants";
+import { CHAT_STATUS } from "./chat/constants";
 import useSessionConfig from "./chat/useSessionConfig";
 import { streamCompletion as streamCompletionFn } from "./chat/streamCompletion";
 import useDisplayMessages from "./chat/useDisplayMessages";
 import { runChatLoop } from "./chat/chatLoop";
 import useChatSideEffects from "./chat/useChatSideEffects";
 import useChangeActions from "./chat/useChangeActions";
+import { loadActiveChat, clearActiveChat } from "./chat/activeChatStorage";
 import { resetPatternSearchCache } from "../services/toolExecutor";
 
 /**
@@ -31,8 +31,17 @@ import { resetPatternSearchCache } from "../services/toolExecutor";
  * @return {Object} Chat state and handlers for the editor
  */
 const useEditorChatREST = () => {
+	// Restore active chat (messages + model history) from localStorage once,
+	// on first mount, so a page reload resumes instead of starting a new chat.
+	// Stored in a ref so we don't re-read localStorage on every render.
+	const persistedRef = useRef();
+	if (persistedRef.current === undefined) {
+		persistedRef.current = loadActiveChat();
+	}
+	const persisted = persistedRef.current;
+
 	// ── Chat state ──
-	const [messages, setMessages] = useState([]);
+	const [messages, setMessages] = useState(persisted.messages);
 	const [status, setStatus] = useState(CHAT_STATUS.IDLE);
 	const [currentResponse, setCurrentResponse] = useState("");
 	const [error, setError] = useState(null);
@@ -48,8 +57,10 @@ const useEditorChatREST = () => {
 	const [hasGlobalStylesChanges, setHasGlobalStylesChanges] = useState(false);
 
 	// ── Refs ──
-	const conversationHistoryRef = useRef([]);
-	const isFirstMessageRef = useRef(true);
+	const conversationHistoryRef = useRef(persisted.history);
+	// Skip re-adding the system prompt only when the restored history actually
+	// starts with one — safer than trusting history.length alone.
+	const isFirstMessageRef = useRef(persisted.history[0]?.role !== "system");
 	const originalGlobalStylesRef = useRef(null);
 	const blockSnapshotRef = useRef(null);
 	const executedToolsRef = useRef([]);
@@ -141,6 +152,7 @@ const useEditorChatREST = () => {
 	useChatSideEffects({
 		messages,
 		messagesRef,
+		conversationHistoryRef,
 		status,
 		executedTools,
 		executedToolsRef,
@@ -216,8 +228,8 @@ const useEditorChatREST = () => {
 
 	// ── handleNewChat ──
 	const handleNewChat = useCallback(() => {
-		// Archive outgoing conversation
-		archiveConversation(messagesRef.current, null, null, EDITOR_CHAT_CONSUMER);
+		// Drop the persisted active chat — we're starting fresh.
+		clearActiveChat();
 
 		// Reset everything
 		resetPatternSearchCache();

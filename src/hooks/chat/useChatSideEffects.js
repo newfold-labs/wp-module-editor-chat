@@ -1,20 +1,20 @@
 /**
  * useChatSideEffects — Manages all side effects for the editor chat hook.
  *
- * Consolidates ref syncing, tool lifecycle, save watching,
- * and conversation persistence into a single hook.
+ * Consolidates ref syncing, tool lifecycle, save watching, and
+ * active-chat persistence (for reload-resume) into a single hook.
  */
-import { useEffect } from "@wordpress/element";
-import { archiveConversation } from "@newfold-labs/wp-module-ai-chat";
+import { useEffect, useRef } from "@wordpress/element";
 
 import { upsertToolExecMsg } from "../../services/toolExecutor";
-import { CHAT_STATUS, EDITOR_CHAT_CONSUMER } from "./constants";
-import { hasMeaningfulUserMessage } from "./conversationUtils";
+import { CHAT_STATUS } from "./constants";
+import { saveActiveChat } from "./activeChatStorage";
 
 /**
  * @param {Object}   deps                           All state and refs needed by the side effects
  * @param {Array}    deps.messages                  Chat messages array
- * @param {Object}   deps.messagesRef               Ref to messages for unload handler
+ * @param {Object}   deps.messagesRef               Ref kept in sync with messages
+ * @param {Object}   deps.conversationHistoryRef    Ref to the model-visible history (for persistence)
  * @param {string}   deps.status                    Current chat status
  * @param {Array}    deps.executedTools             Executed tools array
  * @param {Object}   deps.executedToolsRef          Ref to executed tools
@@ -28,6 +28,7 @@ import { hasMeaningfulUserMessage } from "./conversationUtils";
 const useChatSideEffects = ({
 	messages,
 	messagesRef,
+	conversationHistoryRef,
 	status,
 	executedTools,
 	executedToolsRef,
@@ -76,23 +77,20 @@ const useChatSideEffects = ({
 		}
 	}, [isSaving, isSavingPost, setMessages, setHasGlobalStylesChanges, setIsSaving]);
 
-	// Archive conversation while chatting
+	// Persist active chat so a page reload can resume where we left off.
+	// conversationHistoryRef is mutated by chatLoop BEFORE setMessages fires,
+	// so by the time this effect runs, the ref already reflects the new turn.
+	// Skip the initial mount: the effect would otherwise rewrite savedAt to
+	// "now" on every page load and effectively disable the TTL.
+	const isInitialMountRef = useRef(true);
 	useEffect(() => {
-		if (hasMeaningfulUserMessage(messages)) {
-			archiveConversation(messages, null, null, EDITOR_CHAT_CONSUMER);
+		if (isInitialMountRef.current) {
+			isInitialMountRef.current = false;
+			return;
 		}
+		saveActiveChat(messages, conversationHistoryRef.current);
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- ref deliberately omitted; see note above
 	}, [messages]);
-
-	// Archive on unload
-	useEffect(() => {
-		const handleBeforeUnload = () => {
-			if (hasMeaningfulUserMessage(messagesRef.current)) {
-				archiveConversation(messagesRef.current, null, null, EDITOR_CHAT_CONSUMER);
-			}
-		};
-		window.addEventListener("beforeunload", handleBeforeUnload);
-		return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-	}, [messagesRef]);
 };
 
 export default useChatSideEffects;
