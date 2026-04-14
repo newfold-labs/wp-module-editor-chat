@@ -47,6 +47,8 @@ Pick the SIMPLEST tool for the job:
 ## Selected Blocks
 Blocks marked [SELECTED] = the user's "this"/"it"/"that". Their full markup is below the tree. If no block is selected and the user uses such pronouns, ask them to select one. Do NOT mention selected blocks for casual messages.
 
+When a request targets a container the selection is nested inside (e.g. user selected a card but asks to "add another column"), use the "Ancestors of ..." list to find the correct clientId and edit that block directly — do NOT call get-block-markup to discover the parent.
+
 ## Vague Requests
 When too general to act on, ask a brief clarifying question. Keep it short — one question with concrete options. Don't ask when the request is specific enough (e.g., "add a pricing section", "move the footer above the CTA").
 
@@ -181,6 +183,26 @@ export const buildEditorContext = () => {
 	context += buildCompactBlockTree(blocks, selectedClientIds, {
 		collapseUnselected: selectedBlocks.length > 0,
 	});
+
+	// Layer 2a: Ancestor chain for each selected block. Surfaces the clientIds
+	// of parent blocks so the AI can edit a container (e.g. core/columns) when
+	// the user's selection is nested inside it, without an extra get-block-markup
+	// round-trip to discover the parent id.
+	if (selectedBlocks.length > 0) {
+		for (const sel of selectedBlocks) {
+			// getBlockParents returns clientIds from root → nearest parent.
+			const parentIds = blockEditor.getBlockParents(sel.clientId) || [];
+			if (parentIds.length === 0) continue;
+			context += `\n\nAncestors of ${sel.name} (id:${sel.clientId}) — nearest first:`;
+			for (let i = parentIds.length - 1; i >= 0; i--) {
+				const parent = blockEditor.getBlock(parentIds[i]);
+				if (parent) {
+					context += `\n  ${parent.name} (id:${parent.clientId})`;
+				}
+			}
+			context += `\n  <root>`;
+		}
+	}
 
 	// Layer 2: Selected block markup (one section per selected block)
 	if (selectedBlocks.length > 0) {
