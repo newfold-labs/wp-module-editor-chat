@@ -196,8 +196,25 @@ export async function runChatLoop(userMessage, deps) {
 		setCurrentResponse("");
 		setStatus(CHAT_STATUS.TOOL_CALL);
 
-		// Retry detection
-		const { allRetried, retryLimitHit } = retryTracker.recordIteration(toolCalls);
+		// Retry detection — tracker must see the real ability name, not the
+		// gateway dispatcher. Without this, any two calls routed through
+		// blu-call-ability (even reads of different blocks) look like the same
+		// tool repeating and trip the retry limit.
+		const unwrappedNames = toolCalls.map((tc) => {
+			if (tc.name !== "blu-call-ability") return { ...tc };
+			const parsed =
+				typeof tc.arguments === "string"
+					? (() => {
+							try {
+								return JSON.parse(tc.arguments);
+							} catch {
+								return {};
+							}
+						})()
+					: tc.arguments || {};
+			return { ...tc, name: parsed.ability_name || tc.name };
+		});
+		const { allRetried, retryLimitHit } = retryTracker.recordIteration(unwrappedNames);
 
 		if (allRetried) {
 			if (retryLimitHit) {
@@ -207,7 +224,7 @@ export async function runChatLoop(userMessage, deps) {
 			}
 			console.warn(
 				"[EditorChat] Retry loop detected — all tool calls have been repeated",
-				toolCalls.map((tc) => `${tc.name}`)
+				unwrappedNames.map((tc) => tc.name)
 			);
 			// Append the assistant message so the conversation stays valid
 			conversationHistoryRef.current.push({
