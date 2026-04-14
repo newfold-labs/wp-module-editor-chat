@@ -290,7 +290,12 @@ export async function runChatLoop(userMessage, deps) {
 			});
 		}
 
-		toolsJustExecuted = true;
+		// Only switch to SUMMARIZE_NUDGE when at least one tool actually changed
+		// something. If the round was purely discovery (get-ability-schema,
+		// get-block-markup, etc.) we must keep nudging EXECUTE — otherwise the
+		// next iteration tells the AI "all changes are applied" and it replies
+		// with a confirmation without ever running the write tool.
+		toolsJustExecuted = results.some((r) => r.hasChanges === true);
 		setStatus(CHAT_STATUS.SUMMARIZING);
 		// Loop continues — next iteration will get the AI's response
 	}
