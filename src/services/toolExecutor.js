@@ -686,18 +686,39 @@ async function handleEditBlock(toolCall, args, ctx) {
 					__("Generating image…", "wp-module-editor-chat") + ` (${i + 1}/${promptCount})`,
 					500
 				);
+				console.log(
+					`[ToolExecutor:REST] edit-block: generating image ${i + 1}/${promptCount}`,
+					imgArgs
+				);
 				try {
 					const mcpResult = await callAbility(ctx.mcpClient, "blu-generate-image", imgArgs);
+					console.log(
+						`[ToolExecutor:REST] edit-block: image ${i + 1} MCP result`,
+						mcpResult
+					);
 					if (!mcpResult.isError && mcpResult.content?.[0]?.text) {
 						const parsed = JSON.parse(mcpResult.content[0].text);
 						const url = parsed?.message?.url || parsed?.url;
 						if (url) {
 							imageUrls.push(url);
 							generatedImageUrls.push(url);
+						} else {
+							console.warn(
+								`[ToolExecutor:REST] edit-block: image ${i + 1} result had no URL`,
+								parsed
+							);
 						}
+					} else {
+						console.warn(
+							`[ToolExecutor:REST] edit-block: image ${i + 1} MCP result flagged as error or empty`,
+							mcpResult
+						);
 					}
-				} catch {
-					// image generation failed — non-critical
+				} catch (imgErr) {
+					console.error(
+						`[ToolExecutor:REST] edit-block: image ${i + 1} generation threw`,
+						imgErr
+					);
 				}
 			}
 
@@ -716,6 +737,16 @@ async function handleEditBlock(toolCall, args, ctx) {
 				);
 			}
 		}
+	}
+
+	// If any placeholder is still present after the image step, log loudly —
+	// the block would otherwise render a broken <img src="__IMG_N__">.
+	const leftover = args.block_content.match(/__IMG_\d+__/g);
+	if (leftover && leftover.length > 0) {
+		console.warn(
+			"[ToolExecutor:REST] edit-block: placeholders left unresolved — block will render with broken image URLs",
+			leftover
+		);
 	}
 
 	await ctx.updateProgress(__("Validating block markup…", "wp-module-editor-chat"), 300);
@@ -1254,6 +1285,10 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 
 		try {
 			let toolName = toolCall.name || "";
+			console.log(
+				`[ToolExecutor:REST] Executing ${toolIndex}/${totalTools}: ${toolName}`,
+				toolCall.arguments
+			);
 			let args = toolCall.arguments || {};
 			if (typeof args === "string") {
 				args = safeParseJSON(args).value;
@@ -1271,6 +1306,11 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 			// Normalize alt param names
 			if (!args.client_id && args.clientId) {
 				args.client_id = args.clientId;
+			}
+			// The model commonly sends `instruction` (singular) even though the
+			// ability schema is `instructions` — accept both.
+			if (!args.instructions && args.instruction) {
+				args.instructions = args.instruction;
 			}
 			if (
 				(toolName === "blu-edit-block" || toolName === "blu-add-section") &&
@@ -1393,6 +1433,7 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 				}
 			} else {
 				// Server-side MCP tool — forward to MCP server for execution
+				console.log(`[ToolExecutor:REST] Forwarding to MCP: ${toolName}`, args);
 				try {
 					const mcpResult = await callAbility(ctx.mcpClient, toolName, args);
 					result = {
@@ -1439,6 +1480,7 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 			completedToolsList.push({ ...toolCall, isError });
 			ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError }]);
 		} catch (err) {
+			console.error(`[ToolExecutor:REST] Error executing ${toolCall.name}:`, err);
 			await ctx.updateProgress(
 				__("Action failed:", "wp-module-editor-chat") + " " + err.message,
 				1000
