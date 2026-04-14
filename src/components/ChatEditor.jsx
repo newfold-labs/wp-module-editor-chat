@@ -3,7 +3,7 @@
  */
 import { useDispatch } from "@wordpress/data";
 import { PluginSidebar, PluginSidebarMoreMenuItem } from "@wordpress/editor";
-import { useEffect, useMemo } from "@wordpress/element";
+import { useEffect, useMemo, useState } from "@wordpress/element";
 import { __ } from "@wordpress/i18n";
 import { store as interfaceStore } from "@wordpress/interface";
 
@@ -16,6 +16,7 @@ import { ChatMessages } from "@newfold-labs/wp-module-ai-chat";
  * Internal dependencies
  */
 import useEditorChatREST from "../hooks/useEditorChatREST";
+import useEditorControls from "../hooks/useEditorControls";
 import ChatInput from "./chat/ChatInput";
 import WelcomeScreen from "./chat/WelcomeScreen";
 import SidebarHeader from "./sidebar/SidebarHeader";
@@ -26,6 +27,8 @@ const SIDEBAR_SCOPE = "core";
 
 const ChatEditor = () => {
 	const { enableComplementaryArea } = useDispatch(interfaceStore);
+	const { setShowTemplate } = useEditorControls();
+	const [templateLocked, setTemplateLocked] = useState(false);
 	const {
 		messages,
 		isLoading,
@@ -40,9 +43,20 @@ const ChatEditor = () => {
 		handleStopRequest,
 	} = useEditorChatREST();
 
+	// Phase 1: Enable template mode (show header & footer)
 	useEffect(() => {
-		enableComplementaryArea(SIDEBAR_SCOPE, SIDEBAR_NAME);
-	}, [enableComplementaryArea]);
+		const didShowTemplate = setShowTemplate();
+		if (didShowTemplate) {
+			setTemplateLocked(true);
+		}
+	}, [setShowTemplate]);
+
+	// Phase 2: After template is locked, open sidebar
+	useEffect(() => {
+		if (templateLocked) {
+			enableComplementaryArea(SIDEBAR_SCOPE, SIDEBAR_NAME);
+		}
+	}, [templateLocked, enableComplementaryArea]);
 
 	// Disable new chat button when there are no messages (brand new chat)
 	const isNewChatDisabled = messages.length === 0;
