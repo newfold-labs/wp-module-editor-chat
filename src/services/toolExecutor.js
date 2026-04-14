@@ -70,6 +70,26 @@ const GATEWAY_TOOLS = new Set([
 ]);
 
 /**
+ * Tools that still execute and feed results back to the model, but are
+ * hidden from the UI tool-execution list — purely "meta" calls the user
+ * shouldn't see (e.g. schema lookups).
+ */
+const SILENT_TOOLS = new Set([
+	// Gateway / ability discovery
+	"blu-get-ability-schema",
+	"blu-list-abilities",
+	// REST API discovery
+	"blu-list-api-functions",
+	"blu-get-function-details",
+	// Helper lookups that exist only to feed a subsequent write
+	"blu-get-active-global-styles-id",
+	"blu-get-global-styles",
+	// Context-building reads the AI does on its own
+	"blu-get-site-info",
+]);
+const isSilentTool = (tc) => SILENT_TOOLS.has(tc?.name);
+
+/**
  * Call a blu-* ability via the MCP server, wrapping through blu-call-ability
  * when the ability is not one of the gateway tools. The server only exposes
  * the 3 gateway tools (see McpServer.php), so individual ability calls must
@@ -1252,41 +1272,52 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 	}
 
 	await ctx.wait(300);
-	ctx.setStatus(CHAT_STATUS.TOOL_CALL);
-	ctx.setActiveToolCall({
-		id: "preparing",
-		name: "preparing",
-		index: 0,
-		total: clientToolCalls.length,
-	});
-	ctx.setPendingTools(
-		clientToolCalls.map((tc, idx) => ({
-			...tc,
-			id: tc.id || `tool-${idx}`,
-		}))
-	);
+
+	// Only tools that should render in the UI; silent tools run invisibly.
+	// Skip all UI state transitions (including the TOOL_CALL status flip)
+	// when every tool in the batch is silent — otherwise the status bar
+	// flickers with nothing to show for it.
+	const visibleToolCalls = clientToolCalls.filter((tc) => !isSilentTool(tc));
+	if (visibleToolCalls.length > 0) {
+		ctx.setStatus(CHAT_STATUS.TOOL_CALL);
+		ctx.setActiveToolCall({
+			id: "preparing",
+			name: "preparing",
+			index: 0,
+			total: visibleToolCalls.length,
+		});
+		ctx.setPendingTools(
+			visibleToolCalls.map((tc, idx) => ({
+				...tc,
+				id: tc.id || `tool-${idx}`,
+			}))
+		);
+	}
 
 	// Execute client-side tools sequentially
+	let visibleIndex = 0;
 	for (let i = 0; i < clientToolCalls.length; i++) {
 		let toolCall = clientToolCalls[i];
-		const toolIndex = i + 1;
-		const totalTools = clientToolCalls.length;
+		const silent = isSilentTool(toolCall);
 
-		ctx.setPendingTools((prev) => prev.filter((_, idx) => idx !== 0));
-		ctx.setActiveToolCall({
-			id: toolCall.id || `tool-${i}`,
-			name: toolCall.name,
-			arguments: toolCall.arguments,
-			index: toolIndex,
-			total: totalTools,
-		});
+		if (!silent) {
+			visibleIndex += 1;
+			ctx.setPendingTools((prev) => prev.filter((_, idx) => idx !== 0));
+			ctx.setActiveToolCall({
+				id: toolCall.id || `tool-${i}`,
+				name: toolCall.name,
+				arguments: toolCall.arguments,
+				index: visibleIndex,
+				total: visibleToolCalls.length,
+			});
+		}
 
 		await new Promise((r) => requestAnimationFrame(r));
 
 		try {
 			let toolName = toolCall.name || "";
 			console.log(
-				`[ToolExecutor:REST] Executing ${toolIndex}/${totalTools}: ${toolName}`,
+				`[ToolExecutor:REST] Executing ${i + 1}/${clientToolCalls.length}: ${toolName}`,
 				toolCall.arguments
 			);
 			let args = toolCall.arguments || {};
@@ -1432,8 +1463,13 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 			}
 
 			toolResults.push({ tool_call_id: toolCall.id, content, isError, hasChanges: result?.hasChanges || false });
-			completedToolsList.push({ ...toolCall, isError });
-			ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError }]);
+			// Silent tools stay hidden on success, but errors always surface —
+			// otherwise a failing discovery call leaves the user with no trace
+			// for why a subsequent action went sideways.
+			if (!silent || isError) {
+				completedToolsList.push({ ...toolCall, isError });
+				ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError }]);
+			}
 		} catch (err) {
 			console.error(`[ToolExecutor:REST] Error executing ${toolCall.name}:`, err);
 			await ctx.updateProgress(
@@ -1445,6 +1481,7 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 				content: JSON.stringify({ error: err.message }),
 				isError: true,
 			});
+			// Always surface thrown errors, even for silent tools — see comment above.
 			completedToolsList.push({ ...toolCall, isError: true, errorMessage: err.message });
 			ctx.setExecutedTools((prev) => [
 				...prev,
