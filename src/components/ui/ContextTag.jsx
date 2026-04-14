@@ -59,7 +59,7 @@ const extractBlockText = (content) => {
  * @param {Object}   props          Component props
  * @param {Object}   props.block    Single block object to display
  * @param {Function} props.onRemove Optional callback when tag is removed
- * @return {JSX.Element|null} The ContextTag component
+ * @return {Element|null} The ContextTag component
  */
 const ContextTag = ({ block, onRemove }) => {
 	if (!block) {

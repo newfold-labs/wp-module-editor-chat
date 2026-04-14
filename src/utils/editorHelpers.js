@@ -70,7 +70,9 @@ export const buildCompactBlockTree = (
 
 	// Recursive inner block count (all levels)
 	const countInnerBlocks = (block) => {
-		if (!block.innerBlocks || block.innerBlocks.length === 0) return 0;
+		if (!block.innerBlocks || block.innerBlocks.length === 0) {
+			return 0;
+		}
 		return block.innerBlocks.reduce((sum, ib) => sum + 1 + countInnerBlocks(ib), 0);
 	};
 
@@ -110,11 +112,7 @@ export const buildCompactBlockTree = (
 			// all descendant clientIds (needed for tools like replace-image).
 			if (block.innerBlocks && block.innerBlocks.length > 0) {
 				const expandChildren = isSelected || insideSelected;
-				if (
-					hasSelection &&
-					!expandChildren &&
-					!subtreeHasSelected(block.innerBlocks)
-				) {
+				if (hasSelection && !expandChildren && !subtreeHasSelected(block.innerBlocks)) {
 					lines.push(`${"  ".repeat(depth + 1)}... (${block.innerBlocks.length} inner blocks)`);
 				} else {
 					walkBlocks(block.innerBlocks, indexPath, depth + 1, expandChildren);

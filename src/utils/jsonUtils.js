@@ -30,11 +30,24 @@ export function safeParseJSON(str, fallback = {}) {
 		let esc = false;
 		for (let i = 0; i < str.length; i++) {
 			const ch = str[i];
-			if (esc) { esc = false; continue; }
-			if (ch === "\\" && inStr) { esc = true; continue; }
-			if (ch === '"') { inStr = !inStr; continue; }
-			if (inStr) continue;
-			if (ch === "{") depth++;
+			if (esc) {
+				esc = false;
+				continue;
+			}
+			if (ch === "\\" && inStr) {
+				esc = true;
+				continue;
+			}
+			if (ch === '"') {
+				inStr = !inStr;
+				continue;
+			}
+			if (inStr) {
+				continue;
+			}
+			if (ch === "{") {
+				depth++;
+			}
 			if (ch === "}") {
 				depth--;
 				if (depth === 0) {

@@ -9,26 +9,18 @@
 import { CHAT_STATUS } from "@newfold-labs/wp-module-ai-chat";
 import { __ } from "@wordpress/i18n";
 
+import { validateBlockMarkup } from "../utils/blockValidator";
+import { snapshotBlocks } from "../utils/editorContext";
+import { getBlockMarkup, getCurrentPageTitle } from "../utils/editorHelpers";
+import { safeParseJSON } from "../utils/jsonUtils";
 import {
-	handleRewriteAction,
-	handleDeleteAction,
 	handleAddAction,
+	handleDeleteAction,
 	handleMoveAction,
+	handleRewriteAction,
 } from "./actionExecutor";
-import {
-	findAncestorTemplatePart,
-	getBlockPathInTemplatePart,
-	modifyTemplatePartEntity,
-	insertBlocksAtPath,
-	insertBlocksBeforePath,
-	appendBlocksAsChildAtPath,
-} from "./templatePartEditor";
 import { getCurrentGlobalStyles, updateGlobalStyles } from "./globalStylesService";
 import { customizePatternContent } from "./patternCustomizer";
-import { getBlockMarkup, getCurrentPageTitle } from "../utils/editorHelpers";
-import { validateBlockMarkup } from "../utils/blockValidator";
-import { safeParseJSON } from "../utils/jsonUtils";
-import { snapshotBlocks } from "../utils/editorContext";
 
 /**
  * Build a completion function that uses the OpenAI client (CF Worker).
@@ -145,11 +137,13 @@ function extractImageUrls(markup) {
  *
  * @param {string}   markup        Block markup HTML string
  * @param {string[]} availableUrls Pool of generated image URLs to draw from
- * @return {{ markup: string, replacements: Array<{from: string, to: string}> }}
+ * @return {{ markup: string, replacements: Array<{from: string, to: string}> }} The deduplicated markup and list of replacements made.
  */
 function deduplicateImages(markup, availableUrls) {
 	const imgUrls = extractImageUrls(markup);
-	if (imgUrls.length === 0) return { markup, replacements: [] };
+	if (imgUrls.length === 0) {
+		return { markup, replacements: [] };
+	}
 
 	// Find URLs that appear more than once
 	const seen = new Map(); // url → count
@@ -157,11 +151,11 @@ function deduplicateImages(markup, availableUrls) {
 		seen.set(url, (seen.get(url) || 0) + 1);
 	}
 
-	const duplicateUrls = [...seen.entries()]
-		.filter(([, count]) => count > 1)
-		.map(([url]) => url);
+	const duplicateUrls = [...seen.entries()].filter(([, count]) => count > 1).map(([url]) => url);
 
-	if (duplicateUrls.length === 0) return { markup, replacements: [] };
+	if (duplicateUrls.length === 0) {
+		return { markup, replacements: [] };
+	}
 
 	// Build pool of unused URLs (generated but not referenced in markup)
 	const usedInMarkup = new Set(imgUrls);
@@ -177,7 +171,9 @@ function deduplicateImages(markup, availableUrls) {
 		let matchIdx = 0;
 		result = result.replace(srcRe, (full, pre, post) => {
 			matchIdx++;
-			if (matchIdx === 1) return full; // keep first occurrence
+			if (matchIdx === 1) {
+				return full;
+			} // keep first occurrence
 			if (unusedPool.length > 0) {
 				const replacement = unusedPool.shift();
 				replacements.push({ from: dupUrl, to: replacement });
@@ -230,11 +226,7 @@ export function upsertToolExecMsg(setMessages, tools, undoData) {
 				executedTools: [...tools],
 				...(undoData ? { hasActions: true, undoData } : {}),
 			};
-			return [
-				...prev.slice(0, existingIdx),
-				updated,
-				...prev.slice(existingIdx + 1),
-			];
+			return [...prev.slice(0, existingIdx), updated, ...prev.slice(existingIdx + 1)];
 		}
 
 		// Create new — insert after reasoning or after last user message
@@ -257,11 +249,7 @@ export function upsertToolExecMsg(setMessages, tools, undoData) {
 		if (insertIdx === -1) {
 			insertIdx = Math.max(lastUserIdx + 1, 0);
 		}
-		return [
-			...prev.slice(0, insertIdx),
-			toolExecMsg,
-			...prev.slice(insertIdx),
-		];
+		return [...prev.slice(0, insertIdx), toolExecMsg, ...prev.slice(insertIdx)];
 	});
 }
 
@@ -281,10 +269,11 @@ const BLOCK_TOOL_NAMES = [
  * Collects all unique image URLs from the pattern (block comment attrs, img src,
  * background-image) and replaces them in order with the provided URLs.
  * Works for core/image, core/cover, and any block with image URLs.
+ *
  * @param {string} markup
  * @param {Array}  imageUrls
  */
-function replacePatternImages(markup, imageUrls) {
+function _replacePatternImages(markup, imageUrls) {
 	if (!imageUrls || imageUrls.length === 0) {
 		return markup;
 	}
@@ -501,9 +490,10 @@ async function handleUpdateBlockAttrs(toolCall, args, ctx) {
 		// ── Generate image from prompt if provided ──
 		// Allows "change this image" without exposing blu-generate-image as a tool.
 		if (args.image_prompt && !args.attributes?.url) {
-			const imgArgs = typeof args.image_prompt === "string"
-				? { prompt: args.image_prompt }
-				: { prompt: args.image_prompt.prompt, ...args.image_prompt };
+			const imgArgs =
+				typeof args.image_prompt === "string"
+					? { prompt: args.image_prompt }
+					: { prompt: args.image_prompt.prompt, ...args.image_prompt };
 			try {
 				await ctx.updateProgress(__("Generating image…", "wp-module-editor-chat"), 500);
 				const mcpResult = await callAbility(ctx.mcpClient, "blu-generate-image", imgArgs);
@@ -511,14 +501,15 @@ async function handleUpdateBlockAttrs(toolCall, args, ctx) {
 					const parsed = JSON.parse(mcpResult.content[0].text);
 					const url = parsed?.message?.url || parsed?.url;
 					if (url) {
-						if (!args.attributes) args.attributes = {};
+						if (!args.attributes) {
+							args.attributes = {};
+						}
 						args.attributes.url = url;
 						generatedImageUrls.push(url);
-						console.log("[ToolExecutor] update-block-attrs: generated image from prompt:", url);
 					}
 				}
-			} catch (err) {
-				console.warn("[ToolExecutor] update-block-attrs: image generation failed:", err.message);
+			} catch {
+				// image generation failed — non-critical
 			}
 		}
 
@@ -526,13 +517,21 @@ async function handleUpdateBlockAttrs(toolCall, args, ctx) {
 		// The AI often sends "textAlign" but WordPress blocks use "align" for
 		// text alignment on paragraphs, headings, etc.
 		const TEXT_ALIGN_BLOCKS = new Set([
-			"core/paragraph", "core/heading", "core/verse", "core/preformatted",
-			"core/list", "core/quote", "core/pullquote",
+			"core/paragraph",
+			"core/heading",
+			"core/verse",
+			"core/preformatted",
+			"core/list",
+			"core/quote",
+			"core/pullquote",
 		]);
-		if ("textAlign" in args.attributes && !("align" in args.attributes) && TEXT_ALIGN_BLOCKS.has(block.name)) {
+		if (
+			"textAlign" in args.attributes &&
+			!("align" in args.attributes) &&
+			TEXT_ALIGN_BLOCKS.has(block.name)
+		) {
 			args.attributes.align = args.attributes.textAlign;
 			delete args.attributes.textAlign;
-			console.log(`[ToolExecutor] update-block-attrs: normalized textAlign → align for ${block.name}`);
 		}
 
 		// Auto-clear media library ID when replacing image URL on image blocks
@@ -549,10 +548,15 @@ async function handleUpdateBlockAttrs(toolCall, args, ctx) {
 			if (oldPlain === newPlain) {
 				return {
 					id: toolCall.id,
-					result: [{ type: "text", text: JSON.stringify({
-						success: true,
-						message: `Text is already "${oldPlain.substring(0, 60)}" — no change needed`,
-					}) }],
+					result: [
+						{
+							type: "text",
+							text: JSON.stringify({
+								success: true,
+								message: `Text is already "${oldPlain.substring(0, 60)}" — no change needed`,
+							}),
+						},
+					],
 					isError: false,
 					hasChanges: false,
 				};
@@ -574,13 +578,21 @@ async function handleUpdateBlockAttrs(toolCall, args, ctx) {
 		}
 		// Also handle the reverse: if setting a preset, clear the custom style
 		if (args.attributes.textColor && block.attributes?.style?.color?.text) {
-			if (!args.attributes.style) args.attributes.style = {};
-			if (!args.attributes.style.color) args.attributes.style.color = {};
+			if (!args.attributes.style) {
+				args.attributes.style = {};
+			}
+			if (!args.attributes.style.color) {
+				args.attributes.style.color = {};
+			}
 			args.attributes.style.color.text = null;
 		}
 		if (args.attributes.backgroundColor && block.attributes?.style?.color?.background) {
-			if (!args.attributes.style) args.attributes.style = {};
-			if (!args.attributes.style.color) args.attributes.style.color = {};
+			if (!args.attributes.style) {
+				args.attributes.style = {};
+			}
+			if (!args.attributes.style.color) {
+				args.attributes.style.color = {};
+			}
 			args.attributes.style.color.background = null;
 		}
 
@@ -600,9 +612,7 @@ async function handleUpdateBlockAttrs(toolCall, args, ctx) {
 
 		return {
 			id: toolCall.id,
-			result: [
-				{ type: "text", text: JSON.stringify({ success: true, message }) },
-			],
+			result: [{ type: "text", text: JSON.stringify({ success: true, message }) }],
 			isError: false,
 			hasChanges: true,
 		};
@@ -637,10 +647,14 @@ async function handleRewriteText(toolCall, args, ctx) {
 	const pageTitle = getCurrentPageTitle();
 
 	try {
-		const rewritten = await customizePatternContent(originalMarkup, {
-			pageTitle,
-			userMessage: instructions,
-		}, buildCompletionFn(ctx));
+		const rewritten = await customizePatternContent(
+			originalMarkup,
+			{
+				pageTitle,
+				userMessage: instructions,
+			},
+			buildCompletionFn(ctx)
+		);
 
 		if (rewritten === originalMarkup) {
 			return {
@@ -674,7 +688,6 @@ async function handleRewriteText(toolCall, args, ctx) {
 }
 
 async function handleEditBlock(toolCall, args, ctx) {
-
 	// ── Image placeholder resolution (mirrors add-section) ──
 	const imgPlaceholders = args.block_content.match(/__IMG_\d+__/g) || [];
 	const uniquePlaceholders = [...new Set(imgPlaceholders)];
@@ -682,14 +695,12 @@ async function handleEditBlock(toolCall, args, ctx) {
 	if (uniquePlaceholders.length > 0) {
 		if (args.image_prompts && Array.isArray(args.image_prompts) && args.image_prompts.length > 0) {
 			const promptCount = Math.min(args.image_prompts.length, uniquePlaceholders.length);
-			console.log(`[ToolExecutor] edit-block: generating ${promptCount} images from image_prompts`);
 
 			const imageUrls = [];
 			for (let i = 0; i < promptCount; i++) {
 				const prompt = args.image_prompts[i];
-				const imgArgs = typeof prompt === "string"
-					? { prompt }
-					: { prompt: prompt.prompt, ...prompt };
+				const imgArgs =
+					typeof prompt === "string" ? { prompt } : { prompt: prompt.prompt, ...prompt };
 
 				await ctx.updateProgress(
 					__("Generating image…", "wp-module-editor-chat") + ` (${i + 1}/${promptCount})`,
@@ -705,28 +716,25 @@ async function handleEditBlock(toolCall, args, ctx) {
 							generatedImageUrls.push(url);
 						}
 					}
-				} catch (err) {
-					console.warn(`[ToolExecutor] edit-block: image generation ${i + 1} failed:`, err.message);
+				} catch {
+					// image generation failed — non-critical
 				}
 			}
 
 			for (let i = 0; i < imageUrls.length; i++) {
 				args.block_content = args.block_content.replaceAll(`__IMG_${i + 1}__`, imageUrls[i]);
 			}
-			console.log(`[ToolExecutor] edit-block: resolved ${imageUrls.length}/${uniquePlaceholders.length} image placeholders`);
 		} else if (args.image_urls && Array.isArray(args.image_urls) && args.image_urls.length > 0) {
 			for (let i = 0; i < args.image_urls.length; i++) {
 				args.block_content = args.block_content.replaceAll(`__IMG_${i + 1}__`, args.image_urls[i]);
 			}
 		} else if (generatedImageUrls.length > 0) {
 			for (let i = 0; i < Math.min(generatedImageUrls.length, uniquePlaceholders.length); i++) {
-				args.block_content = args.block_content.replaceAll(`__IMG_${i + 1}__`, generatedImageUrls[i]);
+				args.block_content = args.block_content.replaceAll(
+					`__IMG_${i + 1}__`,
+					generatedImageUrls[i]
+				);
 			}
-		}
-
-		const unresolved = (args.block_content.match(/__IMG_\d+__/g) || []);
-		if (unresolved.length > 0) {
-			console.warn(`[ToolExecutor] edit-block: ${unresolved.length} image placeholders unresolved:`, unresolved);
 		}
 	}
 
@@ -739,10 +747,6 @@ async function handleEditBlock(toolCall, args, ctx) {
 	if (generatedImageUrls.length > 0) {
 		const dedup = deduplicateImages(args.block_content, generatedImageUrls);
 		if (dedup.replacements.length > 0) {
-			console.log(
-				`[ToolExecutor] edit-block: auto-replaced ${dedup.replacements.length} duplicate image(s)`,
-				dedup.replacements
-			);
 			args.block_content = dedup.markup;
 		}
 	}
@@ -758,9 +762,6 @@ async function handleEditBlock(toolCall, args, ctx) {
 		if (targetBlock) {
 			const innerCount = countInnerBlocks(targetBlock);
 			if (innerCount >= 40 && args.block_content.length > 12000) {
-				console.warn(
-					`[ToolExecutor] Rejecting very large edit-block rewrite: ${args.block_content.length} chars targeting block with ${innerCount} inner blocks`
-				);
 				return {
 					id: toolCall.id,
 					result: [
@@ -856,23 +857,6 @@ async function handleEditBlock(toolCall, args, ctx) {
 	// ── Apply the edit ──
 	await ctx.updateProgress(__("Editing block content…", "wp-module-editor-chat"), 400);
 
-	// Debug: log original vs replacement content to diagnose no-op edits
-	{
-		const { serialize } = wp.blocks;
-		const origBlock = wpSelect("core/block-editor").getBlock(args.client_id);
-		const origContent = origBlock ? serialize(origBlock) : "(not found)";
-		// eslint-disable-next-line no-console
-		console.log("[ToolExecutor] edit-block applying to:", args.client_id, origBlock?.name);
-		// eslint-disable-next-line no-console
-		console.log("[ToolExecutor] edit-block ORIGINAL attrs:", JSON.stringify(origBlock?.attributes));
-		// eslint-disable-next-line no-console
-		console.log("[ToolExecutor] edit-block REPLACEMENT content (first 500):", finalContent.substring(0, 500));
-		if (origContent === finalContent) {
-			// eslint-disable-next-line no-console
-			console.warn("[ToolExecutor] edit-block: REPLACEMENT IS IDENTICAL TO ORIGINAL — no-op edit");
-		}
-	}
-
 	try {
 		const editResult = await handleRewriteAction(args.client_id, finalContent);
 		await ctx.updateProgress(__("Block updated successfully", "wp-module-editor-chat"), 500);
@@ -902,7 +886,6 @@ async function handleEditBlock(toolCall, args, ctx) {
 }
 
 async function handleAddSection(toolCall, args, ctx) {
-
 	// ── Image placeholder resolution ──
 	// Count __IMG_N__ placeholders in the markup
 	const imgPlaceholders = args.block_content.match(/__IMG_\d+__/g) || [];
@@ -912,14 +895,12 @@ async function handleAddSection(toolCall, args, ctx) {
 		// Preferred path: generate images from image_prompts (markup-first flow)
 		if (args.image_prompts && Array.isArray(args.image_prompts) && args.image_prompts.length > 0) {
 			const promptCount = Math.min(args.image_prompts.length, uniquePlaceholders.length);
-			console.log(`[ToolExecutor] add-section: generating ${promptCount} images from image_prompts`);
 
 			const imageUrls = [];
 			for (let i = 0; i < promptCount; i++) {
 				const prompt = args.image_prompts[i];
-				const imgArgs = typeof prompt === "string"
-					? { prompt }
-					: { prompt: prompt.prompt, ...prompt };
+				const imgArgs =
+					typeof prompt === "string" ? { prompt } : { prompt: prompt.prompt, ...prompt };
 
 				await ctx.updateProgress(
 					__("Generating image…", "wp-module-editor-chat") + ` (${i + 1}/${promptCount})`,
@@ -935,8 +916,8 @@ async function handleAddSection(toolCall, args, ctx) {
 							generatedImageUrls.push(url);
 						}
 					}
-				} catch (err) {
-					console.warn(`[ToolExecutor] add-section: image generation ${i + 1} failed:`, err.message);
+				} catch {
+					// image generation failed — non-critical
 				}
 			}
 
@@ -944,8 +925,6 @@ async function handleAddSection(toolCall, args, ctx) {
 			for (let i = 0; i < imageUrls.length; i++) {
 				args.block_content = args.block_content.replaceAll(`__IMG_${i + 1}__`, imageUrls[i]);
 			}
-
-			console.log(`[ToolExecutor] add-section: resolved ${imageUrls.length}/${uniquePlaceholders.length} image placeholders`);
 		}
 		// Fallback: substitute from pre-supplied image_urls array
 		else if (args.image_urls && Array.isArray(args.image_urls) && args.image_urls.length > 0) {
@@ -956,15 +935,14 @@ async function handleAddSection(toolCall, args, ctx) {
 		// Fallback: substitute from previously generated images in this turn
 		else if (generatedImageUrls.length > 0) {
 			for (let i = 0; i < Math.min(generatedImageUrls.length, uniquePlaceholders.length); i++) {
-				args.block_content = args.block_content.replaceAll(`__IMG_${i + 1}__`, generatedImageUrls[i]);
+				args.block_content = args.block_content.replaceAll(
+					`__IMG_${i + 1}__`,
+					generatedImageUrls[i]
+				);
 			}
 		}
 
 		// Warn about unresolved placeholders
-		const unresolved = (args.block_content.match(/__IMG_\d+__/g) || []);
-		if (unresolved.length > 0) {
-			console.warn(`[ToolExecutor] add-section: ${unresolved.length} image placeholders unresolved:`, unresolved);
-		}
 	}
 
 	await ctx.updateProgress(__("Validating block markup…", "wp-module-editor-chat"), 300);
@@ -978,10 +956,6 @@ async function handleAddSection(toolCall, args, ctx) {
 	if (generatedImageUrls.length > 0) {
 		const dedup = deduplicateImages(args.block_content, generatedImageUrls);
 		if (dedup.replacements.length > 0) {
-			console.log(
-				`[ToolExecutor] add-section: auto-replaced ${dedup.replacements.length} duplicate image(s)`,
-				dedup.replacements
-			);
 			args.block_content = dedup.markup;
 		}
 	}
@@ -1210,11 +1184,6 @@ const READ_TOOLS = new Set([
  * @return {Promise<Array>}  Array of { tool_call_id, content, isError } for the conversation
  */
 export async function executeToolCallsForREST(toolCalls, ctx) {
-	console.log(
-		"[ToolExecutor:REST] Received tool calls:",
-		toolCalls.map((tc) => ({ name: tc.name, args: tc.arguments }))
-	);
-
 	const toolResults = [];
 	const completedToolsList = [];
 	let globalStylesUndoData = null;
@@ -1235,7 +1204,6 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 	// Execute server-side tools via MCP
 	for (const tc of serverToolCalls) {
 		const mcpName = tc.name || "";
-		console.log(`[ToolExecutor:REST] Server-side tool via MCP: ${mcpName}`);
 		try {
 			const mcpResult = await ctx.mcpClient.callTool(mcpName, tc.arguments || {});
 			const content = typeof mcpResult === "string" ? mcpResult : JSON.stringify(mcpResult);
@@ -1247,19 +1215,20 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 			completedToolsList.push({ ...tc, isError: false });
 			ctx.setExecutedTools((prev) => [...prev, { ...tc, isError: false }]);
 		} catch (err) {
-			console.error(`[ToolExecutor:REST] MCP tool failed: ${mcpName}`, err);
 			toolResults.push({
 				tool_call_id: tc.id,
 				content: JSON.stringify({ error: err.message }),
 				isError: true,
 			});
 			completedToolsList.push({ ...tc, isError: true, errorMessage: err.message });
-			ctx.setExecutedTools((prev) => [...prev, { ...tc, isError: true, errorMessage: err.message }]);
+			ctx.setExecutedTools((prev) => [
+				...prev,
+				{ ...tc, isError: true, errorMessage: err.message },
+			]);
 		}
 	}
 
 	if (clientToolCalls.length === 0) {
-		console.log("[ToolExecutor:REST] No client-side tools to execute");
 		return toolResults;
 	}
 
@@ -1316,10 +1285,6 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 
 		try {
 			let toolName = toolCall.name || "";
-			console.log(
-				`[ToolExecutor:REST] Executing ${i + 1}/${clientToolCalls.length}: ${toolName}`,
-				toolCall.arguments
-			);
 			let args = toolCall.arguments || {};
 			if (typeof args === "string") {
 				args = safeParseJSON(args).value;
@@ -1343,12 +1308,17 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 				!args.block_content
 			) {
 				const alt = args.content || args.markup || args.html || args.block_markup;
-				if (alt) args.block_content = alt;
+				if (alt) {
+					args.block_content = alt;
+				}
 			}
 
 			// edit-block without client_id → treat as add-section
-			if (toolName === "blu-edit-block" && !args.client_id && (args.block_content || args.pattern_slug)) {
-				console.log(`[ToolExecutor:REST] Redirecting blu-edit-block → blu-add-section (no client_id)`);
+			if (
+				toolName === "blu-edit-block" &&
+				!args.client_id &&
+				(args.block_content || args.pattern_slug)
+			) {
 				toolName = "blu-add-section";
 			}
 
@@ -1358,21 +1328,42 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 			if (toolName === "blu-update-global-styles" && args.settings) {
 				const gsResult = await handleUpdateGlobalStyles(toolCall, args, ctx);
 				result = gsResult.toolResult;
-				if (gsResult.globalStylesUndoData) globalStylesUndoData = gsResult.globalStylesUndoData;
-			} else if (toolName === "blu-get-global-styles" || toolName === "blu-get-active-global-styles") {
+				if (gsResult.globalStylesUndoData) {
+					globalStylesUndoData = gsResult.globalStylesUndoData;
+				}
+			} else if (
+				toolName === "blu-get-global-styles" ||
+				toolName === "blu-get-active-global-styles"
+			) {
 				result = await handleGetGlobalStyles(toolCall, ctx);
-			} else if (toolName === "blu-edit-block" && args.client_id && (args.block_content || args.pattern_slug)) {
+			} else if (
+				toolName === "blu-edit-block" &&
+				args.client_id &&
+				(args.block_content || args.pattern_slug)
+			) {
 				result = await handleEditBlock(toolCall, args, ctx);
-				if (!result.isError && result.hasChanges) hasBlockEdits = true;
+				if (!result.isError && result.hasChanges) {
+					hasBlockEdits = true;
+				}
 			} else if (toolName === "blu-add-section" && (args.block_content || args.pattern_slug)) {
 				result = await handleAddSection(toolCall, args, ctx);
-				if (!result.isError && result.hasChanges) hasBlockEdits = true;
+				if (!result.isError && result.hasChanges) {
+					hasBlockEdits = true;
+				}
 			} else if (toolName === "blu-delete-block" && args.client_id) {
 				result = await handleDeleteBlock(toolCall, args, ctx);
-				if (!result.isError && result.hasChanges) hasBlockEdits = true;
-			} else if (toolName === "blu-move-block" && args.client_id && ((args.target_client_id && args.position) || args.as_child_of)) {
+				if (!result.isError && result.hasChanges) {
+					hasBlockEdits = true;
+				}
+			} else if (
+				toolName === "blu-move-block" &&
+				args.client_id &&
+				((args.target_client_id && args.position) || args.as_child_of)
+			) {
 				result = await handleMoveBlock(toolCall, args, ctx);
-				if (!result.isError && result.hasChanges) hasBlockEdits = true;
+				if (!result.isError && result.hasChanges) {
+					hasBlockEdits = true;
+				}
 			} else if (toolName === "blu-get-block-markup" && args.client_id) {
 				result = await handleGetBlockMarkup(toolCall, args, ctx);
 			} else if (toolName === "blu-highlight-block" && args.client_id) {
@@ -1380,22 +1371,27 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 			} else if (toolName === "blu-update-block-attrs" && args.client_id) {
 				if (!args.attributes) {
 					// Preserve handler-level params that aren't block attributes
-					const { client_id, image_prompt, ...rest } = args;
+					const { client_id: clientId, image_prompt: imagePrompt, ...rest } = args;
 					if (Object.keys(rest).length > 0) {
-						console.warn(`[ToolExecutor:REST] Auto-wrapping loose properties into attributes`, rest);
-						args = { client_id, attributes: rest };
+						args = { client_id: clientId, attributes: rest };
 					} else {
-						args = { client_id, attributes: {} };
+						args = { client_id: clientId, attributes: {} };
 					}
-					if (image_prompt) args.image_prompt = image_prompt;
+					if (imagePrompt) {
+						args.image_prompt = imagePrompt;
+					}
 				}
 				if (args.attributes || args.image_prompt) {
 					result = await handleUpdateBlockAttrs(toolCall, args, ctx);
-					if (!result.isError && result.hasChanges) hasBlockEdits = true;
+					if (!result.isError && result.hasChanges) {
+						hasBlockEdits = true;
+					}
 				}
 			} else if (toolName === "blu-rewrite-text" && args.client_id && args.instructions) {
 				result = await handleRewriteText(toolCall, args, ctx);
-				if (!result.isError && result.hasChanges) hasBlockEdits = true;
+				if (!result.isError && result.hasChanges) {
+					hasBlockEdits = true;
+				}
 			} else if (toolName === "blu-search-patterns" && args.query) {
 				result = await handleSearchPatterns(toolCall, args, ctx);
 			} else if (toolName === "blu-generate-image" && args.prompt) {
@@ -1414,9 +1410,10 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 							const url = parsed?.message?.url || parsed?.url;
 							if (url) {
 								generatedImageUrls.push(url);
-								console.log(`[ToolExecutor:REST] Tracked generated image (${generatedImageUrls.length} total):`, url);
 							}
-						} catch { /* non-critical */ }
+						} catch {
+							/* non-critical */
+						}
 					}
 				} catch (err) {
 					result = {
@@ -1427,7 +1424,6 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 				}
 			} else {
 				// Server-side MCP tool — forward to MCP server for execution
-				console.log(`[ToolExecutor:REST] Forwarding to MCP: ${toolName}`, args);
 				try {
 					const mcpResult = await callAbility(ctx.mcpClient, toolName, args);
 					result = {
@@ -1436,10 +1432,11 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 						isError: mcpResult.isError || false,
 					};
 				} catch (mcpErr) {
-					console.error(`[ToolExecutor:REST] MCP call failed for ${toolName}:`, mcpErr);
 					result = {
 						id: toolCall.id,
-						result: [{ type: "text", text: JSON.stringify({ success: false, error: mcpErr.message }) }],
+						result: [
+							{ type: "text", text: JSON.stringify({ success: false, error: mcpErr.message }) },
+						],
 						isError: true,
 					};
 				}
@@ -1455,14 +1452,21 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 			} else {
 				// Extract human-readable .message from handler's JSON result
 				const msg = (() => {
-					try { return JSON.parse(result?.result?.[0]?.text)?.message; } catch { return null; }
+					try {
+						return JSON.parse(result?.result?.[0]?.text)?.message;
+					} catch {
+						return null;
+					}
 				})();
-				content = result?.hasChanges
-					? (msg || "Applied successfully")
-					: "No changes needed";
+				content = result?.hasChanges ? msg || "Applied successfully" : "No changes needed";
 			}
 
-			toolResults.push({ tool_call_id: toolCall.id, content, isError, hasChanges: result?.hasChanges || false });
+			toolResults.push({
+				tool_call_id: toolCall.id,
+				content,
+				isError,
+				hasChanges: result?.hasChanges || false,
+			});
 			// Silent tools stay hidden on success, but errors always surface —
 			// otherwise a failing discovery call leaves the user with no trace
 			// for why a subsequent action went sideways.
@@ -1471,7 +1475,6 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 				ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError }]);
 			}
 		} catch (err) {
-			console.error(`[ToolExecutor:REST] Error executing ${toolCall.name}:`, err);
 			await ctx.updateProgress(
 				__("Action failed:", "wp-module-editor-chat") + " " + err.message,
 				1000

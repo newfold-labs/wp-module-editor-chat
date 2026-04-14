@@ -24,7 +24,7 @@ import ContextTag from "../ui/ContextTag";
  * @param {Function} props.onSendMessage - The function to call when the message is sent.
  * @param {Function} props.onStopRequest - The function to call when the stop button is clicked.
  * @param {boolean}  props.disabled      - Whether the input is disabled.
- * @return {JSX.Element} The ChatInput component.
+ * @return {Element} The ChatInput component.
  */
 const ChatInput = ({ onSendMessage, onStopRequest, disabled = false }) => {
 	const [message, setMessage] = useState("");

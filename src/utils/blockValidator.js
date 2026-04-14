@@ -37,10 +37,34 @@ function checkTagBalance(markup) {
 	const html = markup.replace(/<!--[\s\S]*?-->/g, "");
 
 	const containerTags = new Set([
-		"div", "figure", "figcaption", "ul", "ol", "li",
-		"blockquote", "table", "thead", "tbody", "tr", "td", "th",
-		"section", "nav", "header", "footer", "main", "aside",
-		"span", "p", "h1", "h2", "h3", "h4", "h5", "h6", "a",
+		"div",
+		"figure",
+		"figcaption",
+		"ul",
+		"ol",
+		"li",
+		"blockquote",
+		"table",
+		"thead",
+		"tbody",
+		"tr",
+		"td",
+		"th",
+		"section",
+		"nav",
+		"header",
+		"footer",
+		"main",
+		"aside",
+		"span",
+		"p",
+		"h1",
+		"h2",
+		"h3",
+		"h4",
+		"h5",
+		"h6",
+		"a",
 	]);
 
 	const stack = [];
@@ -52,9 +76,13 @@ function checkTagBalance(markup) {
 		const fullTag = match[0];
 		const tagName = match[1].toLowerCase();
 
-		if (!containerTags.has(tagName)) continue;
+		if (!containerTags.has(tagName)) {
+			continue;
+		}
 		// Skip self-closing tags like <img />, <br />, etc.
-		if (fullTag.endsWith("/>")) continue;
+		if (fullTag.endsWith("/>")) {
+			continue;
+		}
 
 		if (fullTag.startsWith("</")) {
 			// Closing tag
@@ -73,7 +101,10 @@ function checkTagBalance(markup) {
 	}
 
 	if (stack.length > 0) {
-		const unclosed = stack.reverse().map((t) => `</${t}>`).join(", ");
+		const unclosed = stack
+			.reverse()
+			.map((t) => `</${t}>`)
+			.join(", ");
 		return {
 			balanced: false,
 			details: `Unclosed tags — missing: ${unclosed}`,
@@ -139,9 +170,6 @@ export const validateBlockMarkup = (blockContent) => {
 		};
 	}
 
-	// Snapshot block count before normalization for later comparison
-	const preNormCount = deepBlockCount(parsed);
-
 	// ── Auto-wrap blocks that require a parent wrapper ──
 	// core/button must be inside core/buttons, core/list-item inside core/list.
 	// The AI often sends bare child blocks without the required parent.
@@ -154,7 +182,8 @@ export const validateBlockMarkup = (blockContent) => {
 		if (wrapper) {
 			// Check if already wrapped (e.g., button inside buttons)
 			const alreadyWrapped = parsed.some(
-				(b, idx) => idx !== i && b.name === wrapper && b.innerBlocks?.some((ib) => ib.name === parsed[i].name)
+				(b, idx) =>
+					idx !== i && b.name === wrapper && b.innerBlocks?.some((ib) => ib.name === parsed[i].name)
 			);
 			if (!alreadyWrapped) {
 				// eslint-disable-next-line no-console
@@ -207,6 +236,7 @@ export const validateBlockMarkup = (blockContent) => {
 		// original markup was structurally broken in a way the tag-balance
 		// check didn't catch.  Reject instead of silently inserting
 		// incomplete content.
+		const preNormCount = deepBlockCount(parsed);
 		const postNormCount = deepBlockCount(reParsed);
 		if (preNormCount > 0 && postNormCount < preNormCount) {
 			const lost = preNormCount - postNormCount;

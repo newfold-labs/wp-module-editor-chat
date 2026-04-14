@@ -223,7 +223,7 @@ const useEditorChatREST = () => {
 				setPendingTools([]);
 			}
 		},
-		[configStatus, openaiClientRef, openaiTools, streamCompletion, buildToolCtx]
+		[configStatus, openaiClientRef, openaiTools, streamCompletion, buildToolCtx, abortControllerRef]
 	);
 
 	// ── handleNewChat ──
