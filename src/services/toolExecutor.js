@@ -60,6 +60,37 @@ function buildCompletionFn(ctx) {
 let generatedImageUrls = [];
 
 /**
+ * Gateway tools exposed directly by the MCP server. Every other ability
+ * must be reached through blu-call-ability.
+ */
+const GATEWAY_TOOLS = new Set([
+	"blu-list-abilities",
+	"blu-get-ability-schema",
+	"blu-call-ability",
+]);
+
+/**
+ * Call a blu-* ability via the MCP server, wrapping through blu-call-ability
+ * when the ability is not one of the gateway tools. The server only exposes
+ * the 3 gateway tools (see McpServer.php), so individual ability calls must
+ * be routed through blu-call-ability.
+ *
+ * @param {Object} mcpClient   The MCP client instance.
+ * @param {string} abilityName Hyphen-form ability name (e.g. "blu-generate-image").
+ * @param {Object} parameters  Parameters for the inner ability.
+ * @return {Promise<Object>} MCP result.
+ */
+function callAbility(mcpClient, abilityName, parameters) {
+	if (!abilityName.startsWith("blu-") || GATEWAY_TOOLS.has(abilityName)) {
+		return mcpClient.callTool(abilityName, parameters);
+	}
+	return mcpClient.callTool("blu-call-ability", {
+		ability_name: abilityName,
+		parameters: parameters || {},
+	});
+}
+
+/**
  * Clear the generated image tracker.
  * Called at the start of each new user turn so stale results from a
  * previous request don't contaminate the next request.
@@ -352,7 +383,7 @@ async function handleUpdateGlobalStyles(toolCall, args, ctx) {
 	}
 
 	// Fallback to MCP
-	const result = await ctx.mcpClient.callTool(toolCall.name, toolCall.arguments);
+	const result = await callAbility(ctx.mcpClient, toolCall.name, toolCall.arguments);
 	return {
 		toolResult: {
 			id: toolCall.id,
@@ -393,7 +424,7 @@ async function handleGetGlobalStyles(toolCall, ctx) {
 	}
 
 	// Fallback to MCP
-	const result = await ctx.mcpClient.callTool(toolCall.name, toolCall.arguments);
+	const result = await callAbility(ctx.mcpClient, toolCall.name, toolCall.arguments);
 	return {
 		id: toolCall.id,
 		result: result.content,
@@ -455,7 +486,7 @@ async function handleUpdateBlockAttrs(toolCall, args, ctx) {
 				: { prompt: args.image_prompt.prompt, ...args.image_prompt };
 			try {
 				await ctx.updateProgress(__("Generating image…", "wp-module-editor-chat"), 500);
-				const mcpResult = await ctx.mcpClient.callTool("blu-generate-image", imgArgs);
+				const mcpResult = await callAbility(ctx.mcpClient, "blu-generate-image", imgArgs);
 				if (!mcpResult.isError && mcpResult.content?.[0]?.text) {
 					const parsed = JSON.parse(mcpResult.content[0].text);
 					const url = parsed?.message?.url || parsed?.url;
@@ -645,7 +676,7 @@ async function handleEditBlock(toolCall, args, ctx) {
 					500
 				);
 				try {
-					const mcpResult = await ctx.mcpClient.callTool("blu-generate-image", imgArgs);
+					const mcpResult = await callAbility(ctx.mcpClient, "blu-generate-image", imgArgs);
 					if (!mcpResult.isError && mcpResult.content?.[0]?.text) {
 						const parsed = JSON.parse(mcpResult.content[0].text);
 						const url = parsed?.message?.url || parsed?.url;
@@ -875,7 +906,7 @@ async function handleAddSection(toolCall, args, ctx) {
 					500
 				);
 				try {
-					const mcpResult = await ctx.mcpClient.callTool("blu-generate-image", imgArgs);
+					const mcpResult = await callAbility(ctx.mcpClient, "blu-generate-image", imgArgs);
 					if (!mcpResult.isError && mcpResult.content?.[0]?.text) {
 						const parsed = JSON.parse(mcpResult.content[0].text);
 						const url = parsed?.message?.url || parsed?.url;
@@ -1123,7 +1154,7 @@ async function handleHighlightBlock(toolCall, args, ctx) {
 
 async function handleSearchPatterns(toolCall, args, ctx) {
 	await ctx.updateProgress(__("Searching pattern library…", "wp-module-editor-chat"), 300);
-	const result = await ctx.mcpClient.callTool(toolCall.name, toolCall.arguments);
+	const result = await callAbility(ctx.mcpClient, toolCall.name, toolCall.arguments);
 	return {
 		id: toolCall.id,
 		result: result.content,
@@ -1339,7 +1370,7 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 			} else if (toolName === "blu-generate-image" && args.prompt) {
 				await ctx.updateProgress(__("Generating image…", "wp-module-editor-chat"), 500);
 				try {
-					const mcpResult = await ctx.mcpClient.callTool("blu-generate-image", args);
+					const mcpResult = await callAbility(ctx.mcpClient, "blu-generate-image", args);
 					result = {
 						id: toolCall.id,
 						result: mcpResult.content,
@@ -1367,7 +1398,7 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 				// Server-side MCP tool — forward to MCP server for execution
 				console.log(`[ToolExecutor:REST] Forwarding to MCP: ${toolName}`, args);
 				try {
-					const mcpResult = await ctx.mcpClient.callTool(toolName, args);
+					const mcpResult = await callAbility(ctx.mcpClient, toolName, args);
 					result = {
 						id: toolCall.id,
 						result: mcpResult.content,
