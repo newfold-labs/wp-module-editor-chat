@@ -293,36 +293,66 @@ export function mcpToolsToOpenAI(mcpTools) {
 }
 
 /**
- * Create a retry tracker for the function-calling loop.
- * Encapsulates per-tool-name iteration counting and retry-limit detection.
+ * Stable, recursive JSON-ish serialization for use as a map key. Sorts
+ * object keys so {a:1,b:2} and {b:2,a:1} produce the same string. Used by
+ * the retry tracker to distinguish tool calls with different arguments.
  *
- * @param {number} maxRetries Max iterations of the same write tool before blocking
+ * @param {*} value Any JSON-safe value
+ * @return {string} Deterministic string representation
+ */
+function stableArgsHash(value) {
+	if (value === null || value === undefined) return "";
+	if (typeof value !== "object") return JSON.stringify(value);
+	if (Array.isArray(value)) {
+		return "[" + value.map(stableArgsHash).join(",") + "]";
+	}
+	const keys = Object.keys(value).sort();
+	return (
+		"{" +
+		keys.map((k) => JSON.stringify(k) + ":" + stableArgsHash(value[k])).join(",") +
+		"}"
+	);
+}
+
+/**
+ * Create a retry tracker for the function-calling loop.
+ *
+ * Tracks how many times each (tool name + serialized arguments) pair has
+ * been called. A call only counts as a "retry" when the AI invokes the
+ * exact same tool with the exact same arguments more than `maxRetries`
+ * times — which is the actual pathology we want to catch (stuck loops).
+ * Different arguments = different work, never a retry.
+ *
+ * Read-only tools are exempt entirely: their repeated calls are either
+ * idempotent or intentionally targeting different resources.
+ *
+ * @param {number} maxRetries Max repeats of the same (tool, args) before blocking
  * @return {{ recordIteration: Function }} Tracker with recordIteration method
  */
 export function createRetryTracker(maxRetries = MAX_SAME_TOOL_RETRIES) {
-	const toolNameCounts = new Map();
+	const callCounts = new Map(); // key: `${name}:${argsHash}`
 	let retryLimitHit = false;
 
 	return {
 		/**
 		 * Record a batch of tool calls and check for retry limits.
 		 *
-		 * @param {Array} toolCalls Array of { name: string, ... }
+		 * @param {Array} toolCalls Array of { name: string, arguments: object, ... }
 		 * @return {{ allRetried: boolean, retryLimitHit: boolean }} Retry status flags
 		 */
 		recordIteration(toolCalls) {
-			const writeToolsInBatch = new Set();
+			const batchKeys = new Set();
 			for (const tc of toolCalls) {
-				if (!READ_ONLY_TOOLS.has(tc.name)) {
-					writeToolsInBatch.add(tc.name);
-				}
+				if (READ_ONLY_TOOLS.has(tc.name)) continue;
+				const key = `${tc.name}:${stableArgsHash(tc.arguments)}`;
+				batchKeys.add(key);
 			}
-			for (const name of writeToolsInBatch) {
-				toolNameCounts.set(name, (toolNameCounts.get(name) || 0) + 1);
+			for (const key of batchKeys) {
+				callCounts.set(key, (callCounts.get(key) || 0) + 1);
 			}
 			const allRetried =
-				writeToolsInBatch.size > 0 &&
-				[...writeToolsInBatch].every((name) => toolNameCounts.get(name) > maxRetries);
+				batchKeys.size > 0 &&
+				[...batchKeys].every((key) => callCounts.get(key) > maxRetries);
 
 			if (allRetried) {
 				const wasAlreadyHit = retryLimitHit;
