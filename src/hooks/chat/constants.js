@@ -39,12 +39,29 @@ export const EDITOR_TOOLS = new Set([
 
 /**
  * Tools that are read-only / non-destructive — exempt from retry detection.
+ * Calling these multiple times in a conversation (even with the same args)
+ * doesn't change state and isn't an AI mistake, so the retry tracker must
+ * skip them. Missing entries here cause the sticky retryLimitHit flag to
+ * trip on legitimate exploration and poison the rest of the conversation.
  */
 export const READ_ONLY_TOOLS = new Set([
+	// Block / page reads
 	"blu-get-block-markup",
 	"blu-get-global-styles",
 	"blu-get-active-global-styles",
+	"blu-get-active-global-styles-id",
+	"blu-get-active-theme",
 	"blu-search-patterns",
 	"blu-highlight-block",
 	"blu-generate-image",
+	// Gateway / ability discovery
+	"blu-list-abilities",
+	"blu-get-ability-schema",
+	// REST API discovery
+	"blu-list-api-functions",
+	"blu-get-function-details",
+	// Site / user context reads
+	"blu-get-site-info",
+	"blu-get-general-settings",
+	"blu-get-current-user",
 ]);
