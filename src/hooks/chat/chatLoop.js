@@ -15,7 +15,6 @@ import {
 	createRetryTracker,
 } from "./conversationUtils";
 import {
-	EDITOR_SYSTEM_PROMPT,
 	REASONING_INSTRUCTION,
 	EXECUTE_NUDGE,
 	SUMMARIZE_NUDGE,
@@ -42,9 +41,9 @@ export async function runChatLoop(userMessage, deps) {
 		abortControllerRef,
 	} = deps;
 
-	// First message: include system prompt
+	// First message: reset conversation history (system prompt is injected by the worker)
 	if (isFirstMessageRef.current) {
-		conversationHistoryRef.current = [{ role: "system", content: EDITOR_SYSTEM_PROMPT }];
+		conversationHistoryRef.current = [];
 		isFirstMessageRef.current = false;
 	}
 

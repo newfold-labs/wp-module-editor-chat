@@ -1334,7 +1334,11 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 			let result;
 
 			// Dispatch to tool handlers
-			if (toolName === "blu-update-global-styles" && args.settings) {
+			if (toolName === "blu-update-global-styles" && (args.settings || args.palette || args.styles)) {
+				// Normalize: AI commonly sends { palette: [...] } instead of { settings: { color: { palette: { theme: [...] } } } }
+				if (!args.settings && args.palette) {
+					args.settings = { color: { palette: { theme: args.palette } } };
+				}
 				const gsResult = await handleUpdateGlobalStyles(toolCall, args, ctx);
 				result = gsResult.toolResult;
 				if (gsResult.globalStylesUndoData) {
