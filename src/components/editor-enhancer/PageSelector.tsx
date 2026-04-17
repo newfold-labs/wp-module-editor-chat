@@ -9,11 +9,17 @@ import { addQueryArgs } from "@wordpress/url";
 import { page as pageIcon, check as checkIcon } from "@wordpress/icons";
 import { __ } from "@wordpress/i18n";
 
-function getSiteEditorPage() {
-	return (window as any).__experimentalExtensibleSiteEditor
+const editPageUrl = (pageId: number) => {
+	const base = (window as any).__experimentalExtensibleSiteEditor
 		? "admin.php?page=site-editor-v2"
 		: "site-editor.php";
-}
+
+	return addQueryArgs(base, {
+		p: `/page/${pageId}`,
+		canvas: "edit",
+		referrer: "nfd-editor-chat",
+	});
+};
 
 export default function PageSelector() {
 	const { pages, currentPage } = useSelect(
@@ -48,11 +54,7 @@ export default function PageSelector() {
 									onClose();
 									return;
 								}
-								document.location = addQueryArgs(getSiteEditorPage(), {
-									p: `/page/${page.id}`,
-									canvas: "edit",
-									referrer: "nfd-editor-chat",
-								});
+								document.location = editPageUrl(page.id);
 							};
 
 							return (
