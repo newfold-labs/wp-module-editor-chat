@@ -51,5 +51,10 @@
 		"dompurify": "^3.3.3",
 		"lucide-react": "^1.7.0",
 		"openai": "^4.86.0"
+	},
+	"peerDependencies": {
+		"@wordpress/core-data": "^7.44.0",
+		"@wordpress/editor": "^14.44.0",
+		"@wordpress/url": "^4.44.0"
 	}
 }

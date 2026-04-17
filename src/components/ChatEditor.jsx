@@ -21,6 +21,7 @@ import ChatInput from "./chat/ChatInput";
 import WelcomeScreen from "./chat/WelcomeScreen";
 import SidebarHeader from "./sidebar/SidebarHeader";
 import AILogo from "./ui/AILogo";
+import EditorEnhancer from "./editor-enhancer/EditorEnhancer";
 
 const SIDEBAR_NAME = "nfd-editor-chat";
 const SIDEBAR_SCOPE = "core";
@@ -71,6 +72,7 @@ const ChatEditor = () => {
 
 	return (
 		<>
+			<EditorEnhancer />
 			<PluginSidebarMoreMenuItem
 				scope={SIDEBAR_SCOPE}
 				target={SIDEBAR_NAME}
