@@ -300,11 +300,13 @@ export async function handleMoveAction(clientId, targetClientId, position, asChi
 /**
  * Add new block(s) to the editor.
  *
- * @param {string|null} clientId The client ID to add after (null for top of page).
+ * @param {string|null} clientId The target block's client ID (null for top of page).
  * @param {Array}       changes  Array of { block_content } objects.
+ * @param {string}      position "after" (default) inserts right after the target;
+ *                               "before" inserts right before it. Ignored when clientId is null.
  * @return {Promise<Object>} Result of the addition.
  */
-export async function handleAddAction(clientId, changes) {
+export async function handleAddAction(clientId, changes, position = "after") {
 	const { getBlocks, getBlock } = select("core/block-editor");
 	const { insertBlocks } = dispatch("core/block-editor");
 	const errors = [];
@@ -355,8 +357,9 @@ export async function handleAddAction(clientId, changes) {
 		if (!path) {
 			throw new Error(`Could not compute path for block ${clientId} in template part`);
 		}
+		const inserter = position === "before" ? insertBlocksBeforePath : insertBlocksAtPath;
 		await modifyTemplatePartEntity(ancestorTemplatePart, (blocks) =>
-			insertBlocksAtPath(blocks, path, parsedBlocksList)
+			inserter(blocks, path, parsedBlocksList)
 		);
 	} else if (clientId === null) {
 		const effectiveRoot = getEffectiveRootBlocks();
@@ -386,7 +389,7 @@ export async function handleAddAction(clientId, changes) {
 			throw new Error(`Target block ${clientId} not found in the block tree`);
 		}
 
-		const insertIndex = context.index + 1;
+		const insertIndex = position === "before" ? context.index : context.index + 1;
 		insertBlocks(blockInstances, insertIndex, context.parentClientId || undefined);
 	}
 

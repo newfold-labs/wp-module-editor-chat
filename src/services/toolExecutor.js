@@ -917,8 +917,17 @@ async function handleAddSection(toolCall, args, ctx) {
 
 	await ctx.updateProgress(__("Adding new section…", "wp-module-editor-chat"), 400);
 	try {
+		// The MCP schema exposes mutually-exclusive after_client_id / before_client_id.
+		// Prefer before_client_id when set so "insert above X" requests land correctly.
+		const beforeClientId = args.before_client_id || null;
 		const afterClientId = args.after_client_id || null;
-		const addResult = await handleAddAction(afterClientId, [{ block_content: sectionContent }]);
+		const targetClientId = beforeClientId || afterClientId;
+		const position = beforeClientId ? "before" : "after";
+		const addResult = await handleAddAction(
+			targetClientId,
+			[{ block_content: sectionContent }],
+			position
+		);
 		await ctx.updateProgress(__("Section added successfully", "wp-module-editor-chat"), 500);
 
 		const resultData = {
