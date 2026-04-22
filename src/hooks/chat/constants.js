@@ -28,7 +28,6 @@ export const EDITOR_TOOLS = new Set([
 	"blu-move-block",
 	"blu-get-block-markup",
 	"blu-highlight-block",
-	"blu-rewrite-text",
 	"blu-update-global-styles",
 	// Gateway tools — the MCP server exposes abilities through these 3 generic
 	// tools instead of individual ones. They must always be available.
@@ -51,7 +50,6 @@ export const READ_ONLY_TOOLS = new Set([
 	"blu-get-active-global-styles",
 	"blu-get-active-global-styles-id",
 	"blu-get-active-theme",
-	"blu-search-patterns",
 	"blu-highlight-block",
 	"blu-generate-image",
 	// Gateway / ability discovery
