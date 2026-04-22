@@ -101,10 +101,14 @@ export async function runChatLoop(userMessage, deps) {
 				{ role: "user", content: editorContextMsg.content + "\n\n" + REASONING_INSTRUCTION },
 			];
 
+			const reasoningStart = performance.now();
 			const { content: rawReasoning } = await streamCompletion(reasoningMessages, [], {
 				max_completion_tokens: 200,
 				stripPrefix: "[PLAN]",
 			});
+			console.debug(
+				`[EditorChat] Reasoning pass: ${(performance.now() - reasoningStart).toFixed(0)}ms`
+			);
 
 			const { isPlan, content: reasoning } = parseReasoningResponse(rawReasoning);
 
@@ -167,9 +171,13 @@ export async function runChatLoop(userMessage, deps) {
 			{ role: "user", content: editorContextMsg.content + "\n\n" + nudge },
 		];
 
+		const toolPassStart = performance.now();
 		const { content, toolCalls } = await streamCompletion(toolMessages, toolsForPass, {
 			silent: true,
 		});
+		console.debug(
+			`[EditorChat] Tool pass #${iterations} LLM: ${(performance.now() - toolPassStart).toFixed(0)}ms (${toolCalls?.length || 0} tool calls)`
+		);
 
 		if (!toolCalls || toolCalls.length === 0) {
 			// Final response — no more tools
@@ -284,10 +292,16 @@ export async function runChatLoop(userMessage, deps) {
 
 		// Execute non-truncated tools only
 		const executableCalls = toolCalls.filter((tc) => !tc._truncated);
+		const toolExecStart = performance.now();
 		const results =
 			executableCalls.length > 0
 				? await executeToolCallsForREST(executableCalls, buildToolCtx())
 				: [];
+		if (executableCalls.length > 0) {
+			console.debug(
+				`[EditorChat] Tool exec #${iterations}: ${(performance.now() - toolExecStart).toFixed(0)}ms (${executableCalls.length} tools)`
+			);
+		}
 
 		// Append tool results to conversation (truncated to limit token growth)
 		for (const r of results) {
