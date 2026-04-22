@@ -27,3 +27,39 @@
 		justify-content: center;
 	}
 }
+
+.nfd-editor-chat-header-page-selector__menu {
+	width: 500px;
+	max-width: 100%;
+
+	&__header {
+		align-items: center;
+		display: flex;
+		padding: 0 16px;
+	}
+
+	input[type="text"].nfd-editor-chat-header-page-selector__menu__search {
+		border: none;
+		border-radius: 0;
+		font-size: 15px;
+		line-height: 28px;
+		margin: 0;
+		outline: none;
+		padding: 16px 4px;
+		width: 100%;
+		box-shadow: none;
+	}
+
+	&__spinner {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding-bottom: 24px;
+	}
+
+	&__no-results {
+		font-size: 14px;
+		text-align: center;
+		padding-bottom: 24px;
+	}
+}
