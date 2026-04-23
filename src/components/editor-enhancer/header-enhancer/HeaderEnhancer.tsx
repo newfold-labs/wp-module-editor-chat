@@ -7,7 +7,7 @@ import { createPortal } from "react-dom";
  * WordPress dependencies
  */
 import { useRef, useEffect, useState } from "@wordpress/element";
-import PageSelector from "../PageSelector";
+import { PageSelector } from "../page-selector";
 
 /**
  * Editor header enhancer
