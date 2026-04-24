@@ -10,49 +10,6 @@ import {
 } from "./constants";
 
 /**
- * Parse the reasoning response to detect [PLAN] prefix.
- * Returns { isPlan, content } where content has the prefix stripped.
- *
- * @param {string} text Raw response text
- * @return {{ isPlan: boolean, content: string }} Parsed result with plan detection
- */
-export function parseReasoningResponse(text) {
-	const trimmed = (text || "").trim();
-	if (trimmed.startsWith("[PLAN]")) {
-		let content = trimmed.slice("[PLAN]".length).trim();
-
-		// Some models emit [PLAN] more than once — keep only the text after
-		// the last marker so the user doesn't see a duplicated plan.
-		const lastPlan = content.lastIndexOf("[PLAN]");
-		if (lastPlan !== -1) {
-			content = content.slice(lastPlan + "[PLAN]".length).trim();
-		}
-
-		// The model sometimes hallucinates function calls in the reasoning pass
-		// (where tools are disabled).  Truncate at the first sign of tool-call
-		// leakage so the user only sees the natural-language plan.
-		const junkPatterns = [
-			/\bto=functions\./i,
-			/=fn\./,
-			/\{\s*"client_id"/,
-			/\{\s*"block_content"/,
-			/<!--\s*wp:/,
-			/\{\s*"after_client_id"/,
-		];
-		for (const pattern of junkPatterns) {
-			const match = content.search(pattern);
-			if (match !== -1) {
-				content = content.slice(0, match).trim();
-				break;
-			}
-		}
-
-		return { isPlan: true, content };
-	}
-	return { isPlan: false, content: trimmed };
-}
-
-/**
  * Truncate tool result content to keep conversation history lean.
  * Preserves enough for the AI to understand what happened.
  *

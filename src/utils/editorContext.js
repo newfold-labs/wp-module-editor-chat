@@ -15,18 +15,18 @@ import {
 import { getCurrentGlobalStyles } from "../services/globalStylesService";
 import { NFD_CLASS_REFERENCE } from "./nfdClassReference";
 /**
- * Instruction appended as a system message during the reasoning-only call (no tools).
- * Tells the model to prefix with [PLAN] when it intends to use tools,
- * or respond normally for conversational messages.
+ * Nudge injected with the user's message on the tool-calling pass. Asks the
+ * model to emit a one-sentence natural-language plan as assistant text BEFORE
+ * its tool_calls, then proceed directly to tools in the same response.
+ *
+ * If the request is purely conversational (greeting, question, chat), the
+ * model responds normally without tool_calls and the loop exits.
+ *
+ * Editing tasks with reasonable defaults (add a column, change a color,
+ * duplicate a block, etc.) MUST be executed using the existing design as
+ * reference — do NOT ask for clarification on trivia the model can infer.
  */
-export const REASONING_INSTRUCTION = `You are being called without tools to communicate your plan. If the user's request requires editing blocks, adding sections, changing styles, or any action that would need tools, begin your response with [PLAN] on its own line, followed by a brief 1-2 sentence summary of what you will do. Address the user naturally (e.g., "I'll update the heading text and change its color to blue."). Do NOT mention tool names, client IDs, or technical details. If the request is purely conversational (greeting, question about the site, general chat), respond normally without any prefix — this will be your final response.`;
-
-/**
- * Brief system nudge injected (via temporary array, NOT persisted to history)
- * before the tool-calling pass, so the model executes its stated plan
- * without repeating it.
- */
-export const EXECUTE_NUDGE = `Now execute the plan you described above using the available tools. Do not repeat the plan — go straight to tool calls.`;
+export const EXECUTE_NUDGE = `Start your response with ONE short sentence (under 20 words) addressed to the user that states what you're about to do (e.g. "I'll add another column matching the existing design."). Then immediately call the tool(s) needed. Do not mention tool names, client IDs, or technical details in the sentence. For editing tasks where reasonable defaults exist (matching existing design, plausible placeholder content, standard icon choices), EXECUTE directly — do not ask clarifying questions unless the request is genuinely ambiguous. If the message is purely conversational, just reply normally with no tool calls.`;
 
 /**
  * Nudge injected after tools have been executed successfully.
