@@ -3,7 +3,9 @@
  */
 import { dispatch, select } from "@wordpress/data";
 import { store as coreStore } from "@wordpress/core-data";
-import { parse } from "@wordpress/blocks";
+import { parse, cloneBlock } from "@wordpress/blocks";
+
+import { resolveTarget } from "./targetResolver";
 
 /**
  * Internal dependencies
@@ -401,6 +403,150 @@ export async function handleAddAction(clientId, changes, position = "after") {
 		insertedClientIds,
 		message: `Added ${parsedBlocksList.length} block(s) successfully`,
 		errors: errors.length > 0 ? errors : undefined,
+	};
+}
+
+/**
+ * Duplicate a block as its next sibling with fresh clientIds.
+ *
+ * Dual-mode:
+ *   - Explicit: pass { client_id } to clone that specific block.
+ *   - Intent:   pass { kind, scope?, position? } and the target resolver picks
+ *               the matching block deterministically. No LLM in the loop for
+ *               target resolution.
+ *
+ * Returns a structured result including the newly-created clientId and a
+ * "resolved_from" trace when intent mode was used, so the caller can show the
+ * user (and the model) exactly which block was cloned.
+ *
+ * @param {Object} params
+ * @param {string} [params.client_id] Explicit target clientId.
+ * @param {string} [params.kind]      Intent: lexicon kind ("column", "card", …).
+ * @param {string} [params.scope]     Intent: clientId bounding the search.
+ * @param {string|number} [params.position] Intent: "last" (default) | "first" | integer.
+ * @return {Promise<Object>} Duplication result.
+ */
+export async function handleDuplicateAction(params = {}) {
+	const { client_id: explicitClientId, kind, scope, position } = params;
+	const { getBlock } = select("core/block-editor");
+	const { insertBlocks } = dispatch("core/block-editor");
+
+	let targetClientId = explicitClientId;
+	let resolution = null;
+	if (!targetClientId) {
+		if (!kind) {
+			throw new Error(
+				"Duplicate requires either client_id (explicit) or kind (intent mode). Neither was provided."
+			);
+		}
+		resolution = resolveTarget({ kind, scope, position });
+		targetClientId = resolution.client_id;
+	}
+
+	const block = getBlock(targetClientId);
+	if (!block) {
+		throw new Error(`Block with clientId ${targetClientId} not found`);
+	}
+
+	const context = findBlockContext(targetClientId);
+	if (!context) {
+		throw new Error(`Block ${targetClientId} not found in the block tree`);
+	}
+
+	const clone = cloneBlock(block);
+	insertBlocks(clone, context.index + 1, context.parentClientId || undefined);
+
+	// Build a compact leaf summary so the follow-up tool call knows which
+	// inner clientIds to target (for content customization, style tweaks, etc.).
+	// Without this, the model has no map from "leaf paragraph" → clientId in the
+	// new subtree and ends up patching the top-level clone with empty attrs.
+	const newLeaves = summarizeNewSubtree(clone);
+
+	return {
+		clientId: targetClientId,
+		newClientId: clone.clientId,
+		blockName: block.name,
+		newSubtree: newLeaves,
+		message: resolution
+			? `Duplicated ${resolution.kind_matched} (${block.name}) — ${resolution.why}`
+			: `Block ${block.name} duplicated successfully`,
+		resolution,
+	};
+}
+
+/**
+ * Walk a freshly-cloned block and return a compact, LLM-friendly flat list of
+ * every block in the subtree (parent → leaves), each tagged with its new
+ * clientId and a short preview of text/content. The model reads this from the
+ * tool result and can immediately target specific leaves with update-block-attrs.
+ *
+ * @param {Object} root The cloned root block.
+ * @return {Array<{client_id: string, name: string, path: string, text?: string}>}
+ */
+function summarizeNewSubtree(root) {
+	const out = [];
+	const walk = (block, path) => {
+		if (!block || !block.clientId) return;
+		const textAttr =
+			block.attributes?.content ??
+			block.attributes?.text ??
+			block.attributes?.url ??
+			null;
+		const entry = {
+			client_id: block.clientId,
+			name: block.name,
+			path,
+		};
+		if (typeof textAttr === "string" && textAttr.length > 0) {
+			entry.text = textAttr.length > 60 ? textAttr.slice(0, 60) + "…" : textAttr;
+		}
+		out.push(entry);
+		if (Array.isArray(block.innerBlocks)) {
+			block.innerBlocks.forEach((child, i) => walk(child, `${path}/${i}`));
+		}
+	};
+	walk(root, "0");
+	return out;
+}
+
+/**
+ * Insert a new block as a child of an existing parent at the given index.
+ *
+ * @param {string}      parentClientId The parent (container) block's client ID.
+ * @param {string}      blockContent   WordPress block markup for the new child.
+ * @param {number|null} index          0-based insert position; null/undefined = append.
+ * @return {Promise<Object>} Result of the insertion.
+ */
+export async function handleInsertInnerBlockAction(parentClientId, blockContent, index = null) {
+	const { getBlock } = select("core/block-editor");
+	const { insertBlocks } = dispatch("core/block-editor");
+
+	const parent = getBlock(parentClientId);
+	if (!parent) {
+		throw new Error(`Parent block with clientId ${parentClientId} not found`);
+	}
+
+	const parsed = parse(blockContent);
+	if (!parsed || parsed.length === 0) {
+		throw new Error("Failed to parse block_content into blocks");
+	}
+
+	const blockInstances = parsed.filter((b) => b.name || b.blockName).map((b) => createBlockFromParsed(b));
+	if (blockInstances.length === 0) {
+		throw new Error("No valid blocks to insert");
+	}
+
+	const childCount = parent.innerBlocks?.length || 0;
+	const insertIndex = typeof index === "number" && index >= 0 ? Math.min(index, childCount) : childCount;
+
+	insertBlocks(blockInstances, insertIndex, parentClientId);
+
+	return {
+		parentClientId,
+		blockName: parent.name,
+		insertedClientIds: blockInstances.map((b) => b.clientId),
+		insertedAtIndex: insertIndex,
+		message: `Inserted ${blockInstances.length} block(s) into ${parent.name}`,
 	};
 }
 

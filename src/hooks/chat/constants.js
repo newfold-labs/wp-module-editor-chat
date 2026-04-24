@@ -25,9 +25,12 @@ export const EDITOR_TOOLS = new Set([
 	"blu-edit-block",
 	"blu-add-section",
 	"blu-delete-block",
+	"blu-duplicate",
+	"blu-insert-inner-block",
 	"blu-move-block",
 	"blu-get-block-markup",
 	"blu-highlight-block",
+	"blu-update-block-attrs",
 	"blu-update-global-styles",
 	// Gateway tools — the MCP server exposes abilities through these 3 generic
 	// tools instead of individual ones. They must always be available.

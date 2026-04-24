@@ -16,6 +16,8 @@ import { safeParseJSON } from "../utils/jsonUtils";
 import {
 	handleAddAction,
 	handleDeleteAction,
+	handleDuplicateAction,
+	handleInsertInnerBlockAction,
 	handleMoveAction,
 	handleRewriteAction,
 } from "./actionExecutor";
@@ -211,6 +213,8 @@ const BLOCK_TOOL_NAMES = [
 	"blu-edit-block",
 	"blu-add-section",
 	"blu-delete-block",
+	"blu-duplicate",
+	"blu-insert-inner-block",
 	"blu-move-block",
 	"blu-update-block-attrs",
 ];
@@ -956,6 +960,83 @@ async function handleAddSection(toolCall, args, ctx) {
 	}
 }
 
+async function handleDuplicate(toolCall, args, ctx) {
+	await ctx.updateProgress(__("Duplicating block…", "wp-module-editor-chat"), 400);
+	try {
+		const dupResult = await handleDuplicateAction({
+			client_id: args.client_id,
+			kind: args.kind,
+			scope: args.scope,
+			position: args.position,
+		});
+		await ctx.updateProgress(__("Block duplicated successfully", "wp-module-editor-chat"), 500);
+		const payload = {
+			success: true,
+			message: dupResult.message,
+			new_client_id: dupResult.newClientId,
+			source_client_id: dupResult.clientId,
+			block_name: dupResult.blockName,
+			new_subtree: dupResult.newSubtree,
+		};
+		if (dupResult.resolution) {
+			payload.resolution = dupResult.resolution;
+		}
+		return {
+			id: toolCall.id,
+			result: [{ type: "text", text: JSON.stringify(payload) }],
+			isError: false,
+			hasChanges: true,
+		};
+	} catch (dupError) {
+		return {
+			id: toolCall.id,
+			result: [{ type: "text", text: JSON.stringify({ success: false, error: dupError.message }) }],
+			isError: true,
+		};
+	}
+}
+
+async function handleInsertInnerBlock(toolCall, args, ctx) {
+	await ctx.updateProgress(__("Inserting block…", "wp-module-editor-chat"), 400);
+	try {
+		// Strip escaped quotes the LLM may copy from JSON-encoded tool results
+		const markup = (args.block_content || "").replace(/\\"/g, '"');
+		const validation = validateBlockMarkup(markup);
+		if (!validation.valid) {
+			return {
+				id: toolCall.id,
+				result: [{ type: "text", text: JSON.stringify({ success: false, error: validation.error }) }],
+				isError: true,
+			};
+		}
+		const finalMarkup = validation.correctedContent || markup;
+		const index = typeof args.index === "number" ? args.index : null;
+		const insResult = await handleInsertInnerBlockAction(args.parent_client_id, finalMarkup, index);
+		await ctx.updateProgress(__("Block inserted successfully", "wp-module-editor-chat"), 500);
+		return {
+			id: toolCall.id,
+			result: [
+				{
+					type: "text",
+					text: JSON.stringify({
+						success: true,
+						message: insResult.message,
+						inserted_client_ids: insResult.insertedClientIds,
+					}),
+				},
+			],
+			isError: false,
+			hasChanges: true,
+		};
+	} catch (insError) {
+		return {
+			id: toolCall.id,
+			result: [{ type: "text", text: JSON.stringify({ success: false, error: insError.message }) }],
+			isError: true,
+		};
+	}
+}
+
 async function handleDeleteBlock(toolCall, args, ctx) {
 	await ctx.updateProgress(__("Deleting block…", "wp-module-editor-chat"), 400);
 	try {
@@ -1199,8 +1280,11 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 			// Unwrap gateway calls: blu-call-ability wraps an inner ability name
 			// and parameters. Extract them so client-side handlers can execute,
 			// and so the UI shows the real ability name (e.g. "Delete Block").
+			// Models sometimes emit the slash form ("blu/edit-block") that matches
+			// how abilities are registered server-side; MCP's tools/list exposes
+			// the hyphen form, so normalize here before dispatch.
 			if (toolName === "blu-call-ability" && args.ability_name) {
-				toolName = args.ability_name;
+				toolName = String(args.ability_name).replace(/\//g, "-");
 				args = args.parameters || {};
 				toolCall = { ...toolCall, name: toolName };
 			}
@@ -1262,6 +1346,20 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 				}
 			} else if (toolName === "blu-delete-block" && args.client_id) {
 				result = await handleDeleteBlock(toolCall, args, ctx);
+				if (!result.isError && result.hasChanges) {
+					hasBlockEdits = true;
+				}
+			} else if (toolName === "blu-duplicate" && (args.client_id || args.kind)) {
+				result = await handleDuplicate(toolCall, args, ctx);
+				if (!result.isError && result.hasChanges) {
+					hasBlockEdits = true;
+				}
+			} else if (
+				toolName === "blu-insert-inner-block" &&
+				args.parent_client_id &&
+				args.block_content
+			) {
+				result = await handleInsertInnerBlock(toolCall, args, ctx);
 				if (!result.isError && result.hasChanges) {
 					hasBlockEdits = true;
 				}
