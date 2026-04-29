@@ -1,11 +1,8 @@
 /**
  * WordPress dependencies.
  */
-import { DropdownMenu } from "@wordpress/components";
 import { useSelect } from "@wordpress/data";
 import { store as editorDataStore } from "@wordpress/editor";
-import { page as pageIcon } from "@wordpress/icons";
-import { __ } from "@wordpress/i18n";
 import { useRef } from "@wordpress/element";
 
 /**
@@ -14,6 +11,9 @@ import { useRef } from "@wordpress/element";
 import PageSelectorProvider from "./context";
 import PageSelectorInner from "./PageSelectorInner";
 import PageSelectorLeavingConfirm from "./PageSelectorLeavingConfirm";
+import { ChevronUpDownIcon, DocumentTextIcon } from "../../icons";
+import { DropdownMenu } from "../dropdown-menu";
+import { Button } from "@wordpress/components";
 
 export default function PageSelector() {
 	const closeMenuRef = useRef<(() => void) | null>(null);
@@ -34,18 +34,21 @@ export default function PageSelector() {
 		<PageSelectorProvider isDirty={isDirty} currentPage={currentPage} closeMenuRef={closeMenuRef}>
 			<PageSelectorLeavingConfirm />
 			<DropdownMenu
-				className="nfd-editor-chat-header-page-selector"
-				icon={pageIcon}
-				text={currentPage.title}
-				label={__("Navigate site pages", "wp-module-editor-chat")}
+				className="nfd-editor-chat__page-selector"
+				contentClassName="nfd-editor-chat__page-selector__dropdown"
 				popoverProps={{ placement: "bottom" }}
-				menuProps={{ className: "nfd-editor-chat-header-page-selector__menu" }}
-			>
-				{({ onClose }) => {
+				renderToggle={({ isOpen, onToggle }) => (
+					<Button onClick={onToggle} aria-expanded={isOpen}>
+						<DocumentTextIcon className="nfd-editor-chat__page-selector__icon" />
+						<span className="nfd-editor-chat__page-selector__content">{currentPage.title}</span>
+						<ChevronUpDownIcon className="nfd-editor-chat__page-selector__chevron" />
+					</Button>
+				)}
+				renderContent={({ onClose }) => {
 					closeMenuRef.current = onClose;
 					return <PageSelectorInner />;
 				}}
-			</DropdownMenu>
+			/>
 		</PageSelectorProvider>
 	);
 }

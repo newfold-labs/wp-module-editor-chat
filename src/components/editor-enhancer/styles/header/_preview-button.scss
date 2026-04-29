@@ -1,0 +1,29 @@
+.nfd-editor-chat__header-preview-button.components-button {
+	color: var(--nfd-editor-chat-header-color);
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 6px;
+	border: 1px solid rgba(0, 0, 0, 0.15);
+	font-size: 14px;
+	border-radius: 8px;
+	padding: 8px 12px 8px 16px;
+	height: auto;
+
+	svg[fill="none"] {
+		fill: none;
+		font-size: 18px;
+	}
+
+	&:hover, &:focus, &:focus-visible, &:active {
+		box-shadow: none;
+		outline: none;
+		color: var(--nfd-editor-chat-header-color);
+	}
+
+	&:hover {
+		background: rgba(0, 0, 0, 0.04);
+		border-color: rgba(0, 0, 0, 0.2);
+	}
+
+}

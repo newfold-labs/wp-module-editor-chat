@@ -1,0 +1,30 @@
+.nfd-editor-chat__bluehost-menu .components-button {
+	color: var(--nfd-editor-chat-header-color);
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 6px;
+	padding: 8px 12px 8px 8px;
+	height: auto;
+	font-weight: 600;
+
+	&:hover, &:focus, &:focus-visible, &:active {
+		box-shadow: none;
+		outline: none;
+		color: var(--nfd-editor-chat-header-color);
+	}
+
+	.nfd-editor-chat__bluehost-menu__icon {
+		font-size: 16px;
+		padding: 5px;
+		box-shadow: 0 2px 4px 0 rgba(20, 21, 31, 0.1), 0 4px 8px 0 rgba(20, 21, 31, 0.1);
+		border-radius: 5px;
+		margin-right: 4px;
+	}
+
+	.nfd-editor-chat__bluehost-menu__chevron {
+		font-size: 13px;
+		stroke-width: 2;
+		margin-top: 1px;
+	}
+}

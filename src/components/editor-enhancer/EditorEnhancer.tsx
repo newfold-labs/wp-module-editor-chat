@@ -1,8 +1,8 @@
 /**
  * Internal dependencies
  */
-import "./styles.scss";
-import { HeaderEnhancer } from "./header-enhancer";
+import "./styles/styles.scss";
+import { Header } from "./header";
 
 /**
  * Enhance editor functionalities.
@@ -10,7 +10,7 @@ import { HeaderEnhancer } from "./header-enhancer";
 export default function EditorEnhancer() {
 	return (
 		<>
-			<HeaderEnhancer />
+			<Header />
 		</>
 	);
 }
