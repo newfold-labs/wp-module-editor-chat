@@ -154,6 +154,7 @@ final class ChatEditor {
 			'wp-plugin-web'           => 'web',
 			'wp-plugin-crazy-domains' => 'crazydomains',
 		);
+
 		return $brand_map[ $plugin_dir ] ?? 'bluehost';
 	}
 
@@ -217,6 +218,7 @@ final class ChatEditor {
 					'nfdChatVersion' => \esc_html( NFD_EDITOR_CHAT_VERSION ),
 					'model'          => defined( 'NFD_EDITOR_CHAT_MODEL' ) ? \NFD_EDITOR_CHAT_MODEL : '',
 					'site'           => self::get_site_context(),
+					'pagesCount'     => array_sum( (array) wp_count_posts( 'page' ) ),
 				)
 			);
 
@@ -234,9 +236,10 @@ final class ChatEditor {
 	/**
 	 * Filter default WP script translations file to load the correct one
 	 *
-	 * @param string $file The translations file.
+	 * @param string $file   The translations file.
 	 * @param string $handle Script handle.
 	 * @param string $domain The strings textdomain.
+	 *
 	 * @return string
 	 */
 	public static function load_script_translation_file( $file, $handle, $domain ) {
@@ -254,6 +257,7 @@ final class ChatEditor {
 	 * Add custom admin class on block editor pages.
 	 *
 	 * @param string $classes Body classes.
+	 *
 	 * @return string
 	 */
 	public static function add_admin_body_class( $classes ) {
