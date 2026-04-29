@@ -11,38 +11,17 @@ import { __ } from "@wordpress/i18n";
 
 import { validateBlockMarkup } from "../utils/blockValidator";
 import { snapshotBlocks } from "../utils/editorContext";
-import { getBlockMarkup, getCurrentPageTitle } from "../utils/editorHelpers";
+import { getBlockMarkup } from "../utils/editorHelpers";
 import { safeParseJSON } from "../utils/jsonUtils";
 import {
 	handleAddAction,
 	handleDeleteAction,
+	handleDuplicateAction,
+	handleInsertInnerBlockAction,
 	handleMoveAction,
 	handleRewriteAction,
 } from "./actionExecutor";
 import { getCurrentGlobalStyles, updateGlobalStyles } from "./globalStylesService";
-import { customizePatternContent } from "./patternCustomizer";
-
-/**
- * Build a completion function that uses the OpenAI client (CF Worker).
- * Returns null if no client is available.
- *
- * @param {Object} ctx Tool context with openaiClientRef.
- * @return {Function|null} Async completion function or null.
- */
-function buildCompletionFn(ctx) {
-	const client = ctx.openaiClientRef?.current;
-	if (!client) {
-		return null;
-	}
-	return async (prompt) => {
-		const response = await client.chat.completions.create({
-			messages: [{ role: "user", content: prompt }],
-			temperature: 0.7,
-			max_completion_tokens: 2000,
-		});
-		return response.choices?.[0]?.message?.content || "";
-	};
-}
 
 /**
  * Module-level tracker for image URLs generated during this user turn.
@@ -55,11 +34,7 @@ let generatedImageUrls = [];
  * Gateway tools exposed directly by the MCP server. Every other ability
  * must be reached through blu-call-ability.
  */
-const GATEWAY_TOOLS = new Set([
-	"blu-list-abilities",
-	"blu-get-ability-schema",
-	"blu-call-ability",
-]);
+const GATEWAY_TOOLS = new Set(["blu-list-abilities", "blu-get-ability-schema", "blu-call-ability"]);
 
 /**
  * Call a blu-* ability via the MCP server, wrapping through blu-call-ability
@@ -87,7 +62,7 @@ function callAbility(mcpClient, abilityName, parameters) {
  * Called at the start of each new user turn so stale results from a
  * previous request don't contaminate the next request.
  */
-export function resetPatternSearchCache() {
+export function resetGeneratedImageCache() {
 	generatedImageUrls = [];
 }
 
@@ -238,8 +213,9 @@ const BLOCK_TOOL_NAMES = [
 	"blu-edit-block",
 	"blu-add-section",
 	"blu-delete-block",
+	"blu-duplicate",
+	"blu-insert-inner-block",
 	"blu-move-block",
-	"blu-rewrite-text",
 	"blu-update-block-attrs",
 ];
 
@@ -605,68 +581,6 @@ async function handleUpdateBlockAttrs(toolCall, args, ctx) {
 	}
 }
 
-async function handleRewriteText(toolCall, args, ctx) {
-	await ctx.updateProgress(__("Rewriting text…", "wp-module-editor-chat"), 300);
-
-	const clientId = args.client_id;
-	const instructions = args.instructions;
-
-	// Get the block's full markup (including inner blocks)
-	const mkData = getBlockMarkup(clientId);
-	if (!mkData) {
-		return {
-			id: toolCall.id,
-			result: [
-				{ type: "text", text: JSON.stringify({ success: false, error: "Block not found" }) },
-			],
-			isError: true,
-		};
-	}
-
-	const originalMarkup = mkData.block_content;
-	const pageTitle = getCurrentPageTitle();
-
-	try {
-		const rewritten = await customizePatternContent(
-			originalMarkup,
-			{
-				pageTitle,
-				userMessage: instructions,
-			},
-			buildCompletionFn(ctx)
-		);
-
-		if (rewritten === originalMarkup) {
-			return {
-				id: toolCall.id,
-				result: [
-					{
-						type: "text",
-						text: JSON.stringify({ success: true, message: "No text changes needed" }),
-					},
-				],
-				isError: false,
-			};
-		}
-
-		// Apply the rewritten markup back to the block
-		const editResult = await handleRewriteAction(clientId, rewritten);
-
-		return {
-			id: toolCall.id,
-			result: [{ type: "text", text: JSON.stringify(editResult) }],
-			isError: false,
-			hasChanges: true,
-		};
-	} catch (err) {
-		return {
-			id: toolCall.id,
-			result: [{ type: "text", text: JSON.stringify({ success: false, error: err.message }) }],
-			isError: true,
-		};
-	}
-}
-
 async function handleEditBlock(toolCall, args, ctx) {
 	// ── Image placeholder resolution (mirrors add-section) ──
 	const imgPlaceholders = args.block_content.match(/__IMG_\d+__/g) || [];
@@ -692,10 +606,7 @@ async function handleEditBlock(toolCall, args, ctx) {
 				);
 				try {
 					const mcpResult = await callAbility(ctx.mcpClient, "blu-generate-image", imgArgs);
-					console.log(
-						`[ToolExecutor:REST] edit-block: image ${i + 1} MCP result`,
-						mcpResult
-					);
+					console.log(`[ToolExecutor:REST] edit-block: image ${i + 1} MCP result`, mcpResult);
 					if (!mcpResult.isError && mcpResult.content?.[0]?.text) {
 						const parsed = JSON.parse(mcpResult.content[0].text);
 						const url = parsed?.message?.url || parsed?.url;
@@ -715,10 +626,7 @@ async function handleEditBlock(toolCall, args, ctx) {
 						);
 					}
 				} catch (imgErr) {
-					console.error(
-						`[ToolExecutor:REST] edit-block: image ${i + 1} generation threw`,
-						imgErr
-					);
+					console.error(`[ToolExecutor:REST] edit-block: image ${i + 1} generation threw`, imgErr);
 				}
 			}
 
@@ -780,7 +688,7 @@ async function handleEditBlock(toolCall, args, ctx) {
 							type: "text",
 							text: JSON.stringify({
 								success: false,
-								error: `This block has ${innerCount} inner blocks — rewriting ${args.block_content.length} chars of markup at once risks broken output. Use a smaller tool instead: (1) For style/spacing/color changes, use blu-update-block-attrs on this block or its children — no markup needed. (2) For text changes, use blu-rewrite-text with an "instructions" string. (3) For adding new content, use blu-add-section with before/after_client_id. (4) For structural reorganization, use blu-move-block and blu-delete-block.`,
+								error: `This block has ${innerCount} inner blocks — rewriting ${args.block_content.length} chars of markup at once risks broken output. Use a smaller tool instead: (1) For style/spacing/color/content changes, use blu-update-block-attrs on this block or its children — no markup needed. (2) For adding new content, use blu-add-section with before/after_client_id. (3) For structural reorganization, use blu-move-block and blu-delete-block.`,
 							}),
 						},
 					],
@@ -1013,8 +921,17 @@ async function handleAddSection(toolCall, args, ctx) {
 
 	await ctx.updateProgress(__("Adding new section…", "wp-module-editor-chat"), 400);
 	try {
+		// The MCP schema exposes mutually-exclusive after_client_id / before_client_id.
+		// Prefer before_client_id when set so "insert above X" requests land correctly.
+		const beforeClientId = args.before_client_id || null;
 		const afterClientId = args.after_client_id || null;
-		const addResult = await handleAddAction(afterClientId, [{ block_content: sectionContent }]);
+		const targetClientId = beforeClientId || afterClientId;
+		const position = beforeClientId ? "before" : "after";
+		const addResult = await handleAddAction(
+			targetClientId,
+			[{ block_content: sectionContent }],
+			position
+		);
 		await ctx.updateProgress(__("Section added successfully", "wp-module-editor-chat"), 500);
 
 		const resultData = {
@@ -1038,6 +955,83 @@ async function handleAddSection(toolCall, args, ctx) {
 		return {
 			id: toolCall.id,
 			result: [{ type: "text", text: JSON.stringify({ success: false, error: addError.message }) }],
+			isError: true,
+		};
+	}
+}
+
+async function handleDuplicate(toolCall, args, ctx) {
+	await ctx.updateProgress(__("Duplicating block…", "wp-module-editor-chat"), 400);
+	try {
+		const dupResult = await handleDuplicateAction({
+			client_id: args.client_id,
+			kind: args.kind,
+			scope: args.scope,
+			position: args.position,
+		});
+		await ctx.updateProgress(__("Block duplicated successfully", "wp-module-editor-chat"), 500);
+		const payload = {
+			success: true,
+			message: dupResult.message,
+			new_client_id: dupResult.newClientId,
+			source_client_id: dupResult.clientId,
+			block_name: dupResult.blockName,
+			new_subtree: dupResult.newSubtree,
+		};
+		if (dupResult.resolution) {
+			payload.resolution = dupResult.resolution;
+		}
+		return {
+			id: toolCall.id,
+			result: [{ type: "text", text: JSON.stringify(payload) }],
+			isError: false,
+			hasChanges: true,
+		};
+	} catch (dupError) {
+		return {
+			id: toolCall.id,
+			result: [{ type: "text", text: JSON.stringify({ success: false, error: dupError.message }) }],
+			isError: true,
+		};
+	}
+}
+
+async function handleInsertInnerBlock(toolCall, args, ctx) {
+	await ctx.updateProgress(__("Inserting block…", "wp-module-editor-chat"), 400);
+	try {
+		// Strip escaped quotes the LLM may copy from JSON-encoded tool results
+		const markup = (args.block_content || "").replace(/\\"/g, '"');
+		const validation = validateBlockMarkup(markup);
+		if (!validation.valid) {
+			return {
+				id: toolCall.id,
+				result: [{ type: "text", text: JSON.stringify({ success: false, error: validation.error }) }],
+				isError: true,
+			};
+		}
+		const finalMarkup = validation.correctedContent || markup;
+		const index = typeof args.index === "number" ? args.index : null;
+		const insResult = await handleInsertInnerBlockAction(args.parent_client_id, finalMarkup, index);
+		await ctx.updateProgress(__("Block inserted successfully", "wp-module-editor-chat"), 500);
+		return {
+			id: toolCall.id,
+			result: [
+				{
+					type: "text",
+					text: JSON.stringify({
+						success: true,
+						message: insResult.message,
+						inserted_client_ids: insResult.insertedClientIds,
+					}),
+				},
+			],
+			isError: false,
+			hasChanges: true,
+		};
+	} catch (insError) {
+		return {
+			id: toolCall.id,
+			result: [{ type: "text", text: JSON.stringify({ success: false, error: insError.message }) }],
 			isError: true,
 		};
 	}
@@ -1157,16 +1151,6 @@ async function handleHighlightBlock(toolCall, args, ctx) {
 	};
 }
 
-async function handleSearchPatterns(toolCall, args, ctx) {
-	await ctx.updateProgress(__("Searching pattern library…", "wp-module-editor-chat"), 300);
-	const result = await callAbility(ctx.mcpClient, toolCall.name, toolCall.arguments);
-	return {
-		id: toolCall.id,
-		result: result.content,
-		isError: result.isError,
-	};
-}
-
 // ─────────────────────────────────────────────────────────────
 // Tool execution (for CF AI Gateway / OpenAI function calling)
 // ─────────────────────────────────────────────────────────────
@@ -1179,7 +1163,6 @@ async function handleSearchPatterns(toolCall, args, ctx) {
 const READ_TOOLS = new Set([
 	"blu-get-block-markup",
 	"blu-get-global-styles",
-	"blu-search-patterns",
 	"blu-highlight-block",
 	"blu-generate-image",
 ]);
@@ -1297,8 +1280,11 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 			// Unwrap gateway calls: blu-call-ability wraps an inner ability name
 			// and parameters. Extract them so client-side handlers can execute,
 			// and so the UI shows the real ability name (e.g. "Delete Block").
+			// Models sometimes emit the slash form ("blu/edit-block") that matches
+			// how abilities are registered server-side; MCP's tools/list exposes
+			// the hyphen form, so normalize here before dispatch.
 			if (toolName === "blu-call-ability" && args.ability_name) {
-				toolName = args.ability_name;
+				toolName = String(args.ability_name).replace(/\//g, "-");
 				args = args.parameters || {};
 				toolCall = { ...toolCall, name: toolName };
 			}
@@ -1323,18 +1309,21 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 			}
 
 			// edit-block without client_id → treat as add-section
-			if (
-				toolName === "blu-edit-block" &&
-				!args.client_id &&
-				(args.block_content || args.pattern_slug)
-			) {
+			if (toolName === "blu-edit-block" && !args.client_id && args.block_content) {
 				toolName = "blu-add-section";
 			}
 
 			let result;
 
 			// Dispatch to tool handlers
-			if (toolName === "blu-update-global-styles" && args.settings) {
+			if (
+				toolName === "blu-update-global-styles" &&
+				(args.settings || args.palette || args.styles)
+			) {
+				// Normalize: AI commonly sends { palette: [...] } instead of { settings: { color: { palette: { theme: [...] } } } }
+				if (!args.settings && args.palette) {
+					args.settings = { color: { palette: { theme: args.palette } } };
+				}
 				const gsResult = await handleUpdateGlobalStyles(toolCall, args, ctx);
 				result = gsResult.toolResult;
 				if (gsResult.globalStylesUndoData) {
@@ -1345,22 +1334,32 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 				toolName === "blu-get-active-global-styles"
 			) {
 				result = await handleGetGlobalStyles(toolCall, ctx);
-			} else if (
-				toolName === "blu-edit-block" &&
-				args.client_id &&
-				(args.block_content || args.pattern_slug)
-			) {
+			} else if (toolName === "blu-edit-block" && args.client_id && args.block_content) {
 				result = await handleEditBlock(toolCall, args, ctx);
 				if (!result.isError && result.hasChanges) {
 					hasBlockEdits = true;
 				}
-			} else if (toolName === "blu-add-section" && (args.block_content || args.pattern_slug)) {
+			} else if (toolName === "blu-add-section" && args.block_content) {
 				result = await handleAddSection(toolCall, args, ctx);
 				if (!result.isError && result.hasChanges) {
 					hasBlockEdits = true;
 				}
 			} else if (toolName === "blu-delete-block" && args.client_id) {
 				result = await handleDeleteBlock(toolCall, args, ctx);
+				if (!result.isError && result.hasChanges) {
+					hasBlockEdits = true;
+				}
+			} else if (toolName === "blu-duplicate" && (args.client_id || args.kind)) {
+				result = await handleDuplicate(toolCall, args, ctx);
+				if (!result.isError && result.hasChanges) {
+					hasBlockEdits = true;
+				}
+			} else if (
+				toolName === "blu-insert-inner-block" &&
+				args.parent_client_id &&
+				args.block_content
+			) {
+				result = await handleInsertInnerBlock(toolCall, args, ctx);
 				if (!result.isError && result.hasChanges) {
 					hasBlockEdits = true;
 				}
@@ -1396,13 +1395,6 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 						hasBlockEdits = true;
 					}
 				}
-			} else if (toolName === "blu-rewrite-text" && args.client_id && args.instructions) {
-				result = await handleRewriteText(toolCall, args, ctx);
-				if (!result.isError && result.hasChanges) {
-					hasBlockEdits = true;
-				}
-			} else if (toolName === "blu-search-patterns" && args.query) {
-				result = await handleSearchPatterns(toolCall, args, ctx);
 			} else if (toolName === "blu-generate-image" && args.prompt) {
 				await ctx.updateProgress(__("Generating image…", "wp-module-editor-chat"), 500);
 				try {

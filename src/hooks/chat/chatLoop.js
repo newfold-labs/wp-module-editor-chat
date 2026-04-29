@@ -2,21 +2,19 @@
 /**
  * chatLoop — The function-calling loop for editor chat.
  *
- * Plain async function (no React hooks). Handles reasoning pass,
- * tool selection, retry detection, tool execution, and history compression.
+ * Plain async function (no React hooks). Single-pass function-calling: the
+ * model emits a brief natural-language plan and tool_calls in the same
+ * response. Handles retry detection, tool execution, and history compression.
  * The orchestrator wraps this in useCallback and handles try/catch/finally.
  */
 import { CHAT_STATUS, EDITOR_TOOLS, MAX_TOOL_ITERATIONS } from "./constants";
 import {
-	parseReasoningResponse,
 	truncateToolResult,
 	compressConversationHistory,
 	messageNeedsSiteTools,
 	createRetryTracker,
 } from "./conversationUtils";
 import {
-	EDITOR_SYSTEM_PROMPT,
-	REASONING_INSTRUCTION,
 	EXECUTE_NUDGE,
 	SUMMARIZE_NUDGE,
 	buildEditorContext,
@@ -42,9 +40,9 @@ export async function runChatLoop(userMessage, deps) {
 		abortControllerRef,
 	} = deps;
 
-	// First message: include system prompt
+	// First message: reset conversation history (system prompt is injected by the worker)
 	if (isFirstMessageRef.current) {
-		conversationHistoryRef.current = [{ role: "system", content: EDITOR_SYSTEM_PROMPT }];
+		conversationHistoryRef.current = [];
 		isFirstMessageRef.current = false;
 	}
 
@@ -67,9 +65,8 @@ export async function runChatLoop(userMessage, deps) {
 		},
 	]);
 
-	// Function calling loop with reasoning first-pass
+	// Single-pass function-calling loop — no separate reasoning pass.
 	let iterations = 0;
-	let isReasoningPass = true;
 	let msgSeq = 0;
 	let toolsJustExecuted = false;
 	const retryTracker = createRetryTracker();
@@ -90,67 +87,7 @@ export async function runChatLoop(userMessage, deps) {
 		setStatus(CHAT_STATUS.GENERATING);
 		setCurrentResponse("");
 
-		if (isReasoningPass) {
-			// ── Pass 1: reasoning call — no tools, [PLAN] prefix stripped ──
-			isReasoningPass = false;
-
-			// Use "user" role for injected context so the conversation always ends
-			// on a user turn. Some providers (e.g. Anthropic via OpenRouter) strip
-			// system messages, which can leave an assistant message last → prefill error.
-			const reasoningMessages = [
-				...conversationHistoryRef.current,
-				{ role: "user", content: editorContextMsg.content + "\n\n" + REASONING_INSTRUCTION },
-			];
-
-			const { content: rawReasoning } = await streamCompletion(reasoningMessages, [], {
-				max_completion_tokens: 200,
-				stripPrefix: "[PLAN]",
-			});
-
-			const { isPlan, content: reasoning } = parseReasoningResponse(rawReasoning);
-
-			if (!isPlan) {
-				// Conversational response — final answer, no tools needed
-				conversationHistoryRef.current.push({
-					role: "assistant",
-					content: reasoning,
-				});
-				setCurrentResponse("");
-				setMessages((prev) => [
-					...prev,
-					{
-						id: `assistant-${ts}-${msgSeq++}`,
-						type: "assistant",
-						role: "assistant",
-						content: reasoning,
-						timestamp: new Date(),
-					},
-				]);
-				break;
-			}
-
-			// It's a plan — persist reasoning as a visible message
-			conversationHistoryRef.current.push({
-				role: "assistant",
-				content: reasoning,
-			});
-			setCurrentResponse("");
-			setMessages((prev) => [
-				...prev,
-				{
-					id: `assistant-${ts}-${msgSeq++}-reasoning`,
-					type: "assistant",
-					role: "assistant",
-					content: reasoning,
-					timestamp: new Date(),
-				},
-			]);
-
-			// Continue to next iteration which will call with tools
-			continue;
-		}
-
-		// ── Pass 2+: call with tools ──
+		// ── Tool-calling pass ──
 		// Dynamically select tools based on the user's message:
 		// editor tasks → only block-editing tools (prevents search-media, get-function-details, etc.)
 		// site management tasks (create post, upload media, etc.) → all tools
@@ -168,9 +105,11 @@ export async function runChatLoop(userMessage, deps) {
 			{ role: "user", content: editorContextMsg.content + "\n\n" + nudge },
 		];
 
-		const { content, toolCalls } = await streamCompletion(toolMessages, toolsForPass, {
-			silent: true,
-		});
+		const toolPassStart = performance.now();
+		const { content, toolCalls } = await streamCompletion(toolMessages, toolsForPass, {});
+		console.log(
+			`[EditorChat] Tool pass #${iterations} LLM: ${(performance.now() - toolPassStart).toFixed(0)}ms (${toolCalls?.length || 0} tool calls)`
+		);
 
 		if (!toolCalls || toolCalls.length === 0) {
 			// Final response — no more tools
@@ -270,6 +209,21 @@ export async function runChatLoop(userMessage, deps) {
 			})),
 		});
 
+		// Surface the inline plan text (emitted before the tool_calls) as a
+		// visible message. Replaces the old separate reasoning-pass bubble.
+		if (content && content.trim()) {
+			setMessages((prev) => [
+				...prev,
+				{
+					id: `assistant-${ts}-${msgSeq++}-plan`,
+					type: "assistant",
+					role: "assistant",
+					content,
+					timestamp: new Date(),
+				},
+			]);
+		}
+
 		// Handle truncated tool calls — skip execution, return error
 		const truncated = toolCalls.filter((tc) => tc._truncated);
 		if (truncated.length > 0) {
@@ -285,10 +239,16 @@ export async function runChatLoop(userMessage, deps) {
 
 		// Execute non-truncated tools only
 		const executableCalls = toolCalls.filter((tc) => !tc._truncated);
+		const toolExecStart = performance.now();
 		const results =
 			executableCalls.length > 0
 				? await executeToolCallsForREST(executableCalls, buildToolCtx())
 				: [];
+		if (executableCalls.length > 0) {
+			console.log(
+				`[EditorChat] Tool exec #${iterations}: ${(performance.now() - toolExecStart).toFixed(0)}ms (${executableCalls.length} tools)`
+			);
+		}
 
 		// Append tool results to conversation (truncated to limit token growth)
 		for (const r of results) {

@@ -23,7 +23,7 @@ import { runChatLoop } from "./chat/chatLoop";
 import useChatSideEffects from "./chat/useChatSideEffects";
 import useChangeActions from "./chat/useChangeActions";
 import { loadActiveChat, clearActiveChat } from "./chat/activeChatStorage";
-import { resetPatternSearchCache } from "../services/toolExecutor";
+import { resetGeneratedImageCache } from "../services/toolExecutor";
 
 /**
  * useEditorChatREST Hook
@@ -180,8 +180,9 @@ const useEditorChatREST = () => {
 			setToolProgress(null);
 			setCurrentResponse("");
 			setError(null);
-			resetPatternSearchCache();
+			resetGeneratedImageCache();
 
+			const requestStart = performance.now();
 			try {
 				await runChatLoop(messageContent, {
 					conversationHistoryRef,
@@ -195,6 +196,9 @@ const useEditorChatREST = () => {
 					abortControllerRef,
 				});
 
+				console.debug(
+					`[EditorChat] Request completed in ${(performance.now() - requestStart).toFixed(0)}ms`
+				);
 				setStatus(CHAT_STATUS.COMPLETED);
 				setTimeout(() => setStatus(CHAT_STATUS.IDLE), 500);
 			} catch (err) {
@@ -232,7 +236,7 @@ const useEditorChatREST = () => {
 		clearActiveChat();
 
 		// Reset everything
-		resetPatternSearchCache();
+		resetGeneratedImageCache();
 		setMessages([]);
 		conversationHistoryRef.current = [];
 		isFirstMessageRef.current = true;
