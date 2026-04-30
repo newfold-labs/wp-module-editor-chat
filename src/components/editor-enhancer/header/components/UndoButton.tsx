@@ -15,7 +15,11 @@ export default function UndoButton() {
 	const { undo } = useDispatch(editorStore);
 
 	return (
-		<HeaderIconButton onClick={undo} disabled={!hasUndo}>
+		<HeaderIconButton
+			onClick={undo}
+			disabled={!hasUndo}
+			id="nfd-editor-chat__header__undo"
+		>
 			<UndoIcon />
 		</HeaderIconButton>
 	);

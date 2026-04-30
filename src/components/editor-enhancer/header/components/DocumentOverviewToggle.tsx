@@ -24,7 +24,7 @@ export default function DocumentOverviewToggle() {
 	const toggle = useCallback(() => setIsListViewOpened(!isOpen), [isOpen, setIsListViewOpened]);
 
 	return (
-		<HeaderIconButton onClick={toggle}>
+		<HeaderIconButton onClick={toggle} id="nfd-editor-chat__header__document-overview-toggle">
 			<QueueListIcon />
 		</HeaderIconButton>
 	);

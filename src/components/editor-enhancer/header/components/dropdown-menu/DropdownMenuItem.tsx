@@ -6,11 +6,12 @@ import { Button } from "@wordpress/components";
 /**
  * External dependencies.
  */
+import type { ReactNode, ComponentProps } from "react";
 import classNames from "classnames";
 
-type DropdownMenuItemProps = React.ComponentProps<typeof Button> & {
-	startDecoration?: React.ReactNode;
-	endDecoration?: React.ReactNode;
+type DropdownMenuItemProps = ComponentProps<typeof Button> & {
+	startDecoration?: ReactNode;
+	endDecoration?: ReactNode;
 	isExternalLink?: boolean;
 };
 

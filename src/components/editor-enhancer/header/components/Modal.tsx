@@ -1,4 +1,12 @@
+/**
+ * WordPress dependencies.
+ */
 import { Modal as WpModal } from "@wordpress/components";
+
+/**
+ * External dependencies.
+ */
+import type { ReactNode } from "react";
 import classNames from "classnames";
 
 type ModalProps = {
@@ -6,9 +14,9 @@ type ModalProps = {
 	onClose?: () => void;
 	className?: string;
 	title?: string;
-	subtitle?: React.ReactNode;
-	actions?: React.ReactNode;
-	children?: React.ReactNode;
+	subtitle?: ReactNode;
+	actions?: ReactNode;
+	children?: ReactNode;
 };
 
 export default function Modal({

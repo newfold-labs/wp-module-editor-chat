@@ -34,7 +34,11 @@ export default function ChatToggle() {
 	};
 
 	return (
-		<HeaderIconButton onClick={toggle} active={isActive}>
+		<HeaderIconButton
+			onClick={toggle}
+			active={isActive}
+			id="nfd-editor-chat__header__chat-toggle"
+		>
 			<ChatIcon />
 		</HeaderIconButton>
 	);

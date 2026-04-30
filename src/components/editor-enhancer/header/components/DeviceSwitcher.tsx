@@ -9,6 +9,7 @@ import { Button } from "@wordpress/components";
  * External dependencies.
  */
 import classNames from "classnames";
+import type { ComponentProps } from "react";
 
 /**
  * Internal dependencies.
@@ -16,7 +17,7 @@ import classNames from "classnames";
 import { DesktopIcon, MobileIcon, TabletIcon } from "../icons";
 import useZoomToggle from "../hooks/useZoomToggle";
 
-type DeviceSwitcherButtonProps = React.ComponentProps<typeof Button> & { active?: boolean };
+type DeviceSwitcherButtonProps = ComponentProps<typeof Button> & { active?: boolean };
 
 function DeviceSwitcherButton({
 	active = false,
@@ -31,7 +32,7 @@ function DeviceSwitcherButton({
 		},
 	]);
 
-	const props: React.ComponentProps<typeof Button> = {
+	const props: ComponentProps<typeof Button> = {
 		className: classes,
 		...buttonProps,
 	};
@@ -69,7 +70,10 @@ export default function DeviceSwitcher() {
 	];
 
 	return (
-		<div className="nfd-editor-chat__header-device-switcher">
+		<div
+			className="nfd-editor-chat__header-device-switcher"
+			id="nfd-editor-chat__header__device-switcher"
+		>
 			{choices.map((choice) => (
 				<DeviceSwitcherButton
 					key={choice.value}

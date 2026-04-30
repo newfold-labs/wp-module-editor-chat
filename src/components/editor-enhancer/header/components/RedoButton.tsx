@@ -15,7 +15,11 @@ export default function RedoButton() {
 	const { redo } = useDispatch(editorStore);
 
 	return (
-		<HeaderIconButton onClick={redo} disabled={!hasRedo}>
+		<HeaderIconButton
+			onClick={redo}
+			disabled={!hasRedo}
+			id="nfd-editor-chat__header__redo"
+		>
 			<RedoIcon />
 		</HeaderIconButton>
 	);

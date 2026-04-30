@@ -19,8 +19,10 @@ export default function PreviewButton() {
 			// @ts-ignore textContent accepts ReactNode.
 			textContent={
 				<>
-					{__("Preview", "wp-module-editor-chat")}
-					<ArrowTopRightOnSquareIcon />
+					<span className="nfd-editor-chat__header-preview-button__label">
+						{__("Preview", "wp-module-editor-chat")}
+					</span>
+					<ArrowTopRightOnSquareIcon className="nfd-editor-chat__header-preview-button__icon" />
 				</>
 			}
 		/>

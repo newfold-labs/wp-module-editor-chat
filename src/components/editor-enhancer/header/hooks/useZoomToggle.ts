@@ -9,11 +9,14 @@ type UseZoomToggleReturn = ReturnType<typeof useButtonReplacement> & {
 
 const useZoomToggle = (): UseZoomToggleReturn => {
 	// Workaround: use useButtonReplacement as the Gutenberg API for the zoom toggle is private.
-	const { active, toggle } = useButtonReplacement({
-		selector: ".editor-header__settings .editor-zoom-out-toggle",
+	const data = useButtonReplacement({
+		selector:
+			".interface-interface-skeleton__header .editor-header__settings .editor-zoom-out-toggle",
 		activeClass: "is-pressed",
-		ancestorSelector: ".interface-interface-skeleton__header",
+		ancestorSelector: "#site-editor",
 	});
+
+	const { active, toggle } = data;
 
 	const resetZoomLevel = () => {
 		if (active) {
@@ -21,7 +24,7 @@ const useZoomToggle = (): UseZoomToggleReturn => {
 		}
 	};
 
-	return { active, toggle, resetZoomLevel };
+	return { ...data, resetZoomLevel };
 };
 
 export default useZoomToggle;

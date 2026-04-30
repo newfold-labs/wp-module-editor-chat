@@ -50,7 +50,7 @@ export default function BluehostDropdownMenu() {
 				renderToggle={({ isOpen, onToggle }) => (
 					<Button onClick={onToggle} aria-expanded={isOpen}>
 						<BluehostIcon className="nfd-editor-chat__bluehost-menu__icon" />
-						Bluehost
+						<span className="nfd-editor-chat__bluehost-menu__label">Bluehost</span>
 						<ChevronDownIcon className="nfd-editor-chat__bluehost-menu__chevron" />
 					</Button>
 				)}

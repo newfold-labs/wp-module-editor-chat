@@ -27,7 +27,7 @@ export default function BlockInserter() {
 	);
 
 	return (
-		<HeaderIconButton onClick={toggleInserter}>
+		<HeaderIconButton onClick={toggleInserter} id="nfd-editor-chat__header__block-inserter">
 			<PlusIcon />
 		</HeaderIconButton>
 	);

@@ -46,9 +46,16 @@ export default function SaveButton() {
 	};
 
 	return (
-		<Button className={classes} disabled={isButtonDisabled} onClick={handleSave}>
-			<GlobeIcon />
-			{__("Publish", "wp-module-editor-chat")}
+		<Button
+			className={classes}
+			disabled={isButtonDisabled}
+			onClick={handleSave}
+			id="nfd-editor-chat__header__save"
+		>
+			<GlobeIcon className="nfd-editor-chat__header__save-button__icon" />
+			<span className="nfd-editor-chat__header__save-button__label">
+				{__("Publish", "wp-module-editor-chat")}
+			</span>
 		</Button>
 	);
 }

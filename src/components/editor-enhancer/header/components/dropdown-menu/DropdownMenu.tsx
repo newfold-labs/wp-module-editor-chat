@@ -7,8 +7,9 @@ import { Dropdown } from "@wordpress/components";
  * External dependencies.
  */
 import classNames from "classnames";
+import type { ComponentProps } from "react";
 
-type DropdownMenuProps = Omit<React.ComponentProps<typeof Dropdown>, "width"> & {
+type DropdownMenuProps = Omit<ComponentProps<typeof Dropdown>, "width"> & {
 	width?: number;
 };
 

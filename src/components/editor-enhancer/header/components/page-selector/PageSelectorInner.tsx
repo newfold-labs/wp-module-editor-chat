@@ -8,6 +8,11 @@ import { Icon, Spinner } from "@wordpress/components";
 import { __ } from "@wordpress/i18n";
 
 /**
+ * External dependencies.
+ */
+import type { MouseEvent } from "react";
+
+/**
  * Internal dependencies.
  */
 import { useDebouncedValue } from "./utils";
@@ -70,12 +75,12 @@ export default function PageSelectorInner() {
 					<>
 						{pages.map((page) => {
 							const isSelected = currentPage.id === page.id;
-							const handleClick = (event: React.MouseEvent) => navigate(page.id, event);
+							const handleClick = (event: MouseEvent) => navigate(page.id, event);
 
 							return (
 								<DropdownMenuItem
 									key={page.id}
-									onClick={(event: React.MouseEvent) => handleClick(event)}
+									onClick={(event: MouseEvent) => handleClick(event)}
 									endDecoration={isSelected ? <CheckIcon /> : undefined}
 								>
 									{page.title.rendered}

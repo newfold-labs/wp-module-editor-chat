@@ -2,8 +2,9 @@
  * External dependencies.
  */
 import classNames from "classnames";
+import type { ComponentProps } from "react";
 
-type HeaderSectionProps = React.ComponentProps<"div"> & {
+type HeaderSectionProps = ComponentProps<"div"> & {
 	section: "left" | "center" | "right";
 };
 

@@ -7,8 +7,9 @@ import { Button } from "@wordpress/components";
  * External dependencies.
  */
 import classNames from "classnames";
+import type { ComponentProps } from "react";
 
-type HeaderIconButtonProps = React.ComponentProps<typeof Button> & { active?: boolean };
+type HeaderIconButtonProps = ComponentProps<typeof Button> & { active?: boolean };
 
 export default function HeaderIconButton({
 	active = false,

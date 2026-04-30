@@ -1,4 +1,9 @@
-type SvgProps = React.ComponentProps<"svg">;
+/**
+ * External dependencies.
+ */
+import type { ComponentProps } from "react";
+
+type SvgProps = ComponentProps<"svg">;
 
 export function UndoIcon(props: SvgProps) {
 	return (

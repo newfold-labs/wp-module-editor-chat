@@ -11,6 +11,7 @@ type UseButtonReplacementProps = {
 
 type UseButtonReplacementReturn = {
 	active: boolean;
+	exists: boolean;
 	toggle: () => void;
 };
 
@@ -25,6 +26,7 @@ const useButtonReplacement = ({
 	const discoverIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 	const ancestorObserverRef = useRef<MutationObserver | null>(null);
 	const classObserverRef = useRef<MutationObserver | null>(null);
+
 	const updateOriginal = useCallback((element: HTMLButtonElement | null) => {
 		if (originalRef.current === element) {
 			return;
@@ -32,24 +34,47 @@ const useButtonReplacement = ({
 		originalRef.current = element;
 		setOriginal(element);
 	}, []);
+
 	const updateActive = useCallback(() => {
 		const element = originalRef.current;
 		setActive(Boolean(element?.classList.contains(activeClass)));
 	}, [activeClass]);
+
 	const discover = useCallback(() => {
 		const element = document.querySelector<HTMLButtonElement>(selector);
 		updateOriginal(element);
+		return !!element;
 	}, [selector, updateOriginal]);
+
 	const toggle = useCallback(() => {
 		originalRef.current?.click();
 	}, []);
+
 	useEffect(() => {
-		discover();
-		discoverIntervalRef.current = setInterval(discover, 100);
+		const discoverAndClean = () => {
+			if (discover()) {
+				if (discoverIntervalRef.current) {
+					clearInterval(discoverIntervalRef.current);
+					discoverIntervalRef.current = null;
+				}
+			}
+		};
+
+		const startDiscovering = () => {
+			console.log("startDiscovering");
+			if (!discoverIntervalRef.current) {
+				console.log("start")
+				discoverIntervalRef.current = setInterval(discoverAndClean, 100);
+				discoverAndClean();
+			}
+		}
+
+		startDiscovering();
+
 		const ancestor = document.querySelector(ancestorSelector);
 		if (ancestor) {
 			ancestorObserverRef.current = new MutationObserver(() => {
-				discover();
+				startDiscovering();
 			});
 			ancestorObserverRef.current.observe(ancestor, {
 				childList: true,
@@ -65,6 +90,7 @@ const useButtonReplacement = ({
 			ancestorObserverRef.current = null;
 		};
 	}, [ancestorSelector, discover]);
+
 	useEffect(() => {
 		classObserverRef.current?.disconnect();
 		classObserverRef.current = null;
@@ -85,8 +111,10 @@ const useButtonReplacement = ({
 			classObserverRef.current = null;
 		};
 	}, [original, updateActive]);
+
 	return {
 		active,
+		exists: !!original,
 		toggle,
 	};
 };
