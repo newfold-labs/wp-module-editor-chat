@@ -46,7 +46,7 @@
 	"dependencies": {
 		"@wordpress/interface": "^9.28.0",
 		"classnames": "^2.5.1",
-		"dompurify": "^3.3.3",
+		"dompurify": "^3.4.2",
 		"lucide-react": "^1.7.0"
 	}
 }
