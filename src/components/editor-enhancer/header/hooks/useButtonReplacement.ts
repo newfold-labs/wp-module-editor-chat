@@ -61,9 +61,7 @@ const useButtonReplacement = ({
 		};
 
 		const startDiscovering = () => {
-			console.log("startDiscovering");
 			if (!discoverIntervalRef.current) {
-				console.log("start")
 				discoverIntervalRef.current = setInterval(discoverAndClean, 100);
 				discoverAndClean();
 			}
