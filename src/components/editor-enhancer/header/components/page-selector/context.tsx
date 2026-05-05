@@ -6,16 +6,21 @@ import { useSelect } from "@wordpress/data";
 import { store as coreDataStore } from "@wordpress/core-data";
 
 /**
+ * External dependencies.
+ */
+import type { ReactNode, MutableRefObject, SetStateAction, Dispatch, MouseEvent } from "react";
+
+/**
  * Internal dependencies.
  */
 import { loadPage, openPageInNewTab } from "./utils";
 import { BASE_PAGE_QUERY } from "./constants";
 
 type PageSelectorProviderProps = {
-	closeMenuRef: React.MutableRefObject<(() => void) | null>;
+	closeMenuRef: MutableRefObject<(() => void) | null>;
 	currentPage?: any;
 	isDirty: boolean;
-	children: React.ReactNode;
+	children: ReactNode;
 };
 
 type ContextValue = Omit<PageSelectorProviderProps, "children" | "closeMenuRef"> & {
@@ -23,8 +28,8 @@ type ContextValue = Omit<PageSelectorProviderProps, "children" | "closeMenuRef">
 	handleNavigationConfirm: () => void;
 	handleNavigationCancel: () => void;
 	navigatingToPage?: number;
-	setNavigatingToPage: React.Dispatch<React.SetStateAction<number | undefined>>;
-	navigate: (pageId: number, event?: React.MouseEvent) => void;
+	setNavigatingToPage: Dispatch<SetStateAction<number | undefined>>;
+	navigate: (pageId: number, event?: MouseEvent) => void;
 };
 
 const Context = createContext<ContextValue>({} as ContextValue);

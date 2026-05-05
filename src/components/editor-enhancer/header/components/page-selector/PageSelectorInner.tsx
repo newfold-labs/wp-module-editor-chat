@@ -4,9 +4,13 @@
 import { useState } from "@wordpress/element";
 import { useSelect } from "@wordpress/data";
 import { store as coreDataStore } from "@wordpress/core-data";
-import { Icon, MenuGroup, MenuItem, Spinner } from "@wordpress/components";
+import { Icon, Spinner } from "@wordpress/components";
 import { __ } from "@wordpress/i18n";
-import { check as checkIcon, search as searchIcon } from "@wordpress/icons";
+
+/**
+ * External dependencies.
+ */
+import type { MouseEvent } from "react";
 
 /**
  * Internal dependencies.
@@ -14,6 +18,8 @@ import { check as checkIcon, search as searchIcon } from "@wordpress/icons";
 import { useDebouncedValue } from "./utils";
 import { BASE_PAGE_QUERY, HAS_LARGE_PAGE_COUNT } from "./constants";
 import { usePageSelector } from "./context";
+import { DropdownMenuItem, DropdownMenuSection } from "../dropdown-menu";
+import { CheckIcon, MagnifyingGlassIcon } from "../../icons";
 
 export default function PageSelectorInner() {
 	const [term, setTerm] = useState<string | undefined>(undefined);
@@ -44,21 +50,23 @@ export default function PageSelectorInner() {
 	return (
 		<>
 			{HAS_LARGE_PAGE_COUNT && (
-				<div className="nfd-editor-chat-header-page-selector__menu__header">
-					<Icon icon={searchIcon} />
-					<input
-						className="nfd-editor-chat-header-page-selector__menu__search"
-						type="text"
-						value={term}
-						onChange={(e) => setTerm(e.target.value)}
-						placeholder={__("Search pages...", "wp-module-editor-chat")}
-					/>
-				</div>
+				<DropdownMenuSection>
+					<div className="nfd-editor-chat__page-selector__dropdown__header">
+						<MagnifyingGlassIcon className="nfd-editor-chat__page-selector__dropdown__search-icon" />
+						<input
+							className="nfd-editor-chat__page-selector__dropdown__search"
+							type="text"
+							value={term}
+							onChange={(e) => setTerm(e.target.value)}
+							placeholder={__("Search pages...", "wp-module-editor-chat")}
+						/>
+					</div>
+				</DropdownMenuSection>
 			)}
 
-			<MenuGroup>
+			<DropdownMenuSection>
 				{isLoading && (
-					<div className="nfd-editor-chat-header-page-selector__menu__spinner">
+					<div className="nfd-editor-chat__page-selector__dropdown__spinner">
 						<Spinner />
 					</div>
 				)}
@@ -67,27 +75,27 @@ export default function PageSelectorInner() {
 					<>
 						{pages.map((page) => {
 							const isSelected = currentPage.id === page.id;
-							const handleClick = (event: React.MouseEvent) => navigate(page.id, event);
+							const handleClick = (event: MouseEvent) => navigate(page.id, event);
 
 							return (
-								<MenuItem
+								<DropdownMenuItem
 									key={page.id}
-									onClick={(event: React.MouseEvent) => handleClick(event)}
-									icon={isSelected ? checkIcon : undefined}
+									onClick={(event: MouseEvent) => handleClick(event)}
+									endDecoration={isSelected ? <CheckIcon /> : undefined}
 								>
 									{page.title.rendered}
-								</MenuItem>
+								</DropdownMenuItem>
 							);
 						})}
 					</>
 				)}
 
 				{!isLoading && !pages.length && (
-					<div className="nfd-editor-chat-header-page-selector__menu__no-results">
+					<div className="nfd-editor-chat__page-selector__dropdown__no-results">
 						{__("No pages found...", "wp-module-editor-chat")}
 					</div>
 				)}
-			</MenuGroup>
+			</DropdownMenuSection>
 		</>
 	);
 }

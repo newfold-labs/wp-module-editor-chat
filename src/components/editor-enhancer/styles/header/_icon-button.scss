@@ -1,0 +1,32 @@
+.nfd-editor-chat__header-icon-button.components-button {
+	font-size: 20px;
+	color: var(--nfd-editor-chat-header-color);
+	padding: 6px;
+	height: auto;
+	border-radius: 8px;
+
+	svg[fill="none"] {
+		fill: none;
+	}
+
+	&:hover, &:focus, &:focus-visible, &:active {
+		box-shadow: none;
+		outline: none;
+	}
+
+	&:hover {
+		color: var(--nfd-editor-chat-header-color);
+		background: rgba(0, 0, 0, 0.04);
+	}
+
+	&.nfd-editor-chat__header-icon-button--active {
+		background: #324458;
+		color: #ffffff;
+	}
+
+	&[disabled] {
+		opacity: 0.3;
+		background: transparent;
+		cursor: default;
+	}
+}

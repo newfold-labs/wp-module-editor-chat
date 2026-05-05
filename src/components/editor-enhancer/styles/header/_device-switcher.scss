@@ -1,0 +1,40 @@
+.nfd-editor-chat__header-device-switcher {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 4px;
+	padding: 3px;
+	border-radius: 8px;
+	border: 1px solid rgba(0, 0, 0, 0.06);
+	background: rgba(0, 0, 0, 0.04);
+
+	.nfd-editor-chat__header-device-switcher__button.components-button {
+		font-size: 20px;
+		color: var(--nfd-editor-chat-header-color);
+		padding: 3px 8px;
+		height: auto;
+		border-radius: 6px;
+		opacity: 0.35;
+
+		svg[fill="none"] {
+			fill: none;
+		}
+
+		&:hover, &:focus, &:focus-visible, &:active {
+			box-shadow: none;
+			outline: none;
+		}
+
+		&:hover {
+			color: var(--nfd-editor-chat-header-color);
+			background: rgba(0, 0, 0, 0.04);
+			opacity: 1;
+		}
+
+		&.nfd-editor-chat__header-device-switcher__button--active {
+			background: #ffffff;
+			opacity: 1;
+			box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08);
+		}
+	}
+}

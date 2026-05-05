@@ -1,0 +1,95 @@
+.nfd-editor-chat__page-selector {
+	max-width: 200px;
+	width: 100%;
+
+	.components-button {
+		color: var(--nfd-editor-chat-header-color);
+		border-radius: 8px;
+		width: 100%;
+		border: 1px solid rgba(0, 0, 0, 0.25);
+		display: flex;
+		align-items: center;
+		padding: 0;
+
+		&:hover, &:focus, &:focus-visible, &:active {
+			box-shadow: none;
+			outline: none;
+			color: var(--nfd-editor-chat-header-color);
+		}
+
+		&:hover {
+			background: rgba(0, 0, 0, 0.04);
+			border-color: rgba(0, 0, 0, 0.3);
+		}
+
+		svg.nfd-editor-chat__page-selector__icon {
+			border-right: 1px solid rgba(0, 0, 0, 0.25);
+			font-size: 18px;
+			width: 1em;
+			box-sizing: content-box;
+			height: 100%;
+			padding-inline: 8px;
+		}
+
+		.nfd-editor-chat__page-selector__content {
+			flex: 1;
+			text-align: left;
+			padding-inline: 8px;
+		}
+
+		svg.nfd-editor-chat__page-selector__chevron {
+			color: var(--nfd-editor-chat-header-color);
+			font-size: 18px;
+			padding-right: 4px;
+		}
+	}
+}
+
+.nfd-editor-chat__page-selector__dropdown {
+	.nfd-editor-chat__page-selector__dropdown__header {
+		display: flex;
+		align-items: center;
+		flex-direction: row;
+		padding: 0 8px;
+		color: var(--nfd-editor-chat-header-color);
+	}
+
+	.nfd-editor-chat__page-selector__dropdown__search-icon{
+		font-size: 22px;
+	}
+
+	input[type="text"].nfd-editor-chat__page-selector__dropdown__search {
+		border: none;
+		border-radius: 0;
+		font-size: 15px;
+		line-height: 28px;
+		margin: 0;
+		outline: none;
+		padding: 4px 4px 4px 8px;
+		width: 100%;
+		box-shadow: none;
+		color: inherit;
+	}
+
+	.nfd-editor-chat__page-selector__dropdown__spinner {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding-block: 24px;
+	}
+
+	.nfd-editor-chat__page-selector__dropdown__no-results {
+		font-size: 14px;
+		text-align: center;
+		padding-block: 24px;
+	}
+
+	.nfd-editor-chat__dropdown-menu__item.components-button{
+		.nfd-editor-chat__dropdown-menu__item__end-decoration {
+			svg {
+				font-size: 18px;
+				stroke-width: 2px;
+			}
+		}
+	}
+}

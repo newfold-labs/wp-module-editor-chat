@@ -1,0 +1,128 @@
+.nfd-editor-chat__modal {
+	width: 600px;
+	max-width: 100%;
+
+	.components-modal__content {
+		margin-top: 50px;
+		padding: 4px 16px 24px;
+
+		ul {
+			list-style: disc;
+			padding-inline-start: 20px;
+		}
+
+		p {
+			margin: 0;
+		}
+	}
+
+	.components-modal__header {
+		padding: 24px 16px 8px;
+		height: 48px;
+
+		.components-button.is-compact.has-icon {
+			--text-color: var(--nfd-editor-chat-header-color);
+			--background-color: rgba(0, 0, 0, 0.04);
+			color: var(--text-color);
+			background: var(--background-color);
+			border-radius: 8px;
+			width: 32px;
+			height: 32px;
+
+			&:hover, &:focus, &:focus-visible, &:active {
+				box-shadow: none;
+				outline: none;
+				color: var(--text-color);
+				background: var(--background-color);
+			}
+		}
+	}
+
+	.nfd-editor-chat__modal__subtitle {
+		padding-bottom: 24px;
+	}
+
+	.nfd-editor-chat__modal__content {
+		padding: 24px 16px;
+		border-top: 1px solid;
+		border-bottom: 1px solid;
+		border-color: rgba(4, 29, 51, 0.08);
+		margin-left: -16px;
+		margin-right: -16px;
+	}
+
+	.nfd-editor-chat__modal__actions {
+		padding-top: 24px;
+		display: flex;
+		align-items: center;
+		justify-content: flex-end;
+		gap: 8px;
+	}
+
+	.components-button {
+		--text-color: var(--nfd-editor-chat-header-color);
+		--background-color: #ffffff;
+		--hover-text-color: var(--text-color);
+		--hover-background-color: var(--background-color);
+
+		color: var(--text-color);
+		background: var(--background-color);
+		border-radius: 8px;
+		box-shadow: none;
+
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		gap: 6px;
+		font-size: 14px;
+		padding: 10px 16px;
+		height: auto;
+
+		&:hover, &:focus, &:focus-visible, &:active {
+			box-shadow: none !important;
+			outline: none !important;
+			color: var(--text-color) !important;
+			background: var(--background-color) !important;
+		}
+
+		&:hover {
+			box-shadow: none !important;
+			outline: none !important;
+			color: var(--hover-text-color) !important;
+			background: var(--hover-background-color) !important;
+		}
+
+		&.is-primary {
+			--text-color: #ffffff;
+			--background-color: #196CDF;
+			--hover-text-color: #ffffff;
+			--hover-background-color: #0C4A9C;
+		}
+
+		&.is-secondary {
+			--text-color: var(--nfd-editor-chat-header-color);
+			--background-color: #ffffff;
+			--hover-text-color: var(--text-color);
+			--hover-background-color: rgba(0, 0, 0, 0.04);
+			border: 1px solid rgba(0, 0, 0, 0.15);
+
+			&:disabled {
+				border: 1px solid rgba(0, 0, 0, 0.15);
+			}
+		}
+
+		&:disabled {
+			color: var(--text-color) !important;
+			background: var(--background-color) !important;
+			opacity: 0.7;
+		}
+
+		svg {
+			font-size: 18px;
+		}
+
+		.components-spinner {
+			margin: 0;
+		}
+	}
+}

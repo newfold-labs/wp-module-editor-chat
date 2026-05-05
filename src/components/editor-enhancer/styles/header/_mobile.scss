@@ -1,0 +1,43 @@
+@media (max-width: 781px) {
+	.nfd-editor-chat__bluehost-menu {
+		.components-button {
+			padding: 0;
+
+			.nfd-editor-chat__bluehost-menu__icon {
+				font-size: 20px;
+				padding: 6px;
+				margin: 0;
+				border-radius: 6px;
+			}
+
+			.nfd-editor-chat__bluehost-menu__label,
+			.nfd-editor-chat__bluehost-menu__chevron {
+				display: none;
+			}
+		}
+	}
+
+	#nfd-editor-chat__header__undo,
+	#nfd-editor-chat__header__redo,
+	#nfd-editor-chat__header__device-switcher,
+	#nfd-editor-chat__header__zoom-toggle {
+		display: none;
+	}
+
+	.nfd-editor-chat__page-selector__icon,
+	.nfd-editor-chat__header__save-button__icon {
+		display: none;
+	}
+
+	.nfd-editor-chat__header-divider {
+		display: none;
+	}
+
+	.nfd-editor-chat__header-preview-button.components-button {
+		padding: 8px;
+
+		.nfd-editor-chat__header-preview-button__label {
+			display: none;
+		}
+	}
+}
