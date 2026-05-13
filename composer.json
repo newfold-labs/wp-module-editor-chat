@@ -83,7 +83,7 @@
   "require-dev": {
     "johnpbloch/wordpress": "@stable",
     "lucatume/wp-browser": "*",
-    "newfold-labs/wp-php-standards": "^1.2.5",
+    "newfold-labs/wp-php-standards": "^1.2.6",
     "phpunit/phpcov": "*",
     "wp-cli/i18n-command": "^2.7.0"
   },
