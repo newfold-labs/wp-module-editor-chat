@@ -26,30 +26,30 @@
 		"lint:js:fix": "wp-scripts lint-js ./src --fix"
 	},
 	"devDependencies": {
-		"@wordpress/eslint-plugin": "^24.4.0",
+		"@wordpress/eslint-plugin": "^25.1.0",
 		"@wordpress/prettier-config": "^4.32.0",
-		"@wordpress/scripts": "^31.8.0",
+		"@wordpress/scripts": "^32.1.0",
 		"autoprefixer": "^10.4.27",
 		"baseline-browser-mapping": "^2.9.16",
 		"concurrently": "^9.2.1",
-		"cssnano": "^7.1.4",
+		"cssnano": "^8.0.0",
 		"esbuild": "^0.28.0",
-		"eslint": "^10.1.0",
+		"eslint": "^10.3.0",
 		"eslint-plugin-prettier": "^5.5.5",
 		"eslit": "^6.0.0",
-		"postcss": "^8.5.8",
+		"postcss": "^8.5.14",
 		"postcss-cli": "^11.0.1",
 		"postcss-import": "^16.1.1",
 		"postcss-safe-important": "^2.0.1",
-		"prettier": "^3.8.1",
+		"prettier": "^3.8.3",
 		"webpack-merge": "^6.0.1"
 	},
 	"dependencies": {
 		"@newfold-labs/wp-module-ai-chat": "file:../wp-module-ai-chat",
 		"@wordpress/interface": "^9.28.0",
 		"classnames": "^2.5.1",
-		"dompurify": "^3.3.3",
-		"lucide-react": "^1.7.0",
+		"dompurify": "^3.4.2",
+		"lucide-react": "^1.14.0",
 		"openai": "^4.86.0"
 	},
 	"peerDependencies": {
