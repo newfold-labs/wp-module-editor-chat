@@ -11,7 +11,10 @@
 		align-items: center;
 		padding: 0;
 
-		&:hover, &:focus, &:focus-visible, &:active {
+		&:hover,
+		&:focus,
+		&:focus-visible,
+		&:active {
 			box-shadow: none;
 			outline: none;
 			color: var(--nfd-editor-chat-header-color);
@@ -46,6 +49,7 @@
 }
 
 .nfd-editor-chat__page-selector__dropdown {
+
 	.nfd-editor-chat__page-selector__dropdown__header {
 		display: flex;
 		align-items: center;
@@ -54,7 +58,7 @@
 		color: var(--nfd-editor-chat-header-color);
 	}
 
-	.nfd-editor-chat__page-selector__dropdown__search-icon{
+	.nfd-editor-chat__page-selector__dropdown__search-icon {
 		font-size: 22px;
 	}
 
@@ -84,8 +88,10 @@
 		padding-block: 24px;
 	}
 
-	.nfd-editor-chat__dropdown-menu__item.components-button{
+	.nfd-editor-chat__dropdown-menu__item.components-button {
+
 		.nfd-editor-chat__dropdown-menu__item__end-decoration {
+
 			svg {
 				font-size: 18px;
 				stroke-width: 2px;

@@ -20,7 +20,10 @@
 			fill: none;
 		}
 
-		&:hover, &:focus, &:focus-visible, &:active {
+		&:hover,
+		&:focus,
+		&:focus-visible,
+		&:active {
 			box-shadow: none;
 			outline: none;
 		}
@@ -32,7 +35,7 @@
 		}
 
 		&.nfd-editor-chat__header-device-switcher__button--active {
-			background: #ffffff;
+			background: #fff;
 			opacity: 1;
 			box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08);
 		}

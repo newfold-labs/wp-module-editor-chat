@@ -29,7 +29,10 @@
 			width: 32px;
 			height: 32px;
 
-			&:hover, &:focus, &:focus-visible, &:active {
+			&:hover,
+			&:focus,
+			&:focus-visible,
+			&:active {
 				box-shadow: none;
 				outline: none;
 				color: var(--text-color);
@@ -61,7 +64,7 @@
 
 	.components-button {
 		--text-color: var(--nfd-editor-chat-header-color);
-		--background-color: #ffffff;
+		--background-color: #fff;
 		--hover-text-color: var(--text-color);
 		--hover-background-color: var(--background-color);
 
@@ -78,7 +81,10 @@
 		padding: 10px 16px;
 		height: auto;
 
-		&:hover, &:focus, &:focus-visible, &:active {
+		&:hover,
+		&:focus,
+		&:focus-visible,
+		&:active {
 			box-shadow: none !important;
 			outline: none !important;
 			color: var(--text-color) !important;
@@ -93,15 +99,15 @@
 		}
 
 		&.is-primary {
-			--text-color: #ffffff;
-			--background-color: #196CDF;
-			--hover-text-color: #ffffff;
-			--hover-background-color: #0C4A9C;
+			--text-color: #fff;
+			--background-color: #196cdf;
+			--hover-text-color: #fff;
+			--hover-background-color: #0c4a9c;
 		}
 
 		&.is-secondary {
 			--text-color: var(--nfd-editor-chat-header-color);
-			--background-color: #ffffff;
+			--background-color: #fff;
 			--hover-text-color: var(--text-color);
 			--hover-background-color: rgba(0, 0, 0, 0.04);
 			border: 1px solid rgba(0, 0, 0, 0.15);

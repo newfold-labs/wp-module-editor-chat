@@ -1,10 +1,10 @@
 .nfd-editor-chat__header-save-button.components-button {
-	color: #ffffff;
+	color: #fff;
 	display: flex;
 	flex-direction: row;
 	align-items: center;
 	gap: 6px;
-	background: #196CDF;
+	background: #196cdf;
 	font-size: 14px;
 	border-radius: 8px;
 	padding: 8px 16px 8px 12px;
@@ -15,14 +15,17 @@
 		font-size: 18px;
 	}
 
-	&:hover, &:focus, &:focus-visible, &:active {
+	&:hover,
+	&:focus,
+	&:focus-visible,
+	&:active {
 		box-shadow: none;
 		outline: none;
-		color: #ffffff;
+		color: #fff;
 	}
 
 	&:hover {
-		background: #0C4A9C;
+		background: #0c4a9c;
 	}
 
 	&[disabled] {

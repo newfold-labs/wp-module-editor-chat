@@ -75,6 +75,7 @@
 
 			// Active item: subtle left accent
 			&--active {
+
 				.nfd-ai-chat-tool-execution__item-header {
 					gap: 8px;
 				}
@@ -82,6 +83,7 @@
 
 			// Completed item
 			&--complete {
+
 				.nfd-ai-chat-tool-execution__item-title {
 					color: var(--nfd-editor-chat-color-text);
 				}
@@ -89,12 +91,15 @@
 
 			// Error item
 			&--error {
+
 				.nfd-ai-chat-tool-execution__item-title {
 					color: var(--nfd-editor-chat-color-text-secondary);
 				}
 			}
 		}
 
+		// Base rule deliberately follows the modifier override above.
+		/* stylelint-disable-next-line no-descending-specificity */
 		&__item-header {
 			display: flex;
 			align-items: center;
@@ -126,6 +131,8 @@
 		}
 
 		// ── Title ──
+		// Base rule deliberately follows the modifier override above.
+		/* stylelint-disable-next-line no-descending-specificity */
 		&__item-title {
 			font-size: 13px;
 			font-weight: 400;
@@ -176,13 +183,28 @@
 	}
 
 	@keyframes nfd-refined-spin {
-		from { transform: rotate(0deg); }
-		to { transform: rotate(360deg); }
+
+		from {
+			transform: rotate(0deg);
+		}
+
+		to {
+			transform: rotate(360deg);
+		}
 	}
 
 	@keyframes nfd-pulse-dot {
-		0%, 100% { opacity: 1; transform: scale(1); }
-		50% { opacity: 0.4; transform: scale(0.85); }
+
+		0%,
+		100% {
+			opacity: 1;
+			transform: scale(1);
+		}
+
+		50% {
+			opacity: 0.4;
+			transform: scale(0.85);
+		}
 	}
 
 	// Map ai-chat CSS variables to editor-chat variables

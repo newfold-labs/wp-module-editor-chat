@@ -9,7 +9,10 @@
 		fill: none;
 	}
 
-	&:hover, &:focus, &:focus-visible, &:active {
+	&:hover,
+	&:focus,
+	&:focus-visible,
+	&:active {
 		box-shadow: none;
 		outline: none;
 	}
@@ -21,7 +24,7 @@
 
 	&.nfd-editor-chat__header-icon-button--active {
 		background: #324458;
-		color: #ffffff;
+		color: #fff;
 	}
 
 	&[disabled] {

@@ -8,7 +8,10 @@
 	height: auto;
 	font-weight: 600;
 
-	&:hover, &:focus, &:focus-visible, &:active {
+	&:hover,
+	&:focus,
+	&:focus-visible,
+	&:active {
 		box-shadow: none;
 		outline: none;
 		color: var(--nfd-editor-chat-header-color);
