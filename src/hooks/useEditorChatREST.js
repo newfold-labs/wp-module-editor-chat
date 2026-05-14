@@ -23,7 +23,7 @@ import { runChatLoop } from "./chat/chatLoop";
 import useChatSideEffects from "./chat/useChatSideEffects";
 import useChangeActions from "./chat/useChangeActions";
 import { loadActiveChat, clearActiveChat } from "./chat/activeChatStorage";
-import { resetGeneratedImageCache } from "../services/toolExecutor";
+import { resetGeneratedImageCache } from "../services/toolDispatcher";
 
 /**
  * useEditorChatREST Hook

@@ -1,40 +1,31 @@
 /**
- * WordPress dependencies
- */
-import { dispatch, select } from "@wordpress/data";
-import { store as coreStore } from "@wordpress/core-data";
-import { parse, cloneBlock } from "@wordpress/blocks";
-
-import { resolveTarget } from "./targetResolver";
-
-/**
- * Internal dependencies
- */
-import {
-	isTemplatePart,
-	updateTemplatePartContent,
-	findAncestorTemplatePart,
-	getBlockPathInTemplatePart,
-	modifyTemplatePartEntity,
-	replaceBlockAtPath,
-	insertBlocksAtPath,
-	insertBlocksBeforePath,
-	removeBlockAtPath,
-	applyTemplatePartRewrite,
-	handleDeleteTemplatePart,
-} from "./templatePartEditor";
-import {
-	createBlockFromParsed,
-	getEffectiveRootBlocks,
-	findBlockContext,
-} from "../utils/blockUtils";
-
-/**
- * Block editing functions for the AI chat.
+ * Block actions — the Gutenberg-mutation layer.
+ *
+ * Pure block-tree operations (rewrite, delete, move, add, duplicate,
+ * insert-inner). Knows nothing about the AI or chat UI; each function
+ * takes plain inputs and dispatches to @wordpress/data.
  *
  * Template-part-specific logic lives in templatePartEditor.js;
- * shared helpers live in blockUtils.js.
+ * shared helpers live in utils/blockUtils.js.
  */
+import { parse, cloneBlock } from "@wordpress/blocks";
+import { dispatch, select } from "@wordpress/data";
+
+import { createBlockFromParsed, findBlockContext, getEffectiveRootBlocks } from "../utils/blockUtils";
+import { resolveTarget } from "./targetResolver";
+import {
+	applyTemplatePartRewrite,
+	findAncestorTemplatePart,
+	getBlockPathInTemplatePart,
+	handleDeleteTemplatePart,
+	insertBlocksAtPath,
+	insertBlocksBeforePath,
+	isTemplatePart,
+	modifyTemplatePartEntity,
+	removeBlockAtPath,
+	replaceBlockAtPath,
+	updateTemplatePartContent,
+} from "./templatePartEditor";
 
 // ────────────────────────────────────────────────────────────────
 // Block CRUD operations
@@ -550,128 +541,3 @@ export async function handleInsertInnerBlockAction(parentClientId, blockContent,
 	};
 }
 
-// ────────────────────────────────────────────────────────────────
-// Undo / Restore
-// ────────────────────────────────────────────────────────────────
-
-/**
- * Restore blocks to their previous state.
- *
- * @param {Array} undoData Array of original block states.
- * @return {Promise<Object>} Result of the restore operation.
- */
-export async function restoreBlocks(undoData) {
-	if (!undoData || !Array.isArray(undoData)) {
-		return { success: false, message: "No undo data available" };
-	}
-
-	const { updateBlockAttributes, replaceInnerBlocks } = dispatch("core/block-editor");
-	const { getBlock } = select("core/block-editor");
-	const results = [];
-	const errors = [];
-
-	for (const blockData of undoData) {
-		try {
-			const {
-				clientId,
-				attributes,
-				innerBlocks,
-				isTemplatePart: isTemplatePartBlock,
-				entityContent,
-			} = blockData;
-
-			if (!clientId) {
-				errors.push("Missing clientId in undo data");
-				continue;
-			}
-
-			if (isTemplatePartBlock && entityContent) {
-				const block = getBlock(clientId);
-				if (block) {
-					const contentString =
-						typeof entityContent === "string"
-							? entityContent
-							: entityContent.raw || entityContent.rendered;
-
-					if (contentString) {
-						const originalBlocks = parse(contentString);
-						const updateResult = await updateTemplatePartContent(block, originalBlocks);
-
-						if (!updateResult.success) {
-							// eslint-disable-next-line no-console
-							console.warn("Failed to restore template part entity:", updateResult.message);
-							errors.push(`Template part entity restore failed: ${updateResult.message}`);
-						}
-
-						const restoredInnerBlocks = originalBlocks.map((inner) => createBlockFromParsed(inner));
-						replaceInnerBlocks(clientId, restoredInnerBlocks);
-					} else {
-						// eslint-disable-next-line no-console
-						console.error("No content string to restore for template part");
-					}
-				} else {
-					// eslint-disable-next-line no-console
-					console.error("Could not find block with clientId:", clientId);
-				}
-			} else {
-				updateBlockAttributes(clientId, attributes);
-
-				if (innerBlocks && Array.isArray(innerBlocks)) {
-					const restoredInnerBlocks = innerBlocks.map((inner) => createBlockFromParsed(inner));
-					replaceInnerBlocks(clientId, restoredInnerBlocks);
-				}
-			}
-
-			const messageType = isTemplatePartBlock ? "Template part" : "Block";
-			results.push({
-				clientId,
-				message: `${messageType} restored successfully`,
-			});
-		} catch (error) {
-			errors.push(`Failed to restore block: ${error.message}`);
-			// eslint-disable-next-line no-console
-			console.error("Failed to restore block:", error);
-		}
-	}
-
-	return {
-		success: errors.length === 0,
-		message:
-			errors.length === 0 ? "All blocks restored successfully" : "Some blocks failed to restore",
-		results,
-		errors,
-	};
-}
-
-/**
- * Restore global styles to their previous state.
- *
- * @param {Object} undoData Object containing originalStyles and globalStylesId.
- * @return {Promise<Object>} Result of the restore operation.
- */
-export async function restoreGlobalStyles(undoData) {
-	if (!undoData || !undoData.originalStyles || !undoData.globalStylesId) {
-		return { success: false, message: "No undo data available for global styles" };
-	}
-
-	const { originalStyles, globalStylesId } = undoData;
-	const { editEntityRecord } = dispatch(coreStore);
-
-	try {
-		editEntityRecord("root", "globalStyles", globalStylesId, {
-			settings: originalStyles,
-		});
-
-		return {
-			success: true,
-			message: "Global styles restored successfully",
-		};
-	} catch (error) {
-		// eslint-disable-next-line no-console
-		console.error("Failed to restore global styles:", error);
-		return {
-			success: false,
-			message: `Failed to restore global styles: ${error.message}`,
-		};
-	}
-}

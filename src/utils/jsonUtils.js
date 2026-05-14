@@ -1,8 +1,6 @@
 /**
  * Safe JSON parsing with recovery for truncated/malformed strings.
- *
- * Extracted from toolExecutor.js to share between streamCompletion
- * (useEditorChatREST) and tool argument parsing (toolExecutor).
+ * Used by both the stream-completion path and tool argument parsing.
  */
 
 /**

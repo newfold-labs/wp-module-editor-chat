@@ -6,7 +6,7 @@
  */
 import { useEffect, useRef } from "@wordpress/element";
 
-import { upsertToolExecMsg } from "../../services/toolExecutor";
+import { upsertToolExecMsg } from "../../services/toolDispatcher";
 import { CHAT_STATUS } from "./constants";
 import { saveActiveChat } from "./activeChatStorage";
 

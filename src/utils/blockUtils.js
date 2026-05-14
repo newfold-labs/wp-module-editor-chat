@@ -1,7 +1,7 @@
 /**
  * Shared block utility functions.
  *
- * Small, stateless helpers used by both actionExecutor and templatePartEditor.
+ * Small, stateless helpers used by both blockActions and templatePartEditor.
  */
 import { select } from "@wordpress/data";
 import { createBlock } from "@wordpress/blocks";
@@ -18,16 +18,6 @@ export function createBlockFromParsed(parsedBlock) {
 		: [];
 
 	return createBlock(parsedBlock.name, parsedBlock.attributes || {}, innerBlocks);
-}
-
-/**
- * Normalize an HTML string by collapsing whitespace for consistent comparison.
- *
- * @param {string} html The HTML string to normalize.
- * @return {string} Normalized HTML string.
- */
-export function normalizeHtml(html) {
-	return html.replace(/\s+/g, " ").replace(/>\s+</g, "><").replace(/\\\//g, "/").trim();
 }
 
 /**

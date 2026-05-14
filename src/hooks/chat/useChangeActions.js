@@ -7,7 +7,7 @@
  */
 import { useCallback } from "@wordpress/element";
 
-import { restoreBlocks, restoreGlobalStyles } from "../../services/actionExecutor";
+import { restoreBlocks, restoreGlobalStyles } from "../../services/restoreHandlers";
 
 /**
  * @param {Object}   deps                                        State, setters, refs, and WordPress dispatchers

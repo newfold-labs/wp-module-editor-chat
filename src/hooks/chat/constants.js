@@ -25,7 +25,7 @@ export const EDITOR_TOOLS = new Set([
 	"blu-edit-block",
 	"blu-add-section",
 	"blu-delete-block",
-	"blu-duplicate",
+	"blu-duplicate-block",
 	"blu-insert-inner-block",
 	"blu-move-block",
 	"blu-get-block-markup",

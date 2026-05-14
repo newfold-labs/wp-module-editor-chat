@@ -19,7 +19,7 @@ import {
 	SUMMARIZE_NUDGE,
 	buildEditorContext,
 } from "../../utils/editorContext";
-import { executeToolCallsForREST } from "../../services/toolExecutor";
+import { executeToolCallsForREST } from "../../services/toolDispatcher";
 
 /**
  * Run the function-calling loop for a single user message.

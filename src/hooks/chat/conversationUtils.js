@@ -202,18 +202,6 @@ function estimateHistoryChars(messages) {
 }
 
 /**
- * Check if conversation has at least one meaningful user message.
- *
- * @param {Array} messages Messages array
- * @return {boolean} True if at least one user message has non-empty content.
- */
-export function hasMeaningfulUserMessage(messages) {
-	return messages.some(
-		(m) => (m.role === "user" || m.type === "user") && m.content && String(m.content).trim()
-	);
-}
-
-/**
  * Check if the user's message requires site management tools.
  * Uses the raw user message (not the AI's plan, which always mentions "page").
  * Matches explicit action + noun patterns to avoid false positives.
