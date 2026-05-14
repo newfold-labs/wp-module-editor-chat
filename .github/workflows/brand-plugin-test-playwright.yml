@@ -35,6 +35,7 @@ jobs:
     permissions:
       contents: read # Required for the reusable workflow to clone this module and brand plugin repositories.
     uses: newfold-labs/workflows/.github/workflows/module-plugin-test-playwright.yml@main
+    timeout-minutes: 30
     with:
       module-repo: ${{ github.repository }}
       module-branch: ${{ needs.setup.outputs.branch }}
@@ -47,6 +48,7 @@ jobs:
     permissions:
       contents: read # Required for the reusable workflow to clone this module and brand plugin repositories.
     uses: newfold-labs/workflows/.github/workflows/module-plugin-test-playwright.yml@main
+    timeout-minutes: 30
     with:
       module-repo: ${{ github.repository }}
       module-branch: ${{ needs.setup.outputs.branch }}

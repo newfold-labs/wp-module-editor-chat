@@ -18,6 +18,7 @@ jobs:
       contents: write # Required to let the reusable Crowdin workflow manipulate repository contents.
       pull-requests: write # Required for Crowdin to create translation pull requests (secrets.NEWFOLD_ACCESS_TOKEN in reusable workflow).
     uses: newfold-labs/workflows/.github/workflows/i18n-crowdin-download.yml@main
+    timeout-minutes: 30
     with:
       base_branch: ${{ inputs.base_branch }}
       CROWDIN_PROJECT_ID: ${{ vars.CROWDIN_PROJECT_ID }}
