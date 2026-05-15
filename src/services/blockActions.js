@@ -1,0 +1,547 @@
+/**
+ * Block actions — the Gutenberg-mutation layer.
+ *
+ * Pure block-tree operations (rewrite, delete, move, add, duplicate,
+ * insert-inner). Knows nothing about the AI or chat UI; each function
+ * takes plain inputs and dispatches to @wordpress/data.
+ *
+ * Template-part-specific logic lives in templatePartEditor.js;
+ * shared helpers live in utils/blockUtils.js.
+ */
+import { parse, cloneBlock } from "@wordpress/blocks";
+import { dispatch, select } from "@wordpress/data";
+
+import {
+	createBlockFromParsed,
+	findBlockContext,
+	getEffectiveRootBlocks,
+} from "../utils/blockUtils";
+import { resolveTarget } from "./targetResolver";
+import {
+	applyTemplatePartRewrite,
+	findAncestorTemplatePart,
+	getBlockPathInTemplatePart,
+	handleDeleteTemplatePart,
+	insertBlocksAtPath,
+	insertBlocksBeforePath,
+	isTemplatePart,
+	modifyTemplatePartEntity,
+	removeBlockAtPath,
+	replaceBlockAtPath,
+} from "./templatePartEditor";
+
+// ────────────────────────────────────────────────────────────────
+// Block CRUD operations
+// ────────────────────────────────────────────────────────────────
+
+/**
+ * Replace entire block content.
+ *
+ * @param {string} clientId     The block's client ID.
+ * @param {string} blockContent The new block content HTML.
+ * @return {Promise<Object>} Result of the rewrite.
+ */
+export async function handleRewriteAction(clientId, blockContent) {
+	const { getBlock } = select("core/block-editor");
+	const block = getBlock(clientId);
+
+	if (!block) {
+		throw new Error(`Block with clientId ${clientId} not found`);
+	}
+
+	if (isTemplatePart(block)) {
+		return applyTemplatePartRewrite(clientId, block, blockContent);
+	}
+
+	const originalBlock = {
+		clientId,
+		name: block.name,
+		attributes: { ...block.attributes },
+		innerBlocks: block.innerBlocks ? [...block.innerBlocks] : [],
+	};
+
+	const updatedBlocks = parse(blockContent);
+
+	if (!updatedBlocks || updatedBlocks.length === 0) {
+		throw new Error("Failed to parse block_content into blocks");
+	}
+
+	const ancestorTemplatePart = findAncestorTemplatePart(clientId);
+
+	if (ancestorTemplatePart) {
+		const path = getBlockPathInTemplatePart(ancestorTemplatePart.clientId, clientId);
+		if (!path) {
+			throw new Error(`Could not compute path for block ${clientId} in template part`);
+		}
+		await modifyTemplatePartEntity(ancestorTemplatePart, (blocks) =>
+			replaceBlockAtPath(blocks, path, updatedBlocks)
+		);
+
+		return {
+			clientId,
+			blockName: block.name,
+			message: `Block ${block.name} content rewritten in template part successfully`,
+			originalBlock,
+		};
+	}
+
+	// Replace the block entirely — more reliable than patching individual
+	// attributes, especially for RichText content (paragraphs, headings).
+	const newBlocks = updatedBlocks.map((b) => createBlockFromParsed(b));
+	const { replaceBlocks } = dispatch("core/block-editor");
+	replaceBlocks(clientId, newBlocks);
+
+	return {
+		clientId,
+		blockName: block.name,
+		message: `Block ${block.name} content rewritten successfully`,
+		originalBlock,
+	};
+}
+
+/**
+ * Remove a block from the editor.
+ *
+ * @param {string} clientId The block's client ID to delete.
+ * @return {Promise<Object>} Result of the deletion.
+ */
+export async function handleDeleteAction(clientId) {
+	const { getBlock } = select("core/block-editor");
+	const block = getBlock(clientId);
+
+	if (!block) {
+		throw new Error(`Block with clientId ${clientId} not found`);
+	}
+
+	if (isTemplatePart(block)) {
+		return handleDeleteTemplatePart(clientId, block);
+	}
+
+	const originalBlock = {
+		clientId,
+		name: block.name,
+		attributes: { ...block.attributes },
+		innerBlocks: block.innerBlocks ? [...block.innerBlocks] : [],
+	};
+
+	const ancestorTemplatePart = findAncestorTemplatePart(clientId);
+
+	if (ancestorTemplatePart) {
+		const path = getBlockPathInTemplatePart(ancestorTemplatePart.clientId, clientId);
+		if (!path) {
+			throw new Error(`Could not compute path for block ${clientId} in template part`);
+		}
+		await modifyTemplatePartEntity(ancestorTemplatePart, (blocks) =>
+			removeBlockAtPath(blocks, path)
+		);
+
+		return {
+			clientId,
+			blockName: block.name,
+			message: `Block ${block.name} deleted from template part successfully`,
+			originalBlock,
+		};
+	}
+
+	const { removeBlock } = dispatch("core/block-editor");
+	removeBlock(clientId);
+
+	return {
+		clientId,
+		blockName: block.name,
+		message: `Block ${block.name} deleted successfully`,
+		originalBlock,
+	};
+}
+
+/**
+ * Move a block to a new position.
+ *
+ * Supports two modes:
+ * 1. Sibling mode (target_client_id + position): place before/after another block.
+ * 2. Child mode (asChildOf): move INTO a container block as its last child.
+ *
+ * @param {string}      clientId       The block to move.
+ * @param {string|null} targetClientId Sibling mode: the reference block. Null in child mode.
+ * @param {string|null} position       Sibling mode: "before" or "after". Null in child mode.
+ * @param {string|null} asChildOf      Child mode: container block clientId to move into.
+ * @return {Promise<Object>} Result of the move, including original position for undo.
+ */
+export async function handleMoveAction(clientId, targetClientId, position, asChildOf = null) {
+	const { getBlock, getBlockRootClientId, getBlockIndex } = select("core/block-editor");
+
+	const block = getBlock(clientId);
+	if (!block) {
+		throw new Error(`Block with clientId ${clientId} not found`);
+	}
+
+	const originalRootClientId = getBlockRootClientId(clientId) || "";
+	const originalIndex = getBlockIndex(clientId);
+
+	// ── Child mode: move block inside a container ──
+	if (asChildOf) {
+		const containerBlock = getBlock(asChildOf);
+		if (!containerBlock) {
+			throw new Error(`Container block with clientId ${asChildOf} not found`);
+		}
+
+		// Append as last child of the container
+		const childCount = containerBlock.innerBlocks?.length || 0;
+		const { moveBlockToPosition } = dispatch("core/block-editor");
+		moveBlockToPosition(clientId, originalRootClientId, asChildOf, childCount);
+
+		return {
+			clientId,
+			blockName: block.name,
+			message: `Block ${block.name} moved into ${containerBlock.name} as child`,
+			originalPosition: {
+				rootClientId: originalRootClientId,
+				index: originalIndex,
+			},
+		};
+	}
+
+	// ── Sibling mode: move before/after a target block ──
+	const targetBlock = getBlock(targetClientId);
+	if (!targetBlock) {
+		throw new Error(`Target block with clientId ${targetClientId} not found`);
+	}
+
+	const sourceAncestor = findAncestorTemplatePart(clientId);
+	const targetAncestor = findAncestorTemplatePart(targetClientId);
+
+	if (sourceAncestor || targetAncestor) {
+		// Move within the SAME template part — use entity-based approach
+		if (sourceAncestor && targetAncestor && sourceAncestor.clientId === targetAncestor.clientId) {
+			const sourcePath = getBlockPathInTemplatePart(sourceAncestor.clientId, clientId);
+			const targetPath = getBlockPathInTemplatePart(targetAncestor.clientId, targetClientId);
+
+			if (!sourcePath || !targetPath) {
+				throw new Error("Could not compute paths for move within template part");
+			}
+
+			await modifyTemplatePartEntity(sourceAncestor, (blocks) => {
+				let movedBlock = null;
+				const findBlockInTree = (tree, path) => {
+					if (path.length === 1) {
+						return tree[path[0]];
+					}
+					return findBlockInTree(tree[path[0]].innerBlocks || [], path.slice(1));
+				};
+				movedBlock = findBlockInTree(blocks, sourcePath);
+				if (!movedBlock) {
+					return blocks;
+				}
+
+				let modified = removeBlockAtPath(blocks, sourcePath);
+
+				// After removing the source, adjust target path if source was in the
+				// same parent and at a lower index (indices shift down by 1).
+				const adjustedTarget = [...targetPath];
+				const srcParent = sourcePath.slice(0, -1);
+				const tgtParent = targetPath.slice(0, -1);
+				if (
+					srcParent.length === tgtParent.length &&
+					srcParent.every((v, i) => v === tgtParent[i]) &&
+					sourcePath[sourcePath.length - 1] < targetPath[targetPath.length - 1]
+				) {
+					adjustedTarget[adjustedTarget.length - 1] -= 1;
+				}
+
+				if (position === "after") {
+					modified = insertBlocksAtPath(modified, adjustedTarget, [movedBlock]);
+				} else {
+					modified = insertBlocksBeforePath(modified, adjustedTarget, [movedBlock]);
+				}
+
+				return modified;
+			});
+		} else {
+			// Cross-template-part moves — fall back to standard dispatch
+			const { moveBlockToPosition } = dispatch("core/block-editor");
+			const targetRootClientId = getBlockRootClientId(targetClientId) || "";
+			let targetIndex = getBlockIndex(targetClientId);
+			if (position === "after") {
+				targetIndex += 1;
+			}
+			if (originalRootClientId === targetRootClientId && originalIndex < targetIndex) {
+				targetIndex -= 1;
+			}
+			moveBlockToPosition(clientId, originalRootClientId, targetRootClientId, targetIndex);
+		}
+	} else {
+		const { moveBlockToPosition } = dispatch("core/block-editor");
+		const targetRootClientId = getBlockRootClientId(targetClientId) || "";
+		let targetIndex = getBlockIndex(targetClientId);
+		if (position === "after") {
+			targetIndex += 1;
+		}
+		if (originalRootClientId === targetRootClientId && originalIndex < targetIndex) {
+			targetIndex -= 1;
+		}
+		moveBlockToPosition(clientId, originalRootClientId, targetRootClientId, targetIndex);
+	}
+
+	return {
+		clientId,
+		blockName: block.name,
+		message: `Block ${block.name} moved ${position} ${targetBlock.name} successfully`,
+		originalPosition: {
+			rootClientId: originalRootClientId,
+			index: originalIndex,
+		},
+	};
+}
+
+/**
+ * Add new block(s) to the editor.
+ *
+ * @param {string|null} clientId The target block's client ID (null for top of page).
+ * @param {Array}       changes  Array of { block_content } objects.
+ * @param {string}      position "after" (default) inserts right after the target;
+ *                               "before" inserts right before it. Ignored when clientId is null.
+ * @return {Promise<Object>} Result of the addition.
+ */
+export async function handleAddAction(clientId, changes, position = "after") {
+	const { getBlocks, getBlock } = select("core/block-editor");
+	const { insertBlocks } = dispatch("core/block-editor");
+	const errors = [];
+
+	const parsedBlocksList = [];
+	for (const change of changes) {
+		if (!change.block_content || typeof change.block_content !== "string") {
+			errors.push("Add action change missing block_content string");
+			continue;
+		}
+
+		try {
+			const parsedBlocks = parse(change.block_content);
+			if (!parsedBlocks || parsedBlocks.length === 0) {
+				errors.push("Failed to parse block_content into blocks");
+				continue;
+			}
+
+			parsedBlocksList.push(...parsedBlocks);
+		} catch (error) {
+			errors.push(`Failed to parse block_content: ${error.message}`);
+			// eslint-disable-next-line no-console
+			console.error("Failed to parse block_content:", error);
+		}
+	}
+
+	if (parsedBlocksList.length === 0) {
+		throw new Error("No valid blocks to insert");
+	}
+
+	// Convert raw parse() output to proper block editor instances.
+	// parse() returns objects that may lack clientId and use different
+	// property names (blockName/attrs vs name/attributes).  The template-
+	// part path converts inside modifyTemplatePartEntity, but the direct
+	// insertBlocks() path needs blocks created via createBlock().
+	const blockInstances = parsedBlocksList
+		.filter((b) => b.name || b.blockName)
+		.map((b) => createBlockFromParsed(b));
+
+	if (blockInstances.length === 0) {
+		throw new Error("No valid blocks to insert (all freeform/null)");
+	}
+
+	const ancestorTemplatePart = clientId ? findAncestorTemplatePart(clientId) : null;
+
+	if (ancestorTemplatePart) {
+		const path = getBlockPathInTemplatePart(ancestorTemplatePart.clientId, clientId);
+		if (!path) {
+			throw new Error(`Could not compute path for block ${clientId} in template part`);
+		}
+		const inserter = position === "before" ? insertBlocksBeforePath : insertBlocksAtPath;
+		await modifyTemplatePartEntity(ancestorTemplatePart, (blocks) =>
+			inserter(blocks, path, parsedBlocksList)
+		);
+	} else if (clientId === null) {
+		const effectiveRoot = getEffectiveRootBlocks();
+		if (effectiveRoot.blocks.length > 0) {
+			if (effectiveRoot.parentClientId) {
+				insertBlocks(blockInstances, 0, effectiveRoot.parentClientId);
+			} else {
+				insertBlocks(blockInstances, 0, effectiveRoot.blocks[0].clientId);
+			}
+		} else {
+			const rootBlocks = getBlocks();
+			const postContentBlock = rootBlocks.find((b) => b.name === "core/post-content");
+			if (postContentBlock) {
+				insertBlocks(blockInstances, 0, postContentBlock.clientId);
+			} else {
+				insertBlocks(blockInstances, 0);
+			}
+		}
+	} else {
+		const targetBlock = getBlock(clientId);
+		if (!targetBlock) {
+			throw new Error(`Target block with clientId ${clientId} not found`);
+		}
+
+		const context = findBlockContext(clientId);
+		if (!context) {
+			throw new Error(`Target block ${clientId} not found in the block tree`);
+		}
+
+		const insertIndex = position === "before" ? context.index : context.index + 1;
+		insertBlocks(blockInstances, insertIndex, context.parentClientId || undefined);
+	}
+
+	const insertedClientIds = blockInstances.map((b) => b.clientId || null).filter(Boolean);
+
+	return {
+		clientId: clientId || "root",
+		blocksAdded: parsedBlocksList.length,
+		insertedClientIds,
+		message: `Added ${parsedBlocksList.length} block(s) successfully`,
+		errors: errors.length > 0 ? errors : undefined,
+	};
+}
+
+/**
+ * Duplicate a block as its next sibling with fresh clientIds.
+ *
+ * Dual-mode:
+ *   - Explicit: pass { client_id } to clone that specific block.
+ *   - Intent:   pass { kind, scope?, position? } and the target resolver picks
+ *               the matching block deterministically. No LLM in the loop for
+ *               target resolution.
+ *
+ * Returns a structured result including the newly-created clientId and a
+ * "resolved_from" trace when intent mode was used, so the caller can show the
+ * user (and the model) exactly which block was cloned.
+ *
+ * @param {Object}        params
+ * @param {string}        [params.client_id] Explicit target clientId.
+ * @param {string}        [params.kind]      Intent: lexicon kind ("column", "card", …).
+ * @param {string}        [params.scope]     Intent: clientId bounding the search.
+ * @param {string|number} [params.position]  Intent: "last" (default) | "first" | integer.
+ * @return {Promise<Object>} Duplication result.
+ */
+export async function handleDuplicateAction(params = {}) {
+	const { client_id: explicitClientId, kind, scope, position } = params;
+	const { getBlock } = select("core/block-editor");
+	const { insertBlocks } = dispatch("core/block-editor");
+
+	let targetClientId = explicitClientId;
+	let resolution = null;
+	if (!targetClientId) {
+		if (!kind) {
+			throw new Error(
+				"Duplicate requires either client_id (explicit) or kind (intent mode). Neither was provided."
+			);
+		}
+		resolution = resolveTarget({ kind, scope, position });
+		targetClientId = resolution.client_id;
+	}
+
+	const block = getBlock(targetClientId);
+	if (!block) {
+		throw new Error(`Block with clientId ${targetClientId} not found`);
+	}
+
+	const context = findBlockContext(targetClientId);
+	if (!context) {
+		throw new Error(`Block ${targetClientId} not found in the block tree`);
+	}
+
+	const clone = cloneBlock(block);
+	insertBlocks(clone, context.index + 1, context.parentClientId || undefined);
+
+	// Build a compact leaf summary so the follow-up tool call knows which
+	// inner clientIds to target (for content customization, style tweaks, etc.).
+	// Without this, the model has no map from "leaf paragraph" → clientId in the
+	// new subtree and ends up patching the top-level clone with empty attrs.
+	const newLeaves = summarizeNewSubtree(clone);
+
+	return {
+		clientId: targetClientId,
+		newClientId: clone.clientId,
+		blockName: block.name,
+		newSubtree: newLeaves,
+		message: resolution
+			? `Duplicated ${resolution.kind_matched} (${block.name}) — ${resolution.why}`
+			: `Block ${block.name} duplicated successfully`,
+		resolution,
+	};
+}
+
+/**
+ * Walk a freshly-cloned block and return a compact, LLM-friendly flat list of
+ * every block in the subtree (parent → leaves), each tagged with its new
+ * clientId and a short preview of text/content. The model reads this from the
+ * tool result and can immediately target specific leaves with update-block-attrs.
+ *
+ * @param {Object} root The cloned root block.
+ * @return {Array<{client_id: string, name: string, path: string, text?: string}>} Flat list of blocks in the subtree.
+ */
+function summarizeNewSubtree(root) {
+	const out = [];
+	const walk = (block, path) => {
+		if (!block || !block.clientId) {
+			return;
+		}
+		const textAttr =
+			block.attributes?.content ?? block.attributes?.text ?? block.attributes?.url ?? null;
+		const entry = {
+			client_id: block.clientId,
+			name: block.name,
+			path,
+		};
+		if (typeof textAttr === "string" && textAttr.length > 0) {
+			entry.text = textAttr.length > 60 ? textAttr.slice(0, 60) + "…" : textAttr;
+		}
+		out.push(entry);
+		if (Array.isArray(block.innerBlocks)) {
+			block.innerBlocks.forEach((child, i) => walk(child, `${path}/${i}`));
+		}
+	};
+	walk(root, "0");
+	return out;
+}
+
+/**
+ * Insert a new block as a child of an existing parent at the given index.
+ *
+ * @param {string}      parentClientId The parent (container) block's client ID.
+ * @param {string}      blockContent   WordPress block markup for the new child.
+ * @param {number|null} index          0-based insert position; null/undefined = append.
+ * @return {Promise<Object>} Result of the insertion.
+ */
+export async function handleInsertInnerBlockAction(parentClientId, blockContent, index = null) {
+	const { getBlock } = select("core/block-editor");
+	const { insertBlocks } = dispatch("core/block-editor");
+
+	const parent = getBlock(parentClientId);
+	if (!parent) {
+		throw new Error(`Parent block with clientId ${parentClientId} not found`);
+	}
+
+	const parsed = parse(blockContent);
+	if (!parsed || parsed.length === 0) {
+		throw new Error("Failed to parse block_content into blocks");
+	}
+
+	const blockInstances = parsed
+		.filter((b) => b.name || b.blockName)
+		.map((b) => createBlockFromParsed(b));
+	if (blockInstances.length === 0) {
+		throw new Error("No valid blocks to insert");
+	}
+
+	const childCount = parent.innerBlocks?.length || 0;
+	const insertIndex =
+		typeof index === "number" && index >= 0 ? Math.min(index, childCount) : childCount;
+
+	insertBlocks(blockInstances, insertIndex, parentClientId);
+
+	return {
+		parentClientId,
+		blockName: parent.name,
+		insertedClientIds: blockInstances.map((b) => b.clientId),
+		insertedAtIndex: insertIndex,
+		message: `Inserted ${blockInstances.length} block(s) into ${parent.name}`,
+	};
+}

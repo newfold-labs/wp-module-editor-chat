@@ -78,4 +78,48 @@ class PermissionsWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 		wp_set_current_user( $user_id );
 		$this->assertTrue( Permissions::is_editor() );
 	}
+
+	/**
+	 * Returns true for administrator from is_authorized_admin.
+	 *
+	 * @return void
+	 */
+	public function test_is_authorized_admin_when_administrator() {
+		$user_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $user_id );
+		$this->assertTrue( Permissions::is_authorized_admin() );
+	}
+
+	/**
+	 * Returns false for subscriber from is_admin.
+	 *
+	 * @return void
+	 */
+	public function test_is_admin_when_subscriber() {
+		$user_id = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		wp_set_current_user( $user_id );
+		$this->assertFalse( Permissions::is_admin() );
+	}
+
+	/**
+	 * Returns false for subscriber from is_editor.
+	 *
+	 * @return void
+	 */
+	public function test_is_editor_when_subscriber() {
+		$user_id = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		wp_set_current_user( $user_id );
+		$this->assertFalse( Permissions::is_editor() );
+	}
+
+	/**
+	 * Returns true for administrator from is_editor (admin has edit_pages).
+	 *
+	 * @return void
+	 */
+	public function test_is_editor_when_administrator() {
+		$user_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $user_id );
+		$this->assertTrue( Permissions::is_editor() );
+	}
 }

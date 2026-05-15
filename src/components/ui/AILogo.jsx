@@ -12,7 +12,7 @@ import { ReactComponent as SparksIcon } from "../../svg/sparks.svg";
  * @param {Object} props        - The component props.
  * @param {number} props.width  - The width of the logo (default: 24).
  * @param {number} props.height - The height of the logo (default: 24).
- * @return {JSX.Element} The AILogo component.
+ * @return {Element} The AILogo component.
  */
 const AILogo = ({ width = 24, height = 24 }) => (
 	<div

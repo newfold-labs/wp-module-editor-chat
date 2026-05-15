@@ -9,7 +9,7 @@ $module_dir = dirname( dirname( __DIR__ ) );
 
 // Define constants used by the module when not loaded via container.
 if ( ! defined( 'NFD_EDITOR_CHAT_VERSION' ) ) {
-	define( 'NFD_EDITOR_CHAT_VERSION', '1.0.8' );
+	define( 'NFD_EDITOR_CHAT_VERSION', '2.0.0' );
 }
 if ( ! defined( 'NFD_EDITOR_CHAT_DIR' ) ) {
 	define( 'NFD_EDITOR_CHAT_DIR', $module_dir );

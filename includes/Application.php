@@ -2,7 +2,6 @@
 namespace NewfoldLabs\WP\Module\EditorChat;
 
 use NewfoldLabs\WP\ModuleLoader\Container;
-use NewfoldLabs\WP\Module\EditorChat\RestApi\RestApi;
 
 /**
  * Main Application class for the Editor Chat module.
@@ -27,9 +26,6 @@ class Application {
 
 		// Delay ChatEditor initialization until WordPress functions are available
 		\add_action( 'plugins_loaded', array( $this, 'initialize_chat_editor' ) );
-
-		// Initialize REST API
-		new RestApi();
 	}
 
 	/**

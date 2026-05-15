@@ -6,7 +6,8 @@ namespace NewfoldLabs\WP\Module\EditorChat;
  * ChatEditor main class
  *
  * Handles the registration and loading of the AI chat editor assets
- * in the WordPress block editor.
+ * in the WordPress block editor, and provides a config REST endpoint
+ * for the CF AI Gateway Worker handshake.
  */
 final class ChatEditor {
 	/**
@@ -23,8 +24,140 @@ final class ChatEditor {
 	 */
 	public function __construct() {
 		\add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_site_editor_assets' ) );
+		\add_action( 'rest_api_init', array( __CLASS__, 'register_rest_routes' ) );
 		\add_action( 'init', array( __CLASS__, 'load_text_domain' ), 100 );
 		\add_filter( 'load_script_translation_file', array( __CLASS__, 'load_script_translation_file' ), 10, 3 );
+	}
+
+	/**
+	 * Register REST API routes.
+	 */
+	public static function register_rest_routes() {
+		\register_rest_route(
+			'nfd-editor-chat/v1',
+			'/config',
+			array(
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => array( __CLASS__, 'get_config' ),
+				'permission_callback' => function () {
+					return Permissions::is_editor();
+				},
+			)
+		);
+	}
+
+	/**
+	 * Get configuration for the editor chat frontend.
+	 *
+	 * Performs a server-to-server handshake with the CF Worker to exchange
+	 * the Hiive auth token for a short-lived session JWT. The Hiive token
+	 * never reaches the browser.
+	 *
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public static function get_config() {
+		$worker_url = defined( 'NFD_EDITOR_CHAT_WORKER_URL' )
+			? \NFD_EDITOR_CHAT_WORKER_URL
+			: 'https://cf-worker-ai-chat.bluehost.workers.dev';
+
+		if ( empty( $worker_url ) ) {
+			return new \WP_Error(
+				'worker_url_not_configured',
+				__( 'Editor chat Worker URL is not configured. Set NFD_EDITOR_CHAT_WORKER_URL in wp-config.php.', 'nfd-editor-chat' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		$worker_url = \untrailingslashit( $worker_url );
+
+		// Get Hiive auth token for server-to-server handshake
+		$hiive_token = '';
+		if ( class_exists( '\NewfoldLabs\WP\Module\Data\HiiveConnection' ) ) {
+			$hiive_token = \NewfoldLabs\WP\Module\Data\HiiveConnection::get_auth_token();
+		}
+
+		if ( empty( $hiive_token ) ) {
+			return new \WP_Error(
+				'hiive_token_unavailable',
+				__( 'Unable to retrieve Hiive authentication token.', 'nfd-editor-chat' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		// Server-to-server handshake with Worker
+		$handshake_response = \wp_remote_post(
+			$worker_url . '/handshake',
+			array(
+				'headers' => array(
+					'X-Hiive-Token' => $hiive_token,
+					'Content-Type'  => 'application/json',
+				),
+				'body'    => \wp_json_encode(
+					array(
+						'site_url' => \get_site_url(),
+						'brand_id' => self::get_brand_id(),
+					)
+				),
+				'timeout' => 10,
+			)
+		);
+
+		if ( \is_wp_error( $handshake_response ) ) {
+			return new \WP_Error(
+				'handshake_failed',
+				$handshake_response->get_error_message(),
+				array( 'status' => 502 )
+			);
+		}
+
+		$status_code = \wp_remote_retrieve_response_code( $handshake_response );
+		if ( 200 !== $status_code ) {
+			return new \WP_Error(
+				'handshake_failed',
+				/* translators: %d: HTTP status code from the Worker handshake. */
+				\sprintf( __( 'Worker handshake returned HTTP %d.', 'nfd-editor-chat' ), $status_code ),
+				array( 'status' => 502 )
+			);
+		}
+
+		$data = json_decode( \wp_remote_retrieve_body( $handshake_response ), true );
+
+		if ( empty( $data['session_token'] ) ) {
+			return new \WP_Error(
+				'handshake_failed',
+				__( 'Worker handshake did not return a session token.', 'nfd-editor-chat' ),
+				array( 'status' => 502 )
+			);
+		}
+
+		return new \WP_REST_Response(
+			array(
+				'worker_url'    => $worker_url,
+				'session_token' => $data['session_token'],
+				'expires_in'    => $data['expires_in'] ?? 3600,
+			)
+		);
+	}
+
+	/**
+	 * Get the brand identifier for the current plugin.
+	 *
+	 * @return string
+	 */
+	private static function get_brand_id() {
+		if ( defined( 'STARTER_PLUGIN_BRAND' ) ) {
+			return \STARTER_PLUGIN_BRAND;
+		}
+		// Fallback: derive from plugin directory name
+		$plugin_dir = \basename( \dirname( __DIR__, 3 ) );
+		$brand_map  = array(
+			'wp-plugin-bluehost'      => 'bluehost',
+			'wp-plugin-hostgator'     => 'hostgator',
+			'wp-plugin-web'           => 'web',
+			'wp-plugin-crazy-domains' => 'crazydomains',
+		);
+
+		return $brand_map[ $plugin_dir ] ?? 'bluehost';
 	}
 
 	/**
@@ -53,6 +186,7 @@ final class ChatEditor {
 	 * Register and enqueue chat editor assets.
 	 */
 	public static function register_assets() {
+
 		$asset_file = NFD_EDITOR_CHAT_BUILD_DIR . '/chat-editor.asset.php';
 
 		if ( \is_readable( $asset_file ) ) {
@@ -79,9 +213,14 @@ final class ChatEditor {
 				array(
 					'nonce'          => \wp_create_nonce( 'wp_rest' ),
 					'nfdRestURL'     => \get_home_url() . '/index.php?rest_route=/nfd-editor-chat/v1',
+					'mcpUrl'         => \esc_url_raw( \rest_url( 'blu/mcp' ) ),
+					'configEndpoint' => \esc_url_raw( \rest_url( 'nfd-editor-chat/v1/config' ) ),
 					'homeUrl'        => \esc_url( \get_home_url() ),
 					'wpVer'          => \esc_html( \get_bloginfo( 'version' ) ),
 					'nfdChatVersion' => \esc_html( NFD_EDITOR_CHAT_VERSION ),
+					'model'          => defined( 'NFD_EDITOR_CHAT_MODEL' ) ? \NFD_EDITOR_CHAT_MODEL : '',
+					'site'           => self::get_site_context(),
+					'pagesCount'     => array_sum( (array) wp_count_posts( 'page' ) ),
 				)
 			);
 
@@ -99,9 +238,10 @@ final class ChatEditor {
 	/**
 	 * Filter default WP script translations file to load the correct one
 	 *
-	 * @param string $file The translations file.
+	 * @param string $file   The translations file.
 	 * @param string $handle Script handle.
 	 * @param string $domain The strings textdomain.
+	 *
 	 * @return string
 	 */
 	public static function load_script_translation_file( $file, $handle, $domain ) {
@@ -119,6 +259,7 @@ final class ChatEditor {
 	 * Add custom admin class on block editor pages.
 	 *
 	 * @param string $classes Body classes.
+	 *
 	 * @return string
 	 */
 	public static function add_admin_body_class( $classes ) {
@@ -129,6 +270,23 @@ final class ChatEditor {
 		}
 
 		return $classes;
+	}
+
+	/**
+	 * Get site context data for the AI assistant.
+	 *
+	 * @return array
+	 */
+	private static function get_site_context() {
+		$onboarding = \get_option( 'nfd_module_onboarding_state_input', array() );
+
+		return array(
+			'title'          => \get_bloginfo( 'name' ),
+			'description'    => ! empty( $onboarding['prompt'] ) ? $onboarding['prompt'] : \get_bloginfo( 'description' ),
+			'siteType'       => $onboarding['siteType'] ?? '',
+			'locale'         => \get_locale(),
+			'classification' => \get_option( 'nfd-ai-site-gen-siteclassification', '' ),
+		);
 	}
 
 	/**

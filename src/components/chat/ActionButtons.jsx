@@ -18,7 +18,7 @@ import { Check, X } from "lucide-react";
  * @param {Function} props.onAccept     - Callback when accept is clicked.
  * @param {Function} props.onDecline    - Callback when decline is clicked.
  * @param {boolean}  props.isSaving     - Whether the post is currently saving.
- * @return {JSX.Element} The ActionButtons component.
+ * @return {Element} The ActionButtons component.
  */
 const ActionButtons = ({ pendingCount, onAccept, onDecline, isSaving }) => {
 	const changeText = pendingCount === 1 ? "change" : "changes";
