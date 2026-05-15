@@ -63,7 +63,7 @@ final class ChatEditor {
 		if ( empty( $worker_url ) ) {
 			return new \WP_Error(
 				'worker_url_not_configured',
-				__( 'Editor chat Worker URL is not configured. Set NFD_EDITOR_CHAT_WORKER_URL in wp-config.php.', 'wp-module-editor-chat' ),
+				__( 'Editor chat Worker URL is not configured. Set NFD_EDITOR_CHAT_WORKER_URL in wp-config.php.', 'nfd-editor-chat' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -79,7 +79,7 @@ final class ChatEditor {
 		if ( empty( $hiive_token ) ) {
 			return new \WP_Error(
 				'hiive_token_unavailable',
-				__( 'Unable to retrieve Hiive authentication token.', 'wp-module-editor-chat' ),
+				__( 'Unable to retrieve Hiive authentication token.', 'nfd-editor-chat' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -115,7 +115,7 @@ final class ChatEditor {
 			return new \WP_Error(
 				'handshake_failed',
 				/* translators: %d: HTTP status code from the Worker handshake. */
-				\sprintf( __( 'Worker handshake returned HTTP %d.', 'wp-module-editor-chat' ), $status_code ),
+				\sprintf( __( 'Worker handshake returned HTTP %d.', 'nfd-editor-chat' ), $status_code ),
 				array( 'status' => 502 )
 			);
 		}
@@ -125,7 +125,7 @@ final class ChatEditor {
 		if ( empty( $data['session_token'] ) ) {
 			return new \WP_Error(
 				'handshake_failed',
-				__( 'Worker handshake did not return a session token.', 'wp-module-editor-chat' ),
+				__( 'Worker handshake did not return a session token.', 'nfd-editor-chat' ),
 				array( 'status' => 502 )
 			);
 		}
