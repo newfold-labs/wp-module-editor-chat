@@ -1,14 +1,10 @@
-/* eslint-disable no-undef, no-console */
+/* eslint-disable no-console */
 import { __ } from "@wordpress/i18n";
 
 import { validateBlockMarkup } from "../../utils/blockValidator";
 import { handleRewriteAction } from "../blockActions";
 import { callAbility } from "../callAbility";
-import {
-	appendGeneratedImageUrl,
-	deduplicateImages,
-	getGeneratedImageUrls,
-} from "../imageCache";
+import { appendGeneratedImageUrl, deduplicateImages, getGeneratedImageUrls } from "../imageCache";
 
 /**
  * Count all inner blocks recursively.

@@ -246,17 +246,17 @@ export function mcpToolsToOpenAI(mcpTools) {
  * @return {string} Deterministic string representation
  */
 function stableArgsHash(value) {
-	if (value === null || value === undefined) return "";
-	if (typeof value !== "object") return JSON.stringify(value);
+	if (value === null || value === undefined) {
+		return "";
+	}
+	if (typeof value !== "object") {
+		return JSON.stringify(value);
+	}
 	if (Array.isArray(value)) {
 		return "[" + value.map(stableArgsHash).join(",") + "]";
 	}
 	const keys = Object.keys(value).sort();
-	return (
-		"{" +
-		keys.map((k) => JSON.stringify(k) + ":" + stableArgsHash(value[k])).join(",") +
-		"}"
-	);
+	return "{" + keys.map((k) => JSON.stringify(k) + ":" + stableArgsHash(value[k])).join(",") + "}";
 }
 
 /**
@@ -288,7 +288,9 @@ export function createRetryTracker(maxRetries = MAX_SAME_TOOL_RETRIES) {
 		recordIteration(toolCalls) {
 			const batchKeys = new Set();
 			for (const tc of toolCalls) {
-				if (READ_ONLY_TOOLS.has(tc.name)) continue;
+				if (READ_ONLY_TOOLS.has(tc.name)) {
+					continue;
+				}
 				const key = `${tc.name}:${stableArgsHash(tc.arguments)}`;
 				batchKeys.add(key);
 			}
@@ -296,8 +298,7 @@ export function createRetryTracker(maxRetries = MAX_SAME_TOOL_RETRIES) {
 				callCounts.set(key, (callCounts.get(key) || 0) + 1);
 			}
 			const allRetried =
-				batchKeys.size > 0 &&
-				[...batchKeys].every((key) => callCounts.get(key) > maxRetries);
+				batchKeys.size > 0 && [...batchKeys].every((key) => callCounts.get(key) > maxRetries);
 
 			if (allRetried) {
 				const wasAlreadyHit = retryLimitHit;

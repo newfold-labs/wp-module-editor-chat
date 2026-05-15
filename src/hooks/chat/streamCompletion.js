@@ -1,4 +1,4 @@
-/* eslint-disable no-undef, no-console */
+/* eslint-disable no-console */
 /**
  * streamCompletion — Streams an OpenAI chat completion and accumulates tool calls.
  *

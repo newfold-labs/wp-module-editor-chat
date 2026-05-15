@@ -46,7 +46,8 @@ export const BLOCK_LEXICON = {
 		// card-ish class. Keep this pattern generous — missed matches are worse
 		// than slightly loose ones, since the resolver picks the closest match.
 		names: ["core/group", "core/column"],
-		hasClassPattern: /(?:^|\s)(?:is-style-card|wp-block-card|nfd-card|card)(?:\s|$)|(?:^|\s)[\w-]*card[\w-]*(?:\s|$)/i,
+		hasClassPattern:
+			/(?:^|\s)(?:is-style-card|wp-block-card|nfd-card|card)(?:\s|$)|(?:^|\s)[\w-]*card[\w-]*(?:\s|$)/i,
 	},
 	testimonial: {
 		names: ["core/group", "core/column"],
@@ -83,11 +84,15 @@ export const BLOCK_LEXICON = {
  * @return {string|null} Canonical kind key present in BLOCK_LEXICON, or null.
  */
 export function normalizeKind(word) {
-	if (!word || typeof word !== "string") return null;
+	if (!word || typeof word !== "string") {
+		return null;
+	}
 	const w = word.trim().toLowerCase();
 
 	// Direct hit
-	if (BLOCK_LEXICON[w]) return w;
+	if (BLOCK_LEXICON[w]) {
+		return w;
+	}
 
 	// Alias map — keep narrow; don't over-normalize or we'll mask real user intent.
 	const aliases = {
@@ -124,7 +129,9 @@ export function normalizeKind(word) {
 		sections: "section",
 		rows: "row",
 	};
-	if (aliases[w]) return aliases[w];
+	if (aliases[w]) {
+		return aliases[w];
+	}
 
 	// Strip trailing "s" (simple plural)
 	if (w.endsWith("s") && BLOCK_LEXICON[w.slice(0, -1)]) {
@@ -137,16 +144,22 @@ export function normalizeKind(word) {
 /**
  * Test whether a block matches the given kind entry.
  *
- * @param {Object} block     WordPress block (must have .name, .attributes).
- * @param {Object} lexEntry  A BLOCK_LEXICON entry: { names, hasClassPattern? }.
+ * @param {Object} block    WordPress block (must have .name, .attributes).
+ * @param {Object} lexEntry A BLOCK_LEXICON entry: { names, hasClassPattern? }.
  * @return {boolean} True if block matches.
  */
 export function blockMatchesKind(block, lexEntry) {
-	if (!block || !lexEntry) return false;
-	if (lexEntry.names && !lexEntry.names.includes(block.name)) return false;
+	if (!block || !lexEntry) {
+		return false;
+	}
+	if (lexEntry.names && !lexEntry.names.includes(block.name)) {
+		return false;
+	}
 	if (lexEntry.hasClassPattern) {
 		const className = block.attributes?.className || "";
-		if (!lexEntry.hasClassPattern.test(className)) return false;
+		if (!lexEntry.hasClassPattern.test(className)) {
+			return false;
+		}
 	}
 	return true;
 }

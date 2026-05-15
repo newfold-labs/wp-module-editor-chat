@@ -3,11 +3,7 @@ import { __ } from "@wordpress/i18n";
 import { validateBlockMarkup } from "../../utils/blockValidator";
 import { handleAddAction } from "../blockActions";
 import { callAbility } from "../callAbility";
-import {
-	appendGeneratedImageUrl,
-	deduplicateImages,
-	getGeneratedImageUrls,
-} from "../imageCache";
+import { appendGeneratedImageUrl, deduplicateImages, getGeneratedImageUrls } from "../imageCache";
 
 export async function handleAddSection(toolCall, args, ctx) {
 	// ── Image placeholder resolution ──

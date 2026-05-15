@@ -14,11 +14,7 @@ import {
 	messageNeedsSiteTools,
 	createRetryTracker,
 } from "./conversationUtils";
-import {
-	EXECUTE_NUDGE,
-	SUMMARIZE_NUDGE,
-	buildEditorContext,
-} from "../../utils/editorContext";
+import { EXECUTE_NUDGE, SUMMARIZE_NUDGE, buildEditorContext } from "../../utils/editorContext";
 import { executeToolCallsForREST } from "../../services/toolDispatcher";
 
 /**
@@ -140,7 +136,9 @@ export async function runChatLoop(userMessage, deps) {
 		// gateway dispatcher's envelope. Unwrap blu-call-ability into the
 		// logical call the model conceptually made.
 		const unwrappedCalls = toolCalls.map((tc) => {
-			if (tc.name !== "blu-call-ability") return { ...tc };
+			if (tc.name !== "blu-call-ability") {
+				return { ...tc };
+			}
 			const parsed =
 				typeof tc.arguments === "string"
 					? (() => {

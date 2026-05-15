@@ -1,4 +1,4 @@
-/* eslint-disable no-undef, no-console */
+/* eslint-disable no-console */
 /**
  * useSessionConfig — Manages OpenAI client initialization, MCP connection,
  * and session token refresh.

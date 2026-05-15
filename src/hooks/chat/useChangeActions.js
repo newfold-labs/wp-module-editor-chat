@@ -1,4 +1,4 @@
-/* eslint-disable no-undef, no-console */
+/* eslint-disable no-console */
 /**
  * useChangeActions — Accept and decline change handlers for editor chat.
  *
@@ -35,7 +35,6 @@ const useChangeActions = ({
 	saveEditedEntityRecord,
 	__experimentalGetCurrentGlobalStylesId,
 }) => {
-	// eslint-disable-next-line no-unused-vars -- wired up via ChatMessages action buttons
 	const handleAcceptChanges = useCallback(async () => {
 		setIsSaving(true);
 
@@ -97,7 +96,6 @@ const useChangeActions = ({
 		blockSnapshotRef,
 	]);
 
-	// eslint-disable-next-line no-unused-vars -- wired up via ChatMessages action buttons
 	const handleDeclineChanges = useCallback(async () => {
 		const firstActionMessage = messages.find((msg) => msg.hasActions && msg.undoData);
 

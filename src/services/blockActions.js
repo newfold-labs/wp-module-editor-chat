@@ -11,7 +11,11 @@
 import { parse, cloneBlock } from "@wordpress/blocks";
 import { dispatch, select } from "@wordpress/data";
 
-import { createBlockFromParsed, findBlockContext, getEffectiveRootBlocks } from "../utils/blockUtils";
+import {
+	createBlockFromParsed,
+	findBlockContext,
+	getEffectiveRootBlocks,
+} from "../utils/blockUtils";
 import { resolveTarget } from "./targetResolver";
 import {
 	applyTemplatePartRewrite,
@@ -24,7 +28,6 @@ import {
 	modifyTemplatePartEntity,
 	removeBlockAtPath,
 	replaceBlockAtPath,
-	updateTemplatePartContent,
 } from "./templatePartEditor";
 
 // ────────────────────────────────────────────────────────────────
@@ -410,11 +413,11 @@ export async function handleAddAction(clientId, changes, position = "after") {
  * "resolved_from" trace when intent mode was used, so the caller can show the
  * user (and the model) exactly which block was cloned.
  *
- * @param {Object} params
- * @param {string} [params.client_id] Explicit target clientId.
- * @param {string} [params.kind]      Intent: lexicon kind ("column", "card", …).
- * @param {string} [params.scope]     Intent: clientId bounding the search.
- * @param {string|number} [params.position] Intent: "last" (default) | "first" | integer.
+ * @param {Object}        params
+ * @param {string}        [params.client_id] Explicit target clientId.
+ * @param {string}        [params.kind]      Intent: lexicon kind ("column", "card", …).
+ * @param {string}        [params.scope]     Intent: clientId bounding the search.
+ * @param {string|number} [params.position]  Intent: "last" (default) | "first" | integer.
  * @return {Promise<Object>} Duplication result.
  */
 export async function handleDuplicateAction(params = {}) {
@@ -472,17 +475,16 @@ export async function handleDuplicateAction(params = {}) {
  * tool result and can immediately target specific leaves with update-block-attrs.
  *
  * @param {Object} root The cloned root block.
- * @return {Array<{client_id: string, name: string, path: string, text?: string}>}
+ * @return {Array<{client_id: string, name: string, path: string, text?: string}>} Flat list of blocks in the subtree.
  */
 function summarizeNewSubtree(root) {
 	const out = [];
 	const walk = (block, path) => {
-		if (!block || !block.clientId) return;
+		if (!block || !block.clientId) {
+			return;
+		}
 		const textAttr =
-			block.attributes?.content ??
-			block.attributes?.text ??
-			block.attributes?.url ??
-			null;
+			block.attributes?.content ?? block.attributes?.text ?? block.attributes?.url ?? null;
 		const entry = {
 			client_id: block.clientId,
 			name: block.name,
@@ -522,13 +524,16 @@ export async function handleInsertInnerBlockAction(parentClientId, blockContent,
 		throw new Error("Failed to parse block_content into blocks");
 	}
 
-	const blockInstances = parsed.filter((b) => b.name || b.blockName).map((b) => createBlockFromParsed(b));
+	const blockInstances = parsed
+		.filter((b) => b.name || b.blockName)
+		.map((b) => createBlockFromParsed(b));
 	if (blockInstances.length === 0) {
 		throw new Error("No valid blocks to insert");
 	}
 
 	const childCount = parent.innerBlocks?.length || 0;
-	const insertIndex = typeof index === "number" && index >= 0 ? Math.min(index, childCount) : childCount;
+	const insertIndex =
+		typeof index === "number" && index >= 0 ? Math.min(index, childCount) : childCount;
 
 	insertBlocks(blockInstances, insertIndex, parentClientId);
 
@@ -540,4 +545,3 @@ export async function handleInsertInnerBlockAction(parentClientId, blockContent,
 		message: `Inserted ${blockInstances.length} block(s) into ${parent.name}`,
 	};
 }
-

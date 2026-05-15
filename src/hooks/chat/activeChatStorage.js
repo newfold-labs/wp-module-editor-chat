@@ -1,4 +1,3 @@
-/* global localStorage, window */
 /**
  * activeChatStorage — persists the current (resumable) editor chat in
  * localStorage so a page reload restores the active conversation. This is

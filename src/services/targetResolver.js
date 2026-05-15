@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 /**
  * Target resolver — deterministic kind → clientId resolution.
  *
@@ -21,9 +20,15 @@ import { BLOCK_LEXICON, normalizeKind, blockMatchesKind } from "../utils/blockLe
 /**
  * Walk a block subtree, pushing every block that matches `lexEntry` into `out`.
  * Depth-first, pre-order — so matches preserve the visual top-to-bottom order.
+ *
+ * @param {Object} block    Block node to walk.
+ * @param {Object} lexEntry Lexicon entry describing the kind to match.
+ * @param {Array}  out      Mutable output array collecting matches.
  */
 function collectMatches(block, lexEntry, out) {
-	if (!block) return;
+	if (!block) {
+		return;
+	}
 	if (blockMatchesKind(block, lexEntry)) {
 		out.push(block);
 	}
@@ -37,11 +42,11 @@ function collectMatches(block, lexEntry, out) {
 /**
  * Resolve {kind, scope?, position?} to a concrete target block.
  *
- * @param {Object} params
- * @param {string} params.kind     User-facing kind word ("column", "card", …).
- * @param {string} [params.scope]  Optional clientId bounding the search.
- * @param {string|number} [params.position]  "last" (default) | "first" | integer index.
- * @return {{client_id: string, parent_client_id: string|null, kind_matched: string, candidates: Array, why: string}}
+ * @param {Object}        params
+ * @param {string}        params.kind       User-facing kind word ("column", "card", …).
+ * @param {string}        [params.scope]    Optional clientId bounding the search.
+ * @param {string|number} [params.position] "last" (default) | "first" | integer index.
+ * @return {{client_id: string, parent_client_id: string|null, kind_matched: string, candidates: Array, why: string}} Resolved target descriptor.
  * @throws {Error} When the kind is unknown or no matching block is found. The error
  *   message lists available kinds or candidates so the caller can self-correct.
  */
@@ -98,11 +103,16 @@ export function resolveTarget({ kind, scope, position = "last" }) {
 
 /**
  * Ordered search roots: explicit scope → selection ancestors → whole tree.
+ *
+ * @param {string|undefined} scope       Optional clientId bounding the search.
+ * @param {Object}           blockEditor `core/block-editor` selector instance.
  */
 function buildSearchRoots(scope, blockEditor) {
 	if (scope) {
 		const block = blockEditor.getBlock(scope);
-		if (block) return [block];
+		if (block) {
+			return [block];
+		}
 		// Fall through to defaults if scope isn't found — better UX than hard-failing.
 	}
 
@@ -113,9 +123,13 @@ function buildSearchRoots(scope, blockEditor) {
 		let currentId = selectedId;
 		while (currentId) {
 			const block = blockEditor.getBlock(currentId);
-			if (block) roots.push(block);
+			if (block) {
+				roots.push(block);
+			}
 			currentId = blockEditor.getBlockRootClientId(currentId);
-			if (!currentId) break;
+			if (!currentId) {
+				break;
+			}
 		}
 		// Finally, the whole tree as a last resort.
 		const topLevel = blockEditor.getBlocks();
@@ -131,12 +145,21 @@ function buildSearchRoots(scope, blockEditor) {
 
 /**
  * Pick one block from an ordered match list by position spec.
+ *
+ * @param {Array}         matches  Ordered list of candidate blocks.
+ * @param {string|number} position "first" | "last" | integer index.
  */
 function pickByPosition(matches, position) {
-	if (position === "first") return matches[0];
-	if (position === "last") return matches[matches.length - 1];
+	if (position === "first") {
+		return matches[0];
+	}
+	if (position === "last") {
+		return matches[matches.length - 1];
+	}
 	if (typeof position === "number") {
-		if (position < 0) return matches[Math.max(0, matches.length + position)];
+		if (position < 0) {
+			return matches[Math.max(0, matches.length + position)];
+		}
 		return matches[Math.min(position, matches.length - 1)];
 	}
 	// Unknown spec — default to last.

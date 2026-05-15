@@ -12,7 +12,9 @@ export async function handleInsertInnerBlock(toolCall, args, ctx) {
 		if (!validation.valid) {
 			return {
 				id: toolCall.id,
-				result: [{ type: "text", text: JSON.stringify({ success: false, error: validation.error }) }],
+				result: [
+					{ type: "text", text: JSON.stringify({ success: false, error: validation.error }) },
+				],
 				isError: true,
 			};
 		}

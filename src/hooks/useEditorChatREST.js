@@ -1,4 +1,4 @@
-/* eslint-disable no-undef, no-console */
+/* eslint-disable no-console */
 /**
  * useEditorChatREST — Editor chat hook using REST (CF AI Gateway via Worker)
  *
@@ -92,7 +92,6 @@ const useEditorChatREST = () => {
 	// ── Helpers ──
 	const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-	// eslint-disable-next-line react-hooks/exhaustive-deps -- stable: only uses state setter and wait
 	const updateProgress = useCallback(async (message, minTime = 400) => {
 		setToolProgress(message);
 		await wait(minTime);

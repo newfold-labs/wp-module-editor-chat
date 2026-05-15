@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 import { __ } from "@wordpress/i18n";
 
 import { deepMergeAttrs as deepMerge } from "../../utils/deepMerge";

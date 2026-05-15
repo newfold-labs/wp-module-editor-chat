@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 import { __ } from "@wordpress/i18n";
 
 export async function handleHighlightBlock(toolCall, args, ctx) {

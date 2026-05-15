@@ -1,4 +1,4 @@
-/* eslint-disable no-undef, no-console */
+/* eslint-disable no-console */
 /**
  * Editor context utilities.
  *
@@ -78,7 +78,9 @@ export const buildEditorContext = () => {
 		for (const sel of selectedBlocks) {
 			// getBlockParents returns clientIds from root → nearest parent.
 			const parentIds = blockEditor.getBlockParents(sel.clientId) || [];
-			if (parentIds.length === 0) continue;
+			if (parentIds.length === 0) {
+				continue;
+			}
 			context += `\n\nAncestors of ${sel.name} (id:${sel.clientId}) — nearest first:`;
 			for (let i = parentIds.length - 1; i >= 0; i--) {
 				const parent = blockEditor.getBlock(parentIds[i]);
@@ -120,7 +122,7 @@ export const buildEditorContext = () => {
 				context += `\n  ${color.slug}: ${color.color} ("${color.name}")`;
 			}
 		}
-	} catch (e) {
+	} catch {
 		// Non-critical — continue without palette data
 	}
 
