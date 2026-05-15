@@ -4,7 +4,7 @@
 import { useState } from "@wordpress/element";
 import { useSelect } from "@wordpress/data";
 import { store as coreDataStore } from "@wordpress/core-data";
-import { Icon, Spinner } from "@wordpress/components";
+import { Spinner } from "@wordpress/components";
 import { __ } from "@wordpress/i18n";
 
 /**
