@@ -12,15 +12,15 @@ import { addQueryArgs } from "@wordpress/url";
  * The value is updated only after the specified delay (250ms),
  * avoiding frequent updates (e.g. during fast typing).
  *
- * @param {string} value - The input value to debounce.
+ * @param {string | undefined} value - The input value to debounce.
  * @return {string} The debounced value.
  */
-export function useDebouncedValue(value: string): string {
+export function useDebouncedValue(value: string | undefined): string {
 	const [debouncedValue, setDebouncedValue] = useState("");
 	const debounced = useDebounce(setDebouncedValue, 250);
 
 	useEffect(() => {
-		debounced(value);
+		debounced(value ?? "");
 		return () => debounced.cancel();
 	}, [debounced, value]);
 
