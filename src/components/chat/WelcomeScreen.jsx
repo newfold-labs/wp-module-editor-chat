@@ -7,7 +7,7 @@ import { __ } from "@wordpress/i18n";
  * External dependencies
  */
 import { ArrowUpDown, Edit3, Layers, Palette } from "lucide-react";
-import { SuggestionButton } from "@newfold-labs/wp-module-ai-chat";
+import { SuggestionButton } from "@newfold/wp-module-ai-chat";
 
 /**
  * Internal dependencies

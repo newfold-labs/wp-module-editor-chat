@@ -10,7 +10,7 @@ import { store as interfaceStore } from "@wordpress/interface";
 /**
  * External dependencies - from wp-module-ai-chat
  */
-import { ChatMessages } from "@newfold-labs/wp-module-ai-chat";
+import { ChatMessages } from "@newfold/wp-module-ai-chat";
 
 /**
  * Internal dependencies

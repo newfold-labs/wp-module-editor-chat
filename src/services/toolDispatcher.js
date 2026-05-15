@@ -12,7 +12,7 @@
  * Per-tool logic (image dedup, validation, progress, etc.) lives in each
  * handler file. Gutenberg DOM mutations live in services/blockActions.js.
  */
-import { CHAT_STATUS } from "@newfold-labs/wp-module-ai-chat";
+import { CHAT_STATUS } from "@newfold/wp-module-ai-chat";
 import { __ } from "@wordpress/i18n";
 
 import { snapshotBlocks } from "../utils/editorContext";

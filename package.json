@@ -45,7 +45,7 @@
 		"webpack-merge": "^6.0.1"
 	},
 	"dependencies": {
-		"@newfold-labs/wp-module-ai-chat": "file:../wp-module-ai-chat",
+		"@newfold/wp-module-ai-chat": "^1.0.4",
 		"@wordpress/interface": "^9.28.0",
 		"classnames": "^2.5.1",
 		"dompurify": "^3.4.2",

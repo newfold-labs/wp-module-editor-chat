@@ -9,7 +9,7 @@
  * enough gap the editor context has almost certainly drifted (different
  * post, different styles) and resuming would be worse than starting over.
  */
-import { simpleHash } from "@newfold-labs/wp-module-ai-chat";
+import { simpleHash } from "@newfold/wp-module-ai-chat";
 
 const TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 

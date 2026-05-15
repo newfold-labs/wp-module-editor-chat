@@ -2,10 +2,6 @@
 
 namespace NewfoldLabs\WP\Module\EditorChat;
 
-use NewfoldLabs\WP\Module\EditorChat\RestApi\ChatController;
-use NewfoldLabs\WP\Module\EditorChat\RestApi\RestApi;
-use NewfoldLabs\WP\Module\EditorChat\Services\ContextBuilder;
-
 /**
  * Module loading wpunit tests.
  *
@@ -16,15 +12,15 @@ class ModuleLoadingWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	/**
 	 * Verify core module classes exist.
 	 *
+	 * The REST proxy classes (RestApi, ChatController, ContextBuilder) were
+	 * removed in v2.0 when the chat moved to the direct CF AI Gateway client.
+	 *
 	 * @return void
 	 */
 	public function test_module_classes_load() {
 		$this->assertTrue( class_exists( Application::class ) );
 		$this->assertTrue( class_exists( ChatEditor::class ) );
 		$this->assertTrue( class_exists( Permissions::class ) );
-		$this->assertTrue( class_exists( RestApi::class ) );
-		$this->assertTrue( class_exists( ChatController::class ) );
-		$this->assertTrue( class_exists( ContextBuilder::class ) );
 	}
 
 	/**

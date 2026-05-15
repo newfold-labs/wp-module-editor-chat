@@ -3,7 +3,7 @@
  * useSessionConfig — Manages OpenAI client initialization, MCP connection,
  * and session token refresh.
  */
-import { createMCPClient } from "@newfold-labs/wp-module-ai-chat";
+import { createMCPClient } from "@newfold/wp-module-ai-chat";
 import apiFetch from "@wordpress/api-fetch";
 import { useCallback, useEffect, useRef, useState } from "@wordpress/element";
 import OpenAI from "openai";
@@ -31,7 +31,7 @@ const useSessionConfig = () => {
 	const hasInitializedRef = useRef(false);
 	const refreshTimerRef = useRef(null);
 
-	// ── Initialization: config fetch + MCP + pattern library ──
+	// ── Initialization: config fetch + MCP ──
 
 	const initialize = useCallback(async () => {
 		if (hasInitializedRef.current) {
