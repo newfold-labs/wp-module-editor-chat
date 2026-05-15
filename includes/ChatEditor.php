@@ -68,6 +68,8 @@ final class ChatEditor {
 			);
 		}
 
+		$worker_url = \untrailingslashit( $worker_url );
+
 		// Get Hiive auth token for server-to-server handshake
 		$hiive_token = '';
 		if ( class_exists( '\NewfoldLabs\WP\Module\Data\HiiveConnection' ) ) {
