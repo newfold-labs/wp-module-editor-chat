@@ -35,7 +35,12 @@ export default function DropdownMenuItem({
 	};
 
 	return (
-		<Button className={classes.main} {...other} target={isExternalLink ? "_blank" : undefined}>
+		<Button
+			className={classes.main}
+			{...other}
+			target={isExternalLink ? "_blank" : undefined}
+			rel={isExternalLink ? "noopener noreferrer" : undefined}
+		>
 			{!!startDecoration && <span className={classes.startDecoration}>{startDecoration}</span>}
 			{!!children && <span className={classes.content}>{children}</span>}
 			{!!endDecoration && <span className={classes.endDecoration}>{endDecoration}</span>}
