@@ -64,7 +64,6 @@ const ChatEditor = () => {
 
 	// Filter out internal message types from rendering
 	// - notification: system context for the AI, not user-facing
-	// - tool_execution: tool progress tracked internally, not shown in chat
 	const visibleMessages = useMemo(
 		() => messages.filter((msg) => msg.type !== "notification"),
 		[messages]
