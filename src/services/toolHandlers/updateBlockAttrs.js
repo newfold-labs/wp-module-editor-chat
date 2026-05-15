@@ -21,9 +21,12 @@ export async function handleUpdateBlockAttrs(toolCall, args, ctx) {
 	}
 
 	try {
+		// Ensure attributes is always an object so `in` / property access is safe.
+		args.attributes = args.attributes || {};
+
 		// ── Generate image from prompt if provided ──
 		// Allows "change this image" without exposing blu-generate-image as a tool.
-		if (args.image_prompt && !args.attributes?.url) {
+		if (args.image_prompt && !args.attributes.url) {
 			const imgArgs =
 				typeof args.image_prompt === "string"
 					? { prompt: args.image_prompt }
@@ -35,9 +38,6 @@ export async function handleUpdateBlockAttrs(toolCall, args, ctx) {
 					const parsed = JSON.parse(mcpResult.content[0].text);
 					const url = parsed?.message?.url || parsed?.url;
 					if (url) {
-						if (!args.attributes) {
-							args.attributes = {};
-						}
 						args.attributes.url = url;
 						appendGeneratedImageUrl(url);
 					}
