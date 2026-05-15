@@ -1,7 +1,7 @@
 {
 	"name": "wp-module-editor-chat",
 	"version": "2.0.0",
-	"description": "BLU WordPress Editor Chat Module - uses wp-module-ai-chat core",
+	"description": "BLU WordPress Editor Chat Module",
 	"homepage": "https://github.com/newfold-labs/wp-module-editor-chat#readme",
 	"bugs": {
 		"url": "https://github.com/newfold-labs/wp-module-editor-chat/issues"
