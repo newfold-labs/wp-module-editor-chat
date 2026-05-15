@@ -22,7 +22,7 @@ import { DropdownMenuItem, DropdownMenuSection } from "../dropdown-menu";
 import { CheckIcon, MagnifyingGlassIcon } from "../../icons";
 
 export default function PageSelectorInner() {
-	const [term, setTerm] = useState<string | undefined>(undefined);
+	const [term, setTerm] = useState<string>("");
 	const delayedSearch = useDebouncedValue(term);
 	const { currentPage, navigate } = usePageSelector();
 
