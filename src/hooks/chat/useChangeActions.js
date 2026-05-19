@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /**
  * useChangeActions — Accept and decline change handlers for editor chat.
  *
