@@ -255,8 +255,6 @@ export async function runChatLoop(userMessage, deps) {
 		const GATEWAY_TOOLS = new Set(["blu-list-abilities", "blu-get-ability-schema"]);
 		for (const r of results) {
 			const rawContent = typeof r.content === "string" ? r.content : JSON.stringify(r.content);
-			console.log( 'rawContent', rawContent );
-			console.log( 'truncateToolResult', truncateToolResult(rawContent) );
 			const toolName = toolCalls.find((tc) => tc.id === r.tool_call_id)?.name || "";
 			conversationHistoryRef.current.push({
 				role: "tool",

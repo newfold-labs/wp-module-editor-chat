@@ -29,6 +29,7 @@ import { handleHighlightBlock } from "./toolHandlers/highlightBlock";
 import { handleInsertInnerBlock } from "./toolHandlers/insertInnerBlock";
 import { handleMoveBlock } from "./toolHandlers/moveBlock";
 import { handleRegenerateLogo } from "./toolHandlers/regenerateLogo";
+import { handleUpdateBlockAttrs } from "./toolHandlers/updateBlockAttrs";
 
 // Re-export so external callers (e.g. useEditorChatREST) keep working.
 export { resetGeneratedImageCache };
@@ -126,7 +127,9 @@ const READ_TOOLS = new Set([
 	"blu-highlight-block",
 	"blu-generate-image",
 	"blu-regenerate-logo",
-	// Gateway tools return data the model needs — pass their full content through
+	// Gateway tools return data the model needs — pass their full content through.
+	// Without these the LLM receives "No changes needed" instead of the ability
+	// list/schema, causing it to loop indefinitely without finding the ability.
 	"blu-list-abilities",
 	"blu-get-ability-schema",
 ]);
