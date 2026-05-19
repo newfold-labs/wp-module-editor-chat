@@ -248,13 +248,22 @@ export async function runChatLoop(userMessage, deps) {
 			);
 		}
 
-		// Append tool results to conversation (truncated to limit token growth)
+		// Append tool results to conversation (truncated to limit token growth).
+		// Gateway discovery tools (blu-list-abilities, blu-get-ability-schema) are
+		// exempt from truncation — their entire output is the data the LLM needs
+		// to discover and call abilities correctly.
+		const GATEWAY_TOOLS = new Set(["blu-list-abilities", "blu-get-ability-schema"]);
 		for (const r of results) {
 			const rawContent = typeof r.content === "string" ? r.content : JSON.stringify(r.content);
+			console.log( 'rawContent', rawContent );
+			console.log( 'truncateToolResult', truncateToolResult(rawContent) );
+			const toolName = toolCalls.find((tc) => tc.id === r.tool_call_id)?.name || "";
 			conversationHistoryRef.current.push({
 				role: "tool",
 				tool_call_id: r.tool_call_id,
-				content: truncateToolResult(rawContent),
+				content: GATEWAY_TOOLS.has(toolName)
+					? rawContent
+					: truncateToolResult(rawContent),
 			});
 		}
 

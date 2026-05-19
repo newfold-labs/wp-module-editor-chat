@@ -28,7 +28,7 @@ import { handleGetGlobalStyles, handleUpdateGlobalStyles } from "./toolHandlers/
 import { handleHighlightBlock } from "./toolHandlers/highlightBlock";
 import { handleInsertInnerBlock } from "./toolHandlers/insertInnerBlock";
 import { handleMoveBlock } from "./toolHandlers/moveBlock";
-import { handleUpdateBlockAttrs } from "./toolHandlers/updateBlockAttrs";
+import { handleRegenerateLogo } from "./toolHandlers/regenerateLogo";
 
 // Re-export so external callers (e.g. useEditorChatREST) keep working.
 export { resetGeneratedImageCache };
@@ -125,6 +125,10 @@ const READ_TOOLS = new Set([
 	"blu-get-global-styles",
 	"blu-highlight-block",
 	"blu-generate-image",
+	"blu-regenerate-logo",
+	// Gateway tools return data the model needs — pass their full content through
+	"blu-list-abilities",
+	"blu-get-ability-schema",
 ]);
 
 /**
@@ -382,6 +386,16 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 						result: [{ type: "text", text: JSON.stringify({ error: err.message }) }],
 						isError: true,
 					};
+				}
+			} else if (toolName === "blu-regenerate-logo") {
+				if (!args.prompt) {
+					result = {
+						id: toolCall.id,
+						result: [{ type: "text", text: JSON.stringify({ error: 'Missing required parameter: prompt. Describe the logo to generate (brand name, style, colors).' }) }],
+						isError: true,
+					};
+				} else {
+					result = await handleRegenerateLogo(toolCall, args, ctx);
 				}
 			} else {
 				// Server-side MCP tool — forward to MCP server for execution
