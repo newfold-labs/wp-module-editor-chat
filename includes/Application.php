@@ -1,4 +1,5 @@
 <?php
+
 namespace NewfoldLabs\WP\Module\EditorChat;
 
 use NewfoldLabs\WP\ModuleLoader\Container;
