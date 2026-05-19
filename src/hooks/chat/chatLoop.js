@@ -259,9 +259,7 @@ export async function runChatLoop(userMessage, deps) {
 			conversationHistoryRef.current.push({
 				role: "tool",
 				tool_call_id: r.tool_call_id,
-				content: GATEWAY_TOOLS.has(toolName)
-					? rawContent
-					: truncateToolResult(rawContent),
+				content: GATEWAY_TOOLS.has(toolName) ? rawContent : truncateToolResult(rawContent),
 			});
 		}
 

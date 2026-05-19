@@ -394,7 +394,15 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 				if (!args.prompt) {
 					result = {
 						id: toolCall.id,
-						result: [{ type: "text", text: JSON.stringify({ error: 'Missing required parameter: prompt. Describe the logo to generate (brand name, style, colors).' }) }],
+						result: [
+							{
+								type: "text",
+								text: JSON.stringify({
+									error:
+										"Missing required parameter: prompt. Describe the logo to generate (brand name, style, colors).",
+								}),
+							},
+						],
 						isError: true,
 					};
 				} else {
