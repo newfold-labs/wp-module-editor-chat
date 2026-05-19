@@ -23,6 +23,9 @@ if ( \function_exists( 'add_action' ) ) {
 			if ( ! \defined( 'NFD_EDITOR_CHAT_BUILD_URL' ) && \defined( 'NFD_EDITOR_CHAT_VERSION' ) ) {
 				\define( 'NFD_EDITOR_CHAT_BUILD_URL', $container->plugin()->url . 'vendor/newfold-labs/wp-module-editor-chat/build/' . NFD_EDITOR_CHAT_VERSION );
 			}
+			if ( ! \defined( 'NFD_EDITOR_CHAT_ASSETS_URL' ) ) {
+				\define( 'NFD_EDITOR_CHAT_ASSETS_URL', $container->plugin()->url . 'vendor/newfold-labs/wp-module-editor-chat/assets/' );
+			}
 
 			new Application( $container );
 		}

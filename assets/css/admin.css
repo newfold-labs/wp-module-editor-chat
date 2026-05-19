@@ -1,0 +1,14 @@
+#wp-admin-bar-nfd-editor-chat > .ab-item {
+	background : #196cdf !important;
+	color      : #ffffff !important;
+}
+
+#wp-admin-bar-nfd-editor-chat:hover > .ab-item {
+	background : #0c4a9c !important;
+	color      : #ffffff !important;
+}
+
+#wp-admin-bar-nfd-editor-chat svg {
+	margin-right : 8px;
+	color        : inherit;
+}
