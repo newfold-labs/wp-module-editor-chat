@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1779285453">
-  <project timestamp="1779285453">
+<coverage generated="1779285613">
+  <project timestamp="1779285613">
     <file name="/home/runner/work/wp-module-editor-chat/wp-module-editor-chat/includes/Application.php">
       <class name="NewfoldLabs\WP\Module\EditorChat\Application" namespace="global">
         <metrics complexity="3" methods="2" coveredmethods="0" conditionals="0" coveredconditionals="0" statements="4" coveredstatements="0" elements="6" coveredelements="0"/>
@@ -15,7 +15,7 @@
     </file>
     <file name="/home/runner/work/wp-module-editor-chat/wp-module-editor-chat/includes/ChatEditor.php">
       <class name="NewfoldLabs\WP\Module\EditorChat\ChatEditor" namespace="global">
-        <metrics complexity="30" methods="12" coveredmethods="5" conditionals="0" coveredconditionals="0" statements="177" coveredstatements="68" elements="189" coveredelements="73"/>
+        <metrics complexity="30" methods="12" coveredmethods="4" conditionals="0" coveredconditionals="0" statements="177" coveredstatements="31" elements="189" coveredelements="35"/>
       </class>
       <line num="25" type="method" name="__construct" visibility="public" complexity="1" crap="1" count="3"/>
       <line num="26" type="stmt" count="3"/>
@@ -118,46 +118,46 @@
       <line num="180" type="stmt" count="2"/>
       <line num="183" type="stmt" count="1"/>
       <line num="184" type="stmt" count="1"/>
-      <line num="190" type="method" name="register_assets" visibility="public" complexity="3" crap="3" count="1"/>
+      <line num="190" type="method" name="register_assets" visibility="public" complexity="3" crap="10.69" count="1"/>
       <line num="192" type="stmt" count="1"/>
       <line num="194" type="stmt" count="1"/>
-      <line num="195" type="stmt" count="1"/>
-      <line num="197" type="stmt" count="1"/>
-      <line num="198" type="stmt" count="1"/>
-      <line num="199" type="stmt" count="1"/>
-      <line num="200" type="stmt" count="1"/>
-      <line num="201" type="stmt" count="1"/>
-      <line num="202" type="stmt" count="1"/>
-      <line num="203" type="stmt" count="1"/>
-      <line num="205" type="stmt" count="1"/>
-      <line num="206" type="stmt" count="1"/>
-      <line num="207" type="stmt" count="1"/>
-      <line num="208" type="stmt" count="1"/>
-      <line num="209" type="stmt" count="1"/>
-      <line num="210" type="stmt" count="1"/>
-      <line num="212" type="stmt" count="1"/>
-      <line num="213" type="stmt" count="1"/>
-      <line num="214" type="stmt" count="1"/>
-      <line num="215" type="stmt" count="1"/>
-      <line num="216" type="stmt" count="1"/>
-      <line num="217" type="stmt" count="1"/>
-      <line num="218" type="stmt" count="1"/>
-      <line num="219" type="stmt" count="1"/>
-      <line num="220" type="stmt" count="1"/>
-      <line num="221" type="stmt" count="1"/>
-      <line num="222" type="stmt" count="1"/>
-      <line num="223" type="stmt" count="1"/>
-      <line num="224" type="stmt" count="1"/>
-      <line num="225" type="stmt" count="1"/>
-      <line num="226" type="stmt" count="1"/>
-      <line num="227" type="stmt" count="1"/>
-      <line num="229" type="stmt" count="1"/>
-      <line num="230" type="stmt" count="1"/>
-      <line num="231" type="stmt" count="1"/>
-      <line num="232" type="stmt" count="1"/>
-      <line num="233" type="stmt" count="1"/>
-      <line num="235" type="stmt" count="1"/>
-      <line num="236" type="stmt" count="1"/>
+      <line num="195" type="stmt" count="0"/>
+      <line num="197" type="stmt" count="0"/>
+      <line num="198" type="stmt" count="0"/>
+      <line num="199" type="stmt" count="0"/>
+      <line num="200" type="stmt" count="0"/>
+      <line num="201" type="stmt" count="0"/>
+      <line num="202" type="stmt" count="0"/>
+      <line num="203" type="stmt" count="0"/>
+      <line num="205" type="stmt" count="0"/>
+      <line num="206" type="stmt" count="0"/>
+      <line num="207" type="stmt" count="0"/>
+      <line num="208" type="stmt" count="0"/>
+      <line num="209" type="stmt" count="0"/>
+      <line num="210" type="stmt" count="0"/>
+      <line num="212" type="stmt" count="0"/>
+      <line num="213" type="stmt" count="0"/>
+      <line num="214" type="stmt" count="0"/>
+      <line num="215" type="stmt" count="0"/>
+      <line num="216" type="stmt" count="0"/>
+      <line num="217" type="stmt" count="0"/>
+      <line num="218" type="stmt" count="0"/>
+      <line num="219" type="stmt" count="0"/>
+      <line num="220" type="stmt" count="0"/>
+      <line num="221" type="stmt" count="0"/>
+      <line num="222" type="stmt" count="0"/>
+      <line num="223" type="stmt" count="0"/>
+      <line num="224" type="stmt" count="0"/>
+      <line num="225" type="stmt" count="0"/>
+      <line num="226" type="stmt" count="0"/>
+      <line num="227" type="stmt" count="0"/>
+      <line num="229" type="stmt" count="0"/>
+      <line num="230" type="stmt" count="0"/>
+      <line num="231" type="stmt" count="0"/>
+      <line num="232" type="stmt" count="0"/>
+      <line num="233" type="stmt" count="0"/>
+      <line num="235" type="stmt" count="0"/>
+      <line num="236" type="stmt" count="0"/>
       <line num="249" type="method" name="load_script_translation_file" visibility="public" complexity="2" crap="2" count="2"/>
       <line num="251" type="stmt" count="2"/>
       <line num="252" type="stmt" count="1"/>
@@ -169,15 +169,15 @@
       <line num="270" type="stmt" count="2"/>
       <line num="271" type="stmt" count="0"/>
       <line num="274" type="stmt" count="2"/>
-      <line num="282" type="method" name="get_site_context" visibility="private" complexity="2" crap="2" count="5"/>
-      <line num="283" type="stmt" count="5"/>
-      <line num="285" type="stmt" count="5"/>
-      <line num="286" type="stmt" count="5"/>
-      <line num="287" type="stmt" count="5"/>
-      <line num="288" type="stmt" count="5"/>
-      <line num="289" type="stmt" count="5"/>
-      <line num="290" type="stmt" count="5"/>
-      <line num="291" type="stmt" count="5"/>
+      <line num="282" type="method" name="get_site_context" visibility="private" complexity="2" crap="2" count="4"/>
+      <line num="283" type="stmt" count="4"/>
+      <line num="285" type="stmt" count="4"/>
+      <line num="286" type="stmt" count="4"/>
+      <line num="287" type="stmt" count="4"/>
+      <line num="288" type="stmt" count="4"/>
+      <line num="289" type="stmt" count="4"/>
+      <line num="290" type="stmt" count="4"/>
+      <line num="291" type="stmt" count="4"/>
       <line num="299" type="method" name="load_text_domain" visibility="public" complexity="1" crap="2" count="0"/>
       <line num="301" type="stmt" count="0"/>
       <line num="302" type="stmt" count="0"/>
@@ -206,7 +206,7 @@
       <line num="337" type="stmt" count="0"/>
       <line num="343" type="method" name="enqueue_admin_assets" visibility="public" complexity="1" crap="2" count="0"/>
       <line num="344" type="stmt" count="0"/>
-      <metrics loc="347" ncloc="266" classes="1" methods="12" coveredmethods="5" conditionals="0" coveredconditionals="0" statements="177" coveredstatements="68" elements="189" coveredelements="73"/>
+      <metrics loc="347" ncloc="266" classes="1" methods="12" coveredmethods="4" conditionals="0" coveredconditionals="0" statements="177" coveredstatements="31" elements="189" coveredelements="35"/>
     </file>
     <file name="/home/runner/work/wp-module-editor-chat/wp-module-editor-chat/includes/Permissions.php">
       <class name="NewfoldLabs\WP\Module\EditorChat\Permissions" namespace="global">
@@ -220,6 +220,6 @@
       <line num="43" type="stmt" count="2"/>
       <metrics loc="46" ncloc="22" classes="1" methods="3" coveredmethods="3" conditionals="0" coveredconditionals="0" statements="3" coveredstatements="3" elements="6" coveredelements="6"/>
     </file>
-    <metrics files="3" loc="437" ncloc="312" classes="3" methods="17" coveredmethods="8" conditionals="0" coveredconditionals="0" statements="184" coveredstatements="71" elements="201" coveredelements="79"/>
+    <metrics files="3" loc="437" ncloc="312" classes="3" methods="17" coveredmethods="7" conditionals="0" coveredconditionals="0" statements="184" coveredstatements="34" elements="201" coveredelements="41"/>
   </project>
 </coverage>
