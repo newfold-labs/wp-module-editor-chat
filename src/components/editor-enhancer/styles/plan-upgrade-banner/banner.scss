@@ -1,26 +1,30 @@
 :root {
-	--nfd-editor-chat-plan-upgrade-banner-height: 100px;
+	--nfd-editor-chat-plan-upgrade-banner-height: 50px;
+
+	@media screen and (max-width: 782px) {
+		--nfd-editor-chat-plan-upgrade-banner-height: 80px;
+	}
 }
 
 .nfd-editor-chat__plan-upgrade-banner {
-	padding-inline: 40px;
+	padding-inline: 16px;
 	box-sizing: border-box;
-	background: #f1f1f1;
-	color: var(--nfd-editor-chat-header-color);
+	background: #A1D1FA;
+	color: #14151F;
 	position: fixed;
 	top: 0;
 	left: 0;
 	width: 100%;
 	z-index: 99999999;
-	font-size: 14px;
+	font-size: 13px;
 	height: var(--nfd-editor-chat-plan-upgrade-banner-height);
 	max-height: var(--nfd-editor-chat-plan-upgrade-banner-height);
 
 	&__content {
-		max-width: 1024px;
 		display: flex;
 		flex-direction: row;
 		align-items: center;
+		justify-content: center;
 		gap: 16px;
 		width: 100%;
 		height: 100%;
@@ -28,49 +32,22 @@
 	}
 
 	&__message {
-		flex: 1;
-		font-size: 1.1em;
 		line-height: 1.5;
-	}
-
-	&__actions {
-		position: relative;
 	}
 
 	&__cta {
 		display: inline-block;
-		padding: 12px 24px;
-		background: #dd881f;
+		padding: 6px 16px;
+		background: #196CDF;
 		border-radius: 8px;
 		color: #ffffff;
-		font-size: 1em;
 		text-decoration: none;
-		text-transform: uppercase;
-		font-weight: 500;
-		letter-spacing: 1px;
+		white-space: nowrap;
 
 		&:hover {
-			background: #c06f0c;
+			background: #0C4A9C;
 			color: #ffffff;
 		}
-	}
-
-	&__dismiss {
-		position: absolute;
-		top: 100%;
-		cursor: pointer;
-		font-size: 0.85em;
-		margin-top: 4px;
-		left: 50%;
-		transform: translateX(-50%);
-
-		&:hover {
-			text-decoration: underline;
-		}
-	}
-
-	@media screen and (max-width: 782px) {
-		font-size: 12px;
 	}
 }
 
@@ -81,12 +58,14 @@
 
 	.edit-site {
 		height: calc(100vh - var(--nfd-editor-chat-plan-upgrade-banner-height));
+		margin-top: var(--nfd-editor-chat-plan-upgrade-banner-height);
 	}
 
 	@media (min-width: 600px) {
 		.edit-site {
 			min-height: calc(100vh - var(--nfd-editor-chat-plan-upgrade-banner-height));
 			top: var(--nfd-editor-chat-plan-upgrade-banner-height);
+			margin-top: 0;
 		}
 	}
 }
