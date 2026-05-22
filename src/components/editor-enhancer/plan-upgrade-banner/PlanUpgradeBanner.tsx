@@ -22,7 +22,12 @@ export default function PlanUpgradeBanner() {
 			<div className="nfd-editor-chat__plan-upgrade-banner">
 				<div className="nfd-editor-chat__plan-upgrade-banner__content">
 					<div className="nfd-editor-chat__plan-upgrade-banner__message">{options.message}</div>
-					<a className="nfd-editor-chat__plan-upgrade-banner__cta" href={options.upgradeUrl}>
+					<a
+						className="nfd-editor-chat__plan-upgrade-banner__cta"
+						href={options.upgradeUrl}
+						target="_blank"
+						rel="noopener noreferrer"
+					>
 						{__("Upgrade now", "wp-module-editor-chat")}
 					</a>
 				</div>

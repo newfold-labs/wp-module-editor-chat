@@ -44,9 +44,11 @@
 		text-decoration: none;
 		white-space: nowrap;
 
-		&:hover {
+		&:hover, &:active, &:focus, &:focus-visible {
 			background: #0C4A9C;
 			color: #ffffff;
+			outline: none;
+			box-shadow: none;
 		}
 	}
 }
