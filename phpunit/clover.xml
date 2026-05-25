@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1779286845">
-  <project timestamp="1779286845">
+<coverage generated="1779741274">
+  <project timestamp="1779741274">
     <file name="/home/runner/work/wp-module-editor-chat/wp-module-editor-chat/includes/Application.php">
       <class name="NewfoldLabs\WP\Module\EditorChat\Application" namespace="global">
         <metrics complexity="3" methods="2" coveredmethods="0" conditionals="0" coveredconditionals="0" statements="4" coveredstatements="0" elements="6" coveredelements="0"/>
@@ -15,7 +15,7 @@
     </file>
     <file name="/home/runner/work/wp-module-editor-chat/wp-module-editor-chat/includes/ChatEditor.php">
       <class name="NewfoldLabs\WP\Module\EditorChat\ChatEditor" namespace="global">
-        <metrics complexity="30" methods="12" coveredmethods="4" conditionals="0" coveredconditionals="0" statements="177" coveredstatements="31" elements="189" coveredelements="35"/>
+        <metrics complexity="40" methods="13" coveredmethods="4" conditionals="0" coveredconditionals="0" statements="194" coveredstatements="31" elements="207" coveredelements="35"/>
       </class>
       <line num="25" type="method" name="__construct" visibility="public" complexity="1" crap="1" count="3"/>
       <line num="26" type="stmt" count="3"/>
@@ -118,7 +118,7 @@
       <line num="180" type="stmt" count="2"/>
       <line num="183" type="stmt" count="1"/>
       <line num="184" type="stmt" count="1"/>
-      <line num="190" type="method" name="register_assets" visibility="public" complexity="3" crap="10.69" count="1"/>
+      <line num="190" type="method" name="register_assets" visibility="public" complexity="4" crap="17.66" count="1"/>
       <line num="192" type="stmt" count="1"/>
       <line num="194" type="stmt" count="1"/>
       <line num="195" type="stmt" count="0"/>
@@ -147,66 +147,84 @@
       <line num="221" type="stmt" count="0"/>
       <line num="222" type="stmt" count="0"/>
       <line num="223" type="stmt" count="0"/>
-      <line num="224" type="stmt" count="0"/>
       <line num="225" type="stmt" count="0"/>
       <line num="226" type="stmt" count="0"/>
       <line num="227" type="stmt" count="0"/>
-      <line num="229" type="stmt" count="0"/>
       <line num="230" type="stmt" count="0"/>
-      <line num="231" type="stmt" count="0"/>
       <line num="232" type="stmt" count="0"/>
       <line num="233" type="stmt" count="0"/>
+      <line num="234" type="stmt" count="0"/>
       <line num="235" type="stmt" count="0"/>
       <line num="236" type="stmt" count="0"/>
-      <line num="249" type="method" name="load_script_translation_file" visibility="public" complexity="2" crap="2" count="2"/>
-      <line num="251" type="stmt" count="2"/>
-      <line num="252" type="stmt" count="1"/>
-      <line num="253" type="stmt" count="1"/>
-      <line num="254" type="stmt" count="1"/>
-      <line num="257" type="stmt" count="2"/>
-      <line num="267" type="method" name="add_admin_body_class" visibility="public" complexity="4" crap="4.25" count="2"/>
-      <line num="268" type="stmt" count="2"/>
-      <line num="270" type="stmt" count="2"/>
-      <line num="271" type="stmt" count="0"/>
-      <line num="274" type="stmt" count="2"/>
-      <line num="282" type="method" name="get_site_context" visibility="private" complexity="2" crap="2" count="4"/>
-      <line num="283" type="stmt" count="4"/>
-      <line num="285" type="stmt" count="4"/>
-      <line num="286" type="stmt" count="4"/>
-      <line num="287" type="stmt" count="4"/>
-      <line num="288" type="stmt" count="4"/>
-      <line num="289" type="stmt" count="4"/>
-      <line num="290" type="stmt" count="4"/>
-      <line num="291" type="stmt" count="4"/>
-      <line num="299" type="method" name="load_text_domain" visibility="public" complexity="1" crap="2" count="0"/>
-      <line num="301" type="stmt" count="0"/>
-      <line num="302" type="stmt" count="0"/>
-      <line num="303" type="stmt" count="0"/>
+      <line num="238" type="stmt" count="0"/>
+      <line num="239" type="stmt" count="0"/>
+      <line num="248" type="method" name="get_plan_upgrade_banner_data" visibility="private" complexity="8" crap="72" count="0"/>
+      <line num="249" type="stmt" count="0"/>
+      <line num="251" type="stmt" count="0"/>
+      <line num="252" type="stmt" count="0"/>
+      <line num="253" type="stmt" count="0"/>
+      <line num="254" type="stmt" count="0"/>
+      <line num="256" type="stmt" count="0"/>
+      <line num="257" type="stmt" count="0"/>
+      <line num="258" type="stmt" count="0"/>
+      <line num="259" type="stmt" count="0"/>
+      <line num="261" type="stmt" count="0"/>
+      <line num="262" type="stmt" count="0"/>
+      <line num="263" type="stmt" count="0"/>
+      <line num="264" type="stmt" count="0"/>
+      <line num="265" type="stmt" count="0"/>
+      <line num="270" type="stmt" count="0"/>
+      <line num="282" type="method" name="load_script_translation_file" visibility="public" complexity="2" crap="2" count="2"/>
+      <line num="284" type="stmt" count="2"/>
+      <line num="285" type="stmt" count="1"/>
+      <line num="286" type="stmt" count="1"/>
+      <line num="287" type="stmt" count="1"/>
+      <line num="290" type="stmt" count="2"/>
+      <line num="300" type="method" name="add_admin_body_class" visibility="public" complexity="5" crap="8.12" count="2"/>
+      <line num="301" type="stmt" count="2"/>
+      <line num="303" type="stmt" count="2"/>
       <line num="304" type="stmt" count="0"/>
-      <line num="305" type="stmt" count="0"/>
+      <line num="306" type="stmt" count="0"/>
       <line num="307" type="stmt" count="0"/>
-      <line num="308" type="stmt" count="0"/>
-      <line num="309" type="stmt" count="0"/>
-      <line num="310" type="stmt" count="0"/>
-      <line num="311" type="stmt" count="0"/>
-      <line num="319" type="method" name="admin_bar_menu" visibility="public" complexity="1" crap="2" count="0"/>
-      <line num="320" type="stmt" count="0"/>
-      <line num="322" type="stmt" count="0"/>
-      <line num="324" type="stmt" count="0"/>
-      <line num="325" type="stmt" count="0"/>
-      <line num="326" type="stmt" count="0"/>
-      <line num="327" type="stmt" count="0"/>
-      <line num="328" type="stmt" count="0"/>
-      <line num="330" type="stmt" count="0"/>
-      <line num="331" type="stmt" count="0"/>
-      <line num="332" type="stmt" count="0"/>
-      <line num="333" type="stmt" count="0"/>
-      <line num="334" type="stmt" count="0"/>
-      <line num="335" type="stmt" count="0"/>
-      <line num="337" type="stmt" count="0"/>
-      <line num="343" type="method" name="enqueue_admin_assets" visibility="public" complexity="1" crap="2" count="0"/>
+      <line num="311" type="stmt" count="2"/>
+      <line num="319" type="method" name="get_site_context" visibility="private" complexity="2" crap="2" count="4"/>
+      <line num="320" type="stmt" count="4"/>
+      <line num="322" type="stmt" count="4"/>
+      <line num="323" type="stmt" count="4"/>
+      <line num="324" type="stmt" count="4"/>
+      <line num="325" type="stmt" count="4"/>
+      <line num="326" type="stmt" count="4"/>
+      <line num="327" type="stmt" count="4"/>
+      <line num="328" type="stmt" count="4"/>
+      <line num="336" type="method" name="load_text_domain" visibility="public" complexity="1" crap="2" count="0"/>
+      <line num="338" type="stmt" count="0"/>
+      <line num="339" type="stmt" count="0"/>
+      <line num="340" type="stmt" count="0"/>
+      <line num="341" type="stmt" count="0"/>
+      <line num="342" type="stmt" count="0"/>
       <line num="344" type="stmt" count="0"/>
-      <metrics loc="347" ncloc="266" classes="1" methods="12" coveredmethods="4" conditionals="0" coveredconditionals="0" statements="177" coveredstatements="31" elements="189" coveredelements="35"/>
+      <line num="345" type="stmt" count="0"/>
+      <line num="346" type="stmt" count="0"/>
+      <line num="347" type="stmt" count="0"/>
+      <line num="348" type="stmt" count="0"/>
+      <line num="356" type="method" name="admin_bar_menu" visibility="public" complexity="1" crap="2" count="0"/>
+      <line num="357" type="stmt" count="0"/>
+      <line num="359" type="stmt" count="0"/>
+      <line num="361" type="stmt" count="0"/>
+      <line num="362" type="stmt" count="0"/>
+      <line num="363" type="stmt" count="0"/>
+      <line num="364" type="stmt" count="0"/>
+      <line num="365" type="stmt" count="0"/>
+      <line num="367" type="stmt" count="0"/>
+      <line num="368" type="stmt" count="0"/>
+      <line num="369" type="stmt" count="0"/>
+      <line num="370" type="stmt" count="0"/>
+      <line num="371" type="stmt" count="0"/>
+      <line num="372" type="stmt" count="0"/>
+      <line num="374" type="stmt" count="0"/>
+      <line num="380" type="method" name="enqueue_admin_assets" visibility="public" complexity="1" crap="2" count="0"/>
+      <line num="381" type="stmt" count="0"/>
+      <metrics loc="384" ncloc="298" classes="1" methods="13" coveredmethods="4" conditionals="0" coveredconditionals="0" statements="194" coveredstatements="31" elements="207" coveredelements="35"/>
     </file>
     <file name="/home/runner/work/wp-module-editor-chat/wp-module-editor-chat/includes/Permissions.php">
       <class name="NewfoldLabs\WP\Module\EditorChat\Permissions" namespace="global">
@@ -220,6 +238,6 @@
       <line num="43" type="stmt" count="2"/>
       <metrics loc="46" ncloc="22" classes="1" methods="3" coveredmethods="3" conditionals="0" coveredconditionals="0" statements="3" coveredstatements="3" elements="6" coveredelements="6"/>
     </file>
-    <metrics files="3" loc="437" ncloc="312" classes="3" methods="17" coveredmethods="7" conditionals="0" coveredconditionals="0" statements="184" coveredstatements="34" elements="201" coveredelements="41"/>
+    <metrics files="3" loc="474" ncloc="344" classes="3" methods="18" coveredmethods="7" conditionals="0" coveredconditionals="0" statements="201" coveredstatements="34" elements="219" coveredelements="41"/>
   </project>
 </coverage>
