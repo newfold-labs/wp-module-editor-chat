@@ -35,7 +35,7 @@ const SidebarHeader = ({ onNewChat, isNewChatDisabled = false }) => {
 						icon={<Plus width={16} height={16} />}
 						label={__("New chat", "wp-module-editor-chat")}
 						onClick={onNewChat}
-						className="nfd-editor-chat-sidebar__new-chat"
+						className="nfd-editor-chat-sidebar__new-chat nfd-editor-chat__icon-button"
 						disabled={isNewChatDisabled}
 					/>
 				</div>

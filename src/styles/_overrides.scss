@@ -1,12 +1,11 @@
-// WordPress component overrides
-.components-button[aria-controls*="nfd-editor-chat"] {
+@use "mixins";
 
-	&.is-active,
-	&:hover,
-	&:focus,
-	&.is-pressed {
-		background: transparent !important;
-		color: inherit !important;
+// WordPress component overrides
+.components-button[aria-controls*="nfd-editor-chat"], .components-button.is-compact.has-icon:not(.has-text)[aria-controls*="nfd-editor-chat"] {
+	@include mixins.icon-button;
+
+	svg{
+		font-size: 28px;
 	}
 }
 

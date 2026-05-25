@@ -1,0 +1,5 @@
+@use "../mixins";
+
+.nfd-editor-chat__icon-button.components-button{
+	@include mixins.icon-button;
+}

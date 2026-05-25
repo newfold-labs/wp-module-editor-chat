@@ -6,7 +6,6 @@ import { __ } from "@wordpress/i18n";
 /**
  * External dependencies
  */
-import { ArrowUpDown, Edit3, Layers, Palette } from "lucide-react";
 import { SuggestionButton } from "@newfold/wp-module-ai-chat";
 
 /**
@@ -24,28 +23,7 @@ import AILogo from "../ui/AILogo";
  * @return {Element} The WelcomeScreen component.
  */
 const WelcomeScreen = ({ onSendMessage }) => {
-	const suggestions = [
-		{
-			icon: <Layers width={16} height={16} />,
-			text: __("Add a section", "wp-module-editor-chat"),
-			action: () => onSendMessage("Add a section"),
-		},
-		{
-			icon: <Palette width={16} height={16} />,
-			text: __("Change colors", "wp-module-editor-chat"),
-			action: () => onSendMessage("Change colors"),
-		},
-		{
-			icon: <Edit3 width={16} height={16} />,
-			text: __("Rewrite content", "wp-module-editor-chat"),
-			action: () => onSendMessage("Rewrite content"),
-		},
-		{
-			icon: <ArrowUpDown width={16} height={16} />,
-			text: __("Rearrange layout", "wp-module-editor-chat"),
-			action: () => onSendMessage("Rearrange layout"),
-		},
-	];
+	const suggestions = [];
 
 	return (
 		<div className="nfd-editor-chat-welcome">

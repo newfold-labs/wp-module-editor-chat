@@ -19,3 +19,51 @@
 		}
 	}
 }
+
+@mixin icon-button{
+	font-size: 20px;
+	color: var(--nfd-editor-chat-icon-button-color);
+	height: 32px;
+	width: 32px;
+	min-height: 32px;
+	min-width: 32px;
+	border-radius: 8px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	svg[fill="none"] {
+		fill: none;
+	}
+
+	svg{
+		position: absolute;
+		width: 1em;
+		height: 1em;
+		font-size: 20px;
+	}
+
+	&:hover,
+	&:focus,
+	&:focus-visible,
+	&:active {
+		box-shadow: none;
+		outline: none;
+	}
+
+	&:hover {
+		color: var(--nfd-editor-chat-icon-button-color);
+		background: rgba(0, 0, 0, 0.04);
+	}
+
+	&.nfd-editor-chat--active {
+		background: var(--nfd-editor-chat-icon-button-color-active);
+		color: #fff;
+	}
+
+	&[disabled] {
+		opacity: 0.3;
+		background: transparent;
+		cursor: default;
+	}
+}

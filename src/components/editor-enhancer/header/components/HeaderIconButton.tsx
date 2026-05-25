@@ -17,10 +17,10 @@ export default function HeaderIconButton({
 	...other
 }: HeaderIconButtonProps) {
 	const classes = classNames([
-		"nfd-editor-chat__header-icon-button",
+		"nfd-editor-chat__icon-button",
 		className,
 		{
-			"nfd-editor-chat__header-icon-button--active": active,
+			"nfd-editor-chat--active": active,
 		},
 	]);
 
