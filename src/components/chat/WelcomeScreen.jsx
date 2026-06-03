@@ -65,16 +65,19 @@ const WelcomeScreen = ({ onSendMessage }) => {
 					</div>
 				</div>
 			</div>
-			<div className="nfd-editor-chat-suggestions">
-				{suggestions.map((suggestion, index) => (
-					<SuggestionButton
-						key={index}
-						icon={suggestion.icon}
-						text={suggestion.text}
-						onClick={suggestion.action}
-					/>
-				))}
-			</div>
+			{/* Suggestions hidden from the screen for now — components kept intact so they can be re-enabled by flipping this flag. */}
+			{false && (
+				<div className="nfd-editor-chat-suggestions">
+					{suggestions.map((suggestion, index) => (
+						<SuggestionButton
+							key={index}
+							icon={suggestion.icon}
+							text={suggestion.text}
+							onClick={suggestion.action}
+						/>
+					))}
+				</div>
+			)}
 		</div>
 	);
 };
