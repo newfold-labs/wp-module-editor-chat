@@ -288,6 +288,10 @@
 		flex-direction: column;
 		justify-content: flex-start;
 
+		.nfd-ai-chat-message__avatar{
+			display: none;
+		}
+
 		.nfd-editor-chat-message__content,
 		.nfd-ai-chat-message__content {
 			flex: 1;
@@ -315,6 +319,10 @@
 				}
 			}
 		}
+	}
+
+	&.nfd-ai-chat-message--assistant+.nfd-ai-chat-message--assistant{
+		margin: 0;
 	}
 
 	// User message (right-aligned, grey bubble)
@@ -349,7 +357,6 @@
 			border-radius: 12px;
 			line-height: 1.5;
 			color: var(--nfd-editor-chat-color-text-secondary);
-			max-width: 70%;
 			white-space: pre-wrap;
 			position: relative;
 			overflow-wrap: break-word;
