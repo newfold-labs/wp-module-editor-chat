@@ -30,6 +30,7 @@ import { handleInsertInnerBlock } from "./toolHandlers/insertInnerBlock";
 import { handleMoveBlock } from "./toolHandlers/moveBlock";
 import { handleRegenerateLogo } from "./toolHandlers/regenerateLogo";
 import { handleUpdateBlockAttrs } from "./toolHandlers/updateBlockAttrs";
+import logger from "../utils/logger";
 
 // Re-export so external callers (e.g. useEditorChatREST) keep working.
 export { resetGeneratedImageCache };
@@ -235,7 +236,7 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 
 		try {
 			let toolName = toolCall.name || "";
-			console.log(
+			logger.log(
 				`[ToolExecutor:REST] Executing ${toolIndex}/${totalTools}: ${toolName}`,
 				toolCall.arguments
 			);
@@ -410,7 +411,7 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 				}
 			} else {
 				// Server-side MCP tool — forward to MCP server for execution
-				console.log(`[ToolExecutor:REST] Forwarding to MCP: ${toolName}`, args);
+				logger.log(`[ToolExecutor:REST] Forwarding to MCP: ${toolName}`, args);
 				try {
 					const mcpResult = await callAbility(ctx.mcpClient, toolName, args);
 					result = {
@@ -447,6 +448,16 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 				})();
 				content = result?.hasChanges ? msg || "Applied successfully" : "No changes needed";
 			}
+
+			// Log every client tool's outcome (with the failure reason) so the full
+			// sequence is visible when debug logging is enabled. Many "failures" are
+			// benign — the model retries with a different tool/target and still
+			// completes the action (e.g. "Block not found" from a stale client_id).
+			logger.log(
+				`[ToolExecutor:REST] ${isError ? "✗ FAILED" : "✓ ok"}: ${toolName} →`,
+				content,
+				isError ? toolCall.arguments : ""
+			);
 
 			toolResults.push({
 				tool_call_id: toolCall.id,

@@ -8,6 +8,7 @@ import {
 	MAX_HISTORY_CHARS,
 	READ_ONLY_TOOLS,
 } from "./constants";
+import logger from "../../utils/logger";
 
 /**
  * Truncate tool result content to keep conversation history lean.
@@ -179,8 +180,7 @@ function collapseOldExchanges(history) {
 		result = [systemPrompt, ...collapsed, ...currentExchange];
 	}
 
-	// eslint-disable-next-line no-console
-	console.log(`[EditorChat] History collapsed: ${history.length} → ${result.length} messages`);
+	logger.log(`[EditorChat] History collapsed: ${history.length} → ${result.length} messages`);
 	return result;
 }
 
