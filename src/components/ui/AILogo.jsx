@@ -1,13 +1,12 @@
 /**
  * Internal dependencies
  */
-import { ReactComponent as SparksIcon } from "../../svg/sparks.svg";
+import { ReactComponent as AiAvatarIcon } from "../../svg/ai-avatar.svg";
 
 /**
  * AILogo Component
  *
- * A reusable logo component for the AI assistant with purple gradient background
- * and white sparks icon.
+ * A reusable logo component for the AI assistant.
  *
  * @param {Object} props        - The component props.
  * @param {number} props.width  - The width of the logo (default: 24).
@@ -22,7 +21,7 @@ const AILogo = ({ width = 24, height = 24 }) => (
 			height,
 		}}
 	>
-		<SparksIcon width={width * 0.625} height={height * 0.625} />
+		<AiAvatarIcon width={width} height={height} />
 	</div>
 );
 
