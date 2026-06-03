@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage generated="1780505347">
+  <project timestamp="1780505347">
+    <file name="/home/runner/work/wp-module-editor-chat/wp-module-editor-chat/includes/Application.php">
+      <class name="NewfoldLabs\WP\Module\EditorChat\Application" namespace="global">
+        <metrics complexity="3" methods="2" coveredmethods="0" conditionals="0" coveredconditionals="0" statements="4" coveredstatements="0" elements="6" coveredelements="0"/>
+      </class>
+      <line num="24" type="method" name="__construct" visibility="public" complexity="1" crap="2" count="0"/>
+      <line num="26" type="stmt" count="0"/>
+      <line num="29" type="stmt" count="0"/>
+      <line num="38" type="method" name="initialize_chat_editor" visibility="public" complexity="2" crap="6" count="0"/>
+      <line num="39" type="stmt" count="0"/>
+      <line num="40" type="stmt" count="0"/>
+      <metrics loc="44" ncloc="24" classes="1" methods="2" coveredmethods="0" conditionals="0" coveredconditionals="0" statements="4" coveredstatements="0" elements="6" coveredelements="0"/>
+    </file>
+    <file name="/home/runner/work/wp-module-editor-chat/wp-module-editor-chat/includes/ChatEditor.php">
+      <class name="NewfoldLabs\WP\Module\EditorChat\ChatEditor" namespace="global">
+        <metrics complexity="40" methods="13" coveredmethods="4" conditionals="0" coveredconditionals="0" statements="194" coveredstatements="31" elements="207" coveredelements="35"/>
+      </class>
+      <line num="25" type="method" name="__construct" visibility="public" complexity="1" crap="1" count="3"/>
+      <line num="26" type="stmt" count="3"/>
+      <line num="27" type="stmt" count="3"/>
+      <line num="28" type="stmt" count="3"/>
+      <line num="29" type="stmt" count="3"/>
+      <line num="30" type="stmt" count="3"/>
+      <line num="31" type="stmt" count="3"/>
+      <line num="37" type="method" name="register_rest_routes" visibility="public" complexity="1" crap="2" count="0"/>
+      <line num="38" type="stmt" count="0"/>
+      <line num="39" type="stmt" count="0"/>
+      <line num="40" type="stmt" count="0"/>
+      <line num="41" type="stmt" count="0"/>
+      <line num="42" type="stmt" count="0"/>
+      <line num="43" type="stmt" count="0"/>
+      <line num="44" type="stmt" count="0"/>
+      <line num="45" type="stmt" count="0"/>
+      <line num="46" type="stmt" count="0"/>
+      <line num="47" type="stmt" count="0"/>
+      <line num="48" type="stmt" count="0"/>
+      <line num="60" type="method" name="get_config" visibility="public" complexity="8" crap="72" count="0"/>
+      <line num="61" type="stmt" count="0"/>
+      <line num="62" type="stmt" count="0"/>
+      <line num="63" type="stmt" count="0"/>
+      <line num="65" type="stmt" count="0"/>
+      <line num="66" type="stmt" count="0"/>
+      <line num="67" type="stmt" count="0"/>
+      <line num="68" type="stmt" count="0"/>
+      <line num="69" type="stmt" count="0"/>
+      <line num="70" type="stmt" count="0"/>
+      <line num="73" type="stmt" count="0"/>
+      <line num="76" type="stmt" count="0"/>
+      <line num="77" type="stmt" count="0"/>
+      <line num="78" type="stmt" count="0"/>
+      <line num="81" type="stmt" count="0"/>
+      <line num="82" type="stmt" count="0"/>
+      <line num="83" type="stmt" count="0"/>
+      <line num="84" type="stmt" count="0"/>
+      <line num="85" type="stmt" count="0"/>
+      <line num="86" type="stmt" count="0"/>
+      <line num="90" type="stmt" count="0"/>
+      <line num="91" type="stmt" count="0"/>
+      <line num="92" type="stmt" count="0"/>
+      <line num="93" type="stmt" count="0"/>
+      <line num="94" type="stmt" count="0"/>
+      <line num="95" type="stmt" count="0"/>
+      <line num="96" type="stmt" count="0"/>
+      <line num="97" type="stmt" count="0"/>
+      <line num="98" type="stmt" count="0"/>
+      <line num="99" type="stmt" count="0"/>
+      <line num="100" type="stmt" count="0"/>
+      <line num="101" type="stmt" count="0"/>
+      <line num="102" type="stmt" count="0"/>
+      <line num="103" type="stmt" count="0"/>
+      <line num="104" type="stmt" count="0"/>
+      <line num="105" type="stmt" count="0"/>
+      <line num="107" type="stmt" count="0"/>
+      <line num="108" type="stmt" count="0"/>
+      <line num="109" type="stmt" count="0"/>
+      <line num="110" type="stmt" count="0"/>
+      <line num="111" type="stmt" count="0"/>
+      <line num="112" type="stmt" count="0"/>
+      <line num="115" type="stmt" count="0"/>
+      <line num="116" type="stmt" count="0"/>
+      <line num="117" type="stmt" count="0"/>
+      <line num="118" type="stmt" count="0"/>
+      <line num="120" type="stmt" count="0"/>
+      <line num="121" type="stmt" count="0"/>
+      <line num="122" type="stmt" count="0"/>
+      <line num="125" type="stmt" count="0"/>
+      <line num="127" type="stmt" count="0"/>
+      <line num="128" type="stmt" count="0"/>
+      <line num="129" type="stmt" count="0"/>
+      <line num="130" type="stmt" count="0"/>
+      <line num="131" type="stmt" count="0"/>
+      <line num="132" type="stmt" count="0"/>
+      <line num="135" type="stmt" count="0"/>
+      <line num="136" type="stmt" count="0"/>
+      <line num="137" type="stmt" count="0"/>
+      <line num="138" type="stmt" count="0"/>
+      <line num="139" type="stmt" count="0"/>
+      <line num="140" type="stmt" count="0"/>
+      <line num="141" type="stmt" count="0"/>
+      <line num="149" type="method" name="get_brand_id" visibility="private" complexity="2" crap="6" count="0"/>
+      <line num="150" type="stmt" count="0"/>
+      <line num="151" type="stmt" count="0"/>
+      <line num="154" type="stmt" count="0"/>
+      <line num="155" type="stmt" count="0"/>
+      <line num="156" type="stmt" count="0"/>
+      <line num="157" type="stmt" count="0"/>
+      <line num="158" type="stmt" count="0"/>
+      <line num="159" type="stmt" count="0"/>
+      <line num="160" type="stmt" count="0"/>
+      <line num="162" type="stmt" count="0"/>
+      <line num="170" type="method" name="enqueue_site_editor_assets" visibility="public" complexity="4" crap="4" count="4"/>
+      <line num="171" type="stmt" count="4"/>
+      <line num="174" type="stmt" count="4"/>
+      <line num="175" type="stmt" count="1"/>
+      <line num="179" type="stmt" count="3"/>
+      <line num="180" type="stmt" count="2"/>
+      <line num="183" type="stmt" count="1"/>
+      <line num="184" type="stmt" count="1"/>
+      <line num="190" type="method" name="register_assets" visibility="public" complexity="4" crap="17.66" count="1"/>
+      <line num="192" type="stmt" count="1"/>
+      <line num="194" type="stmt" count="1"/>
+      <line num="195" type="stmt" count="0"/>
+      <line num="197" type="stmt" count="0"/>
+      <line num="198" type="stmt" count="0"/>
+      <line num="199" type="stmt" count="0"/>
+      <line num="200" type="stmt" count="0"/>
+      <line num="201" type="stmt" count="0"/>
+      <line num="202" type="stmt" count="0"/>
+      <line num="203" type="stmt" count="0"/>
+      <line num="205" type="stmt" count="0"/>
+      <line num="206" type="stmt" count="0"/>
+      <line num="207" type="stmt" count="0"/>
+      <line num="208" type="stmt" count="0"/>
+      <line num="209" type="stmt" count="0"/>
+      <line num="210" type="stmt" count="0"/>
+      <line num="212" type="stmt" count="0"/>
+      <line num="213" type="stmt" count="0"/>
+      <line num="214" type="stmt" count="0"/>
+      <line num="215" type="stmt" count="0"/>
+      <line num="216" type="stmt" count="0"/>
+      <line num="217" type="stmt" count="0"/>
+      <line num="218" type="stmt" count="0"/>
+      <line num="219" type="stmt" count="0"/>
+      <line num="220" type="stmt" count="0"/>
+      <line num="221" type="stmt" count="0"/>
+      <line num="222" type="stmt" count="0"/>
+      <line num="223" type="stmt" count="0"/>
+      <line num="225" type="stmt" count="0"/>
+      <line num="226" type="stmt" count="0"/>
+      <line num="227" type="stmt" count="0"/>
+      <line num="230" type="stmt" count="0"/>
+      <line num="232" type="stmt" count="0"/>
+      <line num="233" type="stmt" count="0"/>
+      <line num="234" type="stmt" count="0"/>
+      <line num="235" type="stmt" count="0"/>
+      <line num="236" type="stmt" count="0"/>
+      <line num="238" type="stmt" count="0"/>
+      <line num="239" type="stmt" count="0"/>
+      <line num="248" type="method" name="get_plan_upgrade_banner_data" visibility="private" complexity="8" crap="72" count="0"/>
+      <line num="249" type="stmt" count="0"/>
+      <line num="251" type="stmt" count="0"/>
+      <line num="252" type="stmt" count="0"/>
+      <line num="253" type="stmt" count="0"/>
+      <line num="254" type="stmt" count="0"/>
+      <line num="256" type="stmt" count="0"/>
+      <line num="257" type="stmt" count="0"/>
+      <line num="258" type="stmt" count="0"/>
+      <line num="259" type="stmt" count="0"/>
+      <line num="261" type="stmt" count="0"/>
+      <line num="262" type="stmt" count="0"/>
+      <line num="263" type="stmt" count="0"/>
+      <line num="264" type="stmt" count="0"/>
+      <line num="265" type="stmt" count="0"/>
+      <line num="270" type="stmt" count="0"/>
+      <line num="282" type="method" name="load_script_translation_file" visibility="public" complexity="2" crap="2" count="2"/>
+      <line num="284" type="stmt" count="2"/>
+      <line num="285" type="stmt" count="1"/>
+      <line num="286" type="stmt" count="1"/>
+      <line num="287" type="stmt" count="1"/>
+      <line num="290" type="stmt" count="2"/>
+      <line num="300" type="method" name="add_admin_body_class" visibility="public" complexity="5" crap="8.12" count="2"/>
+      <line num="301" type="stmt" count="2"/>
+      <line num="303" type="stmt" count="2"/>
+      <line num="304" type="stmt" count="0"/>
+      <line num="306" type="stmt" count="0"/>
+      <line num="307" type="stmt" count="0"/>
+      <line num="311" type="stmt" count="2"/>
+      <line num="319" type="method" name="get_site_context" visibility="private" complexity="2" crap="2" count="4"/>
+      <line num="320" type="stmt" count="4"/>
+      <line num="322" type="stmt" count="4"/>
+      <line num="323" type="stmt" count="4"/>
+      <line num="324" type="stmt" count="4"/>
+      <line num="325" type="stmt" count="4"/>
+      <line num="326" type="stmt" count="4"/>
+      <line num="327" type="stmt" count="4"/>
+      <line num="328" type="stmt" count="4"/>
+      <line num="336" type="method" name="load_text_domain" visibility="public" complexity="1" crap="2" count="0"/>
+      <line num="338" type="stmt" count="0"/>
+      <line num="339" type="stmt" count="0"/>
+      <line num="340" type="stmt" count="0"/>
+      <line num="341" type="stmt" count="0"/>
+      <line num="342" type="stmt" count="0"/>
+      <line num="344" type="stmt" count="0"/>
+      <line num="345" type="stmt" count="0"/>
+      <line num="346" type="stmt" count="0"/>
+      <line num="347" type="stmt" count="0"/>
+      <line num="348" type="stmt" count="0"/>
+      <line num="356" type="method" name="admin_bar_menu" visibility="public" complexity="1" crap="2" count="0"/>
+      <line num="357" type="stmt" count="0"/>
+      <line num="359" type="stmt" count="0"/>
+      <line num="361" type="stmt" count="0"/>
+      <line num="362" type="stmt" count="0"/>
+      <line num="363" type="stmt" count="0"/>
+      <line num="364" type="stmt" count="0"/>
+      <line num="365" type="stmt" count="0"/>
+      <line num="367" type="stmt" count="0"/>
+      <line num="368" type="stmt" count="0"/>
+      <line num="369" type="stmt" count="0"/>
+      <line num="370" type="stmt" count="0"/>
+      <line num="371" type="stmt" count="0"/>
+      <line num="372" type="stmt" count="0"/>
+      <line num="374" type="stmt" count="0"/>
+      <line num="380" type="method" name="enqueue_admin_assets" visibility="public" complexity="1" crap="2" count="0"/>
+      <line num="381" type="stmt" count="0"/>
+      <metrics loc="384" ncloc="298" classes="1" methods="13" coveredmethods="4" conditionals="0" coveredconditionals="0" statements="194" coveredstatements="31" elements="207" coveredelements="35"/>
+    </file>
+    <file name="/home/runner/work/wp-module-editor-chat/wp-module-editor-chat/includes/Permissions.php">
+      <class name="NewfoldLabs\WP\Module\EditorChat\Permissions" namespace="global">
+        <metrics complexity="6" methods="3" coveredmethods="3" conditionals="0" coveredconditionals="0" statements="3" coveredstatements="3" elements="6" coveredelements="6"/>
+      </class>
+      <line num="24" type="method" name="is_admin" visibility="public" complexity="2" crap="2" count="3"/>
+      <line num="25" type="stmt" count="3"/>
+      <line num="33" type="method" name="is_editor" visibility="public" complexity="2" crap="2" count="4"/>
+      <line num="34" type="stmt" count="4"/>
+      <line num="42" type="method" name="is_authorized_admin" visibility="public" complexity="2" crap="2" count="2"/>
+      <line num="43" type="stmt" count="2"/>
+      <metrics loc="46" ncloc="22" classes="1" methods="3" coveredmethods="3" conditionals="0" coveredconditionals="0" statements="3" coveredstatements="3" elements="6" coveredelements="6"/>
+    </file>
+    <metrics files="3" loc="474" ncloc="344" classes="3" methods="18" coveredmethods="7" conditionals="0" coveredconditionals="0" statements="201" coveredstatements="34" elements="219" coveredelements="41"/>
+  </project>
+</coverage>
