@@ -1,435 +1,68 @@
-@use "../mixins";
+// Editor-sidebar overrides for the ai-chat message components. The ai-chat
+// base (imported first in app.scss) owns message layout and typography and
+// already renders with editor tokens via the var map in _overrides.scss, so we
+// only override what the sidebar needs: a neutral grey user bubble, flush-left
+// plain assistant replies, no hover chrome, and a sparkle shown only while the
+// AI is working. (Re-declaring layout here previously fought the redesigned
+// ai-chat DOM and broke avatar placement, wrapping, and spacing.)
 
-// Support both editor-chat and ai-chat class names
-// This allows using ai-chat components within the editor sidebar
-.nfd-editor-chat-messages,
-.nfd-ai-chat-messages {
-	display: flex;
-	flex: 1 1 auto;
-	flex-direction: column;
-	overflow-y: auto;
-	padding: 20px 24px;
-	gap: 16px;
-	min-height: 0;
+.nfd-ai-chat-message--user .nfd-ai-chat-message__content {
+	background: var(--nfd-editor-chat-color-background);
+	color: var(--nfd-editor-chat-color-text-secondary);
+	font-weight: 400;
+	letter-spacing: 0;
 
-	@include mixins.custom-scrollbar;
-}
-
-// Individual message - support both class prefixes
-.nfd-editor-chat-message,
-.nfd-ai-chat-message {
-	display: flex;
-	gap: 12px;
-	align-items: flex-start;
-	font-size: var(--nfd-editor-chat-font-size-base);
-
-	.nfd-editor-chat-message__content,
-	.nfd-ai-chat-message__content {
-		// Reset margins for all elements
-		> * {
-			margin-bottom: 1rem;
-		}
-
-		// Headings
-		h1,
-		h2,
-		h3,
-		h4,
-		h5,
-		h6 {
-			line-height: 1.2;
-			font-weight: 600;
-			margin-top: 1.5rem;
-			margin-bottom: 0.75rem;
-			color: var(--nfd-editor-chat-color-text);
-		}
-
-		h1 {
-			font-size: var(--nfd-editor-chat-font-size-xl);
-			margin-top: 0;
-		}
-
-		h2 {
-			font-size: var(--nfd-editor-chat-font-size-lg);
-		}
-
-		h3 {
-			font-size: var(--nfd-editor-chat-font-size-md);
-			text-transform: initial;
-		}
-
-		h4 {
-			font-size: var(--nfd-editor-chat-font-size-md);
-		}
-
-		h5 {
-			font-size: var(--nfd-editor-chat-font-size-sm);
-		}
-
-		h6 {
-			font-size: var(--nfd-editor-chat-font-size-sm);
-			font-weight: 500;
-		}
-
-		// Paragraphs
-		p {
-			font-size: var(--nfd-editor-chat-font-size-base);
-			line-height: 1.6;
-			margin-bottom: 1rem;
-		}
-
-		// Text formatting
-		strong {
-			font-weight: 600;
-		}
-
-		em {
-			font-style: italic;
-		}
-
-		u {
-			text-decoration: underline;
-		}
-
-		s {
-			text-decoration: line-through;
-		}
-
-		mark {
-			background-color: var(--nfd-editor-chat-color-primary-light-20);
-			padding: 0.1em 0.2em;
-			border-radius: 2px;
-		}
-
-		small {
-			font-size: 0.875em;
-		}
-
-		sub,
-		sup {
-			font-size: 0.75em;
-			line-height: 0;
-			position: relative;
-			vertical-align: baseline;
-		}
-
-		sup {
-			top: -0.5em;
-		}
-
-		sub {
-			bottom: -0.25em;
-		}
-
-		// Links
-		a {
-			color: var(--nfd-editor-chat-color-primary);
-			text-decoration: none;
-
-			&:hover {
-				text-decoration: underline;
-			}
-		}
-
-		// Inline code
-		code {
-			background-color: var(--nfd-editor-chat-color-border);
-			padding: 0.2em 0.4em;
-			border-radius: 3px;
-			font-family: "Courier New", Courier, monospace;
-			font-size: 0.9em;
-		}
-
-		code.inline-code {
-			background-color: rgba(0, 0, 0, 0.06);
-			color: var(--nfd-editor-chat-color-text);
-			font-weight: 500;
-		}
-
-		// Lists
-		ul,
-		ol {
-			margin: 1rem 0;
-			padding-left: 1.5rem;
-		}
-
-		ul {
-			list-style-type: disc;
-		}
-
-		ol {
-			list-style-type: decimal;
-		}
-
-		li {
-			margin-bottom: 0.5rem;
-			line-height: 1.5;
-		}
-
-		// Nested lists
-		ul ul,
-		ol ol,
-		ul ol,
-		ol ul {
-			margin: 0.5rem 0;
-		}
-
-		ul ul {
-			list-style-type: circle;
-		}
-
-		ul ul ul {
-			list-style-type: square;
-		}
-
-		// Definition lists
-		dl {
-			margin: 1rem 0;
-		}
-
-		dt {
-			font-weight: 600;
-			margin-top: 1rem;
-			margin-bottom: 0.25rem;
-		}
-
-		dd {
-			margin-left: 1.5rem;
-			margin-bottom: 0.5rem;
-		}
-
-		// Blockquotes
-		blockquote {
-			margin: 1.5rem 0;
-			padding: 1rem 1.5rem;
-			background-color: var(--nfd-editor-chat-color-background);
-			border-left: 4px solid var(--nfd-editor-chat-color-primary);
-			font-style: italic;
-			line-height: 1.6;
-		}
-
-		// Code blocks
-		pre {
-			background-color: var(--nfd-editor-chat-color-background);
-			padding: 1rem;
-			border-radius: 4px;
-			overflow-x: auto;
-			margin: 1rem 0;
-			font-family: "Courier New", Courier, monospace;
-			font-size: 0.9em;
-			line-height: 1.4;
-		}
-
-		pre code {
-			background: none;
-			padding: 0;
-			border-radius: 0;
-		}
-
-		// Tables
-		table {
-			width: 100%;
-			border-collapse: collapse;
-			margin: 1rem 0;
-			font-size: 0.9em;
-		}
-
-		th,
-		td {
-			padding: 0.75rem;
-			text-align: left;
-			border-bottom: 1px solid var(--nfd-editor-chat-color-grey-light);
-		}
-
-		th {
-			background-color: var(--nfd-editor-chat-color-background);
-			font-weight: 600;
-		}
-
-		// Horizontal rule
-		hr {
-			border: none;
-			border-top: 1px solid var(--nfd-editor-chat-color-grey-light);
-			margin: 2rem 0;
-		}
-
-		// Note boxes
-		.note {
-			background-color: var(--nfd-editor-chat-color-background);
-			border: 1px solid var(--nfd-editor-chat-color-border);
-			border-left: 4px solid var(--nfd-editor-chat-color-primary);
-			padding: 1rem;
-			margin: 1rem 0;
-			border-radius: 4px;
-			line-height: 1.6;
-		}
-
-		// Address
-		address {
-			font-style: italic;
-			margin: 1rem 0;
-			line-height: 1.6;
-		}
-
-		// Time
-		time {
-			color: var(--nfd-editor-chat-color-grey-dark);
-		}
-
-		// Special characters and symbols
-		* {
-			// Ensure proper rendering of special characters
-			unicode-bidi: normal;
-		}
-	}
-
-	// AI message (left-aligned, no bubble)
-	&--assistant {
-		flex-direction: column;
-		justify-content: flex-start;
-
-		.nfd-editor-chat-message__content,
-		.nfd-ai-chat-message__content {
-			flex: 1;
-			width: 100%;
-			line-height: 1.6;
-			color: var(--nfd-editor-chat-color-text);
-			background: none;
-			padding: 4px 0 0 0;
-			border-radius: 0;
-			white-space: pre-wrap;
-
-			// Rich content (markdown/HTML) —
-			// don't preserve whitespace for formatted content
-			&--rich {
-				white-space: normal;
-
-				// First element shouldn't have top margin
-				> *:first-child {
-					margin-top: 0;
-				}
-
-				// Last element shouldn't have bottom margin
-				> *:last-child {
-					margin-bottom: 0;
-				}
-			}
-		}
-	}
-
-	// User message (right-aligned, grey bubble)
-	&--user {
-		justify-content: flex-end;
-
-		.nfd-editor-chat-message__avatar {
-			flex-shrink: 0;
-			width: 32px;
-			height: 32px;
-			border-radius: 50%;
-			background: var(--nfd-editor-chat-color-border);
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			color: var(--nfd-editor-chat-color-text-secondary);
-			font-weight: 600;
-			overflow: hidden;
-
-			.nfd-editor-chat-message__avatar-image {
-				width: 100%;
-				height: 100%;
-				object-fit: cover;
-				border-radius: 50%;
-			}
-		}
-
-		.nfd-editor-chat-message__content,
-		.nfd-ai-chat-message__content {
-			background: var(--nfd-editor-chat-color-background);
-			padding: 8px 16px;
-			border-radius: 12px;
-			line-height: 1.5;
-			color: var(--nfd-editor-chat-color-text-secondary);
-			max-width: 70%;
-			white-space: pre-wrap;
-			position: relative;
-			overflow-wrap: break-word;
-		}
-	}
-
-	// Notification message (centered, subtle)
-	&--notification {
-		justify-content: center;
-
-		.nfd-editor-chat-message__content,
-		.nfd-ai-chat-message__content {
-			text-align: center;
-			font-size: var(--nfd-editor-chat-font-size-sm);
-			color: var(--nfd-editor-chat-color-text-secondary);
-			font-style: italic;
-			padding: 4px 12px;
-		}
-	}
-
-	// Streaming message state
-	&--streaming {
-
-		.nfd-editor-chat-message__content,
-		.nfd-ai-chat-message__content {
-			position: relative;
-		}
-	}
-
-	// Streaming cursor indicator
-	&__cursor {
-		display: inline-block;
-		width: 2px;
-		height: 1em;
-		background-color: var(--nfd-editor-chat-color-primary, #3b82f6);
-		margin-left: 2px;
-		vertical-align: text-bottom;
-		animation: nfd-cursor-blink 1s step-end infinite;
-	}
-
-	// Typing indicator for empty streaming messages
-	&__typing {
-		display: inline-flex;
-		align-items: center;
-
-		&-icon {
-			width: 16px;
-			height: 16px;
-			color: var(--nfd-editor-chat-color-primary, #3b82f6);
-			animation: nfd-spin 1s linear infinite;
-		}
-	}
-
-	// Tool calls container
-	&__tools {
-		margin-top: 12px;
-		width: 100%;
+	// Brand-tinted selection (the base assumes light text on a coloured
+	// bubble, which would be invisible on our grey surface).
+	&::selection,
+	*::selection {
+		background: var(--nfd-editor-chat-color-primary-light-20);
+		color: var(--nfd-editor-chat-color-text);
 	}
 }
 
-@keyframes nfd-cursor-blink {
+// Assistant replies are plain text: no grey hover surface (`::before`) and no
+// action bar (the copy button, which also drives the hover expand).
+.nfd-ai-chat-message--assistant {
 
-	0%,
-	50% {
-		opacity: 1;
+	&::before {
+		display: none;
 	}
 
-	50.01%,
-	100% {
-		opacity: 0;
+	.nfd-ai-chat-message-actions {
+		display: none;
 	}
 }
 
-@keyframes nfd-spin {
+// Keep the animated sparkle on in-progress rows. The base hides the avatar on
+// consecutive assistant turns (visibility:hidden); a loading row usually
+// follows the plan message, so that was blanking the sparkle. Declared before
+// the flush-left rule below to keep specificity ascending.
+.nfd-ai-chat-message--assistant:has(.nfd-ai-chat-typing-indicator) .nfd-ai-chat-message__avatar,
+.nfd-ai-chat-message--assistant:has(.nfd-ai-chat-tool-execution__item--active) .nfd-ai-chat-message__avatar {
+	visibility: visible;
+}
 
-	from {
-		transform: rotate(0deg);
-	}
+// Flush-left replies: drop the avatar gutter so finished assistant content
+// starts at the container edge; gap:0 removes the now-empty flex gap.
+// In-progress rows (typing indicator or an --active tool item) are excluded,
+// so their sparkle from the rule above is preserved.
+.nfd-ai-chat-message--assistant:not(:has(.nfd-ai-chat-typing-indicator)):not(:has(.nfd-ai-chat-tool-execution__item--active)) {
+	gap: 0;
 
-	to {
-		transform: rotate(360deg);
+	.nfd-ai-chat-message__avatar {
+		display: none;
 	}
+}
+
+// Flat user bubble: drop the base brand-gradient shadow and hover lift. The
+// :not(--failed) guard preserves the failed-send error ring (also a shadow).
+.nfd-ai-chat-message--user .nfd-ai-chat-message__content:not(.nfd-ai-chat-message__content--failed) {
+	box-shadow: none;
+}
+
+.nfd-ai-chat-message--user:hover .nfd-ai-chat-message__content:not(.nfd-ai-chat-message__content--failed),
+.nfd-ai-chat-message--user:focus-within .nfd-ai-chat-message__content:not(.nfd-ai-chat-message__content--failed) {
+	transform: none;
+	box-shadow: none;
 }

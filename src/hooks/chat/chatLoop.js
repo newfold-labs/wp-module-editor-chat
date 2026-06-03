@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /**
  * chatLoop — The function-calling loop for editor chat.
  *
@@ -7,7 +6,14 @@
  * response. Handles retry detection, tool execution, and history compression.
  * The orchestrator wraps this in useCallback and handles try/catch/finally.
  */
-import { CHAT_STATUS, EDITOR_TOOLS, MAX_TOOL_ITERATIONS } from "./constants";
+import {
+	CHAT_STATUS,
+	EDITOR_TOOLS,
+	MAX_TOOL_ITERATIONS,
+	MAX_READ_ONLY_PASSES,
+	MAX_READ_RESULT_CHARS,
+	READ_ONLY_TOOLS,
+} from "./constants";
 import {
 	truncateToolResult,
 	compressConversationHistory,
@@ -16,6 +22,7 @@ import {
 } from "./conversationUtils";
 import { EXECUTE_NUDGE, SUMMARIZE_NUDGE, buildEditorContext } from "../../utils/editorContext";
 import { executeToolCallsForREST } from "../../services/toolDispatcher";
+import logger from "../../utils/logger";
 
 /**
  * Run the function-calling loop for a single user message.
@@ -65,11 +72,23 @@ export async function runChatLoop(userMessage, deps) {
 	let iterations = 0;
 	let msgSeq = 0;
 	let toolsJustExecuted = false;
+	// Whether we've already surfaced a plan preamble for this turn. The model is
+	// nudged to restate "I'll do X" before every tool pass, so a multi-pass turn
+	// (e.g. read → edit) emits the same sentence repeatedly. Show the first one as
+	// the preamble and suppress the rest; the final tool-free reply still shows.
+	let planShown = false;
+	// Consecutive passes that only gathered info (read-only tools, no change).
+	let readOnlyStreak = 0;
+	// True once the model has emitted a final tool-free reply for this turn.
+	let endedNaturally = false;
+	// True if the user stopped generation mid-turn (suppresses the closing pass).
+	let userAborted = false;
 	const retryTracker = createRetryTracker();
 
 	while (iterations++ < MAX_TOOL_ITERATIONS) {
 		// Check if user aborted between iterations (e.g. during tool execution)
 		if (abortControllerRef?.current?.signal?.aborted) {
+			userAborted = true;
 			break;
 		}
 
@@ -103,7 +122,7 @@ export async function runChatLoop(userMessage, deps) {
 
 		const toolPassStart = performance.now();
 		const { content, toolCalls } = await streamCompletion(toolMessages, toolsForPass, {});
-		console.log(
+		logger.log(
 			`[EditorChat] Tool pass #${iterations} LLM: ${(performance.now() - toolPassStart).toFixed(0)}ms (${toolCalls?.length || 0} tool calls)`
 		);
 
@@ -124,6 +143,7 @@ export async function runChatLoop(userMessage, deps) {
 					timestamp: new Date(),
 				},
 			]);
+			endedNaturally = true;
 			break;
 		}
 
@@ -207,9 +227,13 @@ export async function runChatLoop(userMessage, deps) {
 			})),
 		});
 
-		// Surface the inline plan text (emitted before the tool_calls) as a
-		// visible message. Replaces the old separate reasoning-pass bubble.
-		if (content && content.trim()) {
+		// Surface the inline plan text (emitted before the tool_calls) as a visible
+		// message — but only the FIRST one per turn. Subsequent passes restate the
+		// same intent ("I'll update the colors…" again), which reads as duplicate
+		// messages. The plan still goes into conversation history above so the model
+		// keeps its own context; we just don't render the repeat.
+		if (content && content.trim() && !planShown) {
+			planShown = true;
 			setMessages((prev) => [
 				...prev,
 				{
@@ -243,23 +267,38 @@ export async function runChatLoop(userMessage, deps) {
 				? await executeToolCallsForREST(executableCalls, buildToolCtx())
 				: [];
 		if (executableCalls.length > 0) {
-			console.log(
+			logger.log(
 				`[EditorChat] Tool exec #${iterations}: ${(performance.now() - toolExecStart).toFixed(0)}ms (${executableCalls.length} tools)`
 			);
 		}
 
-		// Append tool results to conversation (truncated to limit token growth).
-		// Gateway discovery tools (blu-list-abilities, blu-get-ability-schema) are
-		// exempt from truncation — their entire output is the data the LLM needs
-		// to discover and call abilities correctly.
-		const GATEWAY_TOOLS = new Set(["blu-list-abilities", "blu-get-ability-schema"]);
+		// Append tool results to conversation. Budget by tool kind, keyed off the
+		// UNWRAPPED ability name (toolCalls carry the `blu-call-ability` envelope):
+		//   - Discovery (list-abilities, get-ability-schema): never truncate — the
+		//     full output is what lets the model find and call abilities.
+		//   - Other read-only tools (get-block-markup, get-global-styles, …): keep a
+		//     generous budget. These return the data the model reasons over; cutting
+		//     them to the write-ack default is what makes it re-read and loop.
+		//   - Write tools: short ack, the default truncation is plenty.
+		const DISCOVERY_TOOLS = new Set(["blu-list-abilities", "blu-get-ability-schema"]);
+		const effectiveName = new Map(
+			unwrappedCalls.map((tc) => [tc.id, (tc.name || "").replace(/\//g, "-")])
+		);
 		for (const r of results) {
 			const rawContent = typeof r.content === "string" ? r.content : JSON.stringify(r.content);
-			const toolName = toolCalls.find((tc) => tc.id === r.tool_call_id)?.name || "";
+			const name = effectiveName.get(r.tool_call_id) || "";
+			let resultContent;
+			if (DISCOVERY_TOOLS.has(name)) {
+				resultContent = rawContent;
+			} else if (READ_ONLY_TOOLS.has(name)) {
+				resultContent = truncateToolResult(rawContent, MAX_READ_RESULT_CHARS);
+			} else {
+				resultContent = truncateToolResult(rawContent);
+			}
 			conversationHistoryRef.current.push({
 				role: "tool",
 				tool_call_id: r.tool_call_id,
-				content: GATEWAY_TOOLS.has(toolName) ? rawContent : truncateToolResult(rawContent),
+				content: resultContent,
 			});
 		}
 
@@ -280,8 +319,59 @@ export async function runChatLoop(userMessage, deps) {
 		// next iteration tells the AI "all changes are applied" and it replies
 		// with a confirmation without ever running the write tool.
 		toolsJustExecuted = results.some((r) => r.hasChanges === true);
+
+		// No-progress guard. The retry tracker exempts read-only tools, so a model
+		// that keeps re-reading (get-block-markup, get-ability-schema, …) without
+		// ever editing would otherwise spin until MAX_TOOL_ITERATIONS and exit with
+		// no reply. Count consecutive info-only passes (read-only tools, nothing
+		// changed); once it's clearly circling, stop — the post-loop closing pass
+		// turns that into a real answer instead of a wall of repeated reasoning.
+		const infoOnlyPass =
+			unwrappedCalls.length > 0 &&
+			!toolsJustExecuted &&
+			unwrappedCalls.every((tc) => READ_ONLY_TOOLS.has((tc.name || "").replace(/\//g, "-")));
+		readOnlyStreak = infoOnlyPass ? readOnlyStreak + 1 : 0;
+		if (readOnlyStreak >= MAX_READ_ONLY_PASSES) {
+			console.warn(
+				`[EditorChat] No-progress loop: ${readOnlyStreak} read-only passes with no change — stopping to summarize`
+			);
+			break;
+		}
+
 		setStatus(CHAT_STATUS.SUMMARIZING);
 		// Loop continues — next iteration will get the AI's response
+	}
+
+	// Closing pass. If we exited mid-task — hit the iteration ceiling, broke a
+	// retry/read loop, or the model never produced a final reply — the user is
+	// left with dangling reasoning and no answer. Make one tool-free pass so the
+	// turn ends with a coherent response (or a clear "here's what I need").
+	if (!endedNaturally && !userAborted && !abortControllerRef?.current?.signal?.aborted) {
+		setStatus(CHAT_STATUS.SUMMARIZING);
+		setCurrentResponse("");
+		const closingContext = buildEditorContext();
+		const closingMessages = [
+			...conversationHistoryRef.current,
+			{
+				role: "user",
+				content: `<editor_context>\n${closingContext}\n</editor_context>\n\n${SUMMARIZE_NUDGE}`,
+			},
+		];
+		const { content: closing } = await streamCompletion(closingMessages, [], {});
+		setCurrentResponse("");
+		if (closing && closing.trim()) {
+			conversationHistoryRef.current.push({ role: "assistant", content: closing });
+			setMessages((prev) => [
+				...prev,
+				{
+					id: `assistant-${ts}-${msgSeq++}`,
+					type: "assistant",
+					role: "assistant",
+					content: closing,
+					timestamp: new Date(),
+				},
+			]);
+		}
 	}
 
 	// Compress older exchanges to keep history lean for next turn

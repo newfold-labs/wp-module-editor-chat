@@ -5,6 +5,18 @@
 export const EDITOR_CHAT_CONSUMER = "editor_chat";
 export const MAX_TOOL_ITERATIONS = 10;
 export const MAX_SAME_TOOL_RETRIES = 1;
+// Consecutive info-only passes (read-only tools, nothing changed) before we stop
+// the loop and force a closing answer. Read-only tools are exempt from retry
+// detection, so without this a model that keeps re-reading would spin until
+// MAX_TOOL_ITERATIONS and end with no reply. 4 leaves room for legitimate
+// multi-block exploration while still catching a stuck "keep reading" loop.
+export const MAX_READ_ONLY_PASSES = 4;
+// Char budget for READ-ONLY tool results in conversation history. Reads (e.g.
+// get-block-markup) return the very data the model reasons over; the default
+// 500-char write-ack truncation cuts a section's markup down to its opening tag,
+// so the model never sees the styling it asked for and re-reads in a loop. Keep
+// reads generous — the history compressor still trims them on later turns.
+export const MAX_READ_RESULT_CHARS = 8000;
 export const MAX_HISTORY_MESSAGES = 30;
 export const MAX_HISTORY_CHARS = 16000;
 
