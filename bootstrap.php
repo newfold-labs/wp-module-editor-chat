@@ -12,7 +12,7 @@ if ( \function_exists( 'add_action' ) ) {
 
 			// Set Global Constants
 			if ( ! \defined( 'NFD_EDITOR_CHAT_VERSION' ) ) {
-				\define( 'NFD_EDITOR_CHAT_VERSION', '2.0.2' );
+				\define( 'NFD_EDITOR_CHAT_VERSION', '2.1.0' );
 			}
 			if ( ! \defined( 'NFD_EDITOR_CHAT_DIR' ) ) {
 				\define( 'NFD_EDITOR_CHAT_DIR', __DIR__ );
