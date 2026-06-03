@@ -93,6 +93,9 @@
 		opacity: 0.6;
 		cursor: not-allowed;
 		box-shadow: none;
+		// Browsers / WP forms.css give disabled fields a grey fill; keep ours flush
+		// with the white container (opacity alone is the disabled cue).
+		background: transparent;
 	}
 
 	// Custom scrollbar styling to match messages
