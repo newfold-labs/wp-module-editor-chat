@@ -1,10 +1,10 @@
-/* eslint-disable no-console */
 import { __ } from "@wordpress/i18n";
 
 import { validateBlockMarkup } from "../../utils/blockValidator";
 import { handleRewriteAction } from "../blockActions";
 import { callAbility } from "../callAbility";
 import { appendGeneratedImageUrl, deduplicateImages, getGeneratedImageUrls } from "../imageCache";
+import logger from "../../utils/logger";
 
 /**
  * Count all inner blocks recursively.
@@ -38,13 +38,13 @@ export async function handleEditBlock(toolCall, args, ctx) {
 					__("Generating image…", "wp-module-editor-chat") + ` (${i + 1}/${promptCount})`,
 					500
 				);
-				console.log(
+				logger.log(
 					`[ToolExecutor:REST] edit-block: generating image ${i + 1}/${promptCount}`,
 					imgArgs
 				);
 				try {
 					const mcpResult = await callAbility(ctx.mcpClient, "blu-generate-image", imgArgs);
-					console.log(`[ToolExecutor:REST] edit-block: image ${i + 1} MCP result`, mcpResult);
+					logger.log(`[ToolExecutor:REST] edit-block: image ${i + 1} MCP result`, mcpResult);
 					if (!mcpResult.isError && mcpResult.content?.[0]?.text) {
 						const parsed = JSON.parse(mcpResult.content[0].text);
 						const url = parsed?.message?.url || parsed?.url;

@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /**
  * chatLoop — The function-calling loop for editor chat.
  *
@@ -23,6 +22,7 @@ import {
 } from "./conversationUtils";
 import { EXECUTE_NUDGE, SUMMARIZE_NUDGE, buildEditorContext } from "../../utils/editorContext";
 import { executeToolCallsForREST } from "../../services/toolDispatcher";
+import logger from "../../utils/logger";
 
 /**
  * Run the function-calling loop for a single user message.
@@ -122,7 +122,7 @@ export async function runChatLoop(userMessage, deps) {
 
 		const toolPassStart = performance.now();
 		const { content, toolCalls } = await streamCompletion(toolMessages, toolsForPass, {});
-		console.log(
+		logger.log(
 			`[EditorChat] Tool pass #${iterations} LLM: ${(performance.now() - toolPassStart).toFixed(0)}ms (${toolCalls?.length || 0} tool calls)`
 		);
 
@@ -267,7 +267,7 @@ export async function runChatLoop(userMessage, deps) {
 				? await executeToolCallsForREST(executableCalls, buildToolCtx())
 				: [];
 		if (executableCalls.length > 0) {
-			console.log(
+			logger.log(
 				`[EditorChat] Tool exec #${iterations}: ${(performance.now() - toolExecStart).toFixed(0)}ms (${executableCalls.length} tools)`
 			);
 		}

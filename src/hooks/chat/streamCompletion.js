@@ -1,10 +1,10 @@
-/* eslint-disable no-console */
 /**
  * streamCompletion — Streams an OpenAI chat completion and accumulates tool calls.
  *
  * Plain async function (no React hooks). The orchestrator wraps it in useCallback.
  */
 import { safeParseJSON } from "../../utils/jsonUtils";
+import logger from "../../utils/logger";
 
 /**
  * Stream a chat completion and accumulate tool calls.
@@ -58,7 +58,7 @@ export async function streamCompletion(msgs, tools, options = {}, deps) {
 		if (!delta) {
 			// Usage-only chunk or empty
 			if (chunk.usage) {
-				console.log(
+				logger.log(
 					`[Token Usage] prompt: ${chunk.usage.prompt_tokens} | completion: ${chunk.usage.completion_tokens} | total: ${chunk.usage.total_tokens}`
 				);
 			}

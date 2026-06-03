@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /**
  * useSessionConfig — Manages OpenAI client initialization, MCP connection,
  * and session token refresh.
@@ -9,6 +8,7 @@ import { useCallback, useEffect, useRef, useState } from "@wordpress/element";
 import OpenAI from "openai";
 
 import { mcpToolsToOpenAI } from "./conversationUtils";
+import logger from "../../utils/logger";
 
 // Module-level MCP client (created once at import time)
 const mcpClient = createMCPClient({ configKey: "nfdEditorChat" });
@@ -129,7 +129,7 @@ const useSessionConfig = () => {
 						baseURL: newConfig.worker_url,
 						dangerouslyAllowBrowser: true,
 					});
-					console.log("[EditorChat] Session token refreshed");
+					logger.log("[EditorChat] Session token refreshed");
 					scheduleRefresh();
 				}
 			} catch (err) {
