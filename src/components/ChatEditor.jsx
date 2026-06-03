@@ -103,7 +103,6 @@ const ChatEditor = () => {
 							executedTools={executedTools}
 							pendingTools={pendingTools}
 							textDomain="wp-module-editor-chat"
-							messageBubbleStyle="minimal"
 						/>
 					)}
 					<ChatInput

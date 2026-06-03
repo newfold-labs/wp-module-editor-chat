@@ -10,6 +10,94 @@ import { useEffect, useMemo, useRef } from "@wordpress/element";
 import logger from "../../utils/logger";
 
 /**
+ * Parse a tool call's `arguments` into a plain object, tolerating both the
+ * object and JSON-string forms the model emits.
+ *
+ * @param {*} raw The raw `arguments` value from an executed-tool entry.
+ * @return {Object} Parsed args, or `{}` when absent/unparseable.
+ */
+function readToolArgs(raw) {
+	if (!raw) {
+		return {};
+	}
+	if (typeof raw === "string") {
+		try {
+			return JSON.parse(raw);
+		} catch {
+			return {};
+		}
+	}
+	return typeof raw === "object" ? raw : {};
+}
+
+/**
+ * Derive a stable identity for an executed tool so a failed attempt and its
+ * successful retry compare equal. Combines the normalized ability name with the
+ * target block, unwrapping the `blu-call-ability` envelope (whose `parameters`
+ * may itself be a JSON string) to reach the real `client_id`.
+ *
+ * @param {Object} entry An executed-tool entry ({ name, arguments, isError }).
+ * @return {string} `name::target` key.
+ */
+function toolActionKey(entry) {
+	const name = (entry.name || "unknown").replace(/\//g, "-");
+	let args = readToolArgs(entry.arguments);
+	if (args.ability_name !== undefined) {
+		args = readToolArgs(args.parameters);
+	}
+	const target =
+		args.client_id || args.clientId || args.parent_client_id || args.target_client_id || "";
+	return `${name}::${target}`;
+}
+
+/**
+ * Drop failed tool entries that a later attempt of the same action recovered
+ * from. A failure the model already retried successfully is noise — surfacing it
+ * makes a completed turn read as "Some actions failed". Order is preserved and
+ * only failures *superseded by a later success* are removed; standalone failures
+ * (no successful retry) stay visible.
+ *
+ * @param {Array} tools Ordered executed-tool entries for one tool_execution message.
+ * @return {Array} Filtered list (same array when nothing is collapsed).
+ */
+export function collapseSupersededFailures(tools) {
+	if (!Array.isArray(tools) || tools.length < 2) {
+		return tools;
+	}
+	let changed = false;
+	const kept = tools.filter((tool, i) => {
+		if (!tool.isError) {
+			return true;
+		}
+		const key = toolActionKey(tool);
+		for (let j = i + 1; j < tools.length; j++) {
+			if (!tools[j].isError && toolActionKey(tools[j]) === key) {
+				changed = true;
+				return false;
+			}
+		}
+		return true;
+	});
+	return changed ? kept : tools;
+}
+
+// Gateway discovery tools are internal plumbing — the model calls them to find
+// abilities and read their schemas. They aren't user-facing actions, so they're
+// hidden from the "Actions completed" list.
+const INTERNAL_TOOL_NAMES = new Set(["blu-list-abilities", "blu-get-ability-schema"]);
+
+/**
+ * Whether an executed-tool entry is internal plumbing that shouldn't be shown in
+ * the actions list (tolerates the slash form some models emit).
+ *
+ * @param {Object} entry An executed-tool entry.
+ * @return {boolean} True when the entry should be hidden from display.
+ */
+function isInternalTool(entry) {
+	return INTERNAL_TOOL_NAMES.has((entry?.name || "").replace(/\//g, "-"));
+}
+
+/**
  * Pure transformation of messages for display.
  * Exported separately for unit testing without React.
  *
@@ -60,6 +148,29 @@ export function buildDisplayMessages(
 	}
 	msgs = merged;
 
+	// Show only the FIRST plan preamble per turn. chatLoop already gates this when
+	// emitting, but enforce it here too so a stray repeat ("I'll do X" restated on
+	// a later tool pass) can never render as a duplicate message. Plan messages are
+	// tagged with an id ending in "-plan"; the flag resets on each user turn.
+	const deduped = [];
+	let planSeenThisTurn = false;
+	for (const m of msgs) {
+		if (m.role === "user" || m.type === "user") {
+			planSeenThisTurn = false;
+			deduped.push(m);
+			continue;
+		}
+		const isPlan = typeof m.id === "string" && m.id.endsWith("-plan");
+		if (isPlan && planSeenThisTurn) {
+			continue;
+		}
+		if (isPlan) {
+			planSeenThisTurn = true;
+		}
+		deduped.push(m);
+	}
+	msgs = deduped;
+
 	// Augment tool_execution with live state
 	const hasToolActivity = !!activeToolCall || pendingTools.length > 0 || executedTools.length > 0;
 	if (hasToolActivity) {
@@ -104,6 +215,21 @@ export function buildDisplayMessages(
 			msgs = [...msgs, augmented];
 		}
 	}
+
+	// Clean up the executed-tools list for display: drop internal discovery calls
+	// (ability list/schema), then collapse failures a later retry recovered from so
+	// a turn that ultimately succeeded doesn't read as "Some actions failed". Both
+	// are display-only — the conversation sent to the model is untouched.
+	msgs = msgs.map((m) =>
+		m.type === "tool_execution" && m.executedTools
+			? {
+					...m,
+					executedTools: collapseSupersededFailures(
+						m.executedTools.filter((t) => !isInternalTool(t))
+					),
+				}
+			: m
+	);
 
 	// Streaming text overlay
 	if (currentResponse) {
