@@ -11,6 +11,7 @@ import apiFetch from "@wordpress/api-fetch";
  */
 import Modal from "./Modal";
 import { ArrowRightCircleIcon } from "../icons";
+import logger from "../../../../utils/logger";
 
 const ADMIN_URL = (window as any)?.NewfoldRuntime?.adminUrl ?? "/wp-admin/";
 const ONBOARDING_URL = ADMIN_URL + "index.php?page=nfd-onboarding";
@@ -40,7 +41,7 @@ export default function RegenerateSiteModal({ open, onClose }: RegenerateSiteMod
 				window.location.href = ONBOARDING_URL;
 			})
 			.catch((error) => {
-				console.log(error);
+				logger.log(error);
 				setGenerating(false);
 			});
 	};

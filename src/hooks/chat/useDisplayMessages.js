@@ -1,10 +1,13 @@
 /**
  * useDisplayMessages — Transforms raw chat messages into display-ready format.
  *
- * Handles tool execution merging, failure notices, live augmentation,
- * and streaming text overlay.
+ * Handles tool execution merging, live augmentation, and streaming text
+ * overlay. Tool failures are reported to the dev console (see the hook below)
+ * rather than surfaced in the chat UI.
  */
-import { useMemo } from "@wordpress/element";
+import { useEffect, useMemo, useRef } from "@wordpress/element";
+
+import logger from "../../utils/logger";
 
 /**
  * Pure transformation of messages for display.
@@ -38,32 +41,6 @@ export function buildDisplayMessages(
 			last.type !== "tool_execution";
 		if (isFinalResponse) {
 			msgs = msgs.slice(0, -1);
-		}
-	}
-
-	// Amend final assistant message with tool failure notices
-	if (!isToolsActive) {
-		const failedTools = msgs
-			.filter((m) => m.type === "tool_execution")
-			.flatMap((m) => (m.executedTools || []).filter((t) => t.isError));
-		if (failedTools.length > 0) {
-			for (let i = msgs.length - 1; i >= 0; i--) {
-				const m = msgs[i];
-				if (
-					(m.role === "assistant" || m.type === "assistant") &&
-					m.type !== "tool_execution" &&
-					!m.id?.includes("-reasoning") &&
-					m.content
-				) {
-					const names = failedTools.map((t) => (t.name || "unknown").replace(/^blu-/, ""));
-					const notice =
-						failedTools.length === 1
-							? `\n\n> **Note:** The **${names[0]}** action failed and was not applied.`
-							: `\n\n> **Note:** The following actions failed and were not applied: **${names.join("**, **")}**.`;
-					msgs = [...msgs.slice(0, i), { ...m, content: m.content + notice }, ...msgs.slice(i + 1)];
-					break;
-				}
-			}
 		}
 	}
 
@@ -145,6 +122,30 @@ export function buildDisplayMessages(
 }
 
 /**
+ * Collect tool failures from the current turn — i.e. messages after the last
+ * user message — so reporting reflects only the active turn rather than
+ * accumulating failures from the whole conversation history.
+ *
+ * @param {Array} messages Raw messages array
+ * @return {{lastUserIdx: number, names: string[]}} Turn boundary and failed action names
+ */
+export function collectCurrentTurnFailures(messages) {
+	let lastUserIdx = -1;
+	for (let i = messages.length - 1; i >= 0; i--) {
+		if (messages[i].role === "user") {
+			lastUserIdx = i;
+			break;
+		}
+	}
+	const names = messages
+		.slice(lastUserIdx + 1)
+		.filter((m) => m.type === "tool_execution")
+		.flatMap((m) => (m.executedTools || []).filter((t) => t.isError))
+		.map((t) => (t.name || "unknown").replace(/^blu-/, ""));
+	return { lastUserIdx, names };
+}
+
+/**
  * Hook wrapping buildDisplayMessages in useMemo.
  *
  * @param {Object} deps                 Message state dependencies
@@ -164,6 +165,31 @@ const useDisplayMessages = ({
 	executedTools,
 	toolProgress,
 }) => {
+	const isToolsActive = !!activeToolCall || pendingTools.length > 0;
+	const loggedFailureRef = useRef("");
+
+	// Dev-only: report tool failures to the console instead of the chat UI.
+	// Scoped to the current turn and de-duped so each turn logs at most once.
+	// The production guard lets the bundler dead-code-eliminate this branch.
+	useEffect(() => {
+		if (process.env.NODE_ENV === "production" || isToolsActive) {
+			return;
+		}
+		const { lastUserIdx, names } = collectCurrentTurnFailures(messages);
+		if (names.length === 0) {
+			loggedFailureRef.current = "";
+			return;
+		}
+		const signature = `${lastUserIdx}:${names.join(",")}`;
+		if (signature === loggedFailureRef.current) {
+			return;
+		}
+		loggedFailureRef.current = signature;
+		logger.warn(
+			`[EditorChat] ${names.length} tool action(s) failed and were not applied: ${names.join(", ")}`
+		);
+	}, [messages, isToolsActive]);
+
 	return useMemo(
 		() =>
 			buildDisplayMessages(

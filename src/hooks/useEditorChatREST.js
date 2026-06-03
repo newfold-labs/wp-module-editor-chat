@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /**
  * useEditorChatREST — Editor chat hook using REST (CF AI Gateway via Worker)
  *
@@ -24,6 +23,7 @@ import useChatSideEffects from "./chat/useChatSideEffects";
 import useChangeActions from "./chat/useChangeActions";
 import { loadActiveChat, clearActiveChat } from "./chat/activeChatStorage";
 import { resetGeneratedImageCache } from "../services/toolDispatcher";
+import logger from "../utils/logger";
 
 /**
  * useEditorChatREST Hook
@@ -195,14 +195,14 @@ const useEditorChatREST = () => {
 					abortControllerRef,
 				});
 
-				console.debug(
+				logger.debug(
 					`[EditorChat] Request completed in ${(performance.now() - requestStart).toFixed(0)}ms`
 				);
 				setStatus(CHAT_STATUS.COMPLETED);
 				setTimeout(() => setStatus(CHAT_STATUS.IDLE), 500);
 			} catch (err) {
 				if (err.name === "AbortError") {
-					console.log("[EditorChat] Request aborted");
+					logger.log("[EditorChat] Request aborted");
 					setStatus(CHAT_STATUS.IDLE);
 					return;
 				}

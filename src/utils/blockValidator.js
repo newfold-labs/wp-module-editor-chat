@@ -4,6 +4,11 @@
 import { parse, serialize, createBlock } from "@wordpress/blocks";
 
 /**
+ * Internal dependencies
+ */
+import logger from "./logger";
+
+/**
  * Count the total number of blocks (including all nested inner blocks)
  * in a flat or tree-shaped block array.
  *
@@ -186,8 +191,7 @@ export const validateBlockMarkup = (blockContent) => {
 					idx !== i && b.name === wrapper && b.innerBlocks?.some((ib) => ib.name === parsed[i].name)
 			);
 			if (!alreadyWrapped) {
-				// eslint-disable-next-line no-console
-				console.log(`[blockValidator] Auto-wrapping ${parsed[i].name} in ${wrapper}`);
+				logger.log(`[blockValidator] Auto-wrapping ${parsed[i].name} in ${wrapper}`);
 				const wrappedBlock = createBlock(wrapper, {}, [
 					createBlock(parsed[i].name, parsed[i].attributes || {}, parsed[i].innerBlocks || []),
 				]);
@@ -250,8 +254,7 @@ export const validateBlockMarkup = (blockContent) => {
 			};
 		}
 
-		// eslint-disable-next-line no-console
-		console.log("[blockValidator] Normalized markup");
+		logger.log("[blockValidator] Normalized markup");
 		return { valid: true, blocks: reParsed, correctedContent: normalizedContent };
 	} catch (e) {
 		return { valid: false, error: `Block normalization failed: ${e.message}` };
