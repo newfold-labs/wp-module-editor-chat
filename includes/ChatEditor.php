@@ -379,6 +379,8 @@ final class ChatEditor {
 	 * Enqueue styles for admin-bar.
 	 */
 	public static function enqueue_admin_bar_assets() {
-		\wp_enqueue_style( 'nfd-editor-chat-admin-bar', \NFD_EDITOR_CHAT_ASSETS_URL . 'css/admin-bar.css', [], NFD_EDITOR_CHAT_VERSION );
+		if ( is_admin_bar_showing() ) {
+			\wp_enqueue_style( 'nfd-editor-chat-admin-bar', \NFD_EDITOR_CHAT_ASSETS_URL . 'css/admin-bar.css', [], NFD_EDITOR_CHAT_VERSION );
+		}
 	}
 }
