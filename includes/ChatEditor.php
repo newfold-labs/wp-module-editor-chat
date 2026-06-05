@@ -28,7 +28,8 @@ final class ChatEditor {
 		\add_action( 'init', array( __CLASS__, 'load_text_domain' ), 100 );
 		\add_filter( 'load_script_translation_file', array( __CLASS__, 'load_script_translation_file' ), 10, 3 );
 		\add_action( 'admin_bar_menu', array( __CLASS__, 'admin_bar_menu' ), 99 );
-		\add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_admin_assets' ) );
+		\add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_admin_bar_assets' ) );
+		\add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_admin_bar_assets' ) );
 	}
 
 	/**
@@ -255,7 +256,7 @@ final class ChatEditor {
 
 			if ( $plan_data ) {
 				$plan_data   = \is_array( $plan_data ) ? $plan_data : array();
-				$message     = \sanitize_text_field( $plan_data[ 'infoBannerText' ] ?? '' );
+				$message     = \sanitize_text_field( $plan_data['infoBannerText'] ?? '' );
 				$upgrade_url = \esc_url_raw( $plan_data['upgrade_url'] ?? '' );
 
 				if ( $message && $upgrade_url ) {
@@ -375,9 +376,11 @@ final class ChatEditor {
 	}
 
 	/**
-	 * Enqueue styles and scripts.
+	 * Enqueue styles for admin-bar.
 	 */
-	public static function enqueue_admin_assets() {
-		\wp_enqueue_style( 'nfd-editor-chat-admin', \NFD_EDITOR_CHAT_ASSETS_URL . 'css/admin.css', [], NFD_EDITOR_CHAT_VERSION );
+	public static function enqueue_admin_bar_assets() {
+		if ( is_admin_bar_showing() ) {
+			\wp_enqueue_style( 'nfd-editor-chat-admin-bar', \NFD_EDITOR_CHAT_ASSETS_URL . 'css/admin-bar.css', [], NFD_EDITOR_CHAT_VERSION );
+		}
 	}
 }
