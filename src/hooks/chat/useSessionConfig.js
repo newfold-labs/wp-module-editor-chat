@@ -11,7 +11,11 @@ import { mcpToolsToOpenAI } from "./conversationUtils";
 import logger from "../../utils/logger";
 
 // Module-level MCP client (created once at import time)
-const mcpClient = createMCPClient({ configKey: "nfdEditorChat" });
+export const mcpClient = createMCPClient({ configKey: "nfdEditorChat" });
+
+// Module-level OpenAI client ref — populated by the hook on first init.
+// Exported so blockAI.js can make direct completions without the agent loop.
+export const openaiClientRef = { current: null };
 
 /**
  * Hook that handles session configuration, OpenAI client setup,
@@ -25,7 +29,8 @@ const useSessionConfig = () => {
 	const [openaiTools, setOpenaiTools] = useState([]);
 	const [configError, setConfigError] = useState(null);
 
-	const openaiClientRef = useRef(null);
+	// Re-use the module-level ref so blockAI.js can access the client directly.
+	// useRef(openaiClientRef) is NOT used — we assign into the module-level object.
 	const sessionConfigRef = useRef(null);
 	const abortControllerRef = useRef(null);
 	const hasInitializedRef = useRef(false);
