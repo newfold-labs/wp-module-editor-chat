@@ -6,6 +6,7 @@
  */
 import { useCallback } from "@wordpress/element";
 
+import { persistGlobalStyles } from "../../services/globalStylesService";
 import { restoreBlocks, restoreGlobalStyles } from "../../services/restoreHandlers";
 
 /**
@@ -38,16 +39,12 @@ const useChangeActions = ({
 		setIsSaving(true);
 
 		if (hasGlobalStylesChanges) {
-			try {
-				const globalStylesId = __experimentalGetCurrentGlobalStylesId
-					? __experimentalGetCurrentGlobalStylesId()
-					: undefined;
-				if (globalStylesId) {
-					await saveEditedEntityRecord("root", "globalStyles", globalStylesId);
-				}
+			const globalStylesId = __experimentalGetCurrentGlobalStylesId
+				? __experimentalGetCurrentGlobalStylesId()
+				: undefined;
+			const saveResult = await persistGlobalStyles(globalStylesId);
+			if (saveResult.success) {
 				originalGlobalStylesRef.current = null;
-			} catch (saveError) {
-				console.error("Error saving global styles:", saveError);
 			}
 		}
 

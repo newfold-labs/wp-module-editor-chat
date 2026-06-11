@@ -33,10 +33,9 @@ export async function handleUpdateGlobalStyles(toolCall, args, ctx) {
 
 		if (jsResult.success) {
 			await ctx.updateProgress(
-				__("✓ Styles updated! Review and Accept or Decline.", "wp-module-editor-chat"),
+				__("✓ Styles saved to your site.", "wp-module-editor-chat"),
 				800
 			);
-			ctx.setHasGlobalStylesChanges(true);
 
 			if (jsResult.undoData && !ctx.originalGlobalStylesRef.current) {
 				ctx.originalGlobalStylesRef.current = jsResult.undoData;

@@ -76,6 +76,31 @@ function getGlobalStylesId() {
 }
 
 /**
+ * Persist global styles entity changes to the database.
+ *
+ * @param {number|string} globalStylesId Global styles post ID.
+ * @return {Promise<{success: boolean, error?: string}>} Save result.
+ */
+export async function persistGlobalStyles(globalStylesId) {
+	const data = getWPData();
+	if (!data) {
+		return { success: false, error: "WordPress data store not available." };
+	}
+	if (!globalStylesId) {
+		return { success: false, error: "Global styles ID not found." };
+	}
+
+	try {
+		const coreDispatch = data.dispatch("core");
+		await coreDispatch.saveEditedEntityRecord("root", "globalStyles", globalStylesId);
+		return { success: true };
+	} catch (error) {
+		console.error("Error saving global styles:", error);
+		return { success: false, error: error.message };
+	}
+}
+
+/**
  * Get current global styles from the data store
  * @return {Object} Current global styles object
  */
@@ -237,8 +262,16 @@ export async function updateGlobalStyles(settings, styles = null) {
 			updateData.styles = deepMerge(currentCssStyles, styles);
 		}
 
-		// Update the entity record (preview mode - user must click Accept to save)
+		// Apply changes in the editor, then persist immediately.
 		await coreDispatch.editEntityRecord("root", "globalStyles", globalStylesId, updateData);
+
+		const saveResult = await persistGlobalStyles(globalStylesId);
+		if (!saveResult.success) {
+			return {
+				success: false,
+				error: `Failed to save global styles: ${saveResult.error}`,
+			};
+		}
 
 		// Extract updated colors for the response message
 		const themeColors = settings?.color?.palette?.theme || [];
@@ -258,7 +291,7 @@ export async function updateGlobalStyles(settings, styles = null) {
 		if (hasSpacing) {
 			message += " Spacing settings updated.";
 		}
-		message += " Click Accept to save or Decline to revert.";
+		message += " Changes saved to your site.";
 
 		return {
 			success: true,
