@@ -17,6 +17,7 @@ import { ChatMessages } from "@newfold/wp-module-ai-chat";
  */
 import useEditorChatREST from "../hooks/useEditorChatREST";
 import useEditorControls from "../hooks/useEditorControls";
+import { CHAT_SEND_EVENT } from "../services/chatBridge";
 import ChatInput from "./chat/ChatInput";
 import WelcomeScreen from "./chat/WelcomeScreen";
 import SidebarHeader from "./sidebar/SidebarHeader";
@@ -51,6 +52,18 @@ const ChatEditor = () => {
 			setTemplateLocked(true);
 		}
 	}, [setShowTemplate]);
+
+	// Listen for messages dispatched from the block toolbar popover.
+	useEffect(() => {
+		const handler = (e) => {
+			const message = e.detail?.message;
+			if (!message) return;
+			enableComplementaryArea(SIDEBAR_SCOPE, SIDEBAR_NAME);
+			handleSendMessage(message);
+		};
+		window.addEventListener(CHAT_SEND_EVENT, handler);
+		return () => window.removeEventListener(CHAT_SEND_EVENT, handler);
+	}, [enableComplementaryArea, handleSendMessage]);
 
 	// Phase 2: After template is locked, open sidebar
 	useEffect(() => {

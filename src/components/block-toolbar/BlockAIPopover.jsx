@@ -1,43 +1,19 @@
-import {
-	Popover,
-	TextareaControl,
-	Button,
-	Spinner,
-	__experimentalToggleGroupControl as ToggleGroupControl,
-	__experimentalToggleGroupControlOption as ToggleGroupControlOption,
-} from "@wordpress/components";
-import { useState } from "@wordpress/element";
+import { Popover, Button } from "@wordpress/components";
+import { useRef, useState } from "@wordpress/element";
 import { __ } from "@wordpress/i18n";
+import { ArrowUp } from "lucide-react";
 
-import { applyBlockAI, DUAL_BLOCK, IMAGE_BLOCKS, LOGO_BLOCK } from "../../services/blockAI";
-
-const placeholderFor = (block, mode) => {
-	if (block.name === LOGO_BLOCK) return __("e.g. a minimalist blue coffee-cup logo", "wp-module-editor-chat");
-	if (IMAGE_BLOCKS.has(block.name) || mode === "image") return __("e.g. a vintage coffee photo", "wp-module-editor-chat");
-	return __("e.g. make this more concise", "wp-module-editor-chat");
-};
+import { sendToChat } from "../../services/chatBridge";
 
 const BlockAIPopover = ({ block, anchorRef, onClose }) => {
 	const [instruction, setInstruction] = useState("");
-	const [mediaTextMode, setMediaTextMode] = useState("text");
-	const [isApplying, setIsApplying] = useState(false);
-	const [error, setError] = useState(null);
+	const textareaRef = useRef(null);
 
-	const isDual = block.name === DUAL_BLOCK;
-
-	const submit = async () => {
+	const submit = () => {
 		const value = instruction.trim();
-		if (!value || isApplying) return;
-		setIsApplying(true);
-		setError(null);
-		try {
-			await applyBlockAI({ block, instruction: value, mediaTextMode });
-			onClose();
-		} catch (err) {
-			setError(err.message || __("Something went wrong.", "wp-module-editor-chat"));
-		} finally {
-			setIsApplying(false);
-		}
+		if (!value) return;
+		sendToChat(value);
+		onClose();
 	};
 
 	const onKeyDown = (e) => {
@@ -59,36 +35,23 @@ const BlockAIPopover = ({ block, anchorRef, onClose }) => {
 			className="nfd-block-ai-popover"
 		>
 			<div className="nfd-block-ai-popover__inner">
-				{isDual && (
-					<ToggleGroupControl
-						__nextHasNoMarginBottom
-						isBlock
-						value={mediaTextMode}
-						onChange={setMediaTextMode}
-						label={__("Edit", "wp-module-editor-chat")}
-						hideLabelFromVision
-					>
-						<ToggleGroupControlOption value="text" label={__("Text", "wp-module-editor-chat")} />
-						<ToggleGroupControlOption value="image" label={__("Image", "wp-module-editor-chat")} />
-					</ToggleGroupControl>
-				)}
-
-				<TextareaControl
-					__nextHasNoMarginBottom
-					value={instruction}
-					onChange={setInstruction}
-					onKeyDown={onKeyDown}
-					placeholder={placeholderFor(block, mediaTextMode)}
-					rows={3}
-					disabled={isApplying}
-				/>
-
-				{error && <p className="nfd-block-ai-popover__error">{error}</p>}
-
-				<div className="nfd-block-ai-popover__actions">
-					<Button variant="primary" onClick={submit} disabled={!instruction.trim() || isApplying}>
-						{isApplying ? <Spinner /> : __("Apply", "wp-module-editor-chat")}
-					</Button>
+				<div className="nfd-block-ai-popover__container">
+					<textarea
+						ref={textareaRef}
+						className="nfd-block-ai-popover__textarea"
+						value={instruction}
+						onChange={(e) => setInstruction(e.target.value)}
+						onKeyDown={onKeyDown}
+						placeholder={__("Ask for quick changes", "wp-module-editor-chat")}
+						rows={1}
+					/>
+					<Button
+						className="nfd-block-ai-popover__submit"
+						icon={<ArrowUp width={16} height={16} />}
+						label={__("Apply", "wp-module-editor-chat")}
+						onClick={submit}
+						disabled={!instruction.trim()}
+					/>
 				</div>
 			</div>
 		</Popover>

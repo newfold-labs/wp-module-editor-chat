@@ -27,14 +27,13 @@ export const IMAGE_BLOCKS = new Set([
 	"core/cover",
 	"core/post-featured-image",
 ]);
-export const DUAL_BLOCK = "core/media-text"; // shows Text/Image segmented control
+
 export const LOGO_BLOCK = "core/site-logo";
 
 export function isSupportedBlock(name) {
 	return (
 		TEXT_BLOCKS.has(name) ||
 		IMAGE_BLOCKS.has(name) ||
-		name === DUAL_BLOCK ||
 		name === LOGO_BLOCK
 	);
 }
@@ -70,17 +69,19 @@ async function applyText(block, instruction) {
 	let targetClientId = block.clientId;
 	let current = getBlockText(block);
 
-	if (block.name === DUAL_BLOCK) {
-		const para = (block.innerBlocks || []).find((b) => b.name === "core/paragraph");
-		if (!para) {
-			throw new Error("No text block found inside this media & text block.");
-		}
-		targetClientId = para.clientId;
-		current = getBlockText(para);
-	}
 
 	// Strip HTML tags to give the AI clean text, preserve HTML in the update.
 	const plain = (current || "").replace(/<[^>]+>/g, "").trim();
+	const isEmpty = !plain;
+
+	const systemContent = isEmpty
+	  ? "You are a professional copywriter. Generate text from the user's instruction. " +
+		"Return ONLY the final text. Never ask questions. Never explain. No quotes."
+	  : "You are a professional copywriter. Rewrite the text following the instruction. " +
+		"Return ONLY the rewritten text. Never ask questions. Never explain. No quotes.";
+	const userContent = isEmpty
+	  ? `Instruction: ${instruction}`
+	  : `Instruction: ${instruction}\n\nText: ${plain}`;
 
 	const model = window.nfdEditorChat?.model || undefined;
 	const response = await client.chat.completions.create({
@@ -88,18 +89,15 @@ async function applyText(block, instruction) {
 		messages: [
 			{
 				role: "system",
-				content:
-					"You are a professional copywriter. Rewrite the given text following the user's instruction. " +
-					"Return ONLY the rewritten text — no explanations, no quotes, no extra commentary.",
+				content:systemContent
 			},
 			{
 				role: "user",
-				content: `Instruction: ${instruction}\n\nText: ${plain}`,
+				content: userContent,
 			},
 		],
 		stream: false,
 	});
-
 	const next = response.choices?.[0]?.message?.content?.trim();
 	if (!next) {
 		throw new Error("The AI did not return any text.");
@@ -116,15 +114,7 @@ async function applyImage(block, instruction) {
 		throw new Error("The AI did not return an image.");
 	}
 
-	if (block.name === DUAL_BLOCK) {
-		// core/media-text uses mediaUrl / mediaId
-		dispatch("core/block-editor").updateBlockAttributes(block.clientId, {
-			mediaUrl: url,
-			mediaId: 0,
-			mediaType: "image",
-		});
-		return;
-	}
+
 
 	// core/image, core/cover, core/post-featured-image all accept url; clear the
 	// media-library id so WP doesn't override our URL with the old attachment.
@@ -162,11 +152,7 @@ export async function applyBlockAI({ block, instruction, mediaTextMode }) {
 	if (name === LOGO_BLOCK) {
 		return applyLogo(instruction);
 	}
-	if (name === DUAL_BLOCK) {
-		return mediaTextMode === "image"
-			? applyImage(block, instruction)
-			: applyText(block, instruction);
-	}
+	
 	if (IMAGE_BLOCKS.has(name)) {
 		return applyImage(block, instruction);
 	}

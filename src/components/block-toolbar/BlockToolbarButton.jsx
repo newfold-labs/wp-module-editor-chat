@@ -6,7 +6,7 @@ import { __ } from "@wordpress/i18n";
 
 import BlockAIPopover from "./BlockAIPopover";
 import { isSupportedBlock } from "../../services/blockAI";
-import { ReactComponent as SparksIcon } from "../../svg/sparks.svg";
+import { Sparkles } from "lucide-react";
 
 // clientId and name come from the editor.BlockEdit HOC (registerBlockToolbar.js).
 const BlockToolbarButton = ({ clientId, name }) => {
@@ -25,11 +25,12 @@ const BlockToolbarButton = ({ clientId, name }) => {
 
 	return (
 		<BlockControls group="other">
-			<ToolbarGroup>
+			<ToolbarGroup className="nfd-block-ai-toolbar-group">
             <ToolbarButton
                 ref={buttonRef}
-                icon={<SparksIcon width={20} height={20} />}
-                label={__("BLU AI", "wp-module-editor-chat")}
+				className="nfd-block-ai-toolbar-button"
+                icon={<Sparkles size={28} />}
+                label={__("Blu AI", "wp-module-editor-chat")}
                 isActive={isOpen}
                 onClick={() => setIsOpen((v) => !v)}
             />
