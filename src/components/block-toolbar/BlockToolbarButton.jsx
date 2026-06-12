@@ -5,7 +5,7 @@ import { useRef, useState } from "@wordpress/element";
 import { __ } from "@wordpress/i18n";
 
 import BlockAIPopover from "./BlockAIPopover";
-import { isSupportedBlock } from "../../services/blockAI";
+import { isSupportedBlock } from "../../services/blockToolbar/blockAI";
 import { Sparkles } from "lucide-react";
 
 // clientId and name come from the editor.BlockEdit HOC (registerBlockToolbar.js).

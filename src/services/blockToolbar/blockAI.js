@@ -8,8 +8,8 @@
  */
 import { dispatch, select } from "@wordpress/data";
 
-import { callAbility } from "./callAbility";
-import { mcpClient, openaiClientRef } from "../hooks/chat/useSessionConfig";
+import { callAbility } from "../callAbility";
+import { mcpClient, openaiClientRef } from "../../hooks/chat/useSessionConfig";
 
 // ── Allowlists (shared with the toolbar component) ──
 export const TEXT_BLOCKS = new Set([

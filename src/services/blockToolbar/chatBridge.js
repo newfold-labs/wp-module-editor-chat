@@ -6,6 +6,6 @@ export const CHAT_SEND_EVENT = "nfd:chat:send";
  *
  * @param {string} message
  */
-export function sendToChat(message) {
-	window.dispatchEvent(new CustomEvent(CHAT_SEND_EVENT, { detail: { message } }));
+export function sendToChat(message, clientId) {
+	window.dispatchEvent(new CustomEvent(CHAT_SEND_EVENT, { detail: { message, clientId } }));
 }

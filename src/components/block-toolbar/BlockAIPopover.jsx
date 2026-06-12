@@ -3,7 +3,9 @@ import { useRef, useState } from "@wordpress/element";
 import { __ } from "@wordpress/i18n";
 import { ArrowUp } from "lucide-react";
 
-import { sendToChat } from "../../services/chatBridge";
+import { TEXT_BLOCKS, IMAGE_BLOCKS, LOGO_BLOCK } from "../../services/blockToolbar/blockAI";
+import { sendToChat } from "../../services/blockToolbar/chatBridge";
+import { startBlockProcessing, startImageProcessing } from "../../services/blockToolbar/blockHighlight";
 
 const BlockAIPopover = ({ block, anchorRef, onClose }) => {
 	const [instruction, setInstruction] = useState("");
@@ -12,7 +14,14 @@ const BlockAIPopover = ({ block, anchorRef, onClose }) => {
 	const submit = () => {
 		const value = instruction.trim();
 		if (!value) return;
-		sendToChat(value);
+
+		if (TEXT_BLOCKS.has(block.name)) {
+			startBlockProcessing(block.clientId);
+		} else if (IMAGE_BLOCKS.has(block.name) || block.name === LOGO_BLOCK) {
+			startImageProcessing(block.clientId);
+		}
+
+		sendToChat(value, block.clientId);
 		onClose();
 	};
 

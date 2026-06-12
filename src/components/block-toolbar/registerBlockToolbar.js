@@ -2,7 +2,7 @@ import { createHigherOrderComponent } from "@wordpress/compose";
 import { Fragment } from "@wordpress/element";
 import { addFilter } from "@wordpress/hooks";
 
-import { isSupportedBlock } from "../../services/blockAI";
+import { isSupportedBlock } from "../../services/blockToolbar/blockAI";
 import BlockToolbarButton from "./BlockToolbarButton";
 
 const withBluAIToolbar = createHigherOrderComponent(

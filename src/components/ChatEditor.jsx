@@ -17,7 +17,7 @@ import { ChatMessages } from "@newfold/wp-module-ai-chat";
  */
 import useEditorChatREST from "../hooks/useEditorChatREST";
 import useEditorControls from "../hooks/useEditorControls";
-import { CHAT_SEND_EVENT } from "../services/chatBridge";
+import { CHAT_SEND_EVENT } from "../services/blockToolbar/chatBridge";
 import ChatInput from "./chat/ChatInput";
 import WelcomeScreen from "./chat/WelcomeScreen";
 import SidebarHeader from "./sidebar/SidebarHeader";
