@@ -13,9 +13,7 @@ const withBluAIToolbar = createHigherOrderComponent(
 		return (
 			<Fragment>
 				<BlockEdit {...props} />
-				{showButton && (
-					<BlockToolbarButton clientId={props.clientId} name={props.name} />
-				)}
+				{showButton && <BlockToolbarButton clientId={props.clientId} name={props.name} />}
 			</Fragment>
 		);
 	},

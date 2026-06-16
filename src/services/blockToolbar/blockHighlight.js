@@ -5,7 +5,7 @@
  * so both the style injection and the DOM lookup must target that
  * document (falling back to the main document for non-iframed editors).
  *
- * Text blocks → spinning gradient border
+ * Blocks → spinning gradient border
  * Image blocks → shimmer scan overlay
  */
 import { subscribe, select } from "@wordpress/data";
@@ -84,7 +84,9 @@ function getEditorDocument() {
 }
 
 function ensureStyle(doc) {
-	if (doc.getElementById(STYLE_ID)) return;
+	if (doc.getElementById(STYLE_ID)) {
+		return;
+	}
 	const style = doc.createElement("style");
 	style.id = STYLE_ID;
 	style.textContent = PROCESSING_CSS;
@@ -120,13 +122,18 @@ function watchUntilDone(clientId, onDone) {
  * Spinning gradient border — for all non-image blocks.
  * Suppresses the native editor selection outline while active, then restores it.
  * Removed automatically when the block is deselected or its content changes.
+ * @param clientId
  */
 export function startBlockProcessing(clientId) {
-	if (!clientId) return;
+	if (!clientId) {
+		return;
+	}
 	const doc = getEditorDocument();
 	ensureStyle(doc);
 	const node = doc.querySelector(`[data-block="${clientId}"]`);
-	if (!node) return;
+	if (!node) {
+		return;
+	}
 
 	const prevOutline = node.style.getPropertyValue("outline");
 	const prevOutlinePriority = node.style.getPropertyPriority("outline");
@@ -159,17 +166,24 @@ export function startBlockProcessing(clientId) {
  *
  * Container dimensions are frozen via an injected <style> rule with
  * !important so the layout never collapses under the overlay.
+ * @param clientId
  */
 export function startImageProcessing(clientId) {
-	if (!clientId) return;
+	if (!clientId) {
+		return;
+	}
 	const doc = getEditorDocument();
 	ensureStyle(doc);
 	const node = doc.querySelector(`[data-block="${clientId}"]`);
-	if (!node) return;
+	if (!node) {
+		return;
+	}
 
 	const img = node.querySelector("img");
 	const oldSrc = img?.currentSrc || img?.src || null;
-	if (!oldSrc) return;
+	if (!oldSrc) {
+		return;
+	}
 
 	const win = doc.defaultView || window;
 	const nodeRect = node.getBoundingClientRect();
@@ -186,7 +200,7 @@ export function startImageProcessing(clientId) {
 
 	const applyFreeze = (targetClientId) => {
 		removeFreeze();
-		const freezeStyle = doc.createElement("style");
+		const freezeStyle = doc.cgitreateElement("style");
 		freezeStyle.id = FREEZE_ID;
 		freezeStyle.textContent = `
 			[data-block="${targetClientId}"] {
@@ -249,7 +263,9 @@ export function startImageProcessing(clientId) {
 				}
 				let done = false;
 				const onLoad = () => {
-					if (done) return;
+					if (done) {
+						return;
+					}
 					done = true;
 					newImg.removeEventListener("load", onLoad);
 					newImg.removeEventListener("error", onLoad);

@@ -22,29 +22,27 @@ export const TEXT_BLOCKS = new Set([
 	"core/post-title",
 	"core/post-excerpt",
 ]);
-export const IMAGE_BLOCKS = new Set([
-	"core/image",
-	"core/cover",
-	"core/post-featured-image",
-]);
+export const IMAGE_BLOCKS = new Set(["core/image", "core/cover", "core/post-featured-image"]);
 
 export const LOGO_BLOCK = "core/site-logo";
 
 export function isSupportedBlock(name) {
-	return (
-		TEXT_BLOCKS.has(name) ||
-		IMAGE_BLOCKS.has(name) ||
-		name === LOGO_BLOCK
-	);
+	return TEXT_BLOCKS.has(name) || IMAGE_BLOCKS.has(name) || name === LOGO_BLOCK;
 }
 
-/** Read the editable text from a text block, regardless of which attribute holds it. */
+/**
+ * Read the editable text from a text block, regardless of which attribute holds it.
+ * @param block
+ */
 function getBlockText(block) {
 	const a = block.attributes || {};
 	return a.content ?? a.value ?? a.text ?? "";
 }
 
-/** Parse the JSON text payload an MCP ability returns in content[0].text. */
+/**
+ * Parse the JSON text payload an MCP ability returns in content[0].text.
+ * @param mcpResult
+ */
 function parseAbilityResult(mcpResult) {
 	if (mcpResult?.isError || !mcpResult?.content?.[0]?.text) {
 		return null;
@@ -59,6 +57,8 @@ function parseAbilityResult(mcpResult) {
 /**
  * Rewrite text in place via a direct single-shot OpenAI call (no agent loop).
  * For core/media-text the editable text lives in an inner core/paragraph.
+ * @param block
+ * @param instruction
  */
 async function applyText(block, instruction) {
 	const client = openaiClientRef.current;
@@ -66,22 +66,21 @@ async function applyText(block, instruction) {
 		throw new Error("AI session not ready yet — please wait a moment and try again.");
 	}
 
-	let targetClientId = block.clientId;
-	let current = getBlockText(block);
-
+	const targetClientId = block.clientId;
+	const current = getBlockText(block);
 
 	// Strip HTML tags to give the AI clean text, preserve HTML in the update.
 	const plain = (current || "").replace(/<[^>]+>/g, "").trim();
 	const isEmpty = !plain;
 
 	const systemContent = isEmpty
-	  ? "You are a professional copywriter. Generate text from the user's instruction. " +
-		"Return ONLY the final text. Never ask questions. Never explain. No quotes."
-	  : "You are a professional copywriter. Rewrite the text following the instruction. " +
-		"Return ONLY the rewritten text. Never ask questions. Never explain. No quotes.";
+		? "You are a professional copywriter. Generate text from the user's instruction. " +
+			"Return ONLY the final text. Never ask questions. Never explain. No quotes."
+		: "You are a professional copywriter. Rewrite the text following the instruction. " +
+			"Return ONLY the rewritten text. Never ask questions. Never explain. No quotes.";
 	const userContent = isEmpty
-	  ? `Instruction: ${instruction}`
-	  : `Instruction: ${instruction}\n\nText: ${plain}`;
+		? `Instruction: ${instruction}`
+		: `Instruction: ${instruction}\n\nText: ${plain}`;
 
 	const model = window.nfdEditorChat?.model || undefined;
 	const response = await client.chat.completions.create({
@@ -89,7 +88,7 @@ async function applyText(block, instruction) {
 		messages: [
 			{
 				role: "system",
-				content:systemContent
+				content: systemContent,
 			},
 			{
 				role: "user",
@@ -105,7 +104,11 @@ async function applyText(block, instruction) {
 	dispatch("core/block-editor").updateBlockAttributes(targetClientId, { content: next });
 }
 
-/** Generate an image and swap it into the block. */
+/**
+ * Generate an image and swap it into the block.
+ * @param block
+ * @param instruction
+ */
 async function applyImage(block, instruction) {
 	const result = await callAbility(mcpClient, "blu-generate-image", { prompt: instruction });
 	const parsed = parseAbilityResult(result);
@@ -113,8 +116,6 @@ async function applyImage(block, instruction) {
 	if (!url) {
 		throw new Error("The AI did not return an image.");
 	}
-
-
 
 	// core/image, core/cover, core/post-featured-image all accept url; clear the
 	// media-library id so WP doesn't override our URL with the old attachment.
@@ -124,7 +125,10 @@ async function applyImage(block, instruction) {
 	});
 }
 
-/** Regenerate the site logo. Mirrors handleRegenerateLogo (toolHandlers/regenerateLogo.js). */
+/**
+ * Regenerate the site logo. Mirrors handleRegenerateLogo (toolHandlers/regenerateLogo.js).
+ * @param instruction
+ */
 async function applyLogo(instruction) {
 	const result = await callAbility(mcpClient, "blu-regenerate-logo", { prompt: instruction });
 	if (result?.isError) {
@@ -142,8 +146,8 @@ async function applyLogo(instruction) {
  * Single entry point used by the popover.
  *
  * @param {Object} params
- * @param {Object} params.block          The selected block object.
- * @param {string} params.instruction    The user's typed instruction.
+ * @param {Object} params.block           The selected block object.
+ * @param {string} params.instruction     The user's typed instruction.
  * @param {string} [params.mediaTextMode] "text" | "image" — only for core/media-text.
  */
 export async function applyBlockAI({ block, instruction, mediaTextMode }) {
@@ -152,7 +156,7 @@ export async function applyBlockAI({ block, instruction, mediaTextMode }) {
 	if (name === LOGO_BLOCK) {
 		return applyLogo(instruction);
 	}
-	
+
 	if (IMAGE_BLOCKS.has(name)) {
 		return applyImage(block, instruction);
 	}
