@@ -91,27 +91,34 @@ function ensureStyle(doc) {
 	(doc.head || doc.documentElement).appendChild(style);
 }
 
-function watchUntilDone(clientId, cssClass) {
-	const initialAttributes = JSON.stringify(
-		select("core/block-editor").getBlock(clientId)?.attributes ?? {}
-	);
+function getBlockSnapshot(clientId) {
+	const block = select("core/block-editor").getBlock(clientId);
+	return JSON.stringify({
+		attrs: block?.attributes ?? {},
+		inner: (block?.innerBlocks ?? []).map((b) => ({
+			id: b.clientId,
+			attrs: b.attributes,
+		})),
+	});
+}
+
+function watchUntilDone(clientId, onDone) {
+	const initialSnapshot = getBlockSnapshot(clientId);
 
 	const unsubscribe = subscribe(() => {
 		const selectedId = select("core/block-editor").getSelectedBlockClientId();
-		const currentAttributes = JSON.stringify(
-			select("core/block-editor").getBlock(clientId)?.attributes ?? {}
-		);
+		const currentSnapshot = getBlockSnapshot(clientId);
 
-		if (selectedId !== clientId || currentAttributes !== initialAttributes) {
+		if (selectedId !== clientId || currentSnapshot !== initialSnapshot) {
 			unsubscribe();
-			const doc = getEditorDocument();
-			doc.querySelector(`[data-block="${clientId}"]`)?.classList.remove(cssClass);
+			onDone();
 		}
 	});
 }
 
 /**
- * Spinning gradient border — for text blocks.
+ * Spinning gradient border — for all non-image blocks.
+ * Suppresses the native editor selection outline while active, then restores it.
  * Removed automatically when the block is deselected or its content changes.
  */
 export function startBlockProcessing(clientId) {
@@ -120,8 +127,21 @@ export function startBlockProcessing(clientId) {
 	ensureStyle(doc);
 	const node = doc.querySelector(`[data-block="${clientId}"]`);
 	if (!node) return;
-	node.classList.add(PROCESSING_CLASS);
-	watchUntilDone(clientId, PROCESSING_CLASS);
+
+	const prevOutline = node.style.getPropertyValue("outline");
+	const prevOutlinePriority = node.style.getPropertyPriority("outline");
+	const prevBoxShadow = node.style.getPropertyValue("box-shadow");
+	const prevBoxShadowPriority = node.style.getPropertyPriority("box-shadow");
+
+	node.classList.add(PROCESSING_CLASS, "remove-outline");
+	node.style.setProperty("outline", "transparent", "important");
+	node.style.setProperty("box-shadow", "none", "important");
+
+	watchUntilDone(clientId, () => {
+		node.classList.remove(PROCESSING_CLASS, "remove-outline");
+		node.style.setProperty("outline", prevOutline, prevOutlinePriority);
+		node.style.setProperty("box-shadow", prevBoxShadow, prevBoxShadowPriority);
+	});
 }
 
 /**
@@ -287,8 +307,11 @@ export function startImageProcessing(clientId) {
 /** Remove all AI processing effects (safety cleanup). */
 export function clearAllBlockProcessing() {
 	const doc = getEditorDocument();
-	[PROCESSING_CLASS, SHIMMER_CLASS].forEach((cls) => {
-		doc.querySelectorAll(`.${cls}`).forEach((node) => node.classList.remove(cls));
+	doc.querySelectorAll(`.${PROCESSING_CLASS}`).forEach((node) => {
+		node.classList.remove(PROCESSING_CLASS, "remove-outline");
+		node.style.removeProperty("outline");
+		node.style.removeProperty("box-shadow");
 	});
+	doc.querySelectorAll(`.${SHIMMER_CLASS}`).forEach((node) => node.classList.remove(SHIMMER_CLASS));
 	doc.querySelectorAll(".nfd-ghost-overlay").forEach((n) => n.remove());
 }

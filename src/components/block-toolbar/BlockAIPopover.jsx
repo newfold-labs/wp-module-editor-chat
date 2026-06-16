@@ -3,7 +3,7 @@ import { useRef, useState } from "@wordpress/element";
 import { __ } from "@wordpress/i18n";
 import { ArrowUp } from "lucide-react";
 
-import { TEXT_BLOCKS, IMAGE_BLOCKS, LOGO_BLOCK } from "../../services/blockToolbar/blockAI";
+import { IMAGE_BLOCKS, LOGO_BLOCK } from "../../services/blockToolbar/blockAI";
 import { sendToChat } from "../../services/blockToolbar/chatBridge";
 import { startBlockProcessing, startImageProcessing } from "../../services/blockToolbar/blockHighlight";
 
@@ -15,10 +15,10 @@ const BlockAIPopover = ({ block, anchorRef, onClose }) => {
 		const value = instruction.trim();
 		if (!value) return;
 
-		if (TEXT_BLOCKS.has(block.name)) {
-			startBlockProcessing(block.clientId);
-		} else if (IMAGE_BLOCKS.has(block.name) || block.name === LOGO_BLOCK) {
+		if (IMAGE_BLOCKS.has(block.name) || block.name === LOGO_BLOCK) {
 			startImageProcessing(block.clientId);
+		} else {
+			startBlockProcessing(block.clientId);
 		}
 
 		sendToChat(value, block.clientId);

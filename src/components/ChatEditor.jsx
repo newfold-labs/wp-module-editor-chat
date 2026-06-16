@@ -17,7 +17,7 @@ import { ChatMessages } from "@newfold/wp-module-ai-chat";
  */
 import useEditorChatREST from "../hooks/useEditorChatREST";
 import useEditorControls from "../hooks/useEditorControls";
-import { TEXT_BLOCKS, IMAGE_BLOCKS, LOGO_BLOCK } from "../services/blockToolbar/blockAI";
+import { IMAGE_BLOCKS, LOGO_BLOCK } from "../services/blockToolbar/blockAI";
 import { startBlockProcessing, startImageProcessing } from "../services/blockToolbar/blockHighlight";
 import { CHAT_SEND_EVENT } from "../services/blockToolbar/chatBridge";
 import ChatInput from "./chat/ChatInput";
@@ -61,10 +61,10 @@ const ChatEditor = () => {
 		(message, ...rest) => {
 			const selected = select("core/block-editor").getSelectedBlock();
 			if (selected) {
-				if (TEXT_BLOCKS.has(selected.name)) {
-					startBlockProcessing(selected.clientId);
-				} else if (IMAGE_BLOCKS.has(selected.name) || selected.name === LOGO_BLOCK) {
+				if (IMAGE_BLOCKS.has(selected.name) || selected.name === LOGO_BLOCK) {
 					startImageProcessing(selected.clientId);
+				} else {
+					startBlockProcessing(selected.clientId);
 				}
 			}
 			return handleSendMessage(message, ...rest);
