@@ -3,6 +3,7 @@
  */
 import {
 	BlockInserter, BluehostDropdownMenu,
+	ChatToggle,
 	DocumentOverviewToggle,
 	HeaderDivider,
 	HeaderSection,
@@ -17,6 +18,7 @@ export default function HeaderLeft() {
 
 			<HeaderDivider />
 
+			<ChatToggle />
 			<BlockInserter />
 			<DocumentOverviewToggle />
 

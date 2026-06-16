@@ -62,7 +62,11 @@ $radius: 12px;
 
 .nfd-editor-chat-enabled {
 	--wp-editor-canvas-background: #fff;
-	--nfd-frame-radius: #{$radius};
+	--nfd-frame-radius: 0;
+
+	&:has(:where(#nfd-editor-chat)) {
+		--nfd-frame-radius: #{$radius};
+	}
 
 	&:has(.interface-interface-skeleton__secondary-sidebar) {
 		--nfd-frame-radius: 0;

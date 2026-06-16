@@ -2,13 +2,14 @@
  * WordPress dependencies.
  */
 import { useDispatch, useSelect } from "@wordpress/data";
+import { __ } from "@wordpress/i18n";
 import { store as interfaceStore } from "@wordpress/interface";
 
 /**
  * Internal dependencies.
  */
 import HeaderIconButton from "./HeaderIconButton";
-import { ChatIcon } from "../icons";
+import { PanelLeftCloseIcon, PanelLeftOpenIcon } from "../icons";
 
 const COMPLEMENTARY_AREA_SCOPE = "core";
 const CHAT_IDENTIFIER = "nfd-editor-chat";
@@ -36,10 +37,15 @@ export default function ChatToggle() {
 	return (
 		<HeaderIconButton
 			onClick={toggle}
-			active={isActive}
 			id="nfd-editor-chat__header__chat-toggle"
+			label={
+				isActive
+					? __("Close Chat", "wp-module-editor-chat")
+					: __("Open Chat", "wp-module-editor-chat")
+			}
+			showTooltip
 		>
-			<ChatIcon />
+			{isActive ? <PanelLeftCloseIcon /> : <PanelLeftOpenIcon />}
 		</HeaderIconButton>
 	);
 }

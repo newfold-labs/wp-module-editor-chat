@@ -72,7 +72,6 @@
 	display: none;
 }
 
-// Fade the top/bottom edges of the message list (overlays clear the 8px scrollbar).
 .nfd-ai-chat-messages-shell {
 	--nfd-editor-chat-messages-fade: 28px;
 
@@ -80,7 +79,7 @@
 	&::after {
 		content: "";
 		position: absolute;
-		inset-inline: 0 8px;
+		inset-inline: 0 18px;
 		height: var(--nfd-editor-chat-messages-fade);
 		pointer-events: none;
 		z-index: 2;
