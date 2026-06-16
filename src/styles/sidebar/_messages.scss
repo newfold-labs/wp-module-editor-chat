@@ -66,3 +66,41 @@
 	transform: none;
 	box-shadow: none;
 }
+
+// Hide date separators ("Today", etc.).
+.nfd-ai-chat-message-divider {
+	display: none;
+}
+
+// Fade the top/bottom edges of the message list (overlays clear the 8px scrollbar).
+.nfd-ai-chat-messages-shell {
+	--nfd-editor-chat-messages-fade: 28px;
+
+	&::before,
+	&::after {
+		content: "";
+		position: absolute;
+		inset-inline: 0 8px;
+		height: var(--nfd-editor-chat-messages-fade);
+		pointer-events: none;
+		z-index: 2;
+	}
+
+	&::before {
+		top: 0;
+		background: linear-gradient(
+			to bottom,
+			var(--nfd-editor-chat-color-white),
+			transparent
+		);
+	}
+
+	&::after {
+		bottom: 0;
+		background: linear-gradient(
+			to top,
+			var(--nfd-editor-chat-color-white),
+			transparent
+		);
+	}
+}

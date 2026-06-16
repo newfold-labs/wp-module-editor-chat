@@ -1,3 +1,6 @@
+$border: 1px solid #e0e0e0;
+$radius: 12px;
+
 // Main sidebar layout and structure
 .interface-complementary-area__fill:has(#nfd-editor-chat),
 #nfd-editor-chat {
@@ -46,4 +49,54 @@
 	display: flex;
 	flex-direction: column;
 	height: 100%;
+	border: none;
+}
+
+// Move the AI Chat complementary area to the inline-start (left).
+.interface-interface-skeleton__sidebar:has(#nfd-editor-chat) {
+	order: -1;
+	border: none;
+	box-shadow: none;
+	z-index: 100001;
+}
+
+.nfd-editor-chat-enabled {
+	--wp-editor-canvas-background: #fff;
+	--nfd-frame-radius: #{$radius};
+
+	&:has(.interface-interface-skeleton__secondary-sidebar) {
+		--nfd-frame-radius: 0;
+	}
+
+	.interface-interface-skeleton__content {
+		border-top: $border;
+		border-inline-start: $border;
+		border-start-start-radius: var(--nfd-frame-radius);
+	}
+
+	.edit-site-visual-editor__editor-canvas {
+		border-start-start-radius: var(--nfd-frame-radius);
+	}
+
+	.edit-site-resizable-frame__inner-content {
+		background-color: #fff !important;
+	}
+
+	.interface-interface-skeleton__secondary-sidebar {
+		border: none;
+		box-shadow: none;
+		border-top: $border;
+		border-inline-start: $border;
+		border-start-start-radius: $radius;
+		overflow: hidden;
+	}
+
+	.interface-interface-skeleton__footer {
+		display: none;
+	}
+
+	.has-footer .interface-interface-skeleton__body,
+	&.has-footer .interface-interface-skeleton__body {
+		padding-bottom: 0;
+	}
 }
