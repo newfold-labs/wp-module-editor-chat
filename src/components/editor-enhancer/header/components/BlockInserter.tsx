@@ -31,7 +31,7 @@ export default function BlockInserter() {
 		<HeaderIconButton
 			onClick={toggleInserter}
 			id="nfd-editor-chat__header__block-inserter"
-			label={__("Add", "wp-module-editor-chat")}
+			label={__("Add Element", "wp-module-editor-chat")}
 			showTooltip
 		>
 			<PlusIcon />

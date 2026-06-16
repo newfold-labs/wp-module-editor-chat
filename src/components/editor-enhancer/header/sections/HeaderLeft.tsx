@@ -7,6 +7,7 @@ import {
 	DocumentOverviewToggle,
 	HeaderDivider,
 	HeaderSection,
+	NewChatButton,
 	RedoButton,
 	UndoButton,
 } from "../components";
@@ -18,7 +19,12 @@ export default function HeaderLeft() {
 
 			<HeaderDivider />
 
+			{/* Chat controls: collapse toggle + new chat (chat history lands here too). */}
+			<NewChatButton />
 			<ChatToggle />
+
+			<HeaderDivider />
+
 			<BlockInserter />
 			<DocumentOverviewToggle />
 

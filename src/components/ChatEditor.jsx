@@ -15,6 +15,7 @@ import { ChatMessages } from "@newfold/wp-module-ai-chat";
 /**
  * Internal dependencies
  */
+import EditorChatActionsProvider from "../context/editorChatActions";
 import useChatSlideAnimation from "../hooks/useChatSlideAnimation";
 import useEditorChatREST from "../hooks/useEditorChatREST";
 import useEditorControls from "../hooks/useEditorControls";
@@ -74,7 +75,10 @@ const ChatEditor = () => {
 	);
 
 	return (
-		<>
+		<EditorChatActionsProvider
+			handleNewChat={handleNewChat}
+			isNewChatDisabled={isNewChatDisabled}
+		>
 			<EditorEnhancer />
 			<PluginSidebarMoreMenuItem
 				scope={SIDEBAR_SCOPE}
@@ -116,7 +120,7 @@ const ChatEditor = () => {
 					/>
 				</div>
 			</PluginSidebar>
-		</>
+		</EditorChatActionsProvider>
 	);
 };
 
