@@ -32,7 +32,7 @@ export function isSupportedBlock(name) {
 
 /**
  * Read the editable text from a text block, regardless of which attribute holds it.
- * @param block
+ * @param {Object} block
  */
 function getBlockText(block) {
 	const a = block.attributes || {};
@@ -41,7 +41,7 @@ function getBlockText(block) {
 
 /**
  * Parse the JSON text payload an MCP ability returns in content[0].text.
- * @param mcpResult
+ * @param {Object} mcpResult
  */
 function parseAbilityResult(mcpResult) {
 	if (mcpResult?.isError || !mcpResult?.content?.[0]?.text) {
@@ -57,8 +57,8 @@ function parseAbilityResult(mcpResult) {
 /**
  * Rewrite text in place via a direct single-shot OpenAI call (no agent loop).
  * For core/media-text the editable text lives in an inner core/paragraph.
- * @param block
- * @param instruction
+ * @param {Object} block
+ * @param {string} instruction
  */
 async function applyText(block, instruction) {
 	const client = openaiClientRef.current;
@@ -106,8 +106,8 @@ async function applyText(block, instruction) {
 
 /**
  * Generate an image and swap it into the block.
- * @param block
- * @param instruction
+ * @param {Object} block
+ * @param {string} instruction
  */
 async function applyImage(block, instruction) {
 	const result = await callAbility(mcpClient, "blu-generate-image", { prompt: instruction });
@@ -127,7 +127,7 @@ async function applyImage(block, instruction) {
 
 /**
  * Regenerate the site logo. Mirrors handleRegenerateLogo (toolHandlers/regenerateLogo.js).
- * @param instruction
+ * @param {string} instruction
  */
 async function applyLogo(instruction) {
 	const result = await callAbility(mcpClient, "blu-regenerate-logo", { prompt: instruction });
@@ -150,7 +150,7 @@ async function applyLogo(instruction) {
  * @param {string} params.instruction     The user's typed instruction.
  * @param {string} [params.mediaTextMode] "text" | "image" — only for core/media-text.
  */
-export async function applyBlockAI({ block, instruction, mediaTextMode }) {
+export async function applyBlockAI({ block, instruction, mediaTextMode: _mediaTextMode }) {
 	const name = block.name;
 
 	if (name === LOGO_BLOCK) {

@@ -5,7 +5,7 @@ export const CHAT_SEND_EVENT = "nfd:chat:send";
  * (e.g. from the block toolbar popover).
  *
  * @param {string} message
- * @param          clientId
+ * @param {string} clientId
  */
 export function sendToChat(message, clientId) {
 	window.dispatchEvent(new CustomEvent(CHAT_SEND_EVENT, { detail: { message, clientId } }));

@@ -122,7 +122,7 @@ function watchUntilDone(clientId, onDone) {
  * Spinning gradient border — for all non-image blocks.
  * Suppresses the native editor selection outline while active, then restores it.
  * Removed automatically when the block is deselected or its content changes.
- * @param clientId
+ * @param {string} clientId
  */
 export function startBlockProcessing(clientId) {
 	if (!clientId) {
@@ -166,7 +166,7 @@ export function startBlockProcessing(clientId) {
  *
  * Container dimensions are frozen via an injected <style> rule with
  * !important so the layout never collapses under the overlay.
- * @param clientId
+ * @param {string} clientId
  */
 export function startImageProcessing(clientId) {
 	if (!clientId) {
@@ -200,7 +200,7 @@ export function startImageProcessing(clientId) {
 
 	const applyFreeze = (targetClientId) => {
 		removeFreeze();
-		const freezeStyle = doc.cgitreateElement("style");
+		const freezeStyle = doc.createElement("style");
 		freezeStyle.id = FREEZE_ID;
 		freezeStyle.textContent = `
 			[data-block="${targetClientId}"] {
@@ -277,7 +277,7 @@ export function startImageProcessing(clientId) {
 				return;
 			}
 			if (++tries < 60) {
-				requestAnimationFrame(tick);
+				win.requestAnimationFrame(tick);
 			} else {
 				fadeOut();
 			}
