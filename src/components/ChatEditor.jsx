@@ -15,6 +15,7 @@ import { ChatMessages } from "@newfold/wp-module-ai-chat";
 /**
  * Internal dependencies
  */
+import useChatSlideAnimation from "../hooks/useChatSlideAnimation";
 import useEditorChatREST from "../hooks/useEditorChatREST";
 import useEditorControls from "../hooks/useEditorControls";
 import ChatInput from "./chat/ChatInput";
@@ -28,6 +29,9 @@ const SIDEBAR_SCOPE = "core";
 
 const ChatEditor = () => {
 	const { enableComplementaryArea } = useDispatch(interfaceStore);
+
+	useChatSlideAnimation(SIDEBAR_SCOPE, SIDEBAR_NAME);
+
 	const { setShowTemplate } = useEditorControls();
 	const [templateLocked, setTemplateLocked] = useState(false);
 	const {

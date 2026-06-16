@@ -1,10 +1,51 @@
 $border: 1px solid #e0e0e0;
 $radius: 12px;
+$width: 400px;
+$slide-duration: 300ms;
+$slide-ease: cubic-bezier(0.6, 0, 0.4, 1);
 
 // Main sidebar layout and structure
-.interface-complementary-area__fill:has(#nfd-editor-chat),
 #nfd-editor-chat {
-	width: 400px !important;
+	width: $width !important;
+}
+
+// Slide the panel in by re-driving WP's width tween at our panel width
+// (keyframes outrank framer-motion's inline width).
+.interface-complementary-area__fill:has(#nfd-editor-chat) {
+	animation: nfd-editor-chat-slide-in $slide-duration $slide-ease forwards;
+}
+
+// Slide out while closing; ChatEditor toggles this class during WP's exit window.
+body.nfd-editor-chat-closing .interface-complementary-area__fill:has(#nfd-editor-chat) {
+	animation: nfd-editor-chat-slide-out $slide-duration $slide-ease forwards;
+}
+
+@keyframes nfd-editor-chat-slide-in {
+	from {
+		width: 0;
+	}
+
+	to {
+		width: $width;
+	}
+}
+
+@keyframes nfd-editor-chat-slide-out {
+	from {
+		width: $width;
+	}
+
+	to {
+		width: 0;
+	}
+}
+
+// Respect reduced-motion preferences.
+@media (prefers-reduced-motion: reduce) {
+	.interface-complementary-area__fill:has(#nfd-editor-chat),
+	body.nfd-editor-chat-closing .interface-complementary-area__fill:has(#nfd-editor-chat) {
+		animation-duration: 1ms;
+	}
 }
 
 #nfd-editor-chat {
