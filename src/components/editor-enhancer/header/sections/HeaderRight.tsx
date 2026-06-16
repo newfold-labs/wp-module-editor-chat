@@ -2,7 +2,6 @@
  * Internal dependencies.
  */
 import {
-	ChatToggle,
 	DeviceSwitcher,
 	HeaderDivider,
 	HeaderSection,
@@ -18,7 +17,6 @@ export default function HeaderRight() {
 
 			<HeaderDivider />
 
-			<ChatToggle />
 			<ZoomToggle />
 
 			<HeaderDivider />

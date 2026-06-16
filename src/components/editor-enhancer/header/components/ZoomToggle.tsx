@@ -1,4 +1,9 @@
 /**
+ * WordPress dependencies.
+ */
+import { __ } from "@wordpress/i18n";
+
+/**
  * Internal dependencies.
  */
 import HeaderIconButton from "./HeaderIconButton";
@@ -13,7 +18,13 @@ export default function ZoomToggle() {
 	}
 
 	return (
-		<HeaderIconButton onClick={toggle} active={active} id="nfd-editor-chat__header__zoom-toggle">
+		<HeaderIconButton
+			onClick={toggle}
+			active={active}
+			id="nfd-editor-chat__header__zoom-toggle"
+			label={__("Zoom Out", "wp-module-editor-chat")}
+			showTooltip
+		>
 			<ZoomIcon />
 		</HeaderIconButton>
 	);

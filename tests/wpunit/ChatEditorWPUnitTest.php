@@ -280,4 +280,84 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 
 		delete_option( 'nfd_module_onboarding_state_input' );
 	}
+
+	// ── add_editor_canvas_styles ───────────────────────────────────────
+
+	/**
+	 * Constructor registers the block_editor_settings_all filter at priority 10.
+	 *
+	 * @return void
+	 */
+	public function test_constructor_registers_block_editor_settings_filter() {
+		new ChatEditor();
+		$this->assertSame(
+			10,
+			has_filter( 'block_editor_settings_all', array( ChatEditor::class, 'add_editor_canvas_styles' ) )
+		);
+	}
+
+	/**
+	 * Leaves settings untouched outside the Site Editor context.
+	 *
+	 * @return void
+	 */
+	public function test_add_editor_canvas_styles_skips_non_site_editor_context() {
+		$_GET['referrer'] = 'nfd-editor-chat';
+		$context          = new \WP_Block_Editor_Context( array( 'name' => 'core/edit-post' ) );
+		$settings         = array( 'styles' => array() );
+
+		$result = ChatEditor::add_editor_canvas_styles( $settings, $context );
+
+		$this->assertSame( $settings, $result );
+	}
+
+	/**
+	 * Leaves settings untouched in the Site Editor when no referrer is set.
+	 *
+	 * @return void
+	 */
+	public function test_add_editor_canvas_styles_skips_when_no_referrer() {
+		unset( $_GET['referrer'] );
+		$context  = new \WP_Block_Editor_Context( array( 'name' => 'core/edit-site' ) );
+		$settings = array( 'styles' => array() );
+
+		$result = ChatEditor::add_editor_canvas_styles( $settings, $context );
+
+		$this->assertSame( $settings, $result );
+	}
+
+	/**
+	 * Leaves settings untouched when the referrer is not in the allowed list.
+	 *
+	 * @return void
+	 */
+	public function test_add_editor_canvas_styles_skips_when_wrong_referrer() {
+		$_GET['referrer'] = 'some-other-referrer';
+		$context          = new \WP_Block_Editor_Context( array( 'name' => 'core/edit-site' ) );
+		$settings         = array( 'styles' => array() );
+
+		$result = ChatEditor::add_editor_canvas_styles( $settings, $context );
+
+		$this->assertSame( $settings, $result );
+	}
+
+	/**
+	 * Appends the rounded-corner canvas style for a valid Site Editor request.
+	 *
+	 * @return void
+	 */
+	public function test_add_editor_canvas_styles_appends_style_for_valid_request() {
+		$_GET['referrer'] = 'nfd-editor-chat';
+		$context          = new \WP_Block_Editor_Context( array( 'name' => 'core/edit-site' ) );
+		$settings         = array( 'styles' => array( array( 'css' => '.existing{}' ) ) );
+
+		$result = ChatEditor::add_editor_canvas_styles( $settings, $context );
+
+		$this->assertCount( 2, $result['styles'] );
+
+		$appended = end( $result['styles'] );
+		$this->assertArrayHasKey( 'css', $appended );
+		$this->assertStringContainsString( '.is-root-container', $appended['css'] );
+		$this->assertStringContainsString( 'border-start-start-radius:12px', $appended['css'] );
+	}
 }
