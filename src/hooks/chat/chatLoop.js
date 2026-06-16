@@ -22,7 +22,16 @@ import {
 } from "./conversationUtils";
 import { EXECUTE_NUDGE, SUMMARIZE_NUDGE, buildEditorContext } from "../../utils/editorContext";
 import { executeToolCallsForREST } from "../../services/toolDispatcher";
+import { finalizeStreamingMessage, removeStreamingMessage } from "./streamMessageHelpers";
 import logger from "../../utils/logger";
+
+/**
+ * Stable ids for the two assistant slots in a turn (plan preamble vs final reply).
+ * @param ts
+ */
+const planStreamId = (ts) => `assistant-${ts}-plan`;
+const replyStreamId = (ts) => `assistant-${ts}-reply`;
+const closingStreamId = (ts) => `assistant-${ts}-closing`;
 
 /**
  * Run the function-calling loop for a single user message.
@@ -36,7 +45,6 @@ export async function runChatLoop(userMessage, deps) {
 		isFirstMessageRef,
 		setMessages,
 		setStatus,
-		setCurrentResponse,
 		openaiTools,
 		streamCompletion,
 		buildToolCtx,
@@ -70,7 +78,6 @@ export async function runChatLoop(userMessage, deps) {
 
 	// Single-pass function-calling loop — no separate reasoning pass.
 	let iterations = 0;
-	let msgSeq = 0;
 	let toolsJustExecuted = false;
 	// Whether we've already surfaced a plan preamble for this turn. The model is
 	// nudged to restate "I'll do X" before every tool pass, so a multi-pass turn
@@ -100,7 +107,8 @@ export async function runChatLoop(userMessage, deps) {
 		};
 
 		setStatus(CHAT_STATUS.GENERATING);
-		setCurrentResponse("");
+
+		const streamMessageId = planShown ? replyStreamId(ts) : planStreamId(ts);
 
 		// ── Tool-calling pass ──
 		// Dynamically select tools based on the user's message:
@@ -121,7 +129,10 @@ export async function runChatLoop(userMessage, deps) {
 		];
 
 		const toolPassStart = performance.now();
-		const { content, toolCalls } = await streamCompletion(toolMessages, toolsForPass, {});
+		const { content, toolCalls } = await streamCompletion(toolMessages, toolsForPass, {
+			resetStream: planShown,
+			streamMessageId,
+		});
 		logger.log(
 			`[EditorChat] Tool pass #${iterations} LLM: ${(performance.now() - toolPassStart).toFixed(0)}ms (${toolCalls?.length || 0} tool calls)`
 		);
@@ -132,23 +143,12 @@ export async function runChatLoop(userMessage, deps) {
 				role: "assistant",
 				content,
 			});
-			setCurrentResponse("");
-			setMessages((prev) => [
-				...prev,
-				{
-					id: `assistant-${ts}-${msgSeq++}`,
-					type: "assistant",
-					role: "assistant",
-					content,
-					timestamp: new Date(),
-				},
-			]);
+			finalizeStreamingMessage(setMessages, streamMessageId, content);
 			endedNaturally = true;
 			break;
 		}
 
 		// Tool calls — execute them
-		setCurrentResponse("");
 		setStatus(CHAT_STATUS.TOOL_CALL);
 
 		// Retry detection — the tracker hashes (name, arguments) pairs, so it
@@ -234,16 +234,10 @@ export async function runChatLoop(userMessage, deps) {
 		// keeps its own context; we just don't render the repeat.
 		if (content && content.trim() && !planShown) {
 			planShown = true;
-			setMessages((prev) => [
-				...prev,
-				{
-					id: `assistant-${ts}-${msgSeq++}-plan`,
-					type: "assistant",
-					role: "assistant",
-					content,
-					timestamp: new Date(),
-				},
-			]);
+			finalizeStreamingMessage(setMessages, streamMessageId, content);
+		} else {
+			// Repeat preamble or empty plan — drop the in-progress stream row.
+			removeStreamingMessage(setMessages, streamMessageId);
 		}
 
 		// Handle truncated tool calls — skip execution, return error
@@ -348,7 +342,7 @@ export async function runChatLoop(userMessage, deps) {
 	// turn ends with a coherent response (or a clear "here's what I need").
 	if (!endedNaturally && !userAborted && !abortControllerRef?.current?.signal?.aborted) {
 		setStatus(CHAT_STATUS.SUMMARIZING);
-		setCurrentResponse("");
+		const closingId = closingStreamId(ts);
 		const closingContext = buildEditorContext();
 		const closingMessages = [
 			...conversationHistoryRef.current,
@@ -357,20 +351,15 @@ export async function runChatLoop(userMessage, deps) {
 				content: `<editor_context>\n${closingContext}\n</editor_context>\n\n${SUMMARIZE_NUDGE}`,
 			},
 		];
-		const { content: closing } = await streamCompletion(closingMessages, [], {});
-		setCurrentResponse("");
+		const { content: closing } = await streamCompletion(closingMessages, [], {
+			resetStream: true,
+			streamMessageId: closingId,
+		});
 		if (closing && closing.trim()) {
 			conversationHistoryRef.current.push({ role: "assistant", content: closing });
-			setMessages((prev) => [
-				...prev,
-				{
-					id: `assistant-${ts}-${msgSeq++}`,
-					type: "assistant",
-					role: "assistant",
-					content: closing,
-					timestamp: new Date(),
-				},
-			]);
+			finalizeStreamingMessage(setMessages, closingId, closing);
+		} else {
+			removeStreamingMessage(setMessages, closingId);
 		}
 	}
 

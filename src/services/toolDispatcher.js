@@ -52,12 +52,16 @@ export function upsertToolExecMsg(setMessages, tools, undoData) {
 	setMessages((prev) => {
 		// Scope: only merge with a tool_execution after the last user message
 		let lastUserIdx = -1;
+		let lastUserId = "turn";
 		for (let i = prev.length - 1; i >= 0; i--) {
 			if (prev[i].role === "user") {
 				lastUserIdx = i;
+				lastUserId = prev[i].id || `user-${i}`;
 				break;
 			}
 		}
+
+		const stableToolExecId = `tool-exec-${lastUserId}`;
 
 		// Find existing tool_execution message in the current turn
 		let existingIdx = -1;
@@ -72,15 +76,16 @@ export function upsertToolExecMsg(setMessages, tools, undoData) {
 			const existing = prev[existingIdx];
 			const updated = {
 				...existing,
+				id: existing.id || stableToolExecId,
 				executedTools: [...tools],
 				...(undoData ? { hasActions: true, undoData } : {}),
 			};
 			return [...prev.slice(0, existingIdx), updated, ...prev.slice(existingIdx + 1)];
 		}
 
-		// Create new — insert after reasoning or after last user message
+		// Create new — append at end of turn so plan preamble stays above actions.
 		const toolExecMsg = {
-			id: `tool-exec-${Date.now()}`,
+			id: stableToolExecId,
 			role: "assistant",
 			type: "tool_execution",
 			executedTools: [...tools],
@@ -88,17 +93,18 @@ export function upsertToolExecMsg(setMessages, tools, undoData) {
 			timestamp: new Date(),
 		};
 
-		let insertIdx = -1;
+		let afterReasoningIdx = -1;
 		for (let i = prev.length - 1; i > lastUserIdx; i--) {
 			if (prev[i].id?.endsWith("-reasoning")) {
-				insertIdx = i + 1;
+				afterReasoningIdx = i + 1;
 				break;
 			}
 		}
-		if (insertIdx === -1) {
-			insertIdx = Math.max(lastUserIdx + 1, 0);
+		if (afterReasoningIdx > -1) {
+			return [...prev.slice(0, afterReasoningIdx), toolExecMsg, ...prev.slice(afterReasoningIdx)];
 		}
-		return [...prev.slice(0, insertIdx), toolExecMsg, ...prev.slice(insertIdx)];
+
+		return [...prev, toolExecMsg];
 	});
 }
 

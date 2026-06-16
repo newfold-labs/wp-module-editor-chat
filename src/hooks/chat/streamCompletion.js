@@ -5,22 +5,28 @@
  */
 import { safeParseJSON } from "../../utils/jsonUtils";
 import logger from "../../utils/logger";
+import { resetStreamingMessage, upsertStreamingMessage } from "./streamMessageHelpers";
 
 /**
  * Stream a chat completion and accumulate tool calls.
  *
  * @param {Array}  msgs      Messages array for the API
  * @param {Array}  tools     OpenAI tools array
- * @param {Object} [options] Extra options (model, temperature, stripPrefix, silent, etc.)
- * @param {Object} deps      Dependencies: { openaiClientRef, abortControllerRef, setCurrentResponse }
+ * @param {Object} [options] Extra options (model, temperature, stripPrefix, silent, resetStream, etc.)
+ * @param {Object} deps      Dependencies: { openaiClientRef, abortControllerRef, setMessages }
  * @return {Promise<{content: string, toolCalls: Array|null, finishReason: string|null}>} Streamed completion result
  */
 export async function streamCompletion(msgs, tools, options = {}, deps) {
-	const { openaiClientRef, abortControllerRef, setCurrentResponse } = deps;
+	const { openaiClientRef, abortControllerRef, setMessages } = deps;
+	const streamMessageId = options.streamMessageId || null;
 
 	const client = openaiClientRef.current;
 	if (!client) {
 		throw new Error("OpenAI client not initialized");
+	}
+
+	if (options.resetStream && streamMessageId && setMessages) {
+		resetStreamingMessage(setMessages, streamMessageId);
 	}
 
 	// Model is controlled by the Worker's DEFAULT_MODEL env var.
@@ -44,8 +50,40 @@ export async function streamCompletion(msgs, tools, options = {}, deps) {
 	);
 
 	let fullMessage = "";
+	let displayMessage = "";
 	let finishReason = null;
 	const toolCallsInProgress = {};
+
+	// Batch in-place message updates to one paint per frame.
+	let streamUiRafId = null;
+	const scheduleStreamUpsert = () => {
+		if (!setMessages || !streamMessageId || options.silent || !displayMessage) {
+			return;
+		}
+		if (streamUiRafId === null) {
+			streamUiRafId = window.requestAnimationFrame(() => {
+				streamUiRafId = null;
+				upsertStreamingMessage(setMessages, streamMessageId, displayMessage);
+			});
+		}
+	};
+	const flushStreamUiNow = () => {
+		if (streamUiRafId !== null) {
+			window.cancelAnimationFrame(streamUiRafId);
+			streamUiRafId = null;
+		}
+		if (setMessages && streamMessageId && displayMessage && !options.silent) {
+			upsertStreamingMessage(setMessages, streamMessageId, displayMessage);
+		}
+	};
+
+	const appendDisplayText = (text) => {
+		if (!text) {
+			return;
+		}
+		displayMessage += text;
+		scheduleStreamUpsert();
+	};
 
 	// Prefix stripping: buffer early chars to hide [PLAN] from the UI
 	const stripPrefix = options.stripPrefix || null;
@@ -84,11 +122,11 @@ export async function streamCompletion(msgs, tools, options = {}, deps) {
 						const remainder = prefixBuffer.slice(stripPrefix.length).trimStart();
 						if (remainder) {
 							needsTrimStart = false;
-							setCurrentResponse((prev) => prev + remainder);
+							appendDisplayText(remainder);
 						}
 					} else {
 						// Not a match, flush entire buffer
-						setCurrentResponse((prev) => prev + prefixBuffer);
+						appendDisplayText(prefixBuffer);
 					}
 				}
 				// Still buffering — don't update UI yet
@@ -101,9 +139,7 @@ export async function streamCompletion(msgs, tools, options = {}, deps) {
 					cleaned = cleaned.trimStart();
 					needsTrimStart = false;
 				}
-				if (cleaned) {
-					setCurrentResponse((prev) => prev + cleaned);
-				}
+				appendDisplayText(cleaned);
 			}
 		}
 
@@ -140,8 +176,9 @@ export async function streamCompletion(msgs, tools, options = {}, deps) {
 
 	// Flush any unresolved prefix buffer (response shorter than prefix length)
 	if (!prefixResolved && prefixBuffer) {
-		setCurrentResponse((prev) => prev + prefixBuffer);
+		appendDisplayText(prefixBuffer);
 	}
+	flushStreamUiNow();
 
 	abortControllerRef.current = null;
 
