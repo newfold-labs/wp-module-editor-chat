@@ -20,6 +20,7 @@ import useEditorControls from "../hooks/useEditorControls";
 import { IMAGE_BLOCKS, LOGO_BLOCK } from "../services/blockToolbar/blockAI";
 import { startBlockProcessing, startImageProcessing } from "../services/blockToolbar/blockHighlight";
 import { CHAT_SEND_EVENT } from "../services/blockToolbar/chatBridge";
+import { formatImageEditUserMessage } from "../utils/editorContext";
 import ChatInput from "./chat/ChatInput";
 import WelcomeScreen from "./chat/WelcomeScreen";
 import SidebarHeader from "./sidebar/SidebarHeader";
@@ -60,14 +61,18 @@ const ChatEditor = () => {
 	const sendWithBlockFeedback = useCallback(
 		(message, ...rest) => {
 			const selected = select("core/block-editor").getSelectedBlock();
+			let enrichedMessage = message;
+			let editClientId = null;
 			if (selected) {
 				if (IMAGE_BLOCKS.has(selected.name) || selected.name === LOGO_BLOCK) {
 					startImageProcessing(selected.clientId);
+					editClientId = selected.clientId;
 				} else {
 					startBlockProcessing(selected.clientId);
 				}
+				enrichedMessage = formatImageEditUserMessage(message, selected.clientId);
 			}
-			return handleSendMessage(message, ...rest);
+			return handleSendMessage(enrichedMessage, message, editClientId, ...rest);
 		},
 		[handleSendMessage]
 	);
@@ -77,8 +82,12 @@ const ChatEditor = () => {
 		const handler = (e) => {
 			const message = e.detail?.message;
 			if (!message) return;
+
+			const clientId = e.detail?.clientId || null;
+			const enrichedMessage = formatImageEditUserMessage(message, clientId);
+
 			enableComplementaryArea(SIDEBAR_SCOPE, SIDEBAR_NAME);
-			handleSendMessage(message);
+			handleSendMessage(enrichedMessage, message, clientId);
 		};
 		window.addEventListener(CHAT_SEND_EVENT, handler);
 		return () => window.removeEventListener(CHAT_SEND_EVENT, handler);

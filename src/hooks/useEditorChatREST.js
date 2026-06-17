@@ -23,6 +23,7 @@ import useChatSideEffects from "./chat/useChatSideEffects";
 import useChangeActions from "./chat/useChangeActions";
 import { loadActiveChat, clearActiveChat } from "./chat/activeChatStorage";
 import { resetGeneratedImageCache } from "../services/toolDispatcher";
+import { setActiveImageEditTarget } from "../services/imageCache";
 import logger from "../utils/logger";
 
 /**
@@ -165,7 +166,7 @@ const useEditorChatREST = () => {
 
 	// ── handleSendMessage ──
 	const handleSendMessage = useCallback(
-		async (messageContent) => {
+		async (messageContent, displayMessage = messageContent, editClientId = null) => {
 			if (!openaiClientRef.current || configStatus !== "ready") {
 				setError("Chat is not ready. Please wait for initialization.");
 				return;
@@ -180,6 +181,9 @@ const useEditorChatREST = () => {
 			setCurrentResponse("");
 			setError(null);
 			resetGeneratedImageCache();
+			// Record the image block being edited AFTER the reset, so the dispatcher
+			// can route generate→edit even though the chat sidebar steals selection.
+			setActiveImageEditTarget(editClientId);
 
 			const requestStart = performance.now();
 			try {
@@ -193,6 +197,7 @@ const useEditorChatREST = () => {
 					streamCompletion,
 					buildToolCtx,
 					abortControllerRef,
+					displayMessage,
 				});
 
 				logger.debug(

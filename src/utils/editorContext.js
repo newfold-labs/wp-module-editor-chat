@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /**
  * Editor context utilities.
  *
@@ -13,6 +12,8 @@ import {
 	getSelectedBlocks,
 } from "./editorHelpers";
 import { getCurrentGlobalStyles } from "../services/globalStylesService";
+import { IMAGE_BLOCKS } from "../services/blockToolbar/blockAI";
+import { getBlockImageUrl } from "../services/imageAbility";
 import { NFD_CLASS_REFERENCE } from "./nfdClassReference";
 /**
  * Nudge injected with the user's message on the tool-calling pass. Asks the
@@ -33,6 +34,35 @@ export const EXECUTE_NUDGE = `Start your response with ONE short sentence (under
  * Asks the model for a brief confirmation instead of more tool calls.
  */
 export const SUMMARIZE_NUDGE = `All requested changes are applied. Respond with ONE brief sentence confirming what was done. Do not repeat the plan or call any tools.`;
+
+/**
+ * Enrich a toolbar message when the user is editing a selected image block.
+ *
+ * @param {string} instruction User instruction from the block toolbar.
+ * @param {string} [clientId]  Selected block clientId from the toolbar event.
+ * @return {string}
+ */
+export function formatImageEditUserMessage(instruction, clientId) {
+	if (!clientId) {
+		return instruction;
+	}
+
+	const block = wp.data.select("core/block-editor").getBlock(clientId);
+	if (!block || !IMAGE_BLOCKS.has(block.name)) {
+		return instruction;
+	}
+
+	const sourceUrl = getBlockImageUrl(block);
+	if (!sourceUrl) {
+		return instruction;
+	}
+
+	return (
+		`[Image edit request] Selected block: ${block.name} (id:${clientId}). ` +
+		`Current image URL: ${sourceUrl}. ` +
+		`User instruction: ${instruction}`
+	);
+}
 
 /**
  * Build editor context string with block tree and selected block markup.
