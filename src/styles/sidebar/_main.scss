@@ -1,7 +1,51 @@
+$border: 1px solid #e0e0e0;
+$radius: 12px;
+$width: 400px;
+$slide-duration: 300ms;
+$slide-ease: cubic-bezier(0.6, 0, 0.4, 1);
+
 // Main sidebar layout and structure
-.interface-complementary-area__fill:has(#nfd-editor-chat),
 #nfd-editor-chat {
-	width: 400px !important;
+	width: $width !important;
+}
+
+// Slide the panel in by re-driving WP's width tween at our panel width
+// (keyframes outrank framer-motion's inline width).
+.interface-complementary-area__fill:has(#nfd-editor-chat) {
+	animation: nfd-editor-chat-slide-in $slide-duration $slide-ease forwards;
+}
+
+// Slide out while closing; ChatEditor toggles this class during WP's exit window.
+body.nfd-editor-chat-closing .interface-complementary-area__fill:has(#nfd-editor-chat) {
+	animation: nfd-editor-chat-slide-out $slide-duration $slide-ease forwards;
+}
+
+@keyframes nfd-editor-chat-slide-in {
+	from {
+		width: 0;
+	}
+
+	to {
+		width: $width;
+	}
+}
+
+@keyframes nfd-editor-chat-slide-out {
+	from {
+		width: $width;
+	}
+
+	to {
+		width: 0;
+	}
+}
+
+// Respect reduced-motion preferences.
+@media (prefers-reduced-motion: reduce) {
+	.interface-complementary-area__fill:has(#nfd-editor-chat),
+	body.nfd-editor-chat-closing .interface-complementary-area__fill:has(#nfd-editor-chat) {
+		animation-duration: 1ms;
+	}
 }
 
 #nfd-editor-chat {
@@ -46,4 +90,58 @@
 	display: flex;
 	flex-direction: column;
 	height: 100%;
+	border: none;
+}
+
+// Move the AI Chat complementary area to the inline-start (left).
+.interface-interface-skeleton__sidebar:has(#nfd-editor-chat) {
+	order: -1;
+	border: none;
+	box-shadow: none;
+	z-index: 100001;
+}
+
+.nfd-editor-chat-enabled {
+	--wp-editor-canvas-background: #fff;
+	--nfd-frame-radius: 0;
+
+	&:has(:where(#nfd-editor-chat)) {
+		--nfd-frame-radius: #{$radius};
+	}
+
+	&:has(.interface-interface-skeleton__secondary-sidebar) {
+		--nfd-frame-radius: 0;
+	}
+
+	.interface-interface-skeleton__content {
+		border-top: $border;
+		border-inline-start: $border;
+		border-start-start-radius: var(--nfd-frame-radius);
+	}
+
+	.edit-site-visual-editor__editor-canvas {
+		border-start-start-radius: var(--nfd-frame-radius);
+	}
+
+	.edit-site-resizable-frame__inner-content {
+		background-color: #fff !important;
+	}
+
+	.interface-interface-skeleton__secondary-sidebar {
+		border: none;
+		box-shadow: none;
+		border-top: $border;
+		border-inline-start: $border;
+		border-start-start-radius: $radius;
+		overflow: hidden;
+	}
+
+	.interface-interface-skeleton__footer {
+		display: none;
+	}
+
+	.has-footer .interface-interface-skeleton__body,
+	&.has-footer .interface-interface-skeleton__body {
+		padding-bottom: 0;
+	}
 }

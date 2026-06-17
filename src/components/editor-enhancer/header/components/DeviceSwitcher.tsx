@@ -4,6 +4,7 @@
 import { store as editorStore } from "@wordpress/editor";
 import { useDispatch, useSelect } from "@wordpress/data";
 import { Button } from "@wordpress/components";
+import { __ } from "@wordpress/i18n";
 
 /**
  * External dependencies.
@@ -57,14 +58,17 @@ export default function DeviceSwitcher() {
 	const choices = [
 		{
 			value: "Desktop",
+			label: __("Desktop", "wp-module-editor-chat"),
 			icon: <DesktopIcon />,
 		},
 		{
 			value: "Tablet",
+			label: __("Tablet", "wp-module-editor-chat"),
 			icon: <TabletIcon />,
 		},
 		{
 			value: "Mobile",
+			label: __("Mobile", "wp-module-editor-chat"),
 			icon: <MobileIcon />,
 		},
 	];
@@ -79,6 +83,8 @@ export default function DeviceSwitcher() {
 					key={choice.value}
 					onClick={() => handleDevicePreviewChange(choice.value)}
 					active={choice.value === deviceType}
+					label={choice.label}
+					showTooltip
 				>
 					{choice.icon}
 				</DeviceSwitcherButton>
