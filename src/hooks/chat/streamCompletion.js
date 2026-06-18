@@ -5,6 +5,7 @@
  */
 import { safeParseJSON } from "../../utils/jsonUtils";
 import logger from "../../utils/logger";
+import { getAssistantDisplayMessage } from "./assistantResponse";
 import { resetStreamingMessage, upsertStreamingMessage } from "./streamMessageHelpers";
 
 /**
@@ -108,7 +109,7 @@ export async function streamCompletion(msgs, tools, options = {}, deps) {
 			fullMessage += delta.content;
 
 			// Silent mode: accumulate content but don't stream to UI
-			if (options.silent) {
+			if (options.silent || options.jsonMessageDisplay) {
 				continue;
 			}
 
@@ -175,9 +176,15 @@ export async function streamCompletion(msgs, tools, options = {}, deps) {
 	}
 
 	// Flush any unresolved prefix buffer (response shorter than prefix length)
-	if (!prefixResolved && prefixBuffer) {
+	if (!prefixResolved && prefixBuffer && !options.jsonMessageDisplay) {
 		appendDisplayText(prefixBuffer);
 	}
+
+	// Structured JSON responses: show only the "message" field, not raw JSON
+	if (options.jsonMessageDisplay && fullMessage && !options.silent) {
+		displayMessage = getAssistantDisplayMessage(fullMessage);
+	}
+
 	flushStreamUiNow();
 
 	abortControllerRef.current = null;

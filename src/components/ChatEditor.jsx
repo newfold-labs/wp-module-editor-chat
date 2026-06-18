@@ -75,10 +75,7 @@ const ChatEditor = () => {
 	);
 
 	return (
-		<EditorChatActionsProvider
-			handleNewChat={handleNewChat}
-			isNewChatDisabled={isNewChatDisabled}
-		>
+		<EditorChatActionsProvider handleNewChat={handleNewChat} isNewChatDisabled={isNewChatDisabled}>
 			<EditorEnhancer />
 			<PluginSidebarMoreMenuItem
 				scope={SIDEBAR_SCOPE}

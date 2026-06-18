@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /**
  * Editor context utilities.
  *
@@ -14,38 +13,162 @@ import {
 } from "./editorHelpers";
 import { getCurrentGlobalStyles } from "../services/globalStylesService";
 import { NFD_CLASS_REFERENCE } from "./nfdClassReference";
+
+/** Max blocks whose full markup is injected via extraClientIds. */
+export const MAX_CONTEXT_TARGET_BLOCKS = 2;
+
+const MAX_MARKUP_CHARS = 8000;
+const LARGE_BLOCK_INNER_THRESHOLD = 40;
+
 /**
- * Nudge injected with the user's message on the tool-calling pass. Asks the
- * model to emit a one-sentence natural-language plan as assistant text BEFORE
- * its tool_calls, then proceed directly to tools in the same response.
+ * Count all inner blocks recursively.
  *
- * If the request is purely conversational (greeting, question, chat), the
- * model responds normally without tool_calls and the loop exits.
- *
- * Editing tasks with reasonable defaults (add a column, change a color,
- * duplicate a block, etc.) MUST be executed using the existing design as
- * reference — do NOT ask for clarification on trivia the model can infer.
+ * @param {Object} block Block object from the editor store.
+ * @return {number} Total inner block count.
  */
-export const EXECUTE_NUDGE = `Start your response with ONE short sentence (under 20 words) addressed to the user that states what you're about to do (e.g. "I'll add another column matching the existing design."). Then immediately call the tool(s) needed. Do not mention tool names, client IDs, or technical details in the sentence. For editing tasks where reasonable defaults exist (matching existing design, plausible placeholder content, standard icon choices), EXECUTE directly — do not ask clarifying questions unless the request is genuinely ambiguous. If the message is purely conversational, just reply normally with no tool calls.`;
+function countInnerBlocks(block) {
+	if (!block?.innerBlocks?.length) {
+		return 0;
+	}
+	return block.innerBlocks.reduce((sum, ib) => sum + 1 + countInnerBlocks(ib), 0);
+}
+
+/**
+ * Serialize one block's markup for AI context.
+ *
+ * @param {Object} blockEditor core/block-editor selector
+ * @param {string} clientId    Block clientId
+ * @return {{ markup: string, blockName: string, block: Object }|null} Serialized markup or null.
+ */
+function serializeBlockMarkup(blockEditor, clientId) {
+	const fullBlock = blockEditor.getBlock(clientId);
+	if (!fullBlock) {
+		return null;
+	}
+	const { serialize: wpSerialize } = wp.blocks;
+	let markup;
+	if (fullBlock.name === "core/template-part") {
+		const innerBlocks = blockEditor.getBlocks(clientId);
+		markup = innerBlocks.map((b) => wpSerialize(b)).join("\n");
+	} else {
+		markup = wpSerialize(fullBlock);
+	}
+	return { markup, blockName: fullBlock.name, block: fullBlock };
+}
+
+/**
+ * Append ancestor chain for a target block.
+ *
+ * @param {string} context     Context built so far
+ * @param {Object} blockEditor core/block-editor selector
+ * @param {Object} block       Target block
+ * @return {string} Context with ancestor chain appended.
+ */
+function appendAncestorChain(context, blockEditor, block) {
+	const parentIds = blockEditor.getBlockParents(block.clientId) || [];
+	if (parentIds.length === 0) {
+		return context;
+	}
+	let next = context;
+	next += `\n\nAncestors of ${block.name} (id:${block.clientId}) — nearest first:`;
+	for (let i = parentIds.length - 1; i >= 0; i--) {
+		const parent = blockEditor.getBlock(parentIds[i]);
+		if (parent) {
+			next += `\n  ${parent.name} (id:${parent.clientId})`;
+		}
+	}
+	next += `\n  <root>`;
+	return next;
+}
+
+/**
+ * Append serialized markup sections for the given clientIds.
+ *
+ * @param {string}   context     Context built so far
+ * @param {Object}   blockEditor core/block-editor selector
+ * @param {string[]} clientIds   Blocks to serialize
+ * @param {string}   label       Section heading
+ * @return {string} Context with markup sections appended.
+ */
+function appendMarkupSections(context, blockEditor, clientIds, label) {
+	if (!clientIds.length) {
+		return context;
+	}
+	let next = context + `\n\n${label}:`;
+	for (const clientId of clientIds) {
+		const serialized = serializeBlockMarkup(blockEditor, clientId);
+		if (!serialized) {
+			continue;
+		}
+		const { markup, blockName, block } = serialized;
+		const innerCount = countInnerBlocks(block);
+		if (innerCount >= LARGE_BLOCK_INNER_THRESHOLD) {
+			next += `\n\n--- ${blockName} (id:${clientId}) [LARGE: ${innerCount} inner blocks — use blu-update-block-attrs on children or blu-get-block-markup for a subtree] ---`;
+			continue;
+		}
+		let sectionMarkup = markup;
+		if (sectionMarkup.length > MAX_MARKUP_CHARS) {
+			sectionMarkup =
+				sectionMarkup.slice(0, MAX_MARKUP_CHARS) +
+				"\n...[markup truncated for context size — call blu-get-block-markup for the full block]";
+		}
+		next += `\n\n--- ${blockName} (id:${clientId}) ---\n${sectionMarkup}`;
+	}
+	return next;
+}
+
+/**
+ * Nudge injected with the user's message on the tool-calling pass.
+ *
+ * The model must reply with a JSON object (see ASSISTANT_JSON_FORMAT) as its
+ * entire text output, then call tools in the same response when appropriate.
+ */
+export const ASSISTANT_JSON_FORMAT = `Your entire text output MUST be a single JSON object — no markdown fences, no text before or after:
+{"message":"Short sentence for the user (under 20 words)"}
+
+When you will call editing tools in the same response, put your plan ONLY in "message", then call the tool(s). Do not mention tool names or client IDs in message.
+
+If no block is selected and you need serialized block markup before editing, reply with JSON only (no tool calls):
+{"message":"Brief note","need_blocks_markup":["exact-clientId-from-block-tree"]}
+Use 1–2 exact clientIds from the block tree. If markup is already under "Selected block markup" or "Target block markup", or blu-update-block-attrs is enough, use the first format and call tools instead.
+
+If the request is purely conversational, reply with JSON only and no tool calls:
+{"message":"Your reply"}
+
+Output rules:
+- Return ONLY valid JSON.
+- No explanations, no comments, no extra text.
+`;
+
+export const EXECUTE_NUDGE = `${ASSISTANT_JSON_FORMAT}
+
+For editing tasks where reasonable defaults exist (matching existing design, plausible placeholder content, standard icon choices), EXECUTE directly — do not ask clarifying questions unless the request is genuinely ambiguous.`;
 
 /**
  * Nudge injected after tools have been executed successfully.
  * Asks the model for a brief confirmation instead of more tool calls.
  */
-export const SUMMARIZE_NUDGE = `All requested changes are applied. Respond with ONE brief sentence confirming what was done. Do not repeat the plan or call any tools.`;
+export const SUMMARIZE_NUDGE = `All requested changes are applied. Respond with JSON only — no tool calls:
+{"message":"One brief sentence confirming what was done."}`;
 
 /**
  * Build editor context string with block tree and selected block markup.
  * This is prepended to user messages so the AI has current page state.
  *
- * @return {string} Editor context string wrapped in <editor_context> tags
+ * @param {Object}   [options]
+ * @param {string[]} [options.extraClientIds] Target blocks (AI-requested) whose markup is included
+ * @return {string} Editor context string
  */
-export const buildEditorContext = () => {
+export const buildEditorContext = ({ extraClientIds = [] } = {}) => {
 	const { select: wpSelect } = wp.data;
 	const blockEditor = wpSelect("core/block-editor");
 	const blocks = getCurrentPageBlocks();
 	const selectedBlocks = getSelectedBlocks();
 	const selectedClientIds = selectedBlocks.map((b) => b.clientId);
+	const selectedSet = new Set(selectedClientIds);
+	const extraTargets = (extraClientIds || [])
+		.filter((id) => id && !selectedSet.has(id))
+		.slice(0, MAX_CONTEXT_TARGET_BLOCKS);
 
 	const pageTitle = getCurrentPageTitle();
 	const pageId = getCurrentPageId();
@@ -70,47 +193,33 @@ export const buildEditorContext = () => {
 		collapseUnselected: selectedBlocks.length > 0,
 	});
 
-	// Layer 2a: Ancestor chain for each selected block. Surfaces the clientIds
-	// of parent blocks so the AI can edit a container (e.g. core/columns) when
-	// the user's selection is nested inside it, without an extra get-block-markup
-	// round-trip to discover the parent id.
-	if (selectedBlocks.length > 0) {
-		for (const sel of selectedBlocks) {
-			// getBlockParents returns clientIds from root → nearest parent.
-			const parentIds = blockEditor.getBlockParents(sel.clientId) || [];
-			if (parentIds.length === 0) {
-				continue;
-			}
-			context += `\n\nAncestors of ${sel.name} (id:${sel.clientId}) — nearest first:`;
-			for (let i = parentIds.length - 1; i >= 0; i--) {
-				const parent = blockEditor.getBlock(parentIds[i]);
-				if (parent) {
-					context += `\n  ${parent.name} (id:${parent.clientId})`;
-				}
-			}
-			context += `\n  <root>`;
+	// Layer 2a: Ancestor chains for selected and AI-requested target blocks.
+	const ancestorBlocks = [...selectedBlocks];
+	for (const clientId of extraTargets) {
+		const block = blockEditor.getBlock(clientId);
+		if (block) {
+			ancestorBlocks.push(block);
 		}
 	}
+	for (const block of ancestorBlocks) {
+		context = appendAncestorChain(context, blockEditor, block);
+	}
 
-	// Layer 2: Selected block markup (one section per selected block)
+	// Layer 2b: Selected block markup
 	if (selectedBlocks.length > 0) {
-		const { serialize: wpSerialize } = wp.blocks;
 		const label = selectedBlocks.length === 1 ? "Selected block markup" : "Selected blocks markup";
-		context += `\n\n${label}:`;
-		for (const sel of selectedBlocks) {
-			const fullBlock = blockEditor.getBlock(sel.clientId);
-			if (fullBlock) {
-				// Template parts serialize to a self-closing comment; show inner blocks instead.
-				let markup;
-				if (fullBlock.name === "core/template-part") {
-					const innerBlocks = blockEditor.getBlocks(sel.clientId);
-					markup = innerBlocks.map((b) => wpSerialize(b)).join("\n");
-				} else {
-					markup = wpSerialize(fullBlock);
-				}
-				context += `\n\n--- ${fullBlock.name} (id:${fullBlock.clientId}) ---\n${markup}`;
-			}
-		}
+		context = appendMarkupSections(
+			context,
+			blockEditor,
+			selectedBlocks.map((b) => b.clientId),
+			label
+		);
+	}
+
+	// Layer 2c: Target block markup (requested via need_block_markup JSON)
+	if (extraTargets.length > 0) {
+		const label = extraTargets.length === 1 ? "Target block markup" : "Target blocks markup";
+		context = appendMarkupSections(context, blockEditor, extraTargets, label);
 	}
 
 	// Inject active color palette so the AI knows actual hex values
