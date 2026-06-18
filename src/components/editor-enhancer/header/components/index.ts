@@ -6,6 +6,7 @@ export { default as DocumentOverviewToggle } from "./DocumentOverviewToggle";
 export { default as HeaderDivider } from "./HeaderDivider";
 export { default as HeaderIconButton } from "./HeaderIconButton";
 export { default as HeaderSection } from "./HeaderSection";
+export { default as NewChatButton } from "./NewChatButton";
 export { default as PreviewButton } from "./PreviewButton";
 export { default as RedoButton } from "./RedoButton";
 export { default as SaveButton } from "./SaveButton";

@@ -30,6 +30,8 @@ final class ChatEditor {
 		\add_action( 'admin_bar_menu', array( __CLASS__, 'admin_bar_menu' ), 99 );
 		\add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_admin_bar_assets' ) );
 		\add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_admin_bar_assets' ) );
+		// Editor settings build before admin_enqueue_scripts, so register here.
+		\add_filter( 'block_editor_settings_all', array( __CLASS__, 'add_editor_canvas_styles' ), 10, 2 );
 	}
 
 	/**
@@ -203,11 +205,23 @@ final class ChatEditor {
 				true
 			);
 
+			// In dev, version by file mtime so CSS-only rebuilds bust the cache
+			// ($asset['version'] only changes with the JS bundle).
+			$style_version = $asset['version'];
+
+			if ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ) {
+				$style_path = NFD_EDITOR_CHAT_BUILD_DIR . '/chat-editor.css';
+
+				if ( \is_readable( $style_path ) ) {
+					$style_version = (string) \filemtime( $style_path );
+				}
+			}
+
 			\wp_register_style(
 				'nfd-editor-chat',
 				NFD_EDITOR_CHAT_BUILD_URL . '/chat-editor.css',
 				array(),
-				$asset['version']
+				$style_version
 			);
 
 			$args = array(
@@ -310,6 +324,36 @@ final class ChatEditor {
 		}
 
 		return $classes;
+	}
+
+	/**
+	 * Round the top block's selection outline to match the framed canvas corner
+	 * (the outline is drawn inside the iframe, out of reach of our stylesheet).
+	 *
+	 * @param array                   $settings Block editor settings.
+	 * @param \WP_Block_Editor_Context $context  Editor context.
+	 *
+	 * @return array
+	 */
+	public static function add_editor_canvas_styles( $settings, $context ) {
+		if ( ! isset( $context->name ) || 'core/edit-site' !== $context->name ) {
+			return $settings;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Referrer parameter is validated against allowed list, no data modification.
+		if ( ! isset( $_GET['referrer'] ) || ! \in_array( $_GET['referrer'], self::$allowed_referrers, true ) ) {
+			return $settings;
+		}
+
+		// 12px matches $radius in _main.scss.
+		$css = '.is-root-container > .block-editor-block-list__block:first-child,'
+			. '.is-root-container > .block-editor-block-list__block:first-child::before,'
+			. '.is-root-container > .block-editor-block-list__block:first-child::after'
+			. '{border-start-start-radius:12px;}';
+
+		$settings['styles'][] = array( 'css' => $css );
+
+		return $settings;
 	}
 
 	/**

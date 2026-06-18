@@ -4,6 +4,7 @@
 import { useDispatch, useSelect } from "@wordpress/data";
 import { store as editorStore } from "@wordpress/editor";
 import { useCallback } from "@wordpress/element";
+import { __ } from "@wordpress/i18n";
 
 /**
  * Internal dependencies.
@@ -27,7 +28,12 @@ export default function BlockInserter() {
 	);
 
 	return (
-		<HeaderIconButton onClick={toggleInserter} id="nfd-editor-chat__header__block-inserter">
+		<HeaderIconButton
+			onClick={toggleInserter}
+			id="nfd-editor-chat__header__block-inserter"
+			label={__("Add Element", "wp-module-editor-chat")}
+			showTooltip
+		>
 			<PlusIcon />
 		</HeaderIconButton>
 	);

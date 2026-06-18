@@ -3,6 +3,7 @@
  */
 import { useDispatch, useSelect } from "@wordpress/data";
 import { store as editorStore } from "@wordpress/editor";
+import { __ } from "@wordpress/i18n";
 
 /**
  * Internal dependencies.
@@ -19,6 +20,8 @@ export default function RedoButton() {
 			onClick={redo}
 			disabled={!hasRedo}
 			id="nfd-editor-chat__header__redo"
+			label={__("Redo", "wp-module-editor-chat")}
+			showTooltip
 		>
 			<RedoIcon />
 		</HeaderIconButton>

@@ -195,6 +195,10 @@ export function startImageProcessing(clientId) {
 	const rootClientId = store.getBlockRootClientId(clientId) || "";
 	const blockIndex = store.getBlockIndex(clientId);
 
+	// The block the overlay is currently shadowing. Updated when the block is
+	// replaced (rewrite path) so repositioning keeps following the live node.
+	let targetClientId = clientId;
+
 	const FREEZE_ID = `nfd-freeze-${clientId}`;
 	const removeFreeze = () => doc.getElementById(FREEZE_ID)?.remove();
 
@@ -238,7 +242,34 @@ export function startImageProcessing(clientId) {
 	overlay.appendChild(ghostImg);
 	doc.body.appendChild(overlay);
 
+	// Keep the overlay glued to the live image. Layout can shift after submit —
+	// most notably the chat sidebar sliding open narrows the canvas and reflows
+	// the image — so a position captured once would leave the ghost stranded
+	// next to the real image (a visible "double"). Re-read the rect every frame
+	// until cleanup. When the block is mid-replacement the node is briefly gone;
+	// we just keep the last known position.
+	let rafId = null;
+	const reposition = () => {
+		const liveNode = doc.querySelector(`[data-block="${targetClientId}"]`);
+		const liveImg = liveNode?.querySelector("img");
+		if (liveImg) {
+			const rect = liveImg.getBoundingClientRect();
+			if (rect.width && rect.height) {
+				overlay.style.top = `${rect.top + win.scrollY}px`;
+				overlay.style.left = `${rect.left + win.scrollX}px`;
+				overlay.style.width = `${rect.width}px`;
+				overlay.style.height = `${rect.height}px`;
+			}
+		}
+		rafId = win.requestAnimationFrame(reposition);
+	};
+	rafId = win.requestAnimationFrame(reposition);
+
 	const removeAll = () => {
+		if (rafId !== null) {
+			win.cancelAnimationFrame(rafId);
+			rafId = null;
+		}
 		overlay.remove();
 		removeFreeze();
 	};
@@ -299,6 +330,7 @@ export function startImageProcessing(clientId) {
 				removeAll();
 				return;
 			}
+			targetClientId = newClientId;
 			applyFreeze(newClientId);
 			whenImageReady(newClientId);
 			return;
