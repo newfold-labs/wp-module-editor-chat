@@ -1,4 +1,5 @@
 .nfd-block-ai-popover {
+
 	.nfd-block-ai-popover__inner {
 		padding: 8px;
 		width: 280px;
@@ -72,7 +73,7 @@
 			display: block;
 			width: 16px;
 			height: 16px;
-			stroke: currentColor;
+			stroke: currentcolor;
 			fill: none;
 		}
 
@@ -94,6 +95,7 @@
 		padding: 0 4px;
 	}
 }
+
 .nfd-block-ai-toolbar-group {
 	display: flex;
 	align-items: center;
@@ -139,12 +141,29 @@
 }
 
 @keyframes nfd-blu-icon-shimmer {
-	0%   { color: #196cdf; }
-	20%  { color: #3d8fd9; }
-	40%  { color: #4a9fe8; }
-	60%  { color: #2271b1; }
-	80%  { color: #135e96; }
-	100% { color: #196cdf; }
-}
 
+	0% {
+		color: #196cdf;
+	}
+
+	20% {
+		color: #3d8fd9;
+	}
+
+	40% {
+		color: #4a9fe8;
+	}
+
+	60% {
+		color: #2271b1;
+	}
+
+	80% {
+		color: #135e96;
+	}
+
+	100% {
+		color: #196cdf;
+	}
+}
 
