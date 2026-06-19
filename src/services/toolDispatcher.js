@@ -397,15 +397,12 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 				// the request was sent, then the live selection. The active target is the
 				// reliable signal — the chat sidebar steals canvas selection, so
 				// getSelectedBlock() is often null by the time tools dispatch.
-				const targetClientId =
-					args.client_id || getActiveImageEditTarget() || null;
+				const targetClientId = args.client_id || getActiveImageEditTarget() || null;
 				const targetBlock = targetClientId
 					? wp.data.select("core/block-editor").getBlock(targetClientId)
 					: wp.data.select("core/block-editor").getSelectedBlock();
 				const sourceUrl =
-					targetBlock && IMAGE_BLOCKS.has(targetBlock.name)
-						? getBlockImageUrl(targetBlock)
-						: null;
+					targetBlock && IMAGE_BLOCKS.has(targetBlock.name) ? getBlockImageUrl(targetBlock) : null;
 
 				const progressLabel = sourceUrl
 					? __("Editing image…", "wp-module-editor-chat")
@@ -420,10 +417,9 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 					if (url) {
 						appendGeneratedImageUrl(url);
 						if (targetBlock && IMAGE_BLOCKS.has(targetBlock.name)) {
-							wp.data.dispatch("core/block-editor").updateBlockAttributes(
-								targetBlock.clientId,
-								{ url, id: 0 }
-							);
+							wp.data
+								.dispatch("core/block-editor")
+								.updateBlockAttributes(targetBlock.clientId, { url, id: 0 });
 						}
 					}
 					result = {
@@ -433,7 +429,11 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 								type: "text",
 								text: JSON.stringify(
 									url
-										? { success: true, message: sourceUrl ? "Image edited." : "Image generated.", url }
+										? {
+												success: true,
+												message: sourceUrl ? "Image edited." : "Image generated.",
+												url,
+											}
 										: { success: false, error: "No image URL returned." }
 								),
 							},

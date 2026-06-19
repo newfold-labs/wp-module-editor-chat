@@ -12,7 +12,9 @@ export function getBlockImageUrl(block) {
 	}
 
 	const url = block.attributes?.url || null;
-	if (!url) return null;
+	if (!url) {
+		return null;
+	}
 
 	// Cloudflare Image CDN proxy URLs embed the original URL after the transform params:
 	// https://hiive.cloud/cdn-cgi/image/format=auto,width=430,height=430/https://origin.example.com/img.png
@@ -39,20 +41,17 @@ export function parseImageAbilityUrl(mcpResult) {
 	}
 }
 
-
 /**
  * Call blu-edit-image when sourceUrl exists, otherwise blu-generate-image.
  *
- * @param {Object} mcpClient
- * @param {Object} params
- * @param {string} params.prompt
+ * @param {Object}      mcpClient
+ * @param {Object}      params
+ * @param {string}      params.prompt
  * @param {string|null} [params.sourceUrl]
  * @return {Promise<Object>}
  */
 export async function callImageAbility(mcpClient, { prompt, sourceUrl, ...opts }) {
 	const ability = sourceUrl ? "blu-edit-image" : "blu-generate-image";
-	const parameters = sourceUrl
-		? { prompt, source_url: sourceUrl, ...opts }
-		: { prompt, ...opts };
+	const parameters = sourceUrl ? { prompt, source_url: sourceUrl, ...opts } : { prompt, ...opts };
 	return callAbility(mcpClient, ability, parameters);
 }
