@@ -112,6 +112,7 @@
 	color: var(--nfd-editor-chat-color-primary) !important;
 	box-shadow: none;
 
+	/* stylelint-disable-next-line no-descending-specificity */
 	svg {
 		width: 22px;
 		height: 22px;
@@ -130,6 +131,7 @@
 		background: #fff !important;
 		color: #4a9fe8 !important;
 
+		/* stylelint-disable-next-line no-descending-specificity */
 		svg {
 			animation: none;
 		}

@@ -40,7 +40,7 @@ export const SUMMARIZE_NUDGE = `All requested changes are applied. Respond with 
  *
  * @param {string} instruction User instruction from the block toolbar.
  * @param {string} [clientId]  Selected block clientId from the toolbar event.
- * @return {string}
+ * @return {string} The formatted user message for the image edit request.
  */
 export function formatImageEditUserMessage(instruction, clientId) {
 	if (!clientId) {

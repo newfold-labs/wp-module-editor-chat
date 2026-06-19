@@ -4,7 +4,7 @@ import { IMAGE_BLOCKS } from "./blockToolbar/blockAI";
 /**
  * Get the image URL for a block.
  * @param {Object} block
- * @return {string|null}
+ * @return {string|null} The image URL for the block.
  */
 export function getBlockImageUrl(block) {
 	if (!block || !IMAGE_BLOCKS.has(block.name)) {
@@ -27,7 +27,7 @@ export function getBlockImageUrl(block) {
  * Parse the CDN URL from an MCP image ability response.
  *
  * @param {Object} mcpResult Result from callAbility / callImageAbility.
- * @return {string|null}
+ * @return {string|null} The image URL from the MCP result.
  */
 export function parseImageAbilityUrl(mcpResult) {
 	if (mcpResult?.isError || !mcpResult?.content?.[0]?.text) {
@@ -48,7 +48,7 @@ export function parseImageAbilityUrl(mcpResult) {
  * @param {Object}      params
  * @param {string}      params.prompt
  * @param {string|null} [params.sourceUrl]
- * @return {Promise<Object>}
+ * @return {Promise<Object>} The result of the image ability call.
  */
 export async function callImageAbility(mcpClient, { prompt, sourceUrl, ...opts }) {
 	const ability = sourceUrl ? "blu-edit-image" : "blu-generate-image";

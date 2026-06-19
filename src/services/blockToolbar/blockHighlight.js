@@ -202,12 +202,12 @@ export function startImageProcessing(clientId) {
 	const FREEZE_ID = `nfd-freeze-${clientId}`;
 	const removeFreeze = () => doc.getElementById(FREEZE_ID)?.remove();
 
-	const applyFreeze = (targetClientId) => {
+	const applyFreeze = (blockClientId) => {
 		removeFreeze();
 		const freezeStyle = doc.createElement("style");
 		freezeStyle.id = FREEZE_ID;
 		freezeStyle.textContent = `
-			[data-block="${targetClientId}"] {
+			[data-block="${blockClientId}"] {
 				min-height: ${nodeRect.height}px !important;
 			}
 		`;
@@ -282,10 +282,10 @@ export function startImageProcessing(clientId) {
 	};
 
 	// Wait for the (re)mounted node and its loaded image, then fade.
-	const whenImageReady = (targetClientId) => {
+	const whenImageReady = (blockClientId) => {
 		let tries = 0;
 		const tick = () => {
-			const targetNode = doc.querySelector(`[data-block="${targetClientId}"]`);
+			const targetNode = doc.querySelector(`[data-block="${blockClientId}"]`);
 			const newImg = targetNode?.querySelector("img");
 			if (newImg) {
 				if (newImg.complete && newImg.naturalWidth > 0) {

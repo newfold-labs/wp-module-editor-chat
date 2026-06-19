@@ -37,7 +37,7 @@ export function setActiveImageEditTarget(clientId) {
 /**
  * Get the clientId of the image block targeted by the current edit request.
  *
- * @return {string|null}
+ * @return {string|null} The clientId of the image block targeted by the current edit request.
  */
 export function getActiveImageEditTarget() {
 	return activeImageEditClientId;
