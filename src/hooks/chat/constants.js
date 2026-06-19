@@ -67,6 +67,7 @@ export const READ_ONLY_TOOLS = new Set([
 	"blu-get-active-theme",
 	"blu-highlight-block",
 	"blu-generate-image",
+	"blu-edit-image",
 	// Gateway / ability discovery
 	"blu-list-abilities",
 	"blu-get-ability-schema",

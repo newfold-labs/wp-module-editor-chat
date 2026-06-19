@@ -1,9 +1,9 @@
 /**
  * WordPress dependencies
  */
-import { useDispatch } from "@wordpress/data";
+import { select, useDispatch } from "@wordpress/data";
 import { PluginSidebar, PluginSidebarMoreMenuItem } from "@wordpress/editor";
-import { useEffect, useMemo, useState } from "@wordpress/element";
+import { useCallback, useEffect, useMemo, useState } from "@wordpress/element";
 import { __ } from "@wordpress/i18n";
 import { store as interfaceStore } from "@wordpress/interface";
 
@@ -19,6 +19,10 @@ import EditorChatActionsProvider from "../context/editorChatActions";
 import useChatSlideAnimation from "../hooks/useChatSlideAnimation";
 import useEditorChatREST from "../hooks/useEditorChatREST";
 import useEditorControls from "../hooks/useEditorControls";
+import { IMAGE_BLOCKS, LOGO_BLOCK } from "../services/blockToolbar/blockAI";
+import { startBlockProcessing, startImageProcessing } from "../services/blockToolbar/blockHighlight";
+import { CHAT_SEND_EVENT } from "../services/blockToolbar/chatBridge";
+import { formatImageEditUserMessage } from "../utils/editorContext";
 import ChatInput from "./chat/ChatInput";
 import WelcomeScreen from "./chat/WelcomeScreen";
 import SidebarHeader from "./sidebar/SidebarHeader";
@@ -56,6 +60,43 @@ const ChatEditor = () => {
 			setTemplateLocked(true);
 		}
 	}, [setShowTemplate]);
+
+	// Chat sends (input/welcome screen): if a supported block is selected,
+	// trigger the same processing effect used by the toolbar popover.
+	const sendWithBlockFeedback = useCallback(
+		(message, ...rest) => {
+			const selected = select("core/block-editor").getSelectedBlock();
+			let enrichedMessage = message;
+			let editClientId = null;
+			if (selected) {
+				if (IMAGE_BLOCKS.has(selected.name) || selected.name === LOGO_BLOCK) {
+					startImageProcessing(selected.clientId);
+					editClientId = selected.clientId;
+				} else {
+					startBlockProcessing(selected.clientId);
+				}
+				enrichedMessage = formatImageEditUserMessage(message, selected.clientId);
+			}
+			return handleSendMessage(enrichedMessage, message, editClientId, ...rest);
+		},
+		[handleSendMessage]
+	);
+
+	// Listen for messages dispatched from the block toolbar popover.
+	useEffect(() => {
+		const handler = (e) => {
+			const message = e.detail?.message;
+			if (!message) return;
+
+			const clientId = e.detail?.clientId || null;
+			const enrichedMessage = formatImageEditUserMessage(message, clientId);
+
+			enableComplementaryArea(SIDEBAR_SCOPE, SIDEBAR_NAME);
+			handleSendMessage(enrichedMessage, message, clientId);
+		};
+		window.addEventListener(CHAT_SEND_EVENT, handler);
+		return () => window.removeEventListener(CHAT_SEND_EVENT, handler);
+	}, [enableComplementaryArea, handleSendMessage]);
 
 	// Phase 2: After template is locked, open sidebar
 	useEffect(() => {
@@ -96,7 +137,7 @@ const ChatEditor = () => {
 			>
 				<div className="nfd-editor-chat-sidebar__content">
 					{visibleMessages.length === 0 ? (
-						<WelcomeScreen onSendMessage={handleSendMessage} />
+						<WelcomeScreen onSendMessage={sendWithBlockFeedback} />
 					) : (
 						<ChatMessages
 							messages={visibleMessages}
@@ -111,7 +152,7 @@ const ChatEditor = () => {
 						/>
 					)}
 					<ChatInput
-						onSendMessage={handleSendMessage}
+						onSendMessage={sendWithBlockFeedback}
 						onStopRequest={handleStopRequest}
 						disabled={isLoading}
 					/>

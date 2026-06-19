@@ -57,6 +57,7 @@ export async function runChatLoop(userMessage, deps) {
 		streamCompletion,
 		buildToolCtx,
 		abortControllerRef,
+		displayMessage = userMessage,
 	} = deps;
 
 	// First message: reset conversation history (system prompt is injected by the worker)
@@ -71,7 +72,8 @@ export async function runChatLoop(userMessage, deps) {
 		content: userMessage,
 	});
 
-	// Add clean user message to display
+	// Add user message to display — use displayMessage (original instruction) not
+	// the enriched API message which may contain injected context like [Image edit request].
 	const ts = Date.now();
 	setMessages((prev) => [
 		...prev,
@@ -79,7 +81,7 @@ export async function runChatLoop(userMessage, deps) {
 			id: `user-${ts}`,
 			type: "user",
 			role: "user",
-			content: userMessage,
+			content: displayMessage,
 			timestamp: new Date(),
 		},
 	]);

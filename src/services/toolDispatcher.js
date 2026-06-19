@@ -18,7 +18,11 @@ import { __ } from "@wordpress/i18n";
 import { snapshotBlocks } from "../utils/editorContext";
 import { safeParseJSON } from "../utils/jsonUtils";
 import { callAbility } from "./callAbility";
-import { appendGeneratedImageUrl, resetGeneratedImageCache } from "./imageCache";
+import {
+	appendGeneratedImageUrl,
+	getActiveImageEditTarget,
+	resetGeneratedImageCache,
+} from "./imageCache";
 import { handleAddSection } from "./toolHandlers/addSection";
 import { handleDeleteBlock } from "./toolHandlers/deleteBlock";
 import { handleDuplicate } from "./toolHandlers/duplicate";
@@ -30,6 +34,9 @@ import { handleInsertInnerBlock } from "./toolHandlers/insertInnerBlock";
 import { handleMoveBlock } from "./toolHandlers/moveBlock";
 import { handleRegenerateLogo } from "./toolHandlers/regenerateLogo";
 import { handleUpdateBlockAttrs } from "./toolHandlers/updateBlockAttrs";
+import { handleEditImage } from "./toolHandlers/editImage";
+import { callImageAbility, getBlockImageUrl, parseImageAbilityUrl } from "./imageAbility";
+import { IMAGE_BLOCKS } from "./blockToolbar/blockAI";
 import logger from "../utils/logger";
 
 // Re-export so external callers (e.g. useEditorChatREST) keep working.
@@ -134,6 +141,7 @@ const READ_TOOLS = new Set([
 	"blu-highlight-block",
 	"blu-generate-image",
 	"blu-regenerate-logo",
+	"blu-edit-image",
 	// Gateway tools return data the model needs — pass their full content through.
 	// Without these the LLM receives "No changes needed" instead of the ability
 	// list/schema, causing it to loop indefinitely without finding the ability.
@@ -369,27 +377,75 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 						hasBlockEdits = true;
 					}
 				}
-			} else if (toolName === "blu-generate-image" && args.prompt) {
-				await ctx.updateProgress(__("Generating image…", "wp-module-editor-chat"), 500);
-				try {
-					const mcpResult = await callAbility(ctx.mcpClient, "blu-generate-image", args);
+			} else if (toolName === "blu-edit-image") {
+				if (args.prompt && args.source_url) {
+					result = await handleEditImage(toolCall, args, ctx);
+				} else {
 					result = {
 						id: toolCall.id,
-						result: mcpResult.content,
-						isError: mcpResult.isError || false,
+						result: [
+							{
+								type: "text",
+								text: JSON.stringify({
+									error:
+										"Missing required parameters: prompt and source_url. Use blu-edit-image to modify an existing image URL.",
+								}),
+							},
+						],
+						isError: true,
 					};
-					// Track generated image URL for later deduplication
-					if (!result.isError && mcpResult.content?.[0]?.text) {
-						try {
-							const parsed = JSON.parse(mcpResult.content[0].text);
-							const url = parsed?.message?.url || parsed?.url;
-							if (url) {
-								appendGeneratedImageUrl(url);
-							}
-						} catch {
-							/* non-critical */
+				}
+			} else if (toolName === "blu-generate-image" && args.prompt) {
+				// If the targeted block already has an image, redirect to blu-edit-image
+				// so we modify the existing photo rather than discarding it and
+				// generating a brand-new one. Resolve the block from (in priority order):
+				// the explicit client_id arg, the active image-edit target recorded when
+				// the request was sent, then the live selection. The active target is the
+				// reliable signal — the chat sidebar steals canvas selection, so
+				// getSelectedBlock() is often null by the time tools dispatch.
+				const targetClientId = args.client_id || getActiveImageEditTarget() || null;
+				const targetBlock = targetClientId
+					? wp.data.select("core/block-editor").getBlock(targetClientId)
+					: wp.data.select("core/block-editor").getSelectedBlock();
+				const sourceUrl =
+					targetBlock && IMAGE_BLOCKS.has(targetBlock.name) ? getBlockImageUrl(targetBlock) : null;
+
+				const progressLabel = sourceUrl
+					? __("Editing image…", "wp-module-editor-chat")
+					: __("Generating image…", "wp-module-editor-chat");
+				await ctx.updateProgress(progressLabel, 500);
+				try {
+					const mcpResult = await callImageAbility(ctx.mcpClient, {
+						prompt: args.prompt,
+						sourceUrl,
+					});
+					const url = parseImageAbilityUrl(mcpResult);
+					if (url) {
+						appendGeneratedImageUrl(url);
+						if (targetBlock && IMAGE_BLOCKS.has(targetBlock.name)) {
+							wp.data
+								.dispatch("core/block-editor")
+								.updateBlockAttributes(targetBlock.clientId, { url, id: 0 });
 						}
 					}
+					result = {
+						id: toolCall.id,
+						result: [
+							{
+								type: "text",
+								text: JSON.stringify(
+									url
+										? {
+												success: true,
+												message: sourceUrl ? "Image edited." : "Image generated.",
+												url,
+											}
+										: { success: false, error: "No image URL returned." }
+								),
+							},
+						],
+						isError: mcpResult.isError || !url,
+					};
 				} catch (err) {
 					result = {
 						id: toolCall.id,
