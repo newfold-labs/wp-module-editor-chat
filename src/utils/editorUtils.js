@@ -1,4 +1,13 @@
 /**
+ * The maximum size of the files in bytes.
+ * @type {Object}
+ */
+const MAX_SIZE = {
+	image: 10 * 1024 * 1024,    // 2 MB
+	document: 5 * 1024 * 1024,  // 5 MB
+};
+
+/**
  * Basic client-side validation: keep only files whose MIME type is allowed,
  * and never accept more than `maxNew` files. Real size checks + server-side
  * validation are added with the upload service (Phase B).
@@ -10,5 +19,30 @@
  */
 export const validateFiles = (files, acceptedTypes, maxNew) => {
 	const allowed = Object.values(acceptedTypes).flat();
-	return files.filter((file) => allowed.includes(file.type)).slice(0, Math.max(0, maxNew));
+	const valid = [];
+	const rejected = [];
+
+	for (const file of files) {
+		if (!allowed.includes(file.type)) {
+			rejected.push({ file, reason: "type" });
+			continue;
+		}
+
+		const isImage = file.type.startsWith("image/");
+		const maxSize = isImage ? MAX_SIZE.image : MAX_SIZE.document;
+
+		if (file.size > maxSize) {
+			rejected.push({ file, reason: "size" });
+			continue;
+		}
+
+		if (valid.length >= maxNew) {
+			rejected.push({ file, reason: "limit" });
+			continue;
+		}
+
+		valid.push(file);
+	}
+
+	return { valid, rejected };
 };

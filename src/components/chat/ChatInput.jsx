@@ -10,6 +10,7 @@ import { __ } from "@wordpress/i18n";
  * External dependencies
  */
 import { ArrowUp, CircleStop, FileText, Plus, X } from "lucide-react";
+import { uploadFile } from "../../services/fileUpload";
 
 /**
  * Internal dependencies
@@ -61,7 +62,8 @@ const ChatInput = ({ onSendMessage, onStopRequest, disabled = false, maxFiles = 
 	const selectedBlocks = useSelectedBlock();
 	const { clearSelectedBlock, selectBlock, multiSelect } = useDispatch("core/block-editor");
 
-	const canSend = Boolean(message.trim()) || attachments.length > 0;
+	const isUploading = attachments.some((att) => att.status === "uploading");
+	const canSend = (Boolean(message.trim()) || attachments.length > 0) && !isUploading;
 
 	// Auto-resize textarea as user types
 	useEffect(() => {
@@ -100,25 +102,59 @@ const ChatInput = ({ onSendMessage, onStopRequest, disabled = false, maxFiles = 
 		fileInputRef.current?.click();
 	};
 
-	const handleFilesSelected = (files) => {
-		const validFiles = validateFiles(files, acceptedTypes, maxFiles - attachments.length);
+	const handleFilesSelected = async (files) => {
+		const { valid, rejected } = validateFiles(files, acceptedTypes, maxFiles - attachments.length);
 
-		const newAttachments = validFiles.map((file) => ({
+		if (rejected.length > 0) {
+			const reasons = rejected.map(({ file, reason }) => {
+				if (reason === "type") return `${file.name}: tipo file non supportato`;
+				if (reason === "size") return `${file.name}: file troppo grande`;
+				if (reason === "limit") return `${file.name}: limite allegati raggiunto`;
+				return file.name;
+			});
+			// eslint-disable-next-line no-console
+			console.warn("[ChatInput] Files rejected:", reasons);
+		}
+	
+		if (valid.length === 0) return;
+	
+		// Add chips immediately in "uploading" state
+		const pending = valid.map((file) => ({
 			id: crypto.randomUUID(),
 			file,
 			name: file.name,
 			type: file.type,
 			size: file.size,
 			previewUrl: file.type.startsWith("image/") ? URL.createObjectURL(file) : null,
-			url: null, // remote URL — filled in by the upload service (Phase B)
-			status: "ready", // becomes "uploading" / "error" once uploads exist
+			url: null,
+			filename: null,
+			status: "uploading",
 		}));
-
-		setAttachments((prev) => [...prev, ...newAttachments]);
-		
-		// Reset the input so selecting the same file again still fires onChange.
+	
+		setAttachments((prev) => [...prev, ...pending]);
+	
 		if (fileInputRef.current) {
 			fileInputRef.current.value = "";
+		}
+	
+		// Upload each file and update its chip with the server URL
+		for (const item of pending) {
+			try {
+				const result = await uploadFile(item.file);
+				setAttachments((prev) =>
+					prev.map((att) =>
+						att.id === item.id
+							? { ...att, url: result.url, filename: result.filename, status: "ready" }
+							: att
+					)
+				);
+			} catch {
+				setAttachments((prev) =>
+					prev.map((att) =>
+						att.id === item.id ? { ...att, status: "error" } : att
+					)
+				);
+			}
 		}
 	};
 
@@ -198,7 +234,7 @@ const ChatInput = ({ onSendMessage, onStopRequest, disabled = false, maxFiles = 
 									{getFileTypeLabel(att.type)}
 								</span>
 							</div>
-							<div className="nfd-editor-chat-attachment">
+							<div className={`nfd-editor-chat-attachment nfd-editor-chat-attachment--${att.status}`}>
 								{att.type.startsWith("image/") ? (
 									<div
 										className="nfd-editor-chat-attachment__thumb"
