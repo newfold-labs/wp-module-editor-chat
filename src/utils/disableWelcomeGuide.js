@@ -1,7 +1,14 @@
 import { dispatch, select } from "@wordpress/data";
 
 export const disableWelcomeGuide = () => {
-	if (select("core/preferences").get("core/edit-site", "welcomeGuide")) {
-		dispatch("core/preferences").set("core/edit-site", "welcomeGuide", false);
-	}
+	const selector = select("core/preferences");
+	const dispatcher = dispatch("core/preferences");
+
+	const guideKeys = ["welcomeGuide", "welcomeGuidePage"];
+
+	guideKeys.forEach((key) => {
+		if (selector.get("core/edit-site", key)) {
+			dispatcher.set("core/edit-site", key, false);
+		}
+	});
 };
