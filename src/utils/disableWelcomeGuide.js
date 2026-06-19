@@ -7,7 +7,7 @@ export const disableWelcomeGuide = () => {
 	const guideKeys = ["welcomeGuide", "welcomeGuidePage"];
 
 	guideKeys.forEach((key) => {
-		if (selector.get("core/edit-site", key)) {
+		if (selector.get("core/edit-site", key) !== false) {
 			dispatcher.set("core/edit-site", key, false);
 		}
 	});
