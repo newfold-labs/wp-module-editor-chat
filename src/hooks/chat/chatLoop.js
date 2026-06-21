@@ -157,7 +157,7 @@ export async function runChatLoop(userMessage, deps) {
 			`[EditorChat] Tool pass #${iterations} LLM: ${(performance.now() - toolPassStart).toFixed(0)}ms (${toolCalls?.length || 0} tool calls)`
 		);
 
-		const displayMessage = getAssistantDisplayMessage(content);
+		const assistantDisplayMessage = getAssistantDisplayMessage(content);
 
 		if (!toolCalls || toolCalls.length === 0) {
 			const parsed = parseAssistantResponse(content);
@@ -200,7 +200,7 @@ export async function runChatLoop(userMessage, deps) {
 				role: "assistant",
 				content,
 			});
-			finalizeStreamingMessage(setMessages, streamMessageId, displayMessage);
+			finalizeStreamingMessage(setMessages, streamMessageId, assistantDisplayMessage);
 			endedNaturally = true;
 			break;
 		}
@@ -289,9 +289,9 @@ export async function runChatLoop(userMessage, deps) {
 		// same intent ("I'll update the colors…" again), which reads as duplicate
 		// messages. The plan still goes into conversation history above so the model
 		// keeps its own context; we just don't render the repeat.
-		if (displayMessage && !planShown) {
+		if (assistantDisplayMessage && !planShown) {
 			planShown = true;
-			finalizeStreamingMessage(setMessages, streamMessageId, displayMessage);
+			finalizeStreamingMessage(setMessages, streamMessageId, assistantDisplayMessage);
 		} else {
 			// Repeat preamble or empty plan — drop the in-progress stream row.
 			removeStreamingMessage(setMessages, streamMessageId);

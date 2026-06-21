@@ -165,14 +165,13 @@ const maybeLoadInnerBlocks = (block) => {
 			const innerBlocks = blockEditor.getBlocks(block.clientId).map(maybeLoadInnerBlocks);
 			return {
 				...block,
-				innerBlocks: innerBlocks,
-			};
-		} else {
-			return {
-				...block,
-				innerBlocks: block.innerBlocks.map(maybeLoadInnerBlocks),
+				innerBlocks,
 			};
 		}
+		return {
+			...block,
+			innerBlocks: block.innerBlocks.map(maybeLoadInnerBlocks),
+		};
 	}
 	return block;
 };

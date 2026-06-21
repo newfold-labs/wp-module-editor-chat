@@ -287,14 +287,7 @@ const useDisplayMessages = ({
 	}, [messages, isToolsActive]);
 
 	return useMemo(
-		() =>
-			buildDisplayMessages(
-				messages,
-				activeToolCall,
-				pendingTools,
-				executedTools,
-				toolProgress
-			),
+		() => buildDisplayMessages(messages, activeToolCall, pendingTools, executedTools, toolProgress),
 		[messages, activeToolCall, pendingTools, executedTools, toolProgress]
 	);
 };
