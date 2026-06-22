@@ -55,7 +55,7 @@ const WelcomeScreen = ({ onSendMessage }) => {
 				</div>
 				<div className="nfd-editor-chat-welcome__message">
 					<div className="nfd-editor-chat-welcome__title">
-						{__("Hi, I'm BLU, your AI assistant.", "wp-module-editor-chat")}
+						{__("Hi, I'm your AI assistant.", "wp-module-editor-chat")}
 					</div>
 					<div className="nfd-editor-chat-welcome__subtitle">
 						{__("I can help you update page sections and styles,", "wp-module-editor-chat")}

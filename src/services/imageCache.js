@@ -14,6 +14,36 @@
 let generatedImageUrls = [];
 
 /**
+ * clientId of the image block the user is currently editing, captured when an
+ * image-edit request is sent (the chat sidebar steals selection from the
+ * canvas, so getSelectedBlock() is unreliable at tool-dispatch time). Lets the
+ * dispatcher route blu-generate-image → blu-edit-image and apply the result to
+ * the block. The block itself is resolved at dispatch time (it still exists,
+ * just isn't "selected").
+ *
+ * @type {string|null}
+ */
+let activeImageEditClientId = null;
+
+/**
+ * Record the image block targeted by the current edit request.
+ *
+ * @param {string|null} clientId
+ */
+export function setActiveImageEditTarget(clientId) {
+	activeImageEditClientId = clientId || null;
+}
+
+/**
+ * Get the clientId of the image block targeted by the current edit request.
+ *
+ * @return {string|null} The clientId of the image block targeted by the current edit request.
+ */
+export function getActiveImageEditTarget() {
+	return activeImageEditClientId;
+}
+
+/**
  * Get the current list of generated image URLs (live reference, do not mutate
  * externally — use appendGeneratedImageUrl / resetGeneratedImageCache).
  *
@@ -39,6 +69,7 @@ export function appendGeneratedImageUrl(url) {
  */
 export function resetGeneratedImageCache() {
 	generatedImageUrls = [];
+	activeImageEditClientId = null;
 }
 
 /**

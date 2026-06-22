@@ -23,6 +23,7 @@ import useChatSideEffects from "./chat/useChatSideEffects";
 import useChangeActions from "./chat/useChangeActions";
 import { loadActiveChat, clearActiveChat } from "./chat/activeChatStorage";
 import { resetGeneratedImageCache } from "../services/toolDispatcher";
+import { setActiveImageEditTarget } from "../services/imageCache";
 import logger from "../utils/logger";
 
 /**
@@ -43,7 +44,6 @@ const useEditorChatREST = () => {
 	// ── Chat state ──
 	const [messages, setMessages] = useState(persisted.messages);
 	const [status, setStatus] = useState(CHAT_STATUS.IDLE);
-	const [currentResponse, setCurrentResponse] = useState("");
 	const [error, setError] = useState(null);
 
 	// ── Tool execution state ──
@@ -125,20 +125,10 @@ const useEditorChatREST = () => {
 			streamCompletionFn(msgs, tools, options, {
 				openaiClientRef,
 				abortControllerRef,
-				setCurrentResponse,
+				setMessages,
 			}),
-		[openaiClientRef, abortControllerRef]
+		[openaiClientRef, abortControllerRef, setMessages]
 	);
-
-	// ── Display messages ──
-	const displayMessages = useDisplayMessages({
-		messages,
-		currentResponse,
-		activeToolCall,
-		pendingTools,
-		executedTools,
-		toolProgress,
-	});
 
 	// ── Derived state ──
 	const isLoading =
@@ -146,6 +136,15 @@ const useEditorChatREST = () => {
 		status === CHAT_STATUS.TOOL_CALL ||
 		status === CHAT_STATUS.SUMMARIZING ||
 		configStatus === "loading";
+
+	// ── Display messages ──
+	const displayMessages = useDisplayMessages({
+		messages,
+		activeToolCall,
+		pendingTools,
+		executedTools,
+		toolProgress,
+	});
 
 	// ── Side effects ──
 	useChatSideEffects({
@@ -165,7 +164,7 @@ const useEditorChatREST = () => {
 
 	// ── handleSendMessage ──
 	const handleSendMessage = useCallback(
-		async (messageContent) => {
+		async (messageContent, displayMessage = messageContent, editClientId = null) => {
 			if (!openaiClientRef.current || configStatus !== "ready") {
 				setError("Chat is not ready. Please wait for initialization.");
 				return;
@@ -177,9 +176,11 @@ const useEditorChatREST = () => {
 			setPendingTools([]);
 			setActiveToolCall(null);
 			setToolProgress(null);
-			setCurrentResponse("");
 			setError(null);
 			resetGeneratedImageCache();
+			// Record the image block being edited AFTER the reset, so the dispatcher
+			// can route generate→edit even though the chat sidebar steals selection.
+			setActiveImageEditTarget(editClientId);
 
 			const requestStart = performance.now();
 			try {
@@ -188,11 +189,11 @@ const useEditorChatREST = () => {
 					isFirstMessageRef,
 					setMessages,
 					setStatus,
-					setCurrentResponse,
 					openaiTools,
 					streamCompletion,
 					buildToolCtx,
 					abortControllerRef,
+					displayMessage,
 				});
 
 				logger.debug(
@@ -220,7 +221,7 @@ const useEditorChatREST = () => {
 					},
 				]);
 			} finally {
-				setCurrentResponse("");
+				setMessages((prev) => prev.map((m) => (m.isStreaming ? { ...m, isStreaming: false } : m)));
 				setActiveToolCall(null);
 				setToolProgress(null);
 				setPendingTools([]);
@@ -245,7 +246,6 @@ const useEditorChatREST = () => {
 		setPendingTools([]);
 		setActiveToolCall(null);
 		setToolProgress(null);
-		setCurrentResponse("");
 		setError(null);
 		setStatus(CHAT_STATUS.IDLE);
 		originalGlobalStylesRef.current = null;
@@ -261,9 +261,9 @@ const useEditorChatREST = () => {
 		setActiveToolCall(null);
 		setToolProgress(null);
 		setPendingTools([]);
-		setCurrentResponse("");
+		setMessages((prev) => prev.map((m) => (m.isStreaming ? { ...m, isStreaming: false } : m)));
 		setStatus(CHAT_STATUS.IDLE);
-	}, [abortControllerRef]);
+	}, [abortControllerRef, setMessages]);
 
 	// ── Accept / Decline changes ──
 	const { handleAcceptChanges, handleDeclineChanges } = useChangeActions({

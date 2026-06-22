@@ -1,8 +1,9 @@
 import { __ } from "@wordpress/i18n";
 
 import { deepMergeAttrs as deepMerge } from "../../utils/deepMerge";
-import { callAbility } from "../callAbility";
 import { appendGeneratedImageUrl } from "../imageCache";
+import { callImageAbility, getBlockImageUrl, parseImageAbilityUrl } from "../imageAbility";
+import { IMAGE_BLOCKS } from "../blockToolbar/blockAI";
 
 export async function handleUpdateBlockAttrs(toolCall, args, ctx) {
 	const { select: wpSelect, dispatch: wpDispatch } = wp.data;
@@ -23,26 +24,30 @@ export async function handleUpdateBlockAttrs(toolCall, args, ctx) {
 		// Ensure attributes is always an object so `in` / property access is safe.
 		args.attributes = args.attributes || {};
 
-		// ── Generate image from prompt if provided ──
-		// Allows "change this image" without exposing blu-generate-image as a tool.
+		// ── Generate or edit image from prompt if provided ──
+		// Routes to blu-edit-image when the block already has a URL, otherwise blu-generate-image.
 		if (args.image_prompt && !args.attributes.url) {
-			const imgArgs =
+			const imgOpts =
 				typeof args.image_prompt === "string"
 					? { prompt: args.image_prompt }
 					: { prompt: args.image_prompt.prompt, ...args.image_prompt };
+			const sourceUrl = getBlockImageUrl(block);
+			const progressLabel = sourceUrl
+				? __("Editing image…", "wp-module-editor-chat")
+				: __("Generating image…", "wp-module-editor-chat");
 			try {
-				await ctx.updateProgress(__("Generating image…", "wp-module-editor-chat"), 500);
-				const mcpResult = await callAbility(ctx.mcpClient, "blu-generate-image", imgArgs);
-				if (!mcpResult.isError && mcpResult.content?.[0]?.text) {
-					const parsed = JSON.parse(mcpResult.content[0].text);
-					const url = parsed?.message?.url || parsed?.url;
-					if (url) {
-						args.attributes.url = url;
-						appendGeneratedImageUrl(url);
-					}
+				await ctx.updateProgress(progressLabel, 500);
+				const mcpResult = await callImageAbility(ctx.mcpClient, {
+					...imgOpts,
+					sourceUrl,
+				});
+				const url = parseImageAbilityUrl(mcpResult);
+				if (url) {
+					args.attributes.url = url;
+					appendGeneratedImageUrl(url);
 				}
 			} catch {
-				// image generation failed — non-critical
+				// image generation/edit failed — non-critical
 			}
 		}
 
@@ -67,9 +72,7 @@ export async function handleUpdateBlockAttrs(toolCall, args, ctx) {
 			delete args.attributes.textAlign;
 		}
 
-		// Auto-clear media library ID when replacing image URL on image blocks
-		const IMAGE_BLOCKS = ["core/image", "core/cover", "core/media-text"];
-		if (args.attributes.url && IMAGE_BLOCKS.includes(block.name) && !("id" in args.attributes)) {
+		if (args.attributes.url && IMAGE_BLOCKS.has(block.name) && !("id" in args.attributes)) {
 			args.attributes.id = 0;
 		}
 
