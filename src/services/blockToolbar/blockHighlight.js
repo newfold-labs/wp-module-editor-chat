@@ -111,7 +111,9 @@ function watchUntilDone(clientId, onDone) {
 	let done = false;
 
 	const finish = () => {
-		if (done) return;
+		if (done) {
+			return;
+		}
 		done = true;
 		clearTimeout(timer);
 		unsubscribe();
@@ -336,7 +338,9 @@ export function startImageProcessing(clientId) {
 
 	// Safety timeout: remove the overlay even if the AI never responds or errors out
 	const safetyTimer = setTimeout(() => {
-		if (!subscribed) return;
+		if (!subscribed) {
+			return;
+		}
 		subscribed = false;
 		unsubscribe();
 		removeAll();

@@ -21,4 +21,3 @@ export const LOGO_BLOCK = "core/site-logo";
 export function isSupportedBlock(name) {
 	return TEXT_BLOCKS.has(name) || IMAGE_BLOCKS.has(name) || name === LOGO_BLOCK;
 }
-
