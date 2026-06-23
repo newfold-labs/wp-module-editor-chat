@@ -156,6 +156,26 @@ export const getBlockMarkup = (clientId) => {
 	};
 };
 
+const maybeLoadInnerBlocks = (block) => {
+	const CONTAINERS = ["core/post-content", "core/template-part", "core/group"];
+	const blockEditor = select("core/block-editor");
+
+	if (CONTAINERS.includes(block.name)) {
+		if (typeof block.innerBlocks === "undefined" || block.innerBlocks.length < 1) {
+			const innerBlocks = blockEditor.getBlocks(block.clientId).map(maybeLoadInnerBlocks);
+			return {
+				...block,
+				innerBlocks,
+			};
+		}
+		return {
+			...block,
+			innerBlocks: block.innerBlocks.map(maybeLoadInnerBlocks),
+		};
+	}
+	return block;
+};
+
 /**
  * Get the current page blocks (with inner blocks resolved for post-content / template parts).
  *
@@ -166,17 +186,7 @@ export const getCurrentPageBlocks = () => {
 
 	const blocks = blockEditor.getBlocks();
 
-	const processedBlocks = blocks.map((block) => {
-		if (block.name === "core/post-content" || block.name === "core/template-part") {
-			return {
-				...block,
-				innerBlocks: blockEditor.getBlocks(block.clientId),
-			};
-		}
-		return block;
-	});
-
-	return processedBlocks;
+	return blocks.map(maybeLoadInnerBlocks);
 };
 
 /**

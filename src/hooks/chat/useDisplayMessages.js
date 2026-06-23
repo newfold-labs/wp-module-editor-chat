@@ -101,36 +101,21 @@ function isInternalTool(entry) {
  * Pure transformation of messages for display.
  * Exported separately for unit testing without React.
  *
- * @param {Array}  messages        Raw messages array
- * @param {string} currentResponse Streaming response text
- * @param {Object} activeToolCall  Currently executing tool call
- * @param {Array}  pendingTools    Tools waiting to execute
- * @param {Array}  executedTools   List of executed tools
- * @param {string} toolProgress    Tool progress message
+ * @param {Array}  messages       Raw messages array
+ * @param {Object} activeToolCall Currently executing tool call
+ * @param {Array}  pendingTools   Tools waiting to execute
+ * @param {Array}  executedTools  List of executed tools
+ * @param {string} toolProgress   Tool progress message
  * @return {Array} Display-ready messages
  */
 export function buildDisplayMessages(
 	messages,
-	currentResponse,
 	activeToolCall,
 	pendingTools,
 	executedTools,
 	toolProgress
 ) {
 	let msgs = [...messages];
-
-	// Hold back final assistant response while tools are executing
-	const isToolsActive = !!activeToolCall || pendingTools.length > 0;
-	if (isToolsActive && msgs.length > 0) {
-		const last = msgs[msgs.length - 1];
-		const isFinalResponse =
-			(last.role === "assistant" || last.type === "assistant") &&
-			!last.id?.includes("-reasoning") &&
-			last.type !== "tool_execution";
-		if (isFinalResponse) {
-			msgs = msgs.slice(0, -1);
-		}
-	}
 
 	// Merge consecutive tool_execution messages
 	const merged = [];
@@ -231,19 +216,6 @@ export function buildDisplayMessages(
 			: m
 	);
 
-	// Streaming text overlay
-	if (currentResponse) {
-		return [
-			...msgs,
-			{
-				id: "streaming-current",
-				type: "assistant",
-				role: "assistant",
-				content: currentResponse,
-			},
-		];
-	}
-
 	return msgs;
 }
 
@@ -274,18 +246,16 @@ export function collectCurrentTurnFailures(messages) {
 /**
  * Hook wrapping buildDisplayMessages in useMemo.
  *
- * @param {Object} deps                 Message state dependencies
- * @param {Array}  deps.messages        Raw messages array
- * @param {string} deps.currentResponse Streaming response text
- * @param {Object} deps.activeToolCall  Currently executing tool call
- * @param {Array}  deps.pendingTools    Tools waiting to execute
- * @param {Array}  deps.executedTools   List of executed tools
- * @param {string} deps.toolProgress    Tool progress message
+ * @param {Object} deps                Message state dependencies
+ * @param {Array}  deps.messages       Raw messages array
+ * @param {Object} deps.activeToolCall Currently executing tool call
+ * @param {Array}  deps.pendingTools   Tools waiting to execute
+ * @param {Array}  deps.executedTools  List of executed tools
+ * @param {string} deps.toolProgress   Tool progress message
  * @return {Array} Display-ready messages
  */
 const useDisplayMessages = ({
 	messages,
-	currentResponse,
 	activeToolCall,
 	pendingTools,
 	executedTools,
@@ -317,16 +287,8 @@ const useDisplayMessages = ({
 	}, [messages, isToolsActive]);
 
 	return useMemo(
-		() =>
-			buildDisplayMessages(
-				messages,
-				currentResponse,
-				activeToolCall,
-				pendingTools,
-				executedTools,
-				toolProgress
-			),
-		[messages, currentResponse, activeToolCall, pendingTools, executedTools, toolProgress]
+		() => buildDisplayMessages(messages, activeToolCall, pendingTools, executedTools, toolProgress),
+		[messages, activeToolCall, pendingTools, executedTools, toolProgress]
 	);
 };
 

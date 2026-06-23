@@ -8,12 +8,18 @@
 // Import editor-specific styles (which include ai-chat style overrides)
 import "./styles/app.scss";
 
+// Register BLU AI button on block toolbars via editor.BlockEdit filter
+import "./components/block-toolbar/registerBlockToolbar";
+
 import domReady from "@wordpress/dom-ready";
 import { registerPlugin } from "@wordpress/plugins";
 import ChatEditor from "./components/ChatEditor";
+import { disableWelcomeGuide } from "./utils/disableWelcomeGuide";
 
 // Register the plugin when DOM is ready
 domReady(() => {
+	disableWelcomeGuide();
+
 	registerPlugin("nfd-editor-chat", {
 		render: ChatEditor,
 	});
