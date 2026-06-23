@@ -310,3 +310,34 @@ export function createRetryTracker(maxRetries = MAX_SAME_TOOL_RETRIES) {
 		},
 	};
 }
+
+
+/**
+ * Append attachment context to the user message for the AI.
+ * Only "ready" attachments with a URL are included.
+ *
+ * @param {string} message     - The raw user message.
+ * @param {Array}  attachments - Attachment objects from ChatInput state.
+ * @return {string} The enriched message.
+ */
+export function buildMessageWithAttachments(message, attachments) {
+	const ready = attachments.filter((att) => att.status === "ready" && att.url);
+	if (ready.length === 0) return message;
+
+	const images = ready.filter((att) => att.type.startsWith("image/"));
+	const documents = ready.filter((att) => !att.type.startsWith("image/"));
+
+	let context = "";
+
+	if (images.length > 0) {
+		context += "\n\n[User uploaded images — use these URLs as reference_url in blu/edit-image when blending with existing block images]\n";
+		context += images.map((att) => `- ${att.name}: ${att.url}`).join("\n");
+	}
+
+	if (documents.length > 0) {
+		context += "\n\n[User uploaded documents]\n";
+		context += documents.map((att) => `- ${att.name}: ${att.url}`).join("\n");
+	}
+
+	return message + context;
+}

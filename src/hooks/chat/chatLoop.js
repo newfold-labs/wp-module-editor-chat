@@ -19,6 +19,7 @@ import {
 	compressConversationHistory,
 	messageNeedsSiteTools,
 	createRetryTracker,
+	buildMessageWithAttachments,
 } from "./conversationUtils";
 import { EXECUTE_NUDGE, SUMMARIZE_NUDGE, buildEditorContext } from "../../utils/editorContext";
 import { executeToolCallsForREST } from "../../services/toolDispatcher";
@@ -41,6 +42,7 @@ export async function runChatLoop(userMessage, deps) {
 		streamCompletion,
 		buildToolCtx,
 		abortControllerRef,
+		attachments = [],
 	} = deps;
 
 	// First message: reset conversation history (system prompt is injected by the worker)
@@ -49,10 +51,12 @@ export async function runChatLoop(userMessage, deps) {
 		isFirstMessageRef.current = false;
 	}
 
+	const aiMessage = buildMessageWithAttachments(userMessage, attachments);
+
 	// Store clean user message — editor context is injected per-request, not persisted
 	conversationHistoryRef.current.push({
 		role: "user",
-		content: userMessage,
+		content: aiMessage,
 	});
 
 	// Add clean user message to display
@@ -64,6 +68,7 @@ export async function runChatLoop(userMessage, deps) {
 			type: "user",
 			role: "user",
 			content: userMessage,
+			attachments,
 			timestamp: new Date(),
 		},
 	]);

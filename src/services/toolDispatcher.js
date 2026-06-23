@@ -127,6 +127,7 @@ const READ_TOOLS = new Set([
 	"blu-get-global-styles",
 	"blu-highlight-block",
 	"blu-generate-image",
+	"blu-edit-image",
 	"blu-regenerate-logo",
 	// Gateway tools return data the model needs — pass their full content through.
 	// Without these the LLM receives "No changes needed" instead of the ability
@@ -373,6 +374,34 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 						isError: mcpResult.isError || false,
 					};
 					// Track generated image URL for later deduplication
+					if (!result.isError && mcpResult.content?.[0]?.text) {
+						try {
+							const parsed = JSON.parse(mcpResult.content[0].text);
+							const url = parsed?.message?.url || parsed?.url;
+							if (url) {
+								appendGeneratedImageUrl(url);
+							}
+						} catch {
+							/* non-critical */
+						}
+					}
+				} catch (err) {
+					result = {
+						id: toolCall.id,
+						result: [{ type: "text", text: JSON.stringify({ error: err.message }) }],
+						isError: true,
+					};
+				}
+			} else if (toolName === "blu-edit-image" && args.prompt && args.source_url) {
+				await ctx.updateProgress(__("Editing image…", "wp-module-editor-chat"), 500);
+				try {
+					const mcpResult = await callAbility(ctx.mcpClient, "blu-edit-image", args);
+					result = {
+						id: toolCall.id,
+						result: mcpResult.content,
+						isError: mcpResult.isError || false,
+					};
+					// Track edited image URL so subsequent block updates can reference it
 					if (!result.isError && mcpResult.content?.[0]?.text) {
 						try {
 							const parsed = JSON.parse(mcpResult.content[0].text);
