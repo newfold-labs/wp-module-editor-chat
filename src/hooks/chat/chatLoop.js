@@ -19,7 +19,6 @@ import {
 	compressConversationHistory,
 	messageNeedsSiteTools,
 	createRetryTracker,
-	buildMessageWithAttachments,
 } from "./conversationUtils";
 import { EXECUTE_NUDGE, SUMMARIZE_NUDGE, buildEditorContext } from "../../utils/editorContext";
 import { executeToolCallsForREST } from "../../services/toolDispatcher";
@@ -67,16 +66,13 @@ export async function runChatLoop(userMessage, deps) {
 		isFirstMessageRef.current = false;
 	}
 
-	const aiMessage = buildMessageWithAttachments(userMessage, attachments);
-
-	// Store clean user message — editor context is injected per-request, not persisted
+	// userMessage is already enriched by the caller (attachment context, image edit context).
+	// displayMessage is the clean version shown in the chat UI.
 	conversationHistoryRef.current.push({
 		role: "user",
-		content: aiMessage,
+		content: userMessage,
 	});
 
-	// Add user message to display — use displayMessage (original instruction) not
-	// the enriched API message which may contain injected context like [Image edit request].
 	const ts = Date.now();
 	setMessages((prev) => [
 		...prev,

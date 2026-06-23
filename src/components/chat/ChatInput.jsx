@@ -15,6 +15,7 @@ import { uploadFile } from "../../services/fileUpload";
 /**
  * Internal dependencies
  */
+import { buildMessageWithAttachments } from "../../hooks/chat/conversationUtils";
 import useSelectedBlock from "../../hooks/useSelectedBlock";
 import ContextTag from "../ui/ContextTag";
 import { validateFiles } from "../../utils/editorUtils";
@@ -160,7 +161,8 @@ const ChatInput = ({ onSendMessage, onStopRequest, disabled = false, maxFiles = 
 
 	const handleSubmit = () => {
 		if (canSend && !disabled) {
-			onSendMessage(message, attachments);
+			const enrichedMessage = buildMessageWithAttachments(message, attachments);
+			onSendMessage(enrichedMessage, message);
 			setMessage("");
 			setAttachments([]);
 			// Reset textarea height and maintain focus
