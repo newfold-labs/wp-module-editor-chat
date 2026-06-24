@@ -330,8 +330,14 @@ export function buildMessageWithAttachments(message, attachments) {
 	let context = "";
 
 	if (images.length > 0) {
-		context += "\n\n[User uploaded images — use these URLs as reference_url in blu/edit-image when blending with existing block images]\n";
+		context += "\n\n[User uploaded images]\n";
 		context += images.map((att) => `- ${att.name}: ${att.url}`).join("\n");
+		context +=
+			"\n\nGuidance for uploaded images:" +
+			"\n- To blend/edit a block image: use the URL as reference_url in blu/edit-image." +
+			"\n- To replace the site logo (two mandatory steps in order):" +
+			"\n  Step 1: call blu/edit-image(source_url=<uploaded_url>, prompt='remove background and trim whitespace', background:transparent, trim:true)" +
+			"\n  Step 2: call blu/set-logo-from-image(source_url=<url_returned_by_step_1>) — use the URL from Step 1, not the original uploaded URL.";
 	}
 
 	if (documents.length > 0) {
