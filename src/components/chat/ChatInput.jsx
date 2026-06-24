@@ -108,9 +108,9 @@ const ChatInput = ({ onSendMessage, onStopRequest, disabled = false, maxFiles = 
 
 		if (rejected.length > 0) {
 			const reasons = rejected.map(({ file, reason }) => {
-				if (reason === "type") return `${file.name}: tipo file non supportato`;
-				if (reason === "size") return `${file.name}: file troppo grande`;
-				if (reason === "limit") return `${file.name}: limite allegati raggiunto`;
+				if (reason === "type") return `${file.name}: ${__("unsupported file type", "wp-module-editor-chat")}`;
+				if (reason === "size") return `${file.name}: ${__("file too large", "wp-module-editor-chat")}`;
+				if (reason === "limit") return `${file.name}: ${__("attachment limit reached", "wp-module-editor-chat")}`;
 				return file.name;
 			});
 			// eslint-disable-next-line no-console
