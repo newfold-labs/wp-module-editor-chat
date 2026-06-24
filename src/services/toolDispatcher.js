@@ -144,7 +144,7 @@ const READ_TOOLS = new Set([
 	"blu-edit-image",
 	"blu-regenerate-logo",
 	"blu-set-logo-from-image",
-	"blu-edit-image",
+	"blu-read-document",
 	// Gateway tools return data the model needs — pass their full content through.
 	// Without these the LLM receives "No changes needed" instead of the ability
 	// list/schema, causing it to loop indefinitely without finding the ability.

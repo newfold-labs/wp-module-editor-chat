@@ -343,6 +343,12 @@ export function buildMessageWithAttachments(message, attachments) {
 	if (documents.length > 0) {
 		context += "\n\n[User uploaded documents]\n";
 		context += documents.map((att) => `- ${att.name}: ${att.url}`).join("\n");
+		context +=
+			"\n\nGuidance for uploaded documents:" +
+			"\n- To replace text content in blocks: call blu/read-document(source_url=<url>), then use blu/edit-block to set the new inner content. Do NOT use blu/update-block-attrs for text — that tool only changes non-content attributes (color, alignment, etc.)." +
+			"\n- If the user has a block selected, update that block. If it is a container (Group, Cover, etc.), find the paragraph or heading children inside it and edit those." +
+			"\n- After updating ALL the text content of a section from a document: call blu/update-block-attrs on the container block to strip animation classes (nfd-wb-*, nfd-delay-*) from its className. This applies even if the NFD class reference lists those classes as preserved — document-based full-section replacement is the explicit exception." +
+			"\n- Otherwise find the most relevant text blocks from the page's block tree and update them.";
 	}
 
 	return message + context;
