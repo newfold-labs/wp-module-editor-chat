@@ -14,9 +14,9 @@ const NFD_ANIMATION_CLASSES = [
 	"nfd-wb-reveal-right",
 ];
 
-const NFD_ANIM_SELECTOR = NFD_ANIMATION_CLASSES.map(
-	(c) => `.${c}:not(.nfd-wb-animated-in)`
-).join(", ");
+const NFD_ANIM_SELECTOR = NFD_ANIMATION_CLASSES.map((c) => `.${c}:not(.nfd-wb-animated-in)`).join(
+	", "
+);
 
 /**
  * After the AI edits blocks, elements with nfd-wb-* animation classes can
@@ -31,22 +31,22 @@ const NFD_ANIM_SELECTOR = NFD_ANIMATION_CLASSES.map(
  */
 export function restoreAnimatedBlocksInEditor() {
 	// Site Editor renders inside an iframe; admin-bar scripts live in the parent.
-	const iframe = document.querySelector( 'iframe[name="editor-canvas"]' );
+	const iframe = document.querySelector('iframe[name="editor-canvas"]');
 	const doc = iframe?.contentDocument ?? document;
 
 	// Trigger the existing wonder-blocks animation system inside the iframe.
-	doc.dispatchEvent( new CustomEvent( "wonder-blocks/toolbar-button-added" ) );
+	doc.dispatchEvent(new CustomEvent("wonder-blocks/toolbar-button-added"));
 
 	// Direct fallback: restore any element that is still invisible.
-	requestAnimationFrame( () => {
-		doc.querySelectorAll( NFD_ANIM_SELECTOR ).forEach( ( el ) => {
+	window.requestAnimationFrame(() => {
+		doc.querySelectorAll(NFD_ANIM_SELECTOR).forEach((el) => {
 			el.style.transition = "none";
-			el.classList.add( "nfd-wb-animated-in" );
-			requestAnimationFrame( () => {
+			el.classList.add("nfd-wb-animated-in");
+			window.requestAnimationFrame(() => {
 				el.style.transition = "";
-			} );
-		} );
-	} );
+			});
+		});
+	});
 }
 
 /**
@@ -54,8 +54,8 @@ export function restoreAnimatedBlocksInEditor() {
  * @type {Object}
  */
 const MAX_SIZE = {
-	image: 10 * 1024 * 1024,    // 2 MB
-	document: 5 * 1024 * 1024,  // 5 MB
+	image: 10 * 1024 * 1024, // 2 MB
+	document: 5 * 1024 * 1024, // 5 MB
 };
 
 /**
