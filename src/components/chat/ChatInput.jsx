@@ -54,7 +54,7 @@ const getFileTypeLabel = (mimeType) => {
  * @param {Object}   props.acceptedTypes - The accepted file types.
  * @return {Element} The ChatInput component.
  */
-const ChatInput = ({ onSendMessage, onStopRequest, disabled = false, maxFiles = 3, acceptedTypes = DEFAULT_ACCPETED_FILE_TYPES }) => {
+const ChatInput = ({ onSendMessage, onStopRequest, disabled = false, maxFiles = 5, acceptedTypes = DEFAULT_ACCPETED_FILE_TYPES }) => {
 	const [message, setMessage] = useState("");
 	const [attachments, setAttachments] = useState([]);
 	const [isDragging, setIsDragging] = useState(false);
