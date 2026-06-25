@@ -20,7 +20,8 @@ import useChatSlideAnimation from "../hooks/useChatSlideAnimation";
 import useEditorChatREST from "../hooks/useEditorChatREST";
 import useEditorControls from "../hooks/useEditorControls";
 import { IMAGE_BLOCKS, LOGO_BLOCK } from "../services/blockToolbar/blockAI";
-import { startBlockProcessing, startImageProcessing } from "../services/blockToolbar/blockHighlight";
+import { CHAT_STATUS } from "../hooks/chat/constants";
+import { clearAllBlockProcessing, startBlockProcessing, startImageProcessing } from "../services/blockToolbar/blockHighlight";
 import { CHAT_SEND_EVENT } from "../services/blockToolbar/chatBridge";
 import { formatImageEditUserMessage } from "../utils/editorContext";
 import ChatInput from "./chat/ChatInput";
@@ -104,6 +105,14 @@ const ChatEditor = () => {
 			enableComplementaryArea(SIDEBAR_SCOPE, SIDEBAR_NAME);
 		}
 	}, [templateLocked, enableComplementaryArea]);
+
+	// If the AI errors out the block attributes never change, so the processing
+	// effects would stay stuck. Clear them immediately on error.
+	useEffect(() => {
+		if (status === CHAT_STATUS.ERROR) {
+			clearAllBlockProcessing();
+		}
+	}, [status]);
 
 	// Disable new chat button when there are no messages (brand new chat)
 	const isNewChatDisabled = messages.length === 0;

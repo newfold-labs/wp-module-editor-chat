@@ -104,18 +104,35 @@ function getBlockSnapshot(clientId) {
 	});
 }
 
+const PROCESSING_TIMEOUT_MS = 90_000;
+
 function watchUntilDone(clientId, onDone) {
 	const initialSnapshot = getBlockSnapshot(clientId);
+	let done = false;
+
+	const finish = () => {
+		if (done) {
+			return;
+		}
+		done = true;
+		clearTimeout(timer);
+		unsubscribe();
+		onDone();
+	};
+
+	// Safety timeout: clean up even if the AI never responds or errors out
+	const timer = setTimeout(finish, PROCESSING_TIMEOUT_MS);
 
 	const unsubscribe = subscribe(() => {
 		const selectedId = select("core/block-editor").getSelectedBlockClientId();
 		const currentSnapshot = getBlockSnapshot(clientId);
 
 		if (selectedId !== clientId || currentSnapshot !== initialSnapshot) {
-			unsubscribe();
-			onDone();
+			finish();
 		}
 	});
+
+	return finish;
 }
 
 /**
@@ -317,6 +334,17 @@ export function startImageProcessing(clientId) {
 	};
 
 	const initialAttributes = JSON.stringify(store.getBlock(clientId)?.attributes ?? {});
+	let subscribed = true;
+
+	// Safety timeout: remove the overlay even if the AI never responds or errors out
+	const safetyTimer = setTimeout(() => {
+		if (!subscribed) {
+			return;
+		}
+		subscribed = false;
+		unsubscribe();
+		removeAll();
+	}, PROCESSING_TIMEOUT_MS);
 
 	const unsubscribe = subscribe(() => {
 		const block = store.getBlock(clientId);
@@ -324,6 +352,8 @@ export function startImageProcessing(clientId) {
 		if (!block) {
 			// Block was REPLACED (rewrite path) — find the new block at the
 			// same position; the overlay keeps covering the area meanwhile.
+			subscribed = false;
+			clearTimeout(safetyTimer);
 			unsubscribe();
 			const newClientId = store.getBlockOrder(rootClientId)[blockIndex];
 			if (!newClientId) {
@@ -339,6 +369,8 @@ export function startImageProcessing(clientId) {
 		const currentAttributes = JSON.stringify(block.attributes ?? {});
 		if (currentAttributes !== initialAttributes) {
 			// Same block, attributes updated in place
+			subscribed = false;
+			clearTimeout(safetyTimer);
 			unsubscribe();
 			whenImageReady(clientId);
 			return;
@@ -346,6 +378,8 @@ export function startImageProcessing(clientId) {
 
 		const selectedId = store.getSelectedBlockClientId();
 		if (selectedId !== clientId) {
+			subscribed = false;
+			clearTimeout(safetyTimer);
 			unsubscribe();
 			removeAll();
 		}
