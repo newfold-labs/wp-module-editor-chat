@@ -22,6 +22,7 @@ import {
 } from "./conversationUtils";
 import { EXECUTE_NUDGE, SUMMARIZE_NUDGE, buildEditorContext } from "../../utils/editorContext";
 import { executeToolCallsForREST } from "../../services/toolDispatcher";
+import { restoreAnimatedBlocksInEditor } from "../../utils/editorUtils";
 import { finalizeStreamingMessage, removeStreamingMessage } from "./streamMessageHelpers";
 import {
 	MARKUP_PROVIDED_NUDGE,
@@ -369,6 +370,9 @@ export async function runChatLoop(userMessage, deps) {
 		// next iteration tells the AI "all changes are applied" and it replies
 		// with a confirmation without ever running the write tool.
 		toolsJustExecuted = results.some((r) => r.hasChanges === true);
+		if (toolsJustExecuted) {
+			restoreAnimatedBlocksInEditor();
+		}
 
 		// No-progress guard. The retry tracker exempts read-only tools, so a model
 		// that keeps re-reading (get-block-markup, get-ability-schema, …) without

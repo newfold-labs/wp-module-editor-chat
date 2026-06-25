@@ -311,7 +311,6 @@ export function createRetryTracker(maxRetries = MAX_SAME_TOOL_RETRIES) {
 	};
 }
 
-
 /**
  * Append attachment context to the user message for the AI.
  * Only "ready" attachments with a URL are included.
@@ -322,7 +321,9 @@ export function createRetryTracker(maxRetries = MAX_SAME_TOOL_RETRIES) {
  */
 export function buildMessageWithAttachments(message, attachments) {
 	const ready = attachments.filter((att) => att.status === "ready" && att.url);
-	if (ready.length === 0) return message;
+	if (ready.length === 0) {
+		return message;
+	}
 
 	const images = ready.filter((att) => att.type.startsWith("image/"));
 	const documents = ready.filter((att) => !att.type.startsWith("image/"));
@@ -352,7 +353,7 @@ export function buildMessageWithAttachments(message, attachments) {
 			"\n- After updating ALL the text content of a section from a document: call blu/update-block-attrs on the container block to strip animation classes (nfd-wb-*, nfd-delay-*) from its className. This applies even if the NFD class reference lists those classes as preserved — document-based full-section replacement is the explicit exception." +
 			"\n- CSV files contain tabular data. When the user uploads a CSV: read it with blu/read-document, parse the rows/columns, then:" +
 			"\n  • If a core/table block already exists on the page or is selected → update it with blu/edit-block using this markup template:" +
-			"\n    <!-- wp:table --><figure class=\"wp-block-table\"><table><thead><tr><th>Col1</th><th>Col2</th></tr></thead><tbody><tr><td>val</td><td>val</td></tr></tbody></table></figure><!-- /wp:table -->" +
+			'\n    <!-- wp:table --><figure class="wp-block-table"><table><thead><tr><th>Col1</th><th>Col2</th></tr></thead><tbody><tr><td>val</td><td>val</td></tr></tbody></table></figure><!-- /wp:table -->' +
 			"\n  • If no table exists → insert one with blu/add-section at an appropriate position on the page." +
 			"\n  • If the CSV data maps better to cards or a grid (e.g. team members, service cards) than to a plain table, build the appropriate block structure instead and explain the choice." +
 			"\n- Otherwise find the most relevant text blocks from the page's block tree and update them.";
@@ -362,10 +363,12 @@ export function buildMessageWithAttachments(message, attachments) {
 		context +=
 			"\n\nGuidance for combined images + document uploads:" +
 			"\n- The uploaded images are content assets (portraits, product photos, illustrations) to be placed directly into blocks — do NOT call blu/edit-image on them." +
-			"\n- Match each image to the corresponding row in the document by comparing the image filename (strip extension, replace hyphens/underscores with spaces) to text fields such as Name or Title. Example: 'giorgio-ferretti.jpg' → 'Giorgio Ferretti'." +
+			"\n- Match each image to the corresponding document row using this priority:" +
+			"\n  1. If the CSV has a column named Photo, Image, or Filename → match the uploaded filename (strip extension) against that column value (strip extension). This is the preferred approach." +
+			"\n  2. Otherwise fall back to comparing the filename (strip extension, replace hyphens/underscores with spaces) against the Name field. Example: 'giorgio-ferretti.jpg' → 'Giorgio Ferretti'." +
 			"\n- The name shown before the colon is the original filename; the URL after the colon is the actual URL to use." +
 			"\n- Use the matched URL directly as the url attribute of a core/image block — no processing or generation needed:" +
-			"\n  <!-- wp:image {\"sizeSlug\":\"full\"} --><figure class=\"wp-block-image size-full\"><img src=\"<matched_url>\" alt=\"<person name or description>\"/></figure><!-- /wp:image -->" +
+			'\n  <!-- wp:image {"sizeSlug":"full"} --><figure class="wp-block-image size-full"><img src="<matched_url>" alt="<person name or description>"/></figure><!-- /wp:image -->' +
 			"\n- If a filename does not clearly match any document row, place that image at the end or omit it and note the mismatch.";
 	}
 
