@@ -71,6 +71,7 @@ export const READ_ONLY_TOOLS = new Set([
 	// Document / image analysis reads — exempt from retry detection
 	"blu-read-document",
 	"blu-extract-image-colors",
+	"blu-generate-color-palette",
 	// Gateway / ability discovery
 	"blu-list-abilities",
 	"blu-get-ability-schema",

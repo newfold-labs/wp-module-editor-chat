@@ -146,6 +146,7 @@ const READ_TOOLS = new Set([
 	"blu-set-logo-from-image", // write tool, but AI needs the full result (URL) to confirm success
 	"blu-read-document",
 	"blu-extract-image-colors",
+	"blu-generate-color-palette",
 	// Gateway tools return data the model needs — pass their full content through.
 	// Without these the LLM receives "No changes needed" instead of the ability
 	// list/schema, causing it to loop indefinitely without finding the ability.
