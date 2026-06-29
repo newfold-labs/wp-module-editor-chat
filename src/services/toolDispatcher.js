@@ -33,6 +33,7 @@ import { handleHighlightBlock } from "./toolHandlers/highlightBlock";
 import { handleInsertInnerBlock } from "./toolHandlers/insertInnerBlock";
 import { handleMoveBlock } from "./toolHandlers/moveBlock";
 import { handleRegenerateLogo } from "./toolHandlers/regenerateLogo";
+import { handleSetLogoFromImage } from "./toolHandlers/setLogoFromImage";
 import { handleUpdateBlockAttrs } from "./toolHandlers/updateBlockAttrs";
 import { handleEditImage } from "./toolHandlers/editImage";
 import { callImageAbility, getBlockImageUrl, parseImageAbilityUrl } from "./imageAbility";
@@ -140,8 +141,12 @@ const READ_TOOLS = new Set([
 	"blu-get-global-styles",
 	"blu-highlight-block",
 	"blu-generate-image",
-	"blu-regenerate-logo",
 	"blu-edit-image",
+	"blu-regenerate-logo",
+	"blu-set-logo-from-image", // write tool, but AI needs the full result (URL) to confirm success
+	"blu-read-document",
+	"blu-extract-image-colors",
+	"blu-generate-color-palette",
 	// Gateway tools return data the model needs — pass their full content through.
 	// Without these the LLM receives "No changes needed" instead of the ability
 	// list/schema, causing it to loop indefinitely without finding the ability.
@@ -453,6 +458,34 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 						isError: true,
 					};
 				}
+			} else if (toolName === "blu-edit-image" && args.prompt && args.source_url) {
+				await ctx.updateProgress(__("Editing image…", "wp-module-editor-chat"), 500);
+				try {
+					const mcpResult = await callAbility(ctx.mcpClient, "blu-edit-image", args);
+					result = {
+						id: toolCall.id,
+						result: mcpResult.content,
+						isError: mcpResult.isError || false,
+					};
+					// Track edited image URL so subsequent block updates can reference it
+					if (!result.isError && mcpResult.content?.[0]?.text) {
+						try {
+							const parsed = JSON.parse(mcpResult.content[0].text);
+							const url = parsed?.message?.url || parsed?.url;
+							if (url) {
+								appendGeneratedImageUrl(url);
+							}
+						} catch {
+							/* non-critical */
+						}
+					}
+				} catch (err) {
+					result = {
+						id: toolCall.id,
+						result: [{ type: "text", text: JSON.stringify({ error: err.message }) }],
+						isError: true,
+					};
+				}
 			} else if (toolName === "blu-regenerate-logo") {
 				if (!args.prompt) {
 					result = {
@@ -470,6 +503,11 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 					};
 				} else {
 					result = await handleRegenerateLogo(toolCall, args, ctx);
+				}
+			} else if (toolName === "blu-set-logo-from-image" && args.source_url) {
+				result = await handleSetLogoFromImage(toolCall, args, ctx);
+				if (!result.isError) {
+					hasBlockEdits = true;
 				}
 			} else {
 				// Server-side MCP tool — forward to MCP server for execution
@@ -496,7 +534,8 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 			const isError = result?.isError ?? false;
 			let content;
 			if (isError) {
-				content = result.error || result.result?.[0]?.text || "Tool failed";
+				content =
+					result.error || result.result?.[0]?.text || __("Tool failed", "wp-module-editor-chat");
 			} else if (READ_TOOLS.has(toolName) && result?.result?.[0]?.text) {
 				content = result.result[0].text;
 			} else {
@@ -508,7 +547,9 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 						return null;
 					}
 				})();
-				content = result?.hasChanges ? msg || "Applied successfully" : "No changes needed";
+				content = result?.hasChanges
+					? msg || __("Applied successfully", "wp-module-editor-chat")
+					: __("No changes needed", "wp-module-editor-chat");
 			}
 
 			// Log every client tool's outcome (with the failure reason) so the full

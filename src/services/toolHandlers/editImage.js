@@ -2,7 +2,7 @@ import { __ } from "@wordpress/i18n";
 
 import { appendGeneratedImageUrl, getActiveImageEditTarget } from "../imageCache";
 import { callImageAbility, parseImageAbilityUrl } from "../imageAbility";
-import { IMAGE_BLOCKS } from "../blockToolbar/blockAI";
+import { IMAGE_BLOCKS, LOGO_BLOCK } from "../blockToolbar/blockAI";
 
 export async function handleEditImage(toolCall, args, ctx) {
 	if (!args.prompt) {
@@ -53,34 +53,45 @@ export async function handleEditImage(toolCall, args, ctx) {
 		const url = parseImageAbilityUrl(mcpResult);
 		if (url) {
 			appendGeneratedImageUrl(url);
+		}
 
-			// Apply the new URL directly to the target block. The AI rarely passes
-			// client_id, so fall back to the active image-edit target recorded when
-			// the request was sent.
-			const clientId = args.client_id || getActiveImageEditTarget();
-			if (clientId) {
-				const block = wp.data.select("core/block-editor").getBlock(clientId);
-				if (block && IMAGE_BLOCKS.has(block.name)) {
-					wp.data.dispatch("core/block-editor").updateBlockAttributes(clientId, {
-						url,
-						id: 0,
-					});
-				}
-			}
+		// Detect logo context — if the target block is core/site-logo, do NOT update
+		// it directly here; instead tell the AI to call blu-set-logo-from-image.
+		const clientId = args.client_id || getActiveImageEditTarget();
+		const targetBlock = clientId ? wp.data.select("core/block-editor").getBlock(clientId) : null;
+		const isLogoContext = targetBlock?.name === LOGO_BLOCK;
+		const appliedToBlock =
+			!!url && !isLogoContext && !!targetBlock && IMAGE_BLOCKS.has(targetBlock.name);
+
+		if (appliedToBlock) {
+			wp.data.dispatch("core/block-editor").updateBlockAttributes(clientId, {
+				url,
+				id: 0,
+			});
+		}
+
+		let resultPayload;
+		if (!url) {
+			resultPayload = { success: false, error: "Image edit failed — no URL returned." };
+		} else if (isLogoContext) {
+			// Logo block — URL was not applied directly; AI must call blu-set-logo-from-image.
+			resultPayload = {
+				success: true,
+				message:
+					"Image processed. Call blu-set-logo-from-image with this URL to set it as the site logo.",
+				url,
+				next_step: `Call blu-set-logo-from-image(source_url="${url}")`,
+			};
+		} else if (appliedToBlock) {
+			resultPayload = { success: true, message: "Image edited and applied to the block.", url };
+		} else {
+			// URL returned but no target block — return the URL so the AI can place it.
+			resultPayload = { success: true, message: "Image processed.", url };
 		}
 
 		return {
 			id: toolCall.id,
-			result: [
-				{
-					type: "text",
-					text: JSON.stringify(
-						url
-							? { success: true, message: "Image edited successfully.", url }
-							: { success: false, error: "Image edit failed — no URL returned." }
-					),
-				},
-			],
+			result: [{ type: "text", text: JSON.stringify(resultPayload) }],
 			isError: mcpResult.isError || !url,
 		};
 	} catch (err) {

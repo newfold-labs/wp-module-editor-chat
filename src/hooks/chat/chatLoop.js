@@ -22,6 +22,7 @@ import {
 } from "./conversationUtils";
 import { EXECUTE_NUDGE, SUMMARIZE_NUDGE, buildEditorContext } from "../../utils/editorContext";
 import { executeToolCallsForREST } from "../../services/toolDispatcher";
+import { restoreAnimatedBlocksInEditor } from "../../utils/editorUtils";
 import { finalizeStreamingMessage, removeStreamingMessage } from "./streamMessageHelpers";
 import {
 	MARKUP_PROVIDED_NUDGE,
@@ -66,14 +67,13 @@ export async function runChatLoop(userMessage, deps) {
 		isFirstMessageRef.current = false;
 	}
 
-	// Store clean user message — editor context is injected per-request, not persisted
+	// userMessage is already enriched by the caller (attachment context, image edit context).
+	// displayMessage is the clean version shown in the chat UI.
 	conversationHistoryRef.current.push({
 		role: "user",
 		content: userMessage,
 	});
 
-	// Add user message to display — use displayMessage (original instruction) not
-	// the enriched API message which may contain injected context like [Image edit request].
 	const ts = Date.now();
 	setMessages((prev) => [
 		...prev,
@@ -370,6 +370,9 @@ export async function runChatLoop(userMessage, deps) {
 		// next iteration tells the AI "all changes are applied" and it replies
 		// with a confirmation without ever running the write tool.
 		toolsJustExecuted = results.some((r) => r.hasChanges === true);
+		if (toolsJustExecuted) {
+			restoreAnimatedBlocksInEditor();
+		}
 
 		// No-progress guard. The retry tracker exempts read-only tools, so a model
 		// that keeps re-reading (get-block-markup, get-ability-schema, …) without

@@ -83,7 +83,7 @@ nfd-divider-arrow(16px) nfd-divider-clouds(150px) nfd-divider-ellipse(50px)
 nfd-divider-rounded(50px) nfd-divider-slant / nfd-divider-slant-invert(80px)
 nfd-divider-triangle(80px) nfd-divider-zigzag(8px)
 
-### Animations (entrance animations — NEVER remove)
+### Animations (entrance animations — preserve by default; EXCEPTION: remove from a container block when you have just replaced ALL of its text content from an uploaded document)
 nfd-wb-fade-in-bottom(1200ms) nfd-wb-fade-in-bottom-short(600ms)
 nfd-wb-fade-in-top-short(600ms) nfd-wb-fade-in-left-short(600ms) nfd-wb-fade-in-right-short(600ms)
 nfd-wb-zoom-in(1200ms) nfd-wb-zoom-in-short(600ms)

@@ -360,4 +360,183 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 		$this->assertStringContainsString( '.is-root-container', $appended['css'] );
 		$this->assertStringContainsString( 'border-start-start-radius:12px', $appended['css'] );
 	}
+
+	// ── register_rest_routes ───────────────────────────────────────────
+
+	/**
+	 * Constructor registers the rest_api_init hook for route registration.
+	 *
+	 * @return void
+	 */
+	public function test_constructor_registers_rest_api_init_hook() {
+		new ChatEditor();
+		$this->assertIsInt(
+			has_action( 'rest_api_init', array( ChatEditor::class, 'register_rest_routes' ) )
+		);
+	}
+
+	/**
+	 * Registers the config, upload and delete REST routes.
+	 *
+	 * @return void
+	 */
+	public function test_register_rest_routes_registers_upload_routes() {
+		// Ensure the REST server exists so register_rest_route() targets it.
+		$server = rest_get_server();
+		ChatEditor::register_rest_routes();
+
+		$routes = $server->get_routes();
+
+		$this->assertArrayHasKey( '/nfd-editor-chat/v1/config', $routes );
+		$this->assertArrayHasKey( '/nfd-editor-chat/v1/upload', $routes );
+		$this->assertArrayHasKey(
+			'/nfd-editor-chat/v1/upload/(?P<filename>[a-zA-Z0-9_\-\.]+)',
+			$routes
+		);
+	}
+
+	// ── upload_temp_file ───────────────────────────────────────────────
+
+	/**
+	 * Build a WP_REST_Request carrying the given $_FILES-style payload.
+	 *
+	 * @param array $file File params, or null to send no file.
+	 * @return \WP_REST_Request
+	 */
+	private function make_upload_request( $file ) {
+		$request = new \WP_REST_Request( 'POST', '/nfd-editor-chat/v1/upload' );
+		$request->set_file_params( null === $file ? array() : array( 'file' => $file ) );
+		return $request;
+	}
+
+	/**
+	 * Returns a 400 error when no file is provided.
+	 *
+	 * @return void
+	 */
+	public function test_upload_temp_file_errors_when_no_file() {
+		$result = ChatEditor::upload_temp_file( $this->make_upload_request( null ) );
+
+		$this->assertInstanceOf( \WP_Error::class, $result );
+		$this->assertSame( 'no_file', $result->get_error_code() );
+		$this->assertSame( 400, $result->get_error_data()['status'] );
+	}
+
+	/**
+	 * Returns a 400 error when the upload reports an error code.
+	 *
+	 * @return void
+	 */
+	public function test_upload_temp_file_errors_when_upload_error() {
+		$result = ChatEditor::upload_temp_file(
+			$this->make_upload_request(
+				array(
+					'name'     => 'pic.png',
+					'type'     => 'image/png',
+					'tmp_name' => '',
+					'error'    => UPLOAD_ERR_INI_SIZE,
+					'size'     => 0,
+				)
+			)
+		);
+
+		$this->assertInstanceOf( \WP_Error::class, $result );
+		$this->assertSame( 'no_file', $result->get_error_code() );
+	}
+
+	/**
+	 * Rejects disallowed mime types with a 400 error.
+	 *
+	 * @return void
+	 */
+	public function test_upload_temp_file_rejects_invalid_mime_type() {
+		$result = ChatEditor::upload_temp_file(
+			$this->make_upload_request(
+				array(
+					'name'     => 'evil.exe',
+					'type'     => 'application/x-msdownload',
+					'tmp_name' => '/tmp/whatever',
+					'error'    => 0,
+					'size'     => 10,
+				)
+			)
+		);
+
+		$this->assertInstanceOf( \WP_Error::class, $result );
+		$this->assertSame( 'invalid_file_type', $result->get_error_code() );
+		$this->assertSame( 400, $result->get_error_data()['status'] );
+	}
+
+	/**
+	 * An allowed mime type passes validation and reaches the move step, which
+	 * fails for a non-HTTP-uploaded file and surfaces an upload_failed error.
+	 *
+	 * @return void
+	 */
+	public function test_upload_temp_file_fails_to_move_non_uploaded_file() {
+		$tmp = \wp_tempnam( 'nfd-chat-test' );
+		\file_put_contents( $tmp, 'data' );
+
+		$result = ChatEditor::upload_temp_file(
+			$this->make_upload_request(
+				array(
+					'name'     => 'note.txt',
+					'type'     => 'text/plain',
+					'tmp_name' => $tmp,
+					'error'    => 0,
+					'size'     => 4,
+				)
+			)
+		);
+
+		// move_uploaded_file() rejects files not received via HTTP POST.
+		$this->assertInstanceOf( \WP_Error::class, $result );
+		$this->assertSame( 'upload_failed', $result->get_error_code() );
+		$this->assertSame( 500, $result->get_error_data()['status'] );
+
+		@\unlink( $tmp );
+	}
+
+	// ── delete_temp_file ───────────────────────────────────────────────
+
+	/**
+	 * Returns a 404 error when the target file does not exist.
+	 *
+	 * @return void
+	 */
+	public function test_delete_temp_file_errors_when_missing() {
+		$request = new \WP_REST_Request( 'DELETE' );
+		$request->set_param( 'filename', 'does-not-exist.png' );
+
+		$result = ChatEditor::delete_temp_file( $request );
+
+		$this->assertInstanceOf( \WP_Error::class, $result );
+		$this->assertSame( 'file_not_found', $result->get_error_code() );
+		$this->assertSame( 404, $result->get_error_data()['status'] );
+	}
+
+	/**
+	 * Deletes an existing temp file and returns a 204 response.
+	 *
+	 * @return void
+	 */
+	public function test_delete_temp_file_removes_existing_file() {
+		$upload_dir = \wp_upload_dir();
+		$temp_dir   = $upload_dir['basedir'] . '/nfd-chat-temp/';
+		\wp_mkdir_p( $temp_dir );
+
+		$filename = 'deleteme.txt';
+		$filepath = $temp_dir . $filename;
+		\file_put_contents( $filepath, 'bye' );
+		$this->assertFileExists( $filepath );
+
+		$request = new \WP_REST_Request( 'DELETE' );
+		$request->set_param( 'filename', $filename );
+
+		$result = ChatEditor::delete_temp_file( $request );
+
+		$this->assertInstanceOf( \WP_REST_Response::class, $result );
+		$this->assertSame( 204, $result->get_status() );
+		$this->assertFileDoesNotExist( $filepath );
+	}
 }

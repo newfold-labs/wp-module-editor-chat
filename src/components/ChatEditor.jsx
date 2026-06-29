@@ -65,9 +65,9 @@ const ChatEditor = () => {
 	// Chat sends (input/welcome screen): if a supported block is selected,
 	// trigger the same processing effect used by the toolbar popover.
 	const sendWithBlockFeedback = useCallback(
-		(message, ...rest) => {
+		(apiMessage, displayMessage = apiMessage, ...rest) => {
 			const selected = select("core/block-editor").getSelectedBlock();
-			let enrichedMessage = message;
+			let enrichedMessage = apiMessage;
 			let editClientId = null;
 			if (selected) {
 				if (IMAGE_BLOCKS.has(selected.name) || selected.name === LOGO_BLOCK) {
@@ -76,9 +76,9 @@ const ChatEditor = () => {
 				} else {
 					startBlockProcessing(selected.clientId);
 				}
-				enrichedMessage = formatImageEditUserMessage(message, selected.clientId);
+				enrichedMessage = formatImageEditUserMessage(apiMessage, selected.clientId);
 			}
-			return handleSendMessage(enrichedMessage, message, editClientId, ...rest);
+			return handleSendMessage(enrichedMessage, displayMessage, editClientId, ...rest);
 		},
 		[handleSendMessage]
 	);
