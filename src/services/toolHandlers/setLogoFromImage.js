@@ -8,9 +8,7 @@ export async function handleSetLogoFromImage(toolCall, args, ctx) {
 		const mcpResult = await callAbility(ctx.mcpClient, "blu-set-logo-from-image", args);
 		if (!mcpResult.isError) {
 			// Force core/site-logo to re-fetch and re-render with the new logo
-			wp.data
-				.dispatch("core")
-				.invalidateResolution("getEntityRecord", ["root", "site", undefined]);
+			wp.data.dispatch("core").invalidateResolution("getEntityRecord", ["root", "site", undefined]);
 		}
 		return {
 			id: toolCall.id,
