@@ -328,14 +328,23 @@ export function buildMessageWithAttachments(message, attachments) {
 	const images = ready.filter((att) => att.type.startsWith("image/"));
 	const documents = ready.filter((att) => !att.type.startsWith("image/"));
 
+	// Sanitize filenames before interpolating into the AI context string to prevent
+	// prompt injection via crafted filenames (strip newlines, limit length).
+	const safeName = (name) =>
+		String(name || "")
+			.replace(/[\r\n\t]/g, " ")
+			.trim()
+			.slice(0, 128);
+
 	let context = "";
 
 	if (images.length > 0) {
 		context += "\n\n[User uploaded images]\n";
-		context += images.map((att) => `- ${att.name}: ${att.url}`).join("\n");
+		context += images.map((att) => `- ${safeName(att.name)}: ${att.url}`).join("\n");
 		if (documents.length === 0) {
 			context +=
 				"\n\nGuidance for uploaded images:" +
+				"\n- To apply a color from an uploaded image (logo, photo, etc.) to global styles (accent color, primary color, brand color): call blu/extract-image-colors(image_url=<url>) to get the dominant hex values, then call blu/update-global-styles with the chosen hex. NEVER guess colors from filenames or descriptions." +
 				"\n- To blend/edit a block image: use the URL as reference_url in blu/edit-image." +
 				"\n- To replace the site logo (two mandatory steps in order):" +
 				"\n  Step 1: call blu/edit-image(source_url=<uploaded_url>, prompt='remove background and trim whitespace', background:transparent, trim:true)" +
@@ -345,7 +354,7 @@ export function buildMessageWithAttachments(message, attachments) {
 
 	if (documents.length > 0) {
 		context += "\n\n[User uploaded documents]\n";
-		context += documents.map((att) => `- ${att.name}: ${att.url}`).join("\n");
+		context += documents.map((att) => `- ${safeName(att.name)}: ${att.url}`).join("\n");
 		context +=
 			"\n\nGuidance for uploaded documents:" +
 			"\n- To replace text content in blocks: call blu/read-document(source_url=<url>), then use blu/edit-block to set the new inner content. Do NOT use blu/update-block-attrs for text — that tool only changes non-content attributes (color, alignment, etc.)." +

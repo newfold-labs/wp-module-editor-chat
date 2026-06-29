@@ -73,9 +73,8 @@ export async function handleEditImage(toolCall, args, ctx) {
 		let resultPayload;
 		if (!url) {
 			resultPayload = { success: false, error: "Image edit failed — no URL returned." };
-		} else if (isLogoContext || !appliedToBlock) {
-			// Logo context OR no target image block — URL was not applied to any block.
-			// Prompt the AI to call blu-set-logo-from-image to complete the action.
+		} else if (isLogoContext) {
+			// Logo block — URL was not applied directly; AI must call blu-set-logo-from-image.
 			resultPayload = {
 				success: true,
 				message:
@@ -83,8 +82,11 @@ export async function handleEditImage(toolCall, args, ctx) {
 				url,
 				next_step: `Call blu-set-logo-from-image(source_url="${url}")`,
 			};
-		} else {
+		} else if (appliedToBlock) {
 			resultPayload = { success: true, message: "Image edited and applied to the block.", url };
+		} else {
+			// URL returned but no target block — return the URL so the AI can place it.
+			resultPayload = { success: true, message: "Image processed.", url };
 		}
 
 		return {

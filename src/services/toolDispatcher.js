@@ -143,8 +143,9 @@ const READ_TOOLS = new Set([
 	"blu-generate-image",
 	"blu-edit-image",
 	"blu-regenerate-logo",
-	"blu-set-logo-from-image",
+	"blu-set-logo-from-image", // write tool, but AI needs the full result (URL) to confirm success
 	"blu-read-document",
+	"blu-extract-image-colors",
 	// Gateway tools return data the model needs — pass their full content through.
 	// Without these the LLM receives "No changes needed" instead of the ability
 	// list/schema, causing it to loop indefinitely without finding the ability.
@@ -504,7 +505,9 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 				}
 			} else if (toolName === "blu-set-logo-from-image" && args.source_url) {
 				result = await handleSetLogoFromImage(toolCall, args, ctx);
-				if (!result.isError) hasBlockEdits = true;
+				if (!result.isError) {
+					hasBlockEdits = true;
+				}
 			} else {
 				// Server-side MCP tool — forward to MCP server for execution
 				logger.log(`[ToolExecutor:REST] Forwarding to MCP: ${toolName}`, args);
@@ -530,7 +533,8 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 			const isError = result?.isError ?? false;
 			let content;
 			if (isError) {
-				content = result.error || result.result?.[0]?.text || __("Tool failed", "wp-module-editor-chat");
+				content =
+					result.error || result.result?.[0]?.text || __("Tool failed", "wp-module-editor-chat");
 			} else if (READ_TOOLS.has(toolName) && result?.result?.[0]?.text) {
 				content = result.result[0].text;
 			} else {

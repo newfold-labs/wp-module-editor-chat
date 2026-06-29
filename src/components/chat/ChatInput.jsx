@@ -9,7 +9,7 @@ import { __ } from "@wordpress/i18n";
 /**
  * External dependencies
  */
-import { ArrowUp, CircleStop, FileText, Plus, X } from "lucide-react";
+import { ArrowUp, CircleStop, Plus, X } from "lucide-react";
 import { uploadFile } from "../../services/fileUpload";
 
 /**
@@ -24,7 +24,7 @@ import { validateFiles } from "../../utils/editorUtils";
  * The default accepted file types.
  * @type {Object}
  */
-const DEFAULT_ACCPETED_FILE_TYPES = {
+const DEFAULT_ACCEPTED_FILE_TYPES = {
 	images : [ "image/png", "image/jpeg", "image/gif", "image/webp" ],
 	documents : [ "application/pdf", "text/plain", "text/markdown", "text/csv"],
 }
@@ -54,17 +54,27 @@ const getFileTypeLabel = (mimeType) => {
  * @param {Object}   props.acceptedTypes - The accepted file types.
  * @return {Element} The ChatInput component.
  */
-const ChatInput = ({ onSendMessage, onStopRequest, disabled = false, maxFiles = 5, acceptedTypes = DEFAULT_ACCPETED_FILE_TYPES }) => {
+const ChatInput = ({ onSendMessage, onStopRequest, disabled = false, maxFiles = 5, acceptedTypes = DEFAULT_ACCEPTED_FILE_TYPES }) => {
 	const [message, setMessage] = useState("");
 	const [attachments, setAttachments] = useState([]);
 	const [isDragging, setIsDragging] = useState(false);
 	const textareaRef = useRef(null);
 	const fileInputRef = useRef(null);
+	const mountedRef = useRef(true);
+	useEffect(() => {
+		mountedRef.current = true;
+		return () => {
+			mountedRef.current = false;
+		};
+	}, []);
 	const selectedBlocks = useSelectedBlock();
 	const { clearSelectedBlock, selectBlock, multiSelect } = useDispatch("core/block-editor");
 
 	const isUploading = attachments.some((att) => att.status === "uploading");
-	const canSend = (Boolean(message.trim()) || attachments.length > 0) && !isUploading;
+	// Error-state chips stay visible so the user can remove them, but they don't
+	// count as sendable content — only ready/uploading attachments enable send.
+	const hasUsableAttachments = attachments.some((att) => att.status === "ready" || att.status === "uploading");
+	const canSend = (Boolean(message.trim()) || hasUsableAttachments) && !isUploading;
 
 	// Auto-resize textarea as user types
 	useEffect(() => {
@@ -121,7 +131,7 @@ const ChatInput = ({ onSendMessage, onStopRequest, disabled = false, maxFiles = 
 	
 		// Add chips immediately in "uploading" state
 		const pending = valid.map((file) => ({
-			id: crypto.randomUUID(),
+			id: ( typeof crypto.randomUUID === "function" ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}` ),
 			file,
 			name: file.name,
 			type: file.type,
@@ -140,21 +150,26 @@ const ChatInput = ({ onSendMessage, onStopRequest, disabled = false, maxFiles = 
 	
 		// Upload each file and update its chip with the server URL
 		for (const item of pending) {
+			if (!mountedRef.current) break;
 			try {
 				const result = await uploadFile(item.file);
-				setAttachments((prev) =>
-					prev.map((att) =>
-						att.id === item.id
-							? { ...att, url: result.url, filename: result.filename, status: "ready" }
-							: att
-					)
-				);
+				if (mountedRef.current) {
+					setAttachments((prev) =>
+						prev.map((att) =>
+							att.id === item.id
+								? { ...att, url: result.url, filename: result.filename, status: "ready" }
+								: att
+						)
+					);
+				}
 			} catch {
-				setAttachments((prev) =>
-					prev.map((att) =>
-						att.id === item.id ? { ...att, status: "error" } : att
-					)
-				);
+				if (mountedRef.current) {
+					setAttachments((prev) =>
+						prev.map((att) =>
+							att.id === item.id ? { ...att, status: "error" } : att
+						)
+					);
+				}
 			}
 		}
 	};
@@ -309,7 +324,7 @@ const ChatInput = ({ onSendMessage, onStopRequest, disabled = false, maxFiles = 
 							label={__("Send message", "wp-module-editor-chat")}
 							onClick={handleSubmit}
 							className="nfd-editor-chat-input__submit"
-							disabled={!message.trim()}
+							disabled={!canSend}
 						/>
 					)}
 					<input
