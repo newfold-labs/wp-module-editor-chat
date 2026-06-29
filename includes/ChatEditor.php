@@ -60,7 +60,7 @@ final class ChatEditor {
 				},
 			)
 		);
-		
+
 		\register_rest_route(
 			'nfd-editor-chat/v1',
 			'/upload/(?P<filename>[a-zA-Z0-9_\-\.]+)',
@@ -289,7 +289,7 @@ final class ChatEditor {
 		if ( is_null( $data ) ) {
 			$data      = array();
 			$plan_data = \get_option( 'wvc_plan_data', '{}' );
-			$plan_data = ! ! $plan_data && \is_string( $plan_data ) ? \json_decode( $plan_data, true ) : array();
+			$plan_data = (bool) $plan_data && \is_string( $plan_data ) ? \json_decode( $plan_data, true ) : array();
 
 			if ( $plan_data ) {
 				$plan_data   = \is_array( $plan_data ) ? $plan_data : array();
@@ -353,7 +353,7 @@ final class ChatEditor {
 	 * Round the top block's selection outline to match the framed canvas corner
 	 * (the outline is drawn inside the iframe, out of reach of our stylesheet).
 	 *
-	 * @param array                   $settings Block editor settings.
+	 * @param array                    $settings Block editor settings.
 	 * @param \WP_Block_Editor_Context $context  Editor context.
 	 *
 	 * @return array
@@ -447,7 +447,7 @@ final class ChatEditor {
 	 */
 	public static function enqueue_admin_bar_assets() {
 		if ( is_admin_bar_showing() ) {
-			\wp_enqueue_style( 'nfd-editor-chat-admin-bar', \NFD_EDITOR_CHAT_ASSETS_URL . 'css/admin-bar.css', [], NFD_EDITOR_CHAT_VERSION );
+			\wp_enqueue_style( 'nfd-editor-chat-admin-bar', \NFD_EDITOR_CHAT_ASSETS_URL . 'css/admin-bar.css', array(), NFD_EDITOR_CHAT_VERSION );
 		}
 	}
 
