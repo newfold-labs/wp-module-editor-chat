@@ -18,6 +18,7 @@ import { __ } from "@wordpress/i18n";
 import { snapshotBlocks } from "../utils/editorContext";
 import { safeParseJSON } from "../utils/jsonUtils";
 import { callAbility } from "./callAbility";
+import { handleContentCreation, CREATE_ABILITIES } from "./contentNavigation";
 import {
 	appendGeneratedImageUrl,
 	getActiveImageEditTarget,
@@ -494,11 +495,22 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 
 			// Build tool result for conversation
 			const isError = result?.isError ?? false;
+			let creationMeta = null;
 			let content;
 			if (isError) {
 				content = result.error || result.result?.[0]?.text || "Tool failed";
 			} else if (READ_TOOLS.has(toolName) && result?.result?.[0]?.text) {
 				content = result.result[0].text;
+			} else if (CREATE_ABILITIES.has(toolName) && result?.result?.[0]?.text) {
+				creationMeta = await handleContentCreation(toolName, result, ctx);
+				if (creationMeta) {
+					content = JSON.stringify({
+						success: true,
+						created: creationMeta,
+					});
+				} else {
+					content = result.result[0].text;
+				}
 			} else {
 				// Extract human-readable .message from handler's JSON result
 				const msg = (() => {
@@ -526,6 +538,8 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 				content,
 				isError,
 				hasChanges: result?.hasChanges || false,
+				isContentCreation: !!creationMeta,
+				creationMeta,
 			});
 			completedToolsList.push({ ...toolCall, isError });
 			ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError }]);

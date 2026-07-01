@@ -14,5 +14,6 @@ updated: 2025-03-18
 | [integration.md](integration.md) | How the module registers and how hosts use it. |
 | [development.md](development.md) | Lint and workflow. |
 | [release.md](release.md) | Release process: use the Newfold Prepare Release workflow. |
+| [changelog.md](changelog.md) | Notable changes by release. |
 
 Root **AGENTS.md** gives a short agent summary and points here.

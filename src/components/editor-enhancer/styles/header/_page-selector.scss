@@ -38,6 +38,9 @@
 			flex: 1;
 			text-align: left;
 			padding-inline: 8px;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
 		}
 
 		svg.nfd-editor-chat__page-selector__chevron {

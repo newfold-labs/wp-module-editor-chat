@@ -154,6 +154,25 @@ export const SUMMARIZE_NUDGE = `All requested changes are applied. Respond with 
 {"message":"One brief sentence confirming what was done."}`;
 
 /**
+ * Build a summarize nudge after successful content creation.
+ *
+ * @param {Object} outcome Creation outcome from handleContentCreation.
+ * @return {string} Nudge string for the summarize pass.
+ */
+export function buildCreationSummarizeNudge(outcome) {
+	const { navigated, editUrl, postType, title, id } = outcome;
+	let hint = "";
+	if (postType === "page" && navigated) {
+		hint = " The editor preview has opened the new page.";
+	} else if (editUrl) {
+		const label = title || "new draft";
+		hint = ` Include a markdown link: [${label}](${editUrl})`;
+	}
+	return `Content creation succeeded (ID: ${id}, type: ${postType}). Respond with JSON only — no tool calls:
+{"message":"Brief confirmation.${hint}"}`;
+}
+
+/**
  * Enrich a toolbar message when the user is editing a selected image block.
  *
  * @param {string} instruction User instruction from the block toolbar.
