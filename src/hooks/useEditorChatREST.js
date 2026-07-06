@@ -88,7 +88,7 @@ const useEditorChatREST = () => {
 	// ── WordPress dispatch/select ──
 	const { savePost } = useDispatch("core/editor");
 	const { saveEditedEntityRecord } = useDispatch(coreStore);
-	const { requestNavigateToPage } = useEditorNavigation();
+	const { requestNavigateToContent } = useEditorNavigation();
 	const { __experimentalGetCurrentGlobalStylesId } = useSelect(
 		(select) => ({
 			__experimentalGetCurrentGlobalStylesId:
@@ -126,9 +126,9 @@ const useEditorChatREST = () => {
 			getMessages: () => messagesRef.current,
 			updateProgress,
 			wait,
-			requestNavigateToPage,
+			requestNavigateToContent,
 		}),
-		[mcpClient, openaiClientRef, updateProgress, requestNavigateToPage]
+		[mcpClient, openaiClientRef, updateProgress, requestNavigateToContent]
 	);
 
 	// ── Streaming (bind deps to plain function) ──

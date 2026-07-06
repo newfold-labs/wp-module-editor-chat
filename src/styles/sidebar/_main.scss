@@ -145,3 +145,28 @@ body.nfd-editor-chat-closing .interface-complementary-area__fill:has(#nfd-editor
 		padding-bottom: 0;
 	}
 }
+
+// Post block editor (post.php) — keep the chat sidebar on the left without site-editor chrome.
+.nfd-editor-chat-enabled.nfd-editor-chat--post-editor {
+	.interface-interface-skeleton__sidebar:has(#nfd-editor-chat) {
+		order: -1;
+		border: none;
+		box-shadow: none;
+		z-index: 100001;
+	}
+
+	.interface-interface-skeleton__content {
+		border-top: $border;
+		border-inline-start: $border;
+		border-start-start-radius: $radius;
+	}
+
+	.edit-post-layout,
+	.edit-post-visual-editor {
+		border-start-start-radius: $radius;
+	}
+
+	.interface-complementary-area.nfd-editor-chat-sidebar {
+		border-inline-end: $border;
+	}
+}

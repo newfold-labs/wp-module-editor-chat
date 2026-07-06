@@ -3,6 +3,12 @@
  */
 import { addQueryArgs } from "@wordpress/url";
 
+/** Post types opened in Site Editor via SPA navigation (pushState). */
+export const SITE_EDITOR_SPA_TYPES = new Set(["page"]);
+
+/** Post types auto-navigated after creation from chat. */
+export const AUTO_NAV_TYPES = new Set(["page", "post"]);
+
 /** MCP abilities that create new content. */
 export const CREATE_ABILITIES = new Set([
 	"blu-add-page",
@@ -53,7 +59,26 @@ export function getEditUrl(postType, id) {
 	return addQueryArgs("post.php", {
 		post: id,
 		action: "edit",
+		referrer: "nfd-editor-chat",
 	});
+}
+
+/**
+ * Navigate to created/edited content. Pages use Site Editor SPA routing; posts use post.php.
+ *
+ * @param {string} postType WordPress post type slug.
+ * @param {number} entityId Post ID.
+ */
+export function loadEditorEntity(postType, entityId) {
+	const url = getEditUrl(postType, entityId);
+
+	if (SITE_EDITOR_SPA_TYPES.has(postType)) {
+		window.history.pushState({}, "", url);
+		window.dispatchEvent(new PopStateEvent("popstate"));
+		return;
+	}
+
+	window.location.assign(url);
 }
 
 /**
@@ -62,9 +87,7 @@ export function getEditUrl(postType, id) {
  * @param {number} pageId Page post ID.
  */
 export function loadPage(pageId) {
-	const url = getEditUrl("page", pageId);
-	window.history.pushState({}, "", url);
-	window.dispatchEvent(new PopStateEvent("popstate"));
+	loadEditorEntity("page", pageId);
 }
 
 /**
@@ -133,8 +156,8 @@ export async function handleContentCreation(toolName, result, ctx) {
 	let navigated = false;
 	let cancelled = false;
 
-	if (postType === "page" && typeof ctx.requestNavigateToPage === "function") {
-		const nav = await ctx.requestNavigateToPage(entity.id);
+	if (AUTO_NAV_TYPES.has(postType) && typeof ctx.requestNavigateToContent === "function") {
+		const nav = await ctx.requestNavigateToContent(postType, entity.id);
 		navigated = nav.navigated === true;
 		cancelled = nav.cancelled === true;
 	}
@@ -162,8 +185,8 @@ export function appendCreationLinkIfNeeded(displayMessage, outcome) {
 	}
 	const needsLink =
 		outcome.cancelled ||
-		outcome.postType !== "page" ||
-		(outcome.postType === "page" && !outcome.navigated);
+		!AUTO_NAV_TYPES.has(outcome.postType) ||
+		(AUTO_NAV_TYPES.has(outcome.postType) && !outcome.navigated);
 	if (!needsLink) {
 		return displayMessage;
 	}

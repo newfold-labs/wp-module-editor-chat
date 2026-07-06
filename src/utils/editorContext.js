@@ -162,8 +162,11 @@ export const SUMMARIZE_NUDGE = `All requested changes are applied. Respond with 
 export function buildCreationSummarizeNudge(outcome) {
 	const { navigated, editUrl, postType, title, id } = outcome;
 	let hint = "";
-	if (postType === "page" && navigated) {
-		hint = " The editor preview has opened the new page.";
+	if ((postType === "page" || postType === "post") && navigated) {
+		hint =
+			postType === "page"
+				? " The editor preview has opened the new page."
+				: " The block editor has opened the new post.";
 	} else if (editUrl) {
 		const label = title || "new draft";
 		hint = ` Include a markdown link: [${label}](${editUrl})`;
@@ -222,6 +225,8 @@ export const buildEditorContext = ({ extraClientIds = [] } = {}) => {
 
 	const pageTitle = getCurrentPageTitle();
 	const pageId = getCurrentPageId();
+	const postType = wpSelect("core/editor").getCurrentPostType();
+	const contentLabel = postType === "post" ? "Post" : "Page";
 
 	const site = window.nfdEditorChat?.site || {};
 	const siteUrl = window.location.origin;
@@ -237,7 +242,7 @@ export const buildEditorContext = ({ extraClientIds = [] } = {}) => {
 	if (site.locale) {
 		context += `\nLocale: ${site.locale}`;
 	}
-	context += `\nPage: "${pageTitle}" (ID: ${pageId})\n\n`;
+	context += `\n${contentLabel}: "${pageTitle}" (ID: ${pageId})\n\n`;
 	context += "Block tree:\n";
 	context += buildCompactBlockTree(blocks, selectedClientIds, {
 		collapseUnselected: selectedBlocks.length > 0,

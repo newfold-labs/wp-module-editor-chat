@@ -123,10 +123,9 @@ const ChatEditorContent = () => {
 	);
 
 	return (
-
-			<EditorChatActionsProvider handleNewChat={handleNewChat} isNewChatDisabled={isNewChatDisabled}>
-				<EditorEnhancer />
-				<PluginSidebarMoreMenuItem
+		<EditorChatActionsProvider handleNewChat={handleNewChat} isNewChatDisabled={isNewChatDisabled}>
+			<EditorEnhancer />
+			<PluginSidebarMoreMenuItem
 				scope={SIDEBAR_SCOPE}
 				target={SIDEBAR_NAME}
 				icon={<AILogo width={24} height={24} />}
@@ -166,7 +165,7 @@ const ChatEditorContent = () => {
 					/>
 				</div>
 			</PluginSidebar>
-			</EditorChatActionsProvider>
+		</EditorChatActionsProvider>
 	);
 };
 

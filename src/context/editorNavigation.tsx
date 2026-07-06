@@ -16,7 +16,7 @@ import type { ReactNode, MouseEvent } from "react";
 /**
  * Internal dependencies.
  */
-import { getEditUrl, loadPage, openPageInNewTab } from "../services/contentNavigation";
+import { getEditUrl, loadEditorEntity, openPageInNewTab } from "../services/contentNavigation";
 
 type NavigationOutcome = {
 	navigated: boolean;
@@ -25,7 +25,8 @@ type NavigationOutcome = {
 };
 
 type PendingNavigation = {
-	pageId: number;
+	postType: string;
+	entityId: number;
 	editUrl: string;
 	resolve: (outcome: NavigationOutcome) => void;
 };
@@ -35,7 +36,8 @@ type EditorNavigationContextValue = {
 	isDirty: boolean;
 	/** Navigate to a page (header page selector). */
 	navigate: (pageId: number, event?: MouseEvent, onBeforeNavigate?: () => void) => void;
-	/** Navigate to a page from chat after creation — returns when done or user stays. */
+	/** Navigate to a page or post from chat after creation — returns when done or user stays. */
+	requestNavigateToContent: (postType: string, entityId: number) => Promise<NavigationOutcome>;
 	requestNavigateToPage: (pageId: number) => Promise<NavigationOutcome>;
 };
 
@@ -45,6 +47,7 @@ const Context = createContext<EditorNavigationContextValue>({
 	currentPage: null,
 	isDirty: false,
 	navigate: () => {},
+	requestNavigateToContent: noopNavigate,
 	requestNavigateToPage: noopNavigate,
 });
 
@@ -91,29 +94,34 @@ export default function EditorNavigationProvider({ children }: { children: React
 	const [pendingNav, setPendingNav] = useState<PendingNavigation | null>(null);
 	const pendingNavRef = useRef<PendingNavigation | null>(null);
 
-	const performNavigate = useCallback((pageId: number) => {
-		setTimeout(() => loadPage(pageId), 1);
+	const performNavigate = useCallback((postType: string, entityId: number) => {
+		setTimeout(() => loadEditorEntity(postType, entityId), 1);
 	}, []);
 
-	const requestNavigateToPage = useCallback(
-		(pageId: number): Promise<NavigationOutcome> => {
-			const editUrl = getEditUrl("page", pageId);
+	const requestNavigateToContent = useCallback(
+		(postType: string, entityId: number): Promise<NavigationOutcome> => {
+			const editUrl = getEditUrl(postType, entityId);
 
-			if (currentPage?.id === pageId) {
+			if (postType === "page" && currentPage?.id === entityId) {
 				return Promise.resolve({ navigated: true, editUrl });
 			}
 
 			if (!isDirty) {
-				performNavigate(pageId);
+				performNavigate(postType, entityId);
 				return Promise.resolve({ navigated: true, editUrl });
 			}
 			return new Promise((resolve) => {
-				const pending: PendingNavigation = { pageId, editUrl, resolve };
+				const pending: PendingNavigation = { postType, entityId, editUrl, resolve };
 				pendingNavRef.current = pending;
 				setPendingNav(pending);
 			});
 		},
 		[currentPage?.id, isDirty, performNavigate]
+	);
+
+	const requestNavigateToPage = useCallback(
+		(pageId: number) => requestNavigateToContent("page", pageId),
+		[requestNavigateToContent]
 	);
 
 	const navigate = useCallback(
@@ -130,13 +138,14 @@ export default function EditorNavigationProvider({ children }: { children: React
 			}
 
 			if (!isDirty) {
-				performNavigate(pageId);
+				performNavigate("page", pageId);
 				return;
 			}
 
 			const editUrl = getEditUrl("page", pageId);
 			const pending: PendingNavigation = {
-				pageId,
+				postType: "page",
+				entityId: pageId,
 				editUrl,
 				resolve: () => {},
 			};
@@ -151,7 +160,7 @@ export default function EditorNavigationProvider({ children }: { children: React
 		if (!pending) {
 			return;
 		}
-		performNavigate(pending.pageId);
+		performNavigate(pending.postType, pending.entityId);
 		pending.resolve({ navigated: true, editUrl: pending.editUrl });
 		pendingNavRef.current = null;
 		setPendingNav(null);
@@ -172,9 +181,10 @@ export default function EditorNavigationProvider({ children }: { children: React
 			currentPage,
 			isDirty,
 			navigate,
+			requestNavigateToContent,
 			requestNavigateToPage,
 		}),
-		[currentPage, isDirty, navigate, requestNavigateToPage]
+		[currentPage, isDirty, navigate, requestNavigateToContent, requestNavigateToPage]
 	);
 
 	return (

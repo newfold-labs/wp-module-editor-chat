@@ -123,7 +123,7 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	// ── enqueue_site_editor_assets guards ──────────────────────────────
 
 	/**
-	 * Returns early when pagenow is not site-editor.php.
+	 * Does not enqueue on unrelated admin pages (e.g. post.php without a block editor screen).
 	 *
 	 * @return void
 	 */
@@ -207,6 +207,31 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 		$this->assertIsInt(
 			has_filter( 'admin_body_class', array( ChatEditor::class, 'add_admin_body_class' ) )
 		);
+
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$pagenow = null;
+	}
+
+	/**
+	 * Adds the post-editor body class modifier on post.php block editor screens.
+	 *
+	 * @return void
+	 */
+	public function test_add_admin_body_class_adds_post_editor_modifier_on_post_screen() {
+		global $pagenow;
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$pagenow = 'post.php';
+
+		$screen = \WP_Screen::get( 'post' );
+		set_current_screen( $screen );
+
+		if ( ! $screen->is_block_editor() ) {
+			$this->markTestSkipped( 'Post screen is not a block editor in this WordPress version.' );
+		}
+
+		$result = ChatEditor::add_admin_body_class( 'admin ' );
+		$this->assertStringContainsString( 'nfd-editor-chat-enabled', $result );
+		$this->assertStringContainsString( 'nfd-editor-chat--post-editor', $result );
 
 		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 		$pagenow = null;
