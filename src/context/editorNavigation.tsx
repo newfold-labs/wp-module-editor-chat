@@ -24,10 +24,16 @@ type NavigationOutcome = {
 	cancelled?: boolean;
 };
 
+type NavigationOptions = {
+	/** Full page load instead of Site Editor SPA routing (e.g. after creating new content). */
+	fullPageLoad?: boolean;
+};
+
 type PendingNavigation = {
 	postType: string;
 	entityId: number;
 	editUrl: string;
+	fullPageLoad: boolean;
 	resolve: (outcome: NavigationOutcome) => void;
 };
 
@@ -37,7 +43,11 @@ type EditorNavigationContextValue = {
 	/** Navigate to a page (header page selector). */
 	navigate: (pageId: number, event?: MouseEvent, onBeforeNavigate?: () => void) => void;
 	/** Navigate to a page or post from chat after creation — returns when done or user stays. */
-	requestNavigateToContent: (postType: string, entityId: number) => Promise<NavigationOutcome>;
+	requestNavigateToContent: (
+		postType: string,
+		entityId: number,
+		options?: NavigationOptions
+	) => Promise<NavigationOutcome>;
 	requestNavigateToPage: (pageId: number) => Promise<NavigationOutcome>;
 };
 
@@ -94,24 +104,38 @@ export default function EditorNavigationProvider({ children }: { children: React
 	const [pendingNav, setPendingNav] = useState<PendingNavigation | null>(null);
 	const pendingNavRef = useRef<PendingNavigation | null>(null);
 
-	const performNavigate = useCallback((postType: string, entityId: number) => {
-		setTimeout(() => loadEditorEntity(postType, entityId), 1);
-	}, []);
+	const performNavigate = useCallback(
+		(postType: string, entityId: number, options: NavigationOptions = {}) => {
+			setTimeout(() => loadEditorEntity(postType, entityId, options), 1);
+		},
+		[]
+	);
 
 	const requestNavigateToContent = useCallback(
-		(postType: string, entityId: number): Promise<NavigationOutcome> => {
+		(
+			postType: string,
+			entityId: number,
+			options: NavigationOptions = {}
+		): Promise<NavigationOutcome> => {
 			const editUrl = getEditUrl(postType, entityId);
+			const { fullPageLoad = false } = options;
 
-			if (postType === "page" && currentPage?.id === entityId) {
+			if (!fullPageLoad && postType === "page" && currentPage?.id === entityId) {
 				return Promise.resolve({ navigated: true, editUrl });
 			}
 
 			if (!isDirty) {
-				performNavigate(postType, entityId);
+				performNavigate(postType, entityId, options);
 				return Promise.resolve({ navigated: true, editUrl });
 			}
 			return new Promise((resolve) => {
-				const pending: PendingNavigation = { postType, entityId, editUrl, resolve };
+				const pending: PendingNavigation = {
+					postType,
+					entityId,
+					editUrl,
+					fullPageLoad,
+					resolve,
+				};
 				pendingNavRef.current = pending;
 				setPendingNav(pending);
 			});
@@ -147,6 +171,7 @@ export default function EditorNavigationProvider({ children }: { children: React
 				postType: "page",
 				entityId: pageId,
 				editUrl,
+				fullPageLoad: false,
 				resolve: () => {},
 			};
 			pendingNavRef.current = pending;
@@ -160,7 +185,9 @@ export default function EditorNavigationProvider({ children }: { children: React
 		if (!pending) {
 			return;
 		}
-		performNavigate(pending.postType, pending.entityId);
+		performNavigate(pending.postType, pending.entityId, {
+			fullPageLoad: pending.fullPageLoad,
+		});
 		pending.resolve({ navigated: true, editUrl: pending.editUrl });
 		pendingNavRef.current = null;
 		setPendingNav(null);

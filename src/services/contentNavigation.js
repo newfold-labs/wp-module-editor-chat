@@ -64,15 +64,17 @@ export function getEditUrl(postType, id) {
 }
 
 /**
- * Navigate to created/edited content. Pages use Site Editor SPA routing; posts use post.php.
+ * Navigate to editor content.
  *
  * @param {string} postType WordPress post type slug.
  * @param {number} entityId Post ID.
+ * @param {Object} [options]
+ * @param {boolean} [options.fullPageLoad=false] Force a full reload (required for newly created content).
  */
-export function loadEditorEntity(postType, entityId) {
+export function loadEditorEntity(postType, entityId, { fullPageLoad = false } = {}) {
 	const url = getEditUrl(postType, entityId);
 
-	if (SITE_EDITOR_SPA_TYPES.has(postType)) {
+	if (!fullPageLoad && SITE_EDITOR_SPA_TYPES.has(postType)) {
 		window.history.pushState({}, "", url);
 		window.dispatchEvent(new PopStateEvent("popstate"));
 		return;
@@ -157,7 +159,9 @@ export async function handleContentCreation(toolName, result, ctx) {
 	let cancelled = false;
 
 	if (AUTO_NAV_TYPES.has(postType) && typeof ctx.requestNavigateToContent === "function") {
-		const nav = await ctx.requestNavigateToContent(postType, entity.id);
+		const nav = await ctx.requestNavigateToContent(postType, entity.id, {
+			fullPageLoad: true,
+		});
 		navigated = nav.navigated === true;
 		cancelled = nav.cancelled === true;
 	}
