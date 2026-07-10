@@ -84,6 +84,9 @@ export default function PageSelectorInner() {
 									endDecoration={isSelected ? <CheckIcon /> : undefined}
 								>
 									{page.title.rendered}
+									{page.status === "draft" && (
+										<strong> - {__("Draft", "wp-module-editor-chat")}</strong>
+									)}
 								</DropdownMenuItem>
 							);
 						})}

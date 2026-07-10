@@ -3,7 +3,11 @@
  */
 import { useEffect, useState } from "@wordpress/element";
 import { useDebounce } from "@wordpress/compose";
-import { addQueryArgs } from "@wordpress/url";
+
+/**
+ * Internal dependencies.
+ */
+export { loadPage, openPageInNewTab, getEditUrl } from "../../../../../services/contentNavigation";
 
 /**
  * useDebouncedValue Hook
@@ -26,47 +30,3 @@ export function useDebouncedValue(value: string | undefined): string {
 
 	return debouncedValue;
 }
-
-/**
- * Generates the edit URL for a given page ID in the WordPress editor.
- *
- * It supports both the classic Site Editor and the experimental
- * extensible Site Editor, adjusting the base URL accordingly.
- *
- * @param {number} pageId - The ID of the page to edit.
- * @return {string} The full URL to open the page in edit mode.
- */
-const editPageUrl = (pageId: number): string => {
-	const base = (window as any).__experimentalExtensibleSiteEditor
-		? "admin.php?page=site-editor-v2"
-		: "site-editor.php";
-
-	return addQueryArgs(base, {
-		p: `/page/${pageId}`,
-		canvas: "edit",
-		referrer: "nfd-editor-chat",
-	});
-};
-
-/**
- * Loads a page inside the current editor by updating the browser history
- * and triggering a navigation event.
- *
- * This avoids a full page reload and lets the editor handle the routing.
- *
- * @param {number} pageId - The ID of the page to load.
- */
-export const loadPage = (pageId: number) => {
-	window.history.pushState({}, "", editPageUrl(pageId));
-	window.dispatchEvent(new PopStateEvent("popstate"));
-};
-
-/**
- * Opens the specified page in a new browser tab.
- *
- *
- * @param {number} pageId - The ID of the page to open.
- */
-export const openPageInNewTab = (pageId: number) => {
-	window.open(editPageUrl(pageId), "_blank", "noopener,noreferrer");
-};

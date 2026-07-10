@@ -16,6 +16,7 @@ import { ChatMessages } from "@newfold/wp-module-ai-chat";
  * Internal dependencies
  */
 import EditorChatActionsProvider from "../context/editorChatActions";
+import EditorNavigationProvider from "../context/editorNavigation";
 import useChatSlideAnimation from "../hooks/useChatSlideAnimation";
 import useEditorChatREST from "../hooks/useEditorChatREST";
 import useEditorControls from "../hooks/useEditorControls";
@@ -34,6 +35,12 @@ const SIDEBAR_NAME = "nfd-editor-chat";
 const SIDEBAR_SCOPE = "core";
 
 const ChatEditor = () => {
+	return <EditorNavigationProvider>
+		<ChatEditorContent />
+	</EditorNavigationProvider>
+};
+
+const ChatEditorContent = () => {
 	const { enableComplementaryArea } = useDispatch(interfaceStore);
 
 	useChatSlideAnimation(SIDEBAR_SCOPE, SIDEBAR_NAME);

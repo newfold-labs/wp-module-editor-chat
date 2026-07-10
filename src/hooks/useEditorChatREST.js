@@ -24,6 +24,7 @@ import useChangeActions from "./chat/useChangeActions";
 import { loadActiveChat, clearActiveChat } from "./chat/activeChatStorage";
 import { resetGeneratedImageCache } from "../services/toolDispatcher";
 import { setActiveImageEditTarget } from "../services/imageCache";
+import { useEditorNavigation } from "../context/editorNavigation";
 import logger from "../utils/logger";
 
 /**
@@ -67,8 +68,15 @@ const useEditorChatREST = () => {
 	const messagesRef = useRef(messages);
 
 	// ── Session config (handles init + token refresh) ──
-	const { configStatus, configError, openaiClientRef, openaiTools, mcpClient, abortControllerRef } =
-		useSessionConfig();
+	const {
+		configStatus,
+		configError,
+		openaiClientRef,
+		openaiTools,
+		mcpClient,
+		abortControllerRef,
+		sessionConfigRef,
+	} = useSessionConfig();
 
 	// Surface config errors
 	useEffect(() => {
@@ -80,6 +88,7 @@ const useEditorChatREST = () => {
 	// ── WordPress dispatch/select ──
 	const { savePost } = useDispatch("core/editor");
 	const { saveEditedEntityRecord } = useDispatch(coreStore);
+	const { requestNavigateToContent } = useEditorNavigation();
 	const { __experimentalGetCurrentGlobalStylesId } = useSelect(
 		(select) => ({
 			__experimentalGetCurrentGlobalStylesId:
@@ -96,6 +105,8 @@ const useEditorChatREST = () => {
 		setToolProgress(message);
 		await wait(minTime);
 	}, []);
+
+	const getSessionConfig = useCallback(() => sessionConfigRef.current, [sessionConfigRef]);
 
 	// ── Tool context builder (shared by executeToolCallsForREST) ──
 	const buildToolCtx = useCallback(
@@ -115,8 +126,9 @@ const useEditorChatREST = () => {
 			getMessages: () => messagesRef.current,
 			updateProgress,
 			wait,
+			requestNavigateToContent,
 		}),
-		[mcpClient, openaiClientRef, updateProgress]
+		[mcpClient, openaiClientRef, updateProgress, requestNavigateToContent]
 	);
 
 	// ── Streaming (bind deps to plain function) ──
@@ -194,6 +206,7 @@ const useEditorChatREST = () => {
 					buildToolCtx,
 					abortControllerRef,
 					displayMessage,
+					getSessionConfig,
 				});
 
 				logger.debug(
@@ -227,7 +240,7 @@ const useEditorChatREST = () => {
 				setPendingTools([]);
 			}
 		},
-		[configStatus, openaiClientRef, openaiTools, streamCompletion, buildToolCtx, abortControllerRef]
+		[configStatus, openaiClientRef, openaiTools, streamCompletion, buildToolCtx, abortControllerRef, getSessionConfig]
 	);
 
 	// ── handleNewChat ──

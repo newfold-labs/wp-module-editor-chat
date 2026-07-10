@@ -1,34 +1,26 @@
 /**
- * WordPress dependencies.
+ * Page selector context — thin wrapper over shared editor navigation.
  */
-import { createContext, useContext, useState } from "@wordpress/element";
-import { useSelect } from "@wordpress/data";
-import { store as coreDataStore } from "@wordpress/core-data";
+import { createContext, useContext } from "@wordpress/element";
 
 /**
  * External dependencies.
  */
-import type { ReactNode, MutableRefObject, SetStateAction, Dispatch, MouseEvent } from "react";
+import type { ReactNode, MutableRefObject, MouseEvent } from "react";
 
 /**
  * Internal dependencies.
  */
-import { loadPage, openPageInNewTab } from "./utils";
-import { BASE_PAGE_QUERY } from "./constants";
+import { useEditorNavigation } from "../../../../../context/editorNavigation";
 
 type PageSelectorProviderProps = {
 	closeMenuRef: MutableRefObject<(() => void) | null>;
-	currentPage?: any;
-	isDirty: boolean;
 	children: ReactNode;
 };
 
-type ContextValue = Omit<PageSelectorProviderProps, "children" | "closeMenuRef"> & {
+type ContextValue = {
 	closeMenu: () => void;
-	handleNavigationConfirm: () => void;
-	handleNavigationCancel: () => void;
-	navigatingToPage?: number;
-	setNavigatingToPage: Dispatch<SetStateAction<number | undefined>>;
+	currentPage: { id: number; title?: string } | null;
 	navigate: (pageId: number, event?: MouseEvent) => void;
 };
 
@@ -39,61 +31,18 @@ export const usePageSelector = () => useContext(Context);
 export default function PageSelectorProvider({
 	closeMenuRef,
 	children,
-	...passedProps
 }: PageSelectorProviderProps) {
-	const { currentPage, isDirty } = passedProps;
-	const [navigatingToPage, setNavigatingToPage] = useState<number | undefined>();
+	const { currentPage, navigate: sharedNavigate } = useEditorNavigation();
 
 	const closeMenu = () => closeMenuRef.current?.();
 
-	// Preloads an initial batch of pages before opening the menu to prevent a loading spinner on first open.
-	useSelect((select) => {
-		const preloadQuery = { ...BASE_PAGE_QUERY };
-		select(coreDataStore).getEntityRecords("postType", "page", preloadQuery);
-		return {};
-	}, []);
-
-	const privateNavigate = (pageId: number) => {
-		// Delayed to prevent the menu from remaining open while the page reloads.
-		setTimeout(() => loadPage(pageId), 1);
-	};
-
 	const navigate: ContextValue["navigate"] = (pageId, event) => {
-		if (event?.metaKey) {
-			openPageInNewTab(pageId);
-			return;
-		}
-		closeMenu();
-
-		const isCurrentPage = currentPage.id === pageId;
-		if (isCurrentPage) {
-			return;
-		}
-
-		if (isDirty) {
-			setNavigatingToPage(pageId);
-		} else {
-			privateNavigate(pageId);
-		}
-	};
-
-	const handleNavigationConfirm = () => {
-		if (navigatingToPage) privateNavigate(navigatingToPage);
-		setNavigatingToPage(undefined);
-	};
-
-	const handleNavigationCancel = () => {
-		setNavigatingToPage(undefined);
-		closeMenu();
+		sharedNavigate(pageId, event, closeMenu);
 	};
 
 	const theContext: ContextValue = {
-		...passedProps,
 		closeMenu,
-		handleNavigationConfirm,
-		handleNavigationCancel,
-		navigatingToPage,
-		setNavigatingToPage,
+		currentPage,
 		navigate,
 	};
 

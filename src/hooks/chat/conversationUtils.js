@@ -202,25 +202,6 @@ function estimateHistoryChars(messages) {
 }
 
 /**
- * Check if the user's message requires site management tools.
- * Uses the raw user message (not the AI's plan, which always mentions "page").
- * Matches explicit action + noun patterns to avoid false positives.
- *
- * @param {string} userMessage The raw user message text
- * @return {boolean} True if message requires site management tools
- */
-export function messageNeedsSiteTools(userMessage) {
-	const msg = (userMessage || "").toLowerCase();
-	return (
-		/\b(create|write|publish|draft|make)\b.{0,15}\b(post|article|blog)\b/.test(msg) ||
-		/\b(create|make)\b.{0,10}\b(new\s+)?page\b/.test(msg) ||
-		/\b(upload|manage)\b.{0,10}\b(media|image|file)\b/.test(msg) ||
-		/\b(add|create|manage|update|delete)\b.{0,10}\b(user|product|setting)\b/.test(msg) ||
-		/\bwoocommerce\b/.test(msg)
-	);
-}
-
-/**
  * Convert MCP tools to OpenAI function-calling format.
  *
  * @param {Array} mcpTools Tools from mcpClient.listTools()

@@ -15,9 +15,11 @@
 import { CHAT_STATUS } from "@newfold/wp-module-ai-chat";
 import { __ } from "@wordpress/i18n";
 
+import { validateEntityContentArgs, abilityUsesBlockContent } from "../utils/entityContentValidation";
 import { snapshotBlocks } from "../utils/editorContext";
 import { safeParseJSON } from "../utils/jsonUtils";
 import { callAbility } from "./callAbility";
+import { handleContentCreation, CREATE_ABILITIES } from "./contentNavigation";
 import {
 	appendGeneratedImageUrl,
 	getActiveImageEditTarget,
@@ -510,34 +512,81 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 					hasBlockEdits = true;
 				}
 			} else {
-				// Server-side MCP tool — forward to MCP server for execution
-				logger.log(`[ToolExecutor:REST] Forwarding to MCP: ${toolName}`, args);
-				try {
-					const mcpResult = await callAbility(ctx.mcpClient, toolName, args);
-					result = {
-						id: toolCall.id,
-						result: mcpResult.content,
-						isError: mcpResult.isError || false,
-					};
-				} catch (mcpErr) {
-					result = {
-						id: toolCall.id,
-						result: [
-							{ type: "text", text: JSON.stringify({ success: false, error: mcpErr.message }) },
-						],
-						isError: true,
-					};
+				// Validate Gutenberg markup before entity create/update hits WordPress REST.
+				let contentValidationFailed = false;
+				if (abilityUsesBlockContent(toolName)) {
+					const hasContent =
+						args.content ||
+						args.block_content ||
+						args.markup ||
+						args.html ||
+						args.block_markup;
+					if (hasContent) {
+						await ctx.updateProgress(
+							__("Validating block markup…", "wp-module-editor-chat"),
+							300
+						);
+						const contentCheck = validateEntityContentArgs(toolName, args);
+						if (!contentCheck.ok) {
+							contentValidationFailed = true;
+							result = {
+								id: toolCall.id,
+								result: [
+									{
+										type: "text",
+										text: JSON.stringify({
+											success: false,
+											error: contentCheck.error,
+										}),
+									},
+								],
+								isError: true,
+							};
+						}
+					}
+				}
+
+				if (!contentValidationFailed) {
+					// Server-side MCP tool — forward to MCP server for execution
+					logger.log(`[ToolExecutor:REST] Forwarding to MCP: ${toolName}`, args);
+					try {
+						const mcpResult = await callAbility(ctx.mcpClient, toolName, args);
+						result = {
+							id: toolCall.id,
+							result: mcpResult.content,
+							isError: mcpResult.isError || false,
+						};
+					} catch (mcpErr) {
+						result = {
+							id: toolCall.id,
+							result: [
+								{ type: "text", text: JSON.stringify({ success: false, error: mcpErr.message }) },
+							],
+							isError: true,
+						};
+					}
 				}
 			}
 
 			// Build tool result for conversation
 			const isError = result?.isError ?? false;
+			let creationMeta = null;
 			let content;
 			if (isError) {
 				content =
 					result.error || result.result?.[0]?.text || __("Tool failed", "wp-module-editor-chat");
 			} else if (READ_TOOLS.has(toolName) && result?.result?.[0]?.text) {
 				content = result.result[0].text;
+			} else if (CREATE_ABILITIES.has(toolName) && result?.result?.[0]?.text) {
+				creationMeta = await handleContentCreation(toolName, result, ctx);
+				if (creationMeta) {
+					content = JSON.stringify({
+						success: true,
+						created: creationMeta,
+					});
+				} else {
+					content = result.result[0].text;
+				}
 			} else {
 				// Extract human-readable .message from handler's JSON result
 				const msg = (() => {
@@ -567,6 +616,8 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 				content,
 				isError,
 				hasChanges: result?.hasChanges || false,
+				isContentCreation: !!creationMeta,
+				creationMeta,
 			});
 			completedToolsList.push({ ...toolCall, isError });
 			ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError }]);

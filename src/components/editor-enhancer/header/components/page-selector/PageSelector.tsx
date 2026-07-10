@@ -1,38 +1,37 @@
 /**
  * WordPress dependencies.
  */
-import { useSelect } from "@wordpress/data";
-import { store as editorDataStore } from "@wordpress/editor";
 import { useRef } from "@wordpress/element";
+import { useSelect } from "@wordpress/data";
+import { store as coreDataStore } from "@wordpress/core-data";
 
 /**
  * Internal dependencies.
  */
 import PageSelectorProvider from "./context";
 import PageSelectorInner from "./PageSelectorInner";
-import PageSelectorLeavingConfirm from "./PageSelectorLeavingConfirm";
+import { BASE_PAGE_QUERY } from "./constants";
 import { ChevronUpDownIcon, DocumentTextIcon } from "../../icons";
 import { DropdownMenu } from "../dropdown-menu";
 import { Button } from "@wordpress/components";
+import { useEditorNavigation } from "../../../../../context/editorNavigation";
 
 export default function PageSelector() {
 	const closeMenuRef = useRef<(() => void) | null>(null);
-	const { currentPage, isDirty } = useSelect(
-		(select) => ({
-			currentPage: select(editorDataStore).getCurrentPost() as any,
-			isDirty: select(editorDataStore).isEditedPostDirty(),
-		}),
+	const { currentPage } = useEditorNavigation();
 
-		[]
-	);
+	// Preload pages before opening the menu to avoid a spinner on first open.
+	useSelect((select) => {
+		select(coreDataStore).getEntityRecords("postType", "page", { ...BASE_PAGE_QUERY });
+		return {};
+	}, []);
 
 	if (!currentPage) {
 		return null;
 	}
 
 	return (
-		<PageSelectorProvider isDirty={isDirty} currentPage={currentPage} closeMenuRef={closeMenuRef}>
-			<PageSelectorLeavingConfirm />
+		<PageSelectorProvider closeMenuRef={closeMenuRef}>
 			<DropdownMenu
 				className="nfd-editor-chat__page-selector"
 				contentClassName="nfd-editor-chat__page-selector__dropdown"

@@ -189,31 +189,71 @@ final class ChatEditor {
 	}
 
 	/**
-	 * Enqueue site editor specific assets when coming from allowed referrers.
+	 * Enqueue editor chat assets on Site Editor (referrer) or post block editor screens.
 	 *
 	 * @return void
 	 */
 	public static function enqueue_site_editor_assets() {
 		global $pagenow;
 
-		// Only proceed if we're on site-editor.php and have the right referrer
-		if ( 'site-editor.php' !== $pagenow ) {
+		if ( self::is_site_editor_chat_screen( $pagenow ) ) {
+			self::register_assets( 'site' );
+			\add_filter( 'admin_body_class', array( __CLASS__, 'add_admin_body_class' ) );
 			return;
+		}
+
+		if ( self::is_post_editor_chat_screen( $pagenow ) ) {
+			self::register_assets( 'post' );
+			\add_filter( 'admin_body_class', array( __CLASS__, 'add_admin_body_class' ) );
+		}
+	}
+
+	/**
+	 * Whether the current request is the Site Editor with an allowed referrer.
+	 *
+	 * @param string $pagenow Current admin page.
+	 * @return bool
+	 */
+	private static function is_site_editor_chat_screen( $pagenow ) {
+		if ( 'site-editor.php' !== $pagenow ) {
+			return false;
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Referrer parameter is validated against allowed list, no data modification.
-		if ( ! isset( $_GET['referrer'] ) || ! \in_array( $_GET['referrer'], self::$allowed_referrers, true ) ) {
-			return;
+		return isset( $_GET['referrer'] ) && \in_array( $_GET['referrer'], self::$allowed_referrers, true );
+	}
+
+	/**
+	 * Whether the current request is a block post editor screen (post.php / post-new.php).
+	 *
+	 * @param string $pagenow Current admin page.
+	 * @return bool
+	 */
+	private static function is_post_editor_chat_screen( $pagenow ) {
+		if ( ! \in_array( $pagenow, array( 'post.php', 'post-new.php' ), true ) ) {
+			return false;
 		}
 
-		self::register_assets();
-		\add_filter( 'admin_body_class', array( __CLASS__, 'add_admin_body_class' ) );
+		if ( ! Permissions::is_editor() ) {
+			return false;
+		}
+
+		$screen = \get_current_screen();
+
+		if ($screen && \method_exists( $screen, 'is_block_editor' ) && $screen->is_block_editor()){
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Referrer parameter is validated against allowed list, no data modification.
+			return isset( $_GET['referrer'] ) && \in_array( $_GET['referrer'], self::$allowed_referrers, true );
+		}
+
+		return false;
 	}
 
 	/**
 	 * Register and enqueue chat editor assets.
+	 *
+	 * @param string $editor_type `site` or `post`.
 	 */
-	public static function register_assets() {
+	private static function register_assets( $editor_type = 'site' ) {
 
 		$asset_file = NFD_EDITOR_CHAT_BUILD_DIR . '/chat-editor.asset.php';
 
@@ -258,6 +298,7 @@ final class ChatEditor {
 				'model'          => defined( 'NFD_EDITOR_CHAT_MODEL' ) ? \NFD_EDITOR_CHAT_MODEL : '',
 				'site'           => self::get_site_context(),
 				'pagesCount'     => \array_sum( (array) \wp_count_posts( 'page' ) ),
+				'editorType'     => $editor_type,
 			);
 
 			$upgrade_banner_data = self::get_plan_upgrade_banner_data();
@@ -336,10 +377,15 @@ final class ChatEditor {
 	 * @return string
 	 */
 	public static function add_admin_body_class( $classes ) {
+		global $pagenow;
 		$current_screen = \get_current_screen();
 
 		if ( $current_screen && \method_exists( $current_screen, 'is_block_editor' ) && $current_screen->is_block_editor() ) {
 			$classes .= ' nfd-editor-chat-enabled';
+
+			if ( \in_array( $pagenow, array( 'post.php', 'post-new.php' ), true ) ) {
+				$classes .= ' nfd-editor-chat--post-editor';
+			}
 
 			if ( self::get_plan_upgrade_banner_data() ) {
 				$classes .= ' nfd-editor-chat--has-plan-upgrade-banner';

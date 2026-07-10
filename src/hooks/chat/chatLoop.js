@@ -17,11 +17,23 @@ import {
 import {
 	truncateToolResult,
 	compressConversationHistory,
-	messageNeedsSiteTools,
 	createRetryTracker,
 } from "./conversationUtils";
-import { EXECUTE_NUDGE, SUMMARIZE_NUDGE, buildEditorContext } from "../../utils/editorContext";
+import {
+	ASSISTANT_JSON_FORMAT,
+	EXECUTE_NUDGE,
+	SUMMARIZE_NUDGE,
+	buildCreationSummarizeNudge,
+	buildEditorContext,
+} from "../../utils/editorContext";
 import { executeToolCallsForREST } from "../../services/toolDispatcher";
+import { appendCreationLinkIfNeeded } from "../../services/contentNavigation";
+import {
+	classifyUserIntent as classifyUserIntentDefault,
+	intentNeedsAllTools,
+	getIntentNudge,
+	DEFAULT_INTENT,
+} from "../../services/intentClassifier";
 import { restoreAnimatedBlocksInEditor } from "../../utils/editorUtils";
 import { finalizeStreamingMessage, removeStreamingMessage } from "./streamMessageHelpers";
 import {
@@ -43,6 +55,23 @@ const replyStreamId = (ts) => `assistant-${ts}-reply`;
 const closingStreamId = (ts) => `assistant-${ts}-closing`;
 
 /**
+ * Select tools for a pass based on classified user intent.
+ *
+ * @param {Object} intent      Classified intent for this turn
+ * @param {Array}  openaiTools All available MCP tools
+ * @return {Array}
+ */
+function getToolsForIntent(intent, openaiTools) {
+	if (intentNeedsAllTools(intent)) {
+		return openaiTools;
+	}
+	if (intent?.task === "conversational") {
+		return [];
+	}
+	return openaiTools.filter((t) => EDITOR_TOOLS.has(t.function.name));
+}
+
+/**
  * Run the function-calling loop for a single user message.
  *
  * @param {string} userMessage The user's message content
@@ -59,6 +88,8 @@ export async function runChatLoop(userMessage, deps) {
 		buildToolCtx,
 		abortControllerRef,
 		displayMessage = userMessage,
+		getSessionConfig,
+		classifyUserIntent = classifyUserIntentDefault,
 	} = deps;
 
 	// First message: reset conversation history (system prompt is injected by the worker)
@@ -67,13 +98,14 @@ export async function runChatLoop(userMessage, deps) {
 		isFirstMessageRef.current = false;
 	}
 
-	// userMessage is already enriched by the caller (attachment context, image edit context).
-	// displayMessage is the clean version shown in the chat UI.
+	// Store clean user message — editor context is injected per-request, not persisted
 	conversationHistoryRef.current.push({
 		role: "user",
 		content: userMessage,
 	});
 
+	// Add user message to display — use displayMessage (original instruction) not
+	// the enriched API message which may contain injected context like [Image edit request].
 	const ts = Date.now();
 	setMessages((prev) => [
 		...prev,
@@ -104,6 +136,15 @@ export async function runChatLoop(userMessage, deps) {
 	const extraClientIds = [];
 	const markupRequestCount = { current: 0 };
 	let markupJustProvided = false;
+	let lastCreationOutcome = null;
+	const intentMessage = displayMessage || userMessage;
+
+	setStatus(CHAT_STATUS.GENERATING);
+	const sessionConfig = getSessionConfig?.() || null;
+	const intent = sessionConfig
+		? await classifyUserIntent(intentMessage, sessionConfig)
+		: DEFAULT_INTENT;
+	logger.log("[EditorChat] User intent:", intent.task, intent.content_type);
 
 	while (iterations++ < MAX_TOOL_ITERATIONS) {
 		// Check if user aborted between iterations (e.g. during tool execution)
@@ -124,27 +165,29 @@ export async function runChatLoop(userMessage, deps) {
 		const streamMessageId = planShown ? replyStreamId(ts) : planStreamId(ts);
 
 		// ── Tool-calling pass ──
-		// Dynamically select tools based on the user's message:
-		// editor tasks → only block-editing tools (prevents search-media, get-function-details, etc.)
-		// site management tasks (create post, upload media, etc.) → all tools
-		const toolsForPass = messageNeedsSiteTools(userMessage)
-			? openaiTools
-			: openaiTools.filter((t) => EDITOR_TOOLS.has(t.function.name));
+		// Tool set is driven by LLM intent classification (multilingual, synonym-safe).
+		const toolsForPass = getToolsForIntent(intent, openaiTools);
 
 		let nudge;
 		if (toolsJustExecuted) {
-			nudge = SUMMARIZE_NUDGE;
+			nudge = lastCreationOutcome
+				? buildCreationSummarizeNudge(lastCreationOutcome)
+				: SUMMARIZE_NUDGE;
 		} else if (markupJustProvided) {
 			nudge = MARKUP_PROVIDED_NUDGE;
 			markupJustProvided = false;
 		} else {
-			nudge = EXECUTE_NUDGE;
+			nudge = getIntentNudge(intent, EXECUTE_NUDGE, ASSISTANT_JSON_FORMAT);
 		}
 		toolsJustExecuted = false;
 
+		const intentBlock = `<user_intent>\n${JSON.stringify(intent)}\n</user_intent>`;
 		const toolMessages = [
 			...conversationHistoryRef.current,
-			{ role: "user", content: editorContextMsg.content + "\n\n" + nudge },
+			{
+				role: "user",
+				content: editorContextMsg.content + "\n\n" + intentBlock + "\n\n" + nudge,
+			},
 		];
 
 		const toolPassStart = performance.now();
@@ -200,7 +243,10 @@ export async function runChatLoop(userMessage, deps) {
 				role: "assistant",
 				content,
 			});
-			finalizeStreamingMessage(setMessages, streamMessageId, assistantDisplayMessage);
+			const finalDisplay = lastCreationOutcome
+				? appendCreationLinkIfNeeded(assistantDisplayMessage, lastCreationOutcome)
+				: assistantDisplayMessage;
+			finalizeStreamingMessage(setMessages, streamMessageId, finalDisplay);
 			endedNaturally = true;
 			break;
 		}
@@ -369,7 +415,8 @@ export async function runChatLoop(userMessage, deps) {
 		// get-block-markup, etc.) we must keep nudging EXECUTE — otherwise the
 		// next iteration tells the AI "all changes are applied" and it replies
 		// with a confirmation without ever running the write tool.
-		toolsJustExecuted = results.some((r) => r.hasChanges === true);
+		lastCreationOutcome = results.find((r) => r.creationMeta)?.creationMeta ?? null;
+		toolsJustExecuted = results.some((r) => r.hasChanges === true || r.isContentCreation === true);
 		if (toolsJustExecuted) {
 			restoreAnimatedBlocksInEditor();
 		}

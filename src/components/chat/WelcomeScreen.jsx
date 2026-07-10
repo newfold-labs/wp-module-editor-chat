@@ -58,7 +58,10 @@ const WelcomeScreen = ({ onSendMessage }) => {
 						{__("Hi, I'm your AI assistant.", "wp-module-editor-chat")}
 					</div>
 					<div className="nfd-editor-chat-welcome__subtitle">
-						{__("I can help you update page sections and styles,", "wp-module-editor-chat")}
+						{__(
+							"I can help you create pages and posts, update sections and styles,",
+							"wp-module-editor-chat"
+						)}
 					</div>
 					<div className="nfd-editor-chat-welcome__subtitle">
 						{__("add, remove, or edit existing content.", "wp-module-editor-chat")}
