@@ -93,29 +93,51 @@ function ensureStyle(doc) {
 	(doc.head || doc.documentElement).appendChild(style);
 }
 
+function serializeBlockTree(block) {
+	if (!block) {
+		return null;
+	}
+	return {
+		id: block.clientId,
+		attrs: block.attributes ?? {},
+		inner: (block.innerBlocks ?? []).map(serializeBlockTree),
+	};
+}
+
 function getBlockSnapshot(clientId) {
 	const block = select("core/block-editor").getBlock(clientId);
-	return JSON.stringify({
-		attrs: block?.attributes ?? {},
-		inner: (block?.innerBlocks ?? []).map((b) => ({
-			id: b.clientId,
-			attrs: b.attributes,
-		})),
-	});
+	return JSON.stringify(serializeBlockTree(block));
 }
+
+const PROCESSING_TIMEOUT_MS = 90_000;
 
 function watchUntilDone(clientId, onDone) {
 	const initialSnapshot = getBlockSnapshot(clientId);
+	let done = false;
+
+	const finish = () => {
+		if (done) {
+			return;
+		}
+		done = true;
+		clearTimeout(timer);
+		unsubscribe();
+		onDone();
+	};
+
+	// Safety timeout: clean up even if the AI never responds or errors out
+	const timer = setTimeout(finish, PROCESSING_TIMEOUT_MS);
 
 	const unsubscribe = subscribe(() => {
 		const selectedId = select("core/block-editor").getSelectedBlockClientId();
 		const currentSnapshot = getBlockSnapshot(clientId);
 
 		if (selectedId !== clientId || currentSnapshot !== initialSnapshot) {
-			unsubscribe();
-			onDone();
+			finish();
 		}
 	});
+
+	return finish;
 }
 
 /**
@@ -317,6 +339,18 @@ export function startImageProcessing(clientId) {
 	};
 
 	const initialAttributes = JSON.stringify(store.getBlock(clientId)?.attributes ?? {});
+	const initialFullSnapshot = getBlockSnapshot(clientId);
+	let subscribed = true;
+
+	// Safety timeout: remove the overlay even if the AI never responds or errors out
+	const safetyTimer = setTimeout(() => {
+		if (!subscribed) {
+			return;
+		}
+		subscribed = false;
+		unsubscribe();
+		removeAll();
+	}, PROCESSING_TIMEOUT_MS);
 
 	const unsubscribe = subscribe(() => {
 		const block = store.getBlock(clientId);
@@ -324,6 +358,8 @@ export function startImageProcessing(clientId) {
 		if (!block) {
 			// Block was REPLACED (rewrite path) — find the new block at the
 			// same position; the overlay keeps covering the area meanwhile.
+			subscribed = false;
+			clearTimeout(safetyTimer);
 			unsubscribe();
 			const newClientId = store.getBlockOrder(rootClientId)[blockIndex];
 			if (!newClientId) {
@@ -338,14 +374,29 @@ export function startImageProcessing(clientId) {
 
 		const currentAttributes = JSON.stringify(block.attributes ?? {});
 		if (currentAttributes !== initialAttributes) {
-			// Same block, attributes updated in place
+			// Cover's own attributes changed (e.g. image URL) — wait for new image
+			subscribed = false;
+			clearTimeout(safetyTimer);
 			unsubscribe();
 			whenImageReady(clientId);
 			return;
 		}
 
+		// An inner block changed (e.g. text color on a child heading/paragraph)
+		// but the cover image itself did not change — stop the shimmer immediately.
+		const currentFullSnapshot = getBlockSnapshot(clientId);
+		if (currentFullSnapshot !== initialFullSnapshot) {
+			subscribed = false;
+			clearTimeout(safetyTimer);
+			unsubscribe();
+			removeAll();
+			return;
+		}
+
 		const selectedId = store.getSelectedBlockClientId();
 		if (selectedId !== clientId) {
+			subscribed = false;
+			clearTimeout(safetyTimer);
 			unsubscribe();
 			removeAll();
 		}

@@ -34,6 +34,7 @@ import {
 	getIntentNudge,
 	DEFAULT_INTENT,
 } from "../../services/intentClassifier";
+import { restoreAnimatedBlocksInEditor } from "../../utils/editorUtils";
 import { finalizeStreamingMessage, removeStreamingMessage } from "./streamMessageHelpers";
 import {
 	MARKUP_PROVIDED_NUDGE,
@@ -416,6 +417,9 @@ export async function runChatLoop(userMessage, deps) {
 		// with a confirmation without ever running the write tool.
 		lastCreationOutcome = results.find((r) => r.creationMeta)?.creationMeta ?? null;
 		toolsJustExecuted = results.some((r) => r.hasChanges === true || r.isContentCreation === true);
+		if (toolsJustExecuted) {
+			restoreAnimatedBlocksInEditor();
+		}
 
 		// No-progress guard. The retry tracker exempts read-only tools, so a model
 		// that keeps re-reading (get-block-markup, get-ability-schema, …) without

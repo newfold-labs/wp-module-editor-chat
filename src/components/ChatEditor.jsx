@@ -21,7 +21,8 @@ import useChatSlideAnimation from "../hooks/useChatSlideAnimation";
 import useEditorChatREST from "../hooks/useEditorChatREST";
 import useEditorControls from "../hooks/useEditorControls";
 import { IMAGE_BLOCKS, LOGO_BLOCK } from "../services/blockToolbar/blockAI";
-import { startBlockProcessing, startImageProcessing } from "../services/blockToolbar/blockHighlight";
+import { CHAT_STATUS } from "../hooks/chat/constants";
+import { clearAllBlockProcessing, startBlockProcessing, startImageProcessing } from "../services/blockToolbar/blockHighlight";
 import { CHAT_SEND_EVENT } from "../services/blockToolbar/chatBridge";
 import { formatImageEditUserMessage } from "../utils/editorContext";
 import ChatInput from "./chat/ChatInput";
@@ -71,9 +72,9 @@ const ChatEditorContent = () => {
 	// Chat sends (input/welcome screen): if a supported block is selected,
 	// trigger the same processing effect used by the toolbar popover.
 	const sendWithBlockFeedback = useCallback(
-		(message, ...rest) => {
+		(apiMessage, displayMessage = apiMessage, ...rest) => {
 			const selected = select("core/block-editor").getSelectedBlock();
-			let enrichedMessage = message;
+			let enrichedMessage = apiMessage;
 			let editClientId = null;
 			if (selected) {
 				if (IMAGE_BLOCKS.has(selected.name) || selected.name === LOGO_BLOCK) {
@@ -82,9 +83,9 @@ const ChatEditorContent = () => {
 				} else {
 					startBlockProcessing(selected.clientId);
 				}
-				enrichedMessage = formatImageEditUserMessage(message, selected.clientId);
+				enrichedMessage = formatImageEditUserMessage(apiMessage, selected.clientId);
 			}
-			return handleSendMessage(enrichedMessage, message, editClientId, ...rest);
+			return handleSendMessage(enrichedMessage, displayMessage, editClientId, ...rest);
 		},
 		[handleSendMessage]
 	);
@@ -111,6 +112,14 @@ const ChatEditorContent = () => {
 			enableComplementaryArea(SIDEBAR_SCOPE, SIDEBAR_NAME);
 		}
 	}, [templateLocked, enableComplementaryArea]);
+
+	// If the AI errors out the block attributes never change, so the processing
+	// effects would stay stuck. Clear them immediately on error.
+	useEffect(() => {
+		if (status === CHAT_STATUS.ERROR) {
+			clearAllBlockProcessing();
+		}
+	}, [status]);
 
 	// Disable new chat button when there are no messages (brand new chat)
 	const isNewChatDisabled = messages.length === 0;

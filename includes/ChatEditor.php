@@ -49,6 +49,29 @@ final class ChatEditor {
 				},
 			)
 		);
+		\register_rest_route(
+			'nfd-editor-chat/v1',
+			'/upload',
+			array(
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => array( __CLASS__, 'upload_temp_file' ),
+				'permission_callback' => function () {
+					return Permissions::is_editor();
+				},
+			)
+		);
+
+		\register_rest_route(
+			'nfd-editor-chat/v1',
+			'/upload/(?P<filename>[a-zA-Z0-9_\-\.]+)',
+			array(
+				'methods'             => \WP_REST_Server::DELETABLE,
+				'callback'            => array( __CLASS__, 'delete_temp_file' ),
+				'permission_callback' => function () {
+					return Permissions::is_editor();
+				},
+			)
+		);
 	}
 
 	/**
@@ -307,7 +330,7 @@ final class ChatEditor {
 		if ( is_null( $data ) ) {
 			$data      = array();
 			$plan_data = \get_option( 'wvc_plan_data', '{}' );
-			$plan_data = ! ! $plan_data && \is_string( $plan_data ) ? \json_decode( $plan_data, true ) : array();
+			$plan_data = (bool) $plan_data && \is_string( $plan_data ) ? \json_decode( $plan_data, true ) : array();
 
 			if ( $plan_data ) {
 				$plan_data   = \is_array( $plan_data ) ? $plan_data : array();
@@ -376,7 +399,7 @@ final class ChatEditor {
 	 * Round the top block's selection outline to match the framed canvas corner
 	 * (the outline is drawn inside the iframe, out of reach of our stylesheet).
 	 *
-	 * @param array                   $settings Block editor settings.
+	 * @param array                    $settings Block editor settings.
 	 * @param \WP_Block_Editor_Context $context  Editor context.
 	 *
 	 * @return array
@@ -470,7 +493,109 @@ final class ChatEditor {
 	 */
 	public static function enqueue_admin_bar_assets() {
 		if ( is_admin_bar_showing() ) {
-			\wp_enqueue_style( 'nfd-editor-chat-admin-bar', \NFD_EDITOR_CHAT_ASSETS_URL . 'css/admin-bar.css', [], NFD_EDITOR_CHAT_VERSION );
+			\wp_enqueue_style( 'nfd-editor-chat-admin-bar', \NFD_EDITOR_CHAT_ASSETS_URL . 'css/admin-bar.css', array(), NFD_EDITOR_CHAT_VERSION );
 		}
+	}
+
+	/**
+	 * Upload a file to temporary storage (not Media Library).
+	 *
+	 * @param \WP_REST_Request $request The REST request.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public static function upload_temp_file( \WP_REST_Request $request ) {
+		$files = $request->get_file_params();
+
+		if ( empty( $files['file'] ) || ! empty( $files['file']['error'] ) ) {
+			return new \WP_Error(
+				'no_file',
+				__( 'No file provided or upload error.', 'nfd-editor-chat' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$file = $files['file'];
+
+		$allowed_mime_types = array(
+			'image/png',
+			'image/jpeg',
+			'image/webp',
+			'image/gif',
+			'application/pdf',
+			'text/plain',
+			'text/csv',
+			'text/markdown',
+		);
+
+		if ( ! in_array( $file['type'], $allowed_mime_types, true ) ) {
+			return new \WP_Error(
+				'invalid_file_type',
+				__( 'File type not allowed.', 'nfd-editor-chat' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$upload_dir = \wp_upload_dir();
+		$temp_dir   = $upload_dir['basedir'] . '/nfd-chat-temp/';
+		$temp_url   = $upload_dir['baseurl'] . '/nfd-chat-temp/';
+
+		if ( ! \file_exists( $temp_dir ) ) {
+			\wp_mkdir_p( $temp_dir );
+			// Prevent directory listing and PHP execution.
+			\file_put_contents( $temp_dir . 'index.php', '<?php // Silence is golden.' );
+		}
+
+		$filename = \wp_unique_filename( $temp_dir, \sanitize_file_name( $file['name'] ) );
+		$filepath = $temp_dir . $filename;
+
+		if ( ! \move_uploaded_file( $file['tmp_name'], $filepath ) ) {
+			return new \WP_Error(
+				'upload_failed',
+				__( 'Failed to save uploaded file.', 'nfd-editor-chat' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		$file_url = $temp_url . $filename;
+
+		// Track file for cleanup after 24h.
+		\set_transient( 'nfd_chat_temp_' . \md5( $filename ), $filepath, \DAY_IN_SECONDS * 3 );
+
+		return new \WP_REST_Response(
+			array(
+				'url'      => $file_url,
+				'filename' => $filename,
+				'name'     => $file['name'],
+				'type'     => $file['type'],
+				'size'     => $file['size'],
+			),
+			201
+		);
+	}
+
+	/**
+	 * Delete a temporary uploaded file.
+	 *
+	 * @param \WP_REST_Request $request The REST request.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public static function delete_temp_file( \WP_REST_Request $request ) {
+		$filename = $request->get_param( 'filename' );
+
+		$upload_dir = \wp_upload_dir();
+		$filepath   = $upload_dir['basedir'] . '/nfd-chat-temp/' . \sanitize_file_name( $filename );
+
+		if ( ! \file_exists( $filepath ) ) {
+			return new \WP_Error(
+				'file_not_found',
+				__( 'File not found.', 'nfd-editor-chat' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		\wp_delete_file( $filepath );
+		\delete_transient( 'nfd_chat_temp_' . \md5( $filename ) );
+
+		return new \WP_REST_Response( null, 204 );
 	}
 }

@@ -52,7 +52,10 @@ export function parseAssistantResponse(content) {
 	const direct = safeParseJSON(trimmed);
 	const fromDirect = normalize(direct.value);
 
-	if (fromDirect) {
+	// Only return early if we actually got a non-empty message — normalize({})
+	// returns { message: "" } (truthy) when safeParseJSON falls back to {}, which
+	// would suppress the regex fallback below and cause raw JSON to leak into the UI.
+	if (fromDirect?.message) {
 		return fromDirect;
 	}
 

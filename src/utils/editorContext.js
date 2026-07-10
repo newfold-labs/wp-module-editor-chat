@@ -12,7 +12,7 @@ import {
 	getSelectedBlocks,
 } from "./editorHelpers";
 import { getCurrentGlobalStyles } from "../services/globalStylesService";
-import { IMAGE_BLOCKS } from "../services/blockToolbar/blockAI";
+import { IMAGE_BLOCKS, LOGO_BLOCK } from "../services/blockToolbar/blockAI";
 import { getBlockImageUrl } from "../services/imageAbility";
 import { NFD_CLASS_REFERENCE } from "./nfdClassReference";
 
@@ -188,7 +188,18 @@ export function formatImageEditUserMessage(instruction, clientId) {
 	}
 
 	const block = wp.data.select("core/block-editor").getBlock(clientId);
-	if (!block || !IMAGE_BLOCKS.has(block.name)) {
+	if (!block) {
+		return instruction;
+	}
+
+	if (block.name === LOGO_BLOCK) {
+		return (
+			`[Logo replacement request] Selected block: core/site-logo (id:${clientId}). ` +
+			`User instruction: ${instruction}`
+		);
+	}
+
+	if (!IMAGE_BLOCKS.has(block.name)) {
 		return instruction;
 	}
 

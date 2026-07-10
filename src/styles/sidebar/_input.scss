@@ -45,6 +45,7 @@
 	align-items: center;
 	gap: 8px;
 	min-height: 0;
+	flex-wrap: wrap;
 	transition: min-height 0.2s ease;
 
 	&:empty {
@@ -53,6 +54,146 @@
 		padding: 0;
 		gap: 0;
 	}
+
+	// Attachment chips in __top row
+	.nfd-editor-chat-attachment-tooltip {
+		position: absolute;
+		bottom: calc(100% + 8px);
+		left: 0;
+		background: #1c1c1e;
+		padding: 8px 12px;
+		border-radius: 8px;
+		pointer-events: none;
+		opacity: 0;
+		transition: opacity 0.15s ease;
+		z-index: 100;
+		display: flex;
+		flex-direction: column;
+		gap: 3px;
+
+		&__name {
+			font-size: 12px;
+			font-weight: 500;
+			color: #fff;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			max-width: 160px;
+		}
+
+		&__type {
+			font-size: 11px;
+			color: rgba(255, 255, 255, 0.55);
+			white-space: nowrap;
+		}
+	}
+
+	.nfd-editor-chat-attachment-wrapper {
+		position: relative;
+		flex-shrink: 0;
+
+		&:hover .nfd-editor-chat-attachment-tooltip {
+			opacity: 1;
+		}
+	}
+
+	.nfd-editor-chat-attachment {
+		position: relative;
+		width: 48px;
+		height: 48px;
+		border-radius: 8px;
+		overflow: hidden;
+		background: var(--nfd-editor-chat-color-background);
+		border: 1px solid var(--nfd-editor-chat-color-border);
+
+		&__thumb {
+			width: 100%;
+			height: 100%;
+			background-size: cover;
+			background-position: center;
+			background-repeat: no-repeat;
+		}
+
+		&__ext {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			width: 100%;
+			height: 100%;
+			font-size: 11px;
+			font-weight: 600;
+			text-transform: uppercase;
+			color: var(--nfd-editor-chat-color-grey-dark);
+			letter-spacing: 0.05em;
+		}
+
+		&--uploading {
+
+			&::after {
+				content: "";
+				position: absolute;
+				inset: 0;
+				background: rgba(255, 255, 255, 0.6);
+				border-radius: 8px;
+			}
+
+			&::before {
+				content: "";
+				position: absolute;
+				top: 50%;
+				left: 50%;
+				width: 20px;
+				height: 20px;
+				margin: -10px 0 0 -10px;
+				border: 2px solid var(--nfd-editor-chat-color-primary);
+				border-top-color: transparent;
+				border-radius: 50%;
+				animation: nfd-chat-spin 0.7s linear infinite;
+				z-index: 1;
+			}
+		}
+
+		&--error {
+			border-color: var(--nfd-editor-chat-color-error);
+
+			&::after {
+				content: "!";
+				position: absolute;
+				inset: 0;
+				background: rgba(255, 255, 255, 0.75);
+				border-radius: 8px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-size: 18px;
+				font-weight: 700;
+				color: var(--nfd-editor-chat-color-error);
+			}
+		}
+
+		button {
+			all: unset;
+			position: absolute;
+			top: 3px;
+			right: 3px;
+			width: 16px;
+			height: 16px;
+			border-radius: 50%;
+			background: rgba(0, 0, 0, 0.55);
+			color: #fff;
+			cursor: pointer;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			opacity: 0;
+			transition: opacity 0.15s ease;
+		}
+
+		&:hover button {
+			opacity: 1;
+		}
+	}
+
 }
 
 .nfd-editor-chat-input__textarea {
@@ -105,8 +246,55 @@
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	gap: 4px;
+	gap: 6px;
 	flex-wrap: wrap;
+
+	.components-button.nfd-editor-chat-input__attach {
+		flex-shrink: 0;
+		min-width: auto;
+		width: 28px;
+		height: 28px;
+		padding: 0;
+		stroke: var(--nfd-editor-chat-color-grey-dark);
+		background: var(--nfd-editor-chat-color-background);
+		border: none;
+		border-radius: 50%;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: all 0.15s ease;
+		margin-left: 0;
+
+		svg {
+			display: block;
+			fill: none;
+			width: 16px;
+			height: 16px;
+		}
+
+		&:disabled {
+			opacity: 0.4;
+			cursor: not-allowed;
+		}
+
+		&:hover:not(:disabled) {
+			stroke: var(--nfd-editor-chat-color-primary);
+			background: var(--nfd-editor-chat-color-primary-light-12);
+		}
+
+		&:focus:not(:disabled) {
+			outline: none;
+			stroke: var(--nfd-editor-chat-color-primary);
+			background: var(--nfd-editor-chat-color-primary-light-16);
+		}
+
+		&:active:not(:disabled) {
+			stroke: var(--nfd-editor-chat-color-primary-hover);
+			background: var(--nfd-editor-chat-color-primary-light-20);
+		}
+	}
+
 }
 
 // Common styles for submit and stop buttons
@@ -128,6 +316,7 @@
 	transition: all 0.15s ease;
 	margin-left: auto;
 
+	/* stylelint-disable-next-line no-descending-specificity */
 	svg {
 		display: block;
 		fill: none;
@@ -168,5 +357,40 @@
 
 	&:hover:not(:disabled) {
 		color: var(--nfd-editor-chat-color-error);
+	}
+}
+
+
+// Drop overlay — toggled by the --dragging modifier on the root element
+.nfd-editor-chat-input--dragging {
+	position: relative;
+
+	.nfd-editor-chat-input__container {
+		border-color: var(--nfd-editor-chat-color-primary);
+		box-shadow: 0 2px 12px rgba(34, 113, 177, 0.25);
+	}
+
+	&::after {
+		content: "Drop files here";
+		position: absolute;
+		inset: 16px; // match the root's 16px padding so overlay covers only the container
+		background: var(--nfd-editor-chat-color-background);
+		border: 2px dashed var(--nfd-editor-chat-color-primary);
+		border-radius: 12px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-weight: 500;
+		font-size: var(--nfd-editor-chat-font-size-base);
+		color: var(--nfd-editor-chat-color-primary);
+		pointer-events: none;
+	}
+
+}
+
+@keyframes nfd-chat-spin {
+
+	to {
+		transform: rotate(360deg);
 	}
 }
