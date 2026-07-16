@@ -52,20 +52,24 @@ class ApplicationWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 
 		// Remove any pre-existing hooks so we can detect new registrations.
 		remove_all_actions( 'admin_enqueue_scripts' );
+		remove_all_actions( 'rest_api_init' );
 
 		$app->initialize_chat_editor();
 
 		$this->assertIsInt(
 			has_action( 'admin_enqueue_scripts', array( ChatEditor::class, 'enqueue_site_editor_assets' ) )
 		);
+		$this->assertIsInt(
+			has_action( 'rest_api_init', array( ChatEditor::class, 'register_rest_routes' ) )
+		);
 	}
 
 	/**
-	 * Does nothing for a subscriber (no edit_pages).
+	 * Registers REST routes for subscribers but not editor UI assets.
 	 *
 	 * @return void
 	 */
-	public function test_initialize_chat_editor_does_nothing_for_subscriber() {
+	public function test_initialize_chat_editor_registers_rest_routes_for_subscriber() {
 		$user_id = self::factory()->user->create( array( 'role' => 'subscriber' ) );
 		wp_set_current_user( $user_id );
 
@@ -73,29 +77,37 @@ class ApplicationWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 		$app       = new Application( $container );
 
 		remove_all_actions( 'admin_enqueue_scripts' );
+		remove_all_actions( 'rest_api_init' );
 
 		$app->initialize_chat_editor();
 
+		$this->assertIsInt(
+			has_action( 'rest_api_init', array( ChatEditor::class, 'register_rest_routes' ) )
+		);
 		$this->assertFalse(
 			has_action( 'admin_enqueue_scripts', array( ChatEditor::class, 'enqueue_site_editor_assets' ) )
 		);
 	}
 
 	/**
-	 * Does nothing when user is logged out.
+	 * Registers REST routes when logged out but not editor UI assets.
 	 *
 	 * @return void
 	 */
-	public function test_initialize_chat_editor_does_nothing_when_logged_out() {
+	public function test_initialize_chat_editor_registers_rest_routes_when_logged_out() {
 		wp_set_current_user( 0 );
 
 		$container = $this->make_container();
 		$app       = new Application( $container );
 
 		remove_all_actions( 'admin_enqueue_scripts' );
+		remove_all_actions( 'rest_api_init' );
 
 		$app->initialize_chat_editor();
 
+		$this->assertIsInt(
+			has_action( 'rest_api_init', array( ChatEditor::class, 'register_rest_routes' ) )
+		);
 		$this->assertFalse(
 			has_action( 'admin_enqueue_scripts', array( ChatEditor::class, 'enqueue_site_editor_assets' ) )
 		);
