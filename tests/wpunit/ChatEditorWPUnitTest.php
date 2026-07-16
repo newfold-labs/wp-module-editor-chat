@@ -559,7 +559,10 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 		$temp_dir   = $upload_dir['basedir'] . '/' . ChatEditor::TEMP_UPLOAD_SUBDIR . '/';
 
 		if ( \file_exists( $temp_dir ) ) {
-			\array_map( 'unlink', \glob( $temp_dir . '*' ) ?: array() );
+			$temp_files = \glob( $temp_dir . '*' );
+			if ( false !== $temp_files ) {
+				\array_map( 'unlink', $temp_files );
+			}
 			\rmdir( $temp_dir );
 		}
 
