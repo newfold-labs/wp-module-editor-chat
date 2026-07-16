@@ -240,7 +240,7 @@ final class ChatEditor {
 
 		$screen = \get_current_screen();
 
-		if ($screen && \method_exists( $screen, 'is_block_editor' ) && $screen->is_block_editor()){
+		if ( $screen && \method_exists( $screen, 'is_block_editor' ) && $screen->is_block_editor() ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Referrer parameter is validated against allowed list, no data modification.
 			return isset( $_GET['referrer'] ) && \in_array( $_GET['referrer'], self::$allowed_referrers, true );
 		}
