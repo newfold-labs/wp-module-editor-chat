@@ -11,6 +11,11 @@ namespace NewfoldLabs\WP\Module\EditorChat;
  */
 final class ChatEditor {
 	/**
+	 * Subdirectory under wp_upload_dir() for temporary chat uploads.
+	 */
+	const TEMP_UPLOAD_SUBDIR = 'nfd-chat-temp';
+
+	/**
 	 * Array of allowed referrers for site editor access
 	 *
 	 * @var array
@@ -23,15 +28,19 @@ final class ChatEditor {
 	 * Constructor.
 	 */
 	public function __construct() {
-		\add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_site_editor_assets' ) );
+		\add_action( 'init', array( __CLASS__, 'ensure_temp_upload_dir' ), 5 );
 		\add_action( 'rest_api_init', array( __CLASS__, 'register_rest_routes' ) );
 		\add_action( 'init', array( __CLASS__, 'load_text_domain' ), 100 );
 		\add_filter( 'load_script_translation_file', array( __CLASS__, 'load_script_translation_file' ), 10, 3 );
-		\add_action( 'admin_bar_menu', array( __CLASS__, 'admin_bar_menu' ), 99 );
-		\add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_admin_bar_assets' ) );
-		\add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_admin_bar_assets' ) );
-		// Editor settings build before admin_enqueue_scripts, so register here.
-		\add_filter( 'block_editor_settings_all', array( __CLASS__, 'add_editor_canvas_styles' ), 10, 2 );
+
+		if ( Permissions::is_editor() ) {
+			\add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_site_editor_assets' ) );
+			\add_action( 'admin_bar_menu', array( __CLASS__, 'admin_bar_menu' ), 99 );
+			\add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_admin_bar_assets' ) );
+			\add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_admin_bar_assets' ) );
+			// Editor settings build before admin_enqueue_scripts, so register here.
+			\add_filter( 'block_editor_settings_all', array( __CLASS__, 'add_editor_canvas_styles' ), 10, 2 );
+		}
 	}
 
 	/**
@@ -240,7 +249,7 @@ final class ChatEditor {
 
 		$screen = \get_current_screen();
 
-		if ($screen && \method_exists( $screen, 'is_block_editor' ) && $screen->is_block_editor()){
+		if ( $screen && \method_exists( $screen, 'is_block_editor' ) && $screen->is_block_editor() ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Referrer parameter is validated against allowed list, no data modification.
 			return isset( $_GET['referrer'] ) && \in_array( $_GET['referrer'], self::$allowed_referrers, true );
 		}
@@ -498,6 +507,113 @@ final class ChatEditor {
 	}
 
 	/**
+	 * Allowed MIME types for temporary chat uploads.
+	 *
+	 * @return string[]
+	 */
+	private static function get_allowed_temp_mime_types() {
+		return array(
+			'image/png',
+			'image/jpeg',
+			'image/webp',
+			'image/gif',
+			'application/pdf',
+			'text/plain',
+			'text/csv',
+			'text/markdown',
+		);
+	}
+
+	/**
+	 * Allowed file extensions for temporary chat uploads.
+	 *
+	 * @return string[]
+	 */
+	private static function get_allowed_temp_extensions() {
+		return array(
+			'png',
+			'jpg',
+			'jpeg',
+			'webp',
+			'gif',
+			'pdf',
+			'txt',
+			'csv',
+			'md',
+		);
+	}
+
+	/**
+	 * Paths for the temporary chat upload directory.
+	 *
+	 * @return array{basedir: string, baseurl: string}
+	 */
+	private static function get_temp_upload_paths() {
+		$upload_dir = \wp_upload_dir();
+
+		return array(
+			'basedir' => \trailingslashit( $upload_dir['basedir'] ) . self::TEMP_UPLOAD_SUBDIR . '/',
+			'baseurl' => \trailingslashit( $upload_dir['baseurl'] ) . self::TEMP_UPLOAD_SUBDIR . '/',
+		);
+	}
+
+	/**
+	 * Ensure the temporary upload directory exists with a guard index.php.
+	 *
+	 * @return bool True when the directory exists or was created.
+	 */
+	public static function ensure_temp_upload_dir() {
+		$paths    = self::get_temp_upload_paths();
+		$temp_dir = $paths['basedir'];
+
+		if ( \file_exists( $temp_dir ) ) {
+			return true;
+		}
+
+		if ( ! \wp_mkdir_p( $temp_dir ) ) {
+			return false;
+		}
+
+		// Prevent directory listing and PHP execution.
+		\file_put_contents( $temp_dir . 'index.php', '<?php // Silence is golden.' );
+
+		return true;
+	}
+
+	/**
+	 * Validate a temp upload using extension and MIME (browser type is unreliable).
+	 *
+	 * @param array $file $_FILES-style file array.
+	 * @return string|false Detected MIME type when allowed, false otherwise.
+	 */
+	private static function get_allowed_temp_file_type( array $file ) {
+		$allowed_mimes      = self::get_allowed_temp_mime_types();
+		$allowed_extensions = self::get_allowed_temp_extensions();
+		$extension          = \strtolower( (string) \pathinfo( $file['name'], \PATHINFO_EXTENSION ) );
+
+		if ( '' !== $extension && \in_array( $extension, $allowed_extensions, true ) ) {
+			$filetype = \wp_check_filetype( $file['name'] );
+
+			if ( ! empty( $filetype['type'] ) && \in_array( $filetype['type'], $allowed_mimes, true ) ) {
+				return $filetype['type'];
+			}
+
+			if ( ! empty( $file['type'] ) && \in_array( $file['type'], $allowed_mimes, true ) ) {
+				return $file['type'];
+			}
+
+			// Extension is allowlisted even when the browser sends application/octet-stream.
+			return ! empty( $file['type'] ) ? $file['type'] : 'application/octet-stream';
+		}
+
+		if ( ! empty( $file['type'] ) && \in_array( $file['type'], $allowed_mimes, true ) ) {
+			return $file['type'];
+		}
+
+		return false;
+	}
+
+	/**
 	 * Upload a file to temporary storage (not Media Library).
 	 *
 	 * @param \WP_REST_Request $request The REST request.
@@ -515,19 +631,9 @@ final class ChatEditor {
 		}
 
 		$file = $files['file'];
+		$type = self::get_allowed_temp_file_type( $file );
 
-		$allowed_mime_types = array(
-			'image/png',
-			'image/jpeg',
-			'image/webp',
-			'image/gif',
-			'application/pdf',
-			'text/plain',
-			'text/csv',
-			'text/markdown',
-		);
-
-		if ( ! in_array( $file['type'], $allowed_mime_types, true ) ) {
+		if ( false === $type ) {
 			return new \WP_Error(
 				'invalid_file_type',
 				__( 'File type not allowed.', 'nfd-editor-chat' ),
@@ -535,15 +641,17 @@ final class ChatEditor {
 			);
 		}
 
-		$upload_dir = \wp_upload_dir();
-		$temp_dir   = $upload_dir['basedir'] . '/nfd-chat-temp/';
-		$temp_url   = $upload_dir['baseurl'] . '/nfd-chat-temp/';
-
-		if ( ! \file_exists( $temp_dir ) ) {
-			\wp_mkdir_p( $temp_dir );
-			// Prevent directory listing and PHP execution.
-			\file_put_contents( $temp_dir . 'index.php', '<?php // Silence is golden.' );
+		if ( ! self::ensure_temp_upload_dir() ) {
+			return new \WP_Error(
+				'upload_dir_unavailable',
+				__( 'Temporary upload directory is not available.', 'nfd-editor-chat' ),
+				array( 'status' => 500 )
+			);
 		}
+
+		$paths    = self::get_temp_upload_paths();
+		$temp_dir = $paths['basedir'];
+		$temp_url = $paths['baseurl'];
 
 		$filename = \wp_unique_filename( $temp_dir, \sanitize_file_name( $file['name'] ) );
 		$filepath = $temp_dir . $filename;
@@ -566,7 +674,7 @@ final class ChatEditor {
 				'url'      => $file_url,
 				'filename' => $filename,
 				'name'     => $file['name'],
-				'type'     => $file['type'],
+				'type'     => $type,
 				'size'     => $file['size'],
 			),
 			201
@@ -582,8 +690,8 @@ final class ChatEditor {
 	public static function delete_temp_file( \WP_REST_Request $request ) {
 		$filename = $request->get_param( 'filename' );
 
-		$upload_dir = \wp_upload_dir();
-		$filepath   = $upload_dir['basedir'] . '/nfd-chat-temp/' . \sanitize_file_name( $filename );
+		$paths    = self::get_temp_upload_paths();
+		$filepath = $paths['basedir'] . \sanitize_file_name( $filename );
 
 		if ( ! \file_exists( $filepath ) ) {
 			return new \WP_Error(

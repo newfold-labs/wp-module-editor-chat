@@ -25,19 +25,28 @@ class Application {
 
 		$this->container = $container;
 
-		// Delay ChatEditor initialization until WordPress functions are available
-		\add_action( 'plugins_loaded', array( $this, 'initialize_chat_editor' ) );
+		// Delay ChatEditor initialization until WordPress functions are available.
+		if ( \did_action( 'plugins_loaded' ) ) {
+			$this->initialize_chat_editor();
+		} else {
+			\add_action( 'plugins_loaded', array( $this, 'initialize_chat_editor' ) );
+		}
 	}
 
 	/**
-	 * Initialize ChatEditor for users with editor capabilities.
+	 * Bootstrap ChatEditor (REST routes, temp upload dir, editor UI when applicable).
 	 * Called after WordPress pluggable functions are available.
 	 *
 	 * @return void
 	 */
 	public function initialize_chat_editor() {
-		if ( Permissions::is_editor() ) {
-			new ChatEditor();
+		static $initialized = false;
+
+		if ( $initialized ) {
+			return;
 		}
+
+		$initialized = true;
+		new ChatEditor();
 	}
 }

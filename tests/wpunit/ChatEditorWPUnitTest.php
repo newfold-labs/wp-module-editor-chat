@@ -522,6 +522,55 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 		@\unlink( $tmp );
 	}
 
+	/**
+	 * Accepts allowlisted extensions even when the browser reports octet-stream.
+	 *
+	 * @return void
+	 */
+	public function test_upload_temp_file_accepts_csv_with_octet_stream_mime() {
+		$tmp = \wp_tempnam( 'nfd-chat-test' );
+		\file_put_contents( $tmp, 'a,b' );
+
+		$result = ChatEditor::upload_temp_file(
+			$this->make_upload_request(
+				array(
+					'name'     => 'data.csv',
+					'type'     => 'application/octet-stream',
+					'tmp_name' => $tmp,
+					'error'    => 0,
+					'size'     => 3,
+				)
+			)
+		);
+
+		$this->assertInstanceOf( \WP_Error::class, $result );
+		$this->assertSame( 'upload_failed', $result->get_error_code() );
+
+		@\unlink( $tmp );
+	}
+
+	/**
+	 * Creates the temp upload directory with a guard index.php file.
+	 *
+	 * @return void
+	 */
+	public function test_ensure_temp_upload_dir_creates_directory() {
+		$upload_dir = \wp_upload_dir();
+		$temp_dir   = $upload_dir['basedir'] . '/' . ChatEditor::TEMP_UPLOAD_SUBDIR . '/';
+
+		if ( \file_exists( $temp_dir ) ) {
+			$temp_files = \glob( $temp_dir . '*' );
+			if ( false !== $temp_files ) {
+				\array_map( 'unlink', $temp_files );
+			}
+			\rmdir( $temp_dir );
+		}
+
+		$this->assertTrue( ChatEditor::ensure_temp_upload_dir() );
+		$this->assertDirectoryExists( $temp_dir );
+		$this->assertFileExists( $temp_dir . 'index.php' );
+	}
+
 	// ── delete_temp_file ───────────────────────────────────────────────
 
 	/**
@@ -547,7 +596,7 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	 */
 	public function test_delete_temp_file_removes_existing_file() {
 		$upload_dir = \wp_upload_dir();
-		$temp_dir   = $upload_dir['basedir'] . '/nfd-chat-temp/';
+		$temp_dir   = $upload_dir['basedir'] . '/' . ChatEditor::TEMP_UPLOAD_SUBDIR . '/';
 		\wp_mkdir_p( $temp_dir );
 
 		$filename = 'deleteme.txt';
