@@ -37,7 +37,7 @@
 		"eslint": "^10.7.0",
 		"eslint-plugin-prettier": "^5.5.6",
 		"eslit": "^6.0.0",
-		"postcss": "^8.5.15",
+		"postcss": "^8.5.21",
 		"postcss-cli": "^11.0.1",
 		"postcss-import": "^16.1.1",
 		"postcss-safe-important": "^2.0.1",
