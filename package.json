@@ -26,15 +26,15 @@
 		"lint:js:fix": "wp-scripts lint-js ./src --fix"
 	},
 	"devDependencies": {
-		"@wordpress/eslint-plugin": "^25.1.0",
+		"@wordpress/eslint-plugin": "^25.7.0",
 		"@wordpress/prettier-config": "^4.50.0",
 		"@wordpress/scripts": "^32.2.0",
-		"autoprefixer": "^10.5.3",
+		"autoprefixer": "^10.5.4",
 		"baseline-browser-mapping": "^2.10.32",
 		"concurrently": "^10.0.3",
 		"cssnano": "^8.0.1",
 		"esbuild": "^0.28.1",
-		"eslint": "^10.4.0",
+		"eslint": "^10.7.0",
 		"eslint-plugin-prettier": "^5.5.6",
 		"eslit": "^6.0.0",
 		"postcss": "^8.5.15",
@@ -49,7 +49,7 @@
 		"@wordpress/interface": "^9.36.0",
 		"classnames": "^2.5.1",
 		"dompurify": "^3.4.7",
-		"lucide-react": "^1.14.0",
+		"lucide-react": "^1.24.0",
 		"openai": "^4.86.0"
 	},
 	"peerDependencies": {
