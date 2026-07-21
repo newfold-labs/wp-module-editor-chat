@@ -15,12 +15,24 @@ call possono riferirsi a `clientId` e blocchi non più esistenti.
 
 ## Scope
 
-Questo design copre **esclusivamente wp-module-editor-chat**. La controparte
-`ai-platform` (repo Herd separato, non presente in questo workspace) riceve
-solo un **contratto d'interfaccia** (vedi sezione Mirror asincrono) da girare
-come specifica per un ticket a parte in quel repo. Non viene definita né
-verificata alcuna suite di test automatica in questo progetto: la verifica è
-manuale (vedi sezione Testing).
+Questo design copre **esclusivamente wp-module-editor-chat**, lato WP:
+tabella custom, REST API, client. Non viene definita né verificata alcuna
+suite di test automatica in questo progetto: la verifica è manuale (vedi
+sezione Testing).
+
+**Il mirror asincrono verso `ai-platform` è rinviato (deferred).** Un'analisi
+dello schema reale di `ai-platform` (repo Laravel in
+`/Users/ziamanu/Herd/ai-platform`, non presente in questo workspace) ha
+rivelato che le premesse del ticket originale sulla tabella
+`agent_conversations` sono errate (non esiste una colonna `meta`, non esiste
+una colonna `messages` — i messaggi sono normalizzati riga-per-riga in una
+tabella separata, `user_id` punta a uno spazio di identità Laravel diverso da
+quello WP). Il contratto va quindi rinegoziato con il team di ai-platform
+prima di poter implementare `AiPlatformMirror`. Le domande aperte sono
+raccolte nell'Appendice come testo pronto per un ticket separato.
+`AiPlatformMirror::schedule_sync()`/`handle_sync()` **non vengono
+implementati in questa fase** — nessuna chiamata al mirror viene aggiunta a
+`ConversationsController`.
 
 ## Architettura generale
 
@@ -39,8 +51,9 @@ Flusso:
 2. **Turni successivi** — il client accumula i messaggi in memoria e li invia
    con `PUT /conversations/{id}`, debounced ~1s. Ogni `PUT` riuscito aggiorna
    anche `post_modified_seen_at`.
-3. **Ogni `PUT`/`DELETE` riuscito** → `AiPlatformMirror::schedule_sync($id)`
-   pianifica un evento WP-Cron one-off, mai bloccante per l'utente.
+3. **Mirror asincrono (deferred)** — in una fase futura, ogni `PUT`/`DELETE`
+   riuscito pianificherà un evento WP-Cron one-off verso `ai-platform`; non
+   implementato in questa fase (vedi sezione Scope e Appendice).
 4. **Cronologia** — `GET /conversations` (paginata, senza blob messaggi)
    popola la dropdown; click su una riga → risoluzione stato pagina → se
    necessario `GET /conversations/{id}` per il payload completo.
@@ -128,48 +141,21 @@ elementi saltati in caso di timestamp identici tra pagine.
 **Validazione:** `messages` deve decodificare a un array JSON valido,
 altrimenti `400`. Nessun'altra validazione di struttura.
 
-Dopo ogni `PUT`/`DELETE` riuscito → `AiPlatformMirror::schedule_sync($id)`.
+**Mirror asincrono:** nessuna chiamata in questa fase — vedi Scope e
+Appendice. Quando il contratto con ai-platform sarà chiarito, questo è il
+punto dove andrà agganciato `AiPlatformMirror::schedule_sync($id)`.
 
-## Mirror asincrono (`includes/Mirror/AiPlatformMirror.php`)
+## Mirror asincrono — rinviato (deferred)
 
-- `schedule_sync(int $conversation_id)`: `wp_schedule_single_event(time() +
-  5, 'nfd_editor_chat_sync', [$conversation_id])`, solo se non già
-  pianificato per lo stesso id (`wp_next_scheduled`) — de-dup per raffiche di
-  scritture ravvicinate.
-- `handle_sync(int $conversation_id)`: hook su `nfd_editor_chat_sync`. Carica
-  la riga (anche soft-deleted, per propagare le delete), costruisce il
-  payload e fa `POST` a
-  `NFD_AI_PLATFORM_SYNC_URL . '/api/v1/editor-chat/conversations/sync'` via
-  `wp_remote_post()`, header `Authorization` col token Hiive (riuso di
-  `HiiveConnection::get_auth_token()`, già usato in
-  `ChatEditor::get_config()`).
-- **Retry:** su errore/`WP_Error`, contatore tentativi in transient
-  (`nfd_editor_chat_sync_attempts_{id}`), backoff esponenziale (es. 30s,
-  2min, 8min, 30min — 4 tentativi). Dopo l'ultimo tentativo: `error_log()` e
-  pulizia del transient. Meccanismo: `wp_schedule_single_event` standard
-  (nessuna libreria di code trovata nel monorepo).
-
-### Contratto per ai-platform (fuori scope di implementazione qui)
-
-```json
-{
-  "conversation_id": 123,
-  "user_id": 45,
-  "site_url_hash": "a1b2c3d4",
-  "title": "...",
-  "messages": [ /* array messaggi interni */ ],
-  "deleted": false,
-  "meta": {
-    "post_id": 67,
-    "post_type": "page",
-    "post_modified_seen_at": "2026-07-21 10:00:00"
-  }
-}
-```
-
-Endpoint: `POST /api/v1/editor-chat/conversations/sync`, auth middleware
-Hiive esistente. Persistenza di `meta.*` nella colonna meta JSON già presente
-su `agent_conversations` — nessuna migrazione schema in ai-platform.
+`includes/Mirror/AiPlatformMirror.php` **non viene creato in questa fase**.
+L'analisi dello schema reale di ai-platform (vedi Appendice) ha invalidato le
+assunzioni del ticket originale (nessuna colonna `meta` su
+`agent_conversations`, nessuna colonna `messages`, `user_id` in uno spazio di
+identità diverso da quello WP, nessun endpoint di sync esistente). Prima di
+implementare il mirror serve una risposta dal team ai-platform alle domande
+in Appendice. Una volta chiarito il contratto, questa sezione verrà
+aggiornata con lo schema payload definitivo e il piano di implementazione
+riprenderà `schedule_sync`/`handle_sync` come lavoro separato.
 
 ## Client (`src/...`)
 
@@ -273,11 +259,93 @@ modulo non ne ha oggi, solo lint/format). Verifica manuale:
 
 | Decisione | Alternativa scartata | Motivo |
 |---|---|---|
-| ai-platform trattato come solo contratto d'interfaccia | Implementare anche lì | Repo non presente in questo workspace |
+| Mirror asincrono rinviato, solo lato client/WP in questo progetto | Implementare `AiPlatformMirror` ora con le assunzioni del ticket | Lo schema reale di ai-platform contraddice il ticket (niente colonna `meta`/`messages`, `user_id` non mappabile) — serve chiarire il contratto in un ticket separato prima di scrivere codice |
 | Fork mirato dei componenti history | Riuso diretto di `ChatHistoryList`/`Dropdown` | Sono accoppiati a localStorage, incompatibili con paginazione REST |
 | `site_url_hash` calcolato server-side | Fidarsi del valore client | Requisito esplicito "never trust client-supplied identity" |
 | Upgrade via version-check su `init` | `register_activation_hook` | Il modulo non ha un activation hook affidabile (caricato da Module Loader) |
-| `wp_schedule_single_event` per il mirror | Action Scheduler o altra coda | Nessuna libreria di code trovata nel monorepo |
 | Solo PK sulla tabella, nessun indice secondario | Indice composito `(user_id, site_url_hash, updated_at)` | Convenzione del monorepo, volumi previsti bassi |
 | Migrazione localStorage semplice (retry integrale) | Chiave scratch per riprendere da `PUT` dopo `POST` riuscito | Complessità non giustificata dal rischio (solo un piccolo overhead di righe duplicate raro) |
 | Nessuna infrastruttura di test in questo progetto | Setup wp-browser + test-unit-js | Scope esplicitamente limitato a verifica manuale |
+
+## Appendice — domande per un ticket separato su ai-platform
+
+Testo pronto da incollare come ticket nel repo `ai-platform` (Laravel/Herd),
+per chiarire il contratto prima di implementare `AiPlatformMirror` lato WP.
+
+---
+
+**Titolo:** Definire contratto di ingest per il mirror analytics di
+wp-module-editor-chat
+
+**Contesto:** wp-module-editor-chat (plugin WP) vuole specchiare in
+`ai-platform`, a scopo di sola analisi, le conversazioni della chat
+dell'editor persistite in una tabella custom WP. WP resta sempre la fonte di
+verità; ai-platform è un mirror best-effort, mai nel percorso critico
+dell'utente. Analizzando lo schema attuale (`database/migrations/..._create_
+agent_conversations_table.php`, model `Laravel\Ai\Models\Conversation` /
+`ConversationMessage`), sono emersi dei disallineamenti rispetto al ticket
+originale che li aveva assunti diversi. Serve una decisione prima di
+procedere:
+
+1. **Metadati WP (`post_id`, `post_type`, `post_modified_seen_at`).**
+   `agent_conversations` non ha alcuna colonna `meta`/`metadata` oggi.
+   Proponiamo di aggiungere una **nuova colonna `meta` (JSON, nullable)** a
+   `agent_conversations` via migration additiva — generica e riusabile per
+   futuri metadati esterni, non solo WP. Alternativa: colonne dedicate
+   `post_id`/`post_type`/`post_modified_seen_at` direttamente su
+   `agent_conversations`, più esplicite ma specifiche a WordPress su una
+   tabella di un package vendor generico (`laravel/ai`). Quale preferite?
+
+2. **Identità utente.** `agent_conversations.user_id` è un FK verso gli
+   utenti Laravel di ai-platform, che non corrispondono agli utenti WP.
+   Proponiamo di lasciare `user_id` sempre `null` per le conversazioni
+   sincronizzate esternamente, e di portare l'identità reale
+   (`site_url_hash` + WP `user_id`) dentro il nuovo campo `meta`. Va bene, o
+   esiste già una mappatura sito/utente Hiive da riusare per popolare
+   `user_id` correttamente?
+
+3. **Messaggi.** I messaggi non sono un blob unico ma righe separate in
+   `agent_conversation_messages` (`tool_calls`/`tool_results`/`usage`/`meta`
+   come colonne distinte). Dato che WP è la fonte di verità e ogni sync
+   manda lo snapshot completo della conversazione, proponiamo che l'endpoint
+   di ingest faccia **delete-and-reinsert** di tutte le righe messaggio per
+   quel `conversation_id` ad ogni sync (idempotente, niente logica di
+   upsert-per-messaggio, niente bisogno di generare UUID stabili lato WP).
+   È accettabile, o preferite un upsert incrementale per messaggio (richiede
+   ID messaggio stabili e compatibili `varchar(36)` generati lato WP)?
+
+4. **Autenticazione.** Il middleware Hiive (`HiiveTokenAuthentication`) ha
+   già una whitelist con chiave `ai_chat_worker`
+   (`config/sitegen.php`, env `SITEGEN_AI_CHAT_WORKER_HIIVE_TOKEN`) che
+   sembra pensata per un worker/plugin esterno con token statico condiviso,
+   alternativa alla verifica remota completa via Hiive capabilities. È
+   questo il meccanismo giusto per autenticare le richieste di sync dal
+   plugin WP verso il nuovo endpoint?
+
+5. **Endpoint.** Non esiste oggi nessuna rotta di ingest/sync per
+   conversazioni esterne. Proponiamo `POST
+   /api/v1/editor-chat/conversations/sync`, protetta dal middleware Hiive di
+   cui al punto 4, corpo della richiesta:
+   ```json
+   {
+     "wp_conversation_id": 123,
+     "title": "...",
+     "deleted": false,
+     "meta": {
+       "site_url_hash": "a1b2c3d4",
+       "wp_user_id": 45,
+       "post_id": 67,
+       "post_type": "page",
+       "post_modified_seen_at": "2026-07-21 10:00:00"
+     },
+     "messages": [
+       { "role": "user", "content": "...", "tool_calls": [], "tool_results": [], "usage": null }
+     ]
+   }
+   ```
+   Il `wp_conversation_id` andrebbe usato come chiave di lookup (nuova
+   colonna indicizzata su `agent_conversations`, dato che l'`id` nativo è un
+   UUID generato da Laravel) per capire se creare o aggiornare la
+   conversazione mirror. Va bene questo schema?
+
+---
