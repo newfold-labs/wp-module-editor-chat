@@ -78,6 +78,17 @@ const useEditorChatREST = () => {
 	// to prepend a one-time note that prior tool results may reference
 	// clientIds that no longer exist on the (possibly-edited) current page.
 	const needsResumeNoticeRef = useRef(false);
+	// post_id the active conversation is bound to (set at creation/hydration,
+	// never re-derived from the DB row after that) — used to detect when the
+	// user has navigated to a different page while this conversation stays
+	// open, so we can start a fresh chat instead of misattributing edits.
+	const conversationPostIdRef = useRef(persisted.postId ?? null);
+	// Session-only cache of per-page chat state (post_id -> { conversationId,
+	// messages, history, isFirstMessage }), so flipping back and forth between
+	// a few pages in the same editor session restores progress instead of
+	// discarding it. Lost on a full reload by design — activeChatStorage's
+	// single-slot fallback covers whichever page was active at that point.
+	const pagesCacheRef = useRef(new Map());
 	const originalGlobalStylesRef = useRef(null);
 	const blockSnapshotRef = useRef(null);
 	const executedToolsRef = useRef([]);
@@ -89,6 +100,9 @@ const useEditorChatREST = () => {
 			messages,
 			conversationHistoryRef,
 			initialConversationId: persisted.conversationId,
+			onConversationCreated: (_id, postId) => {
+				conversationPostIdRef.current = postId;
+			},
 		});
 
 	// One-time migration: push any pre-existing localStorage chat (within its
@@ -118,7 +132,7 @@ const useEditorChatREST = () => {
 				const legacy = loadActiveChat();
 				if (legacy.messages.length > 0) {
 					const created = await createConversation({
-						postId: getCurrentPageId(),
+						postId: migrationPostId,
 						postType: getCurrentPageType(),
 						postModifiedSeenAt: getCurrentPageModified(),
 					});
@@ -128,6 +142,7 @@ const useEditorChatREST = () => {
 						postModifiedSeenAt: getCurrentPageModified(),
 					});
 					setConversationId(created.id);
+					conversationPostIdRef.current = migrationPostId;
 				}
 				localStorage.setItem("nfd-editor-chat-migrated", "1");
 				clearActiveChat();
@@ -137,6 +152,28 @@ const useEditorChatREST = () => {
 		})();
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- runs once, as soon as migrationPostId resolves
 	}, [migrationPostId]);
+
+	// Backfill conversationPostIdRef from the server when a restored
+	// conversation's post_id wasn't in the local fallback cache — e.g. an
+	// entry saved before post_id tracking existed, or one that failed to
+	// persist for any other reason. Without this, the page-switch detection
+	// below silently never fires for that conversation (its "bound page"
+	// stays unknown forever, since the only other place that sets this ref
+	// is the create step, which doesn't run again for an existing id).
+	useEffect(() => {
+		if (!persisted.conversationId || conversationPostIdRef.current) {
+			return;
+		}
+		(async () => {
+			try {
+				const conversation = await getConversation(persisted.conversationId);
+				conversationPostIdRef.current = conversation.post_id;
+			} catch (err) {
+				logger.warn("[EditorChat] Could not resolve post_id for restored conversation:", err);
+			}
+		})();
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount by design
+	}, []);
 
 	// ── History resume: hydration + page-conflict resolution ──
 	const [pageConflict, setPageConflict] = useState(null); // { conversation } | null
@@ -160,6 +197,7 @@ const useEditorChatREST = () => {
 			setConversationId(conversation.id);
 			setReadOnly(ro);
 			setResumedPostMissing(!conversation.post_exists);
+			conversationPostIdRef.current = conversation.post_id;
 
 			const currentModified = getCurrentPageModified();
 			const seenAt = conversation.post_modified_seen_at;
@@ -308,6 +346,7 @@ const useEditorChatREST = () => {
 		isSaving,
 		isSavingPost,
 		conversationId,
+		conversationPostIdRef,
 		setMessages,
 		setExecutedTools,
 		setHasGlobalStylesChanges,
@@ -409,6 +448,7 @@ const useEditorChatREST = () => {
 		setMessages([]);
 		conversationHistoryRef.current = [];
 		isFirstMessageRef.current = true;
+		conversationPostIdRef.current = null;
 		setHasGlobalStylesChanges(false);
 		setExecutedTools([]);
 		executedToolsRef.current = [];
@@ -429,6 +469,48 @@ const useEditorChatREST = () => {
 		await deleteConversation(conversationId);
 		handleNewChat();
 	}, [conversationId, handleNewChat]);
+
+	// Switch chat context when the user navigates to a different page while an
+	// active (read-write) conversation is open. Without this, edits would keep
+	// landing on a conversation row still bound to the page it was created
+	// for, and the drift watermark would get corrupted with the new page's
+	// timestamp. Read-only conversations are exempt — those are intentionally
+	// viewed against a different page (see the history-resume page-conflict
+	// flow), so a mismatch there is expected, not a drift.
+	//
+	// The outgoing page's state is parked in pagesCacheRef rather than
+	// discarded: if the destination page was already visited this session,
+	// its chat is restored; otherwise a fresh chat starts, same as "+ New Chat".
+	const activeEditorPostId = useSelect((select) => select("core/editor").getCurrentPostId(), []);
+	useEffect(() => {
+		if (
+			readOnly ||
+			!conversationPostIdRef.current ||
+			!activeEditorPostId ||
+			conversationPostIdRef.current === activeEditorPostId
+		) {
+			return;
+		}
+
+		pagesCacheRef.current.set(conversationPostIdRef.current, {
+			conversationId,
+			messages,
+			history: conversationHistoryRef.current,
+			isFirstMessage: isFirstMessageRef.current,
+		});
+
+		const cached = pagesCacheRef.current.get(activeEditorPostId);
+		if (cached) {
+			pagesCacheRef.current.delete(activeEditorPostId);
+			setMessages(cached.messages);
+			conversationHistoryRef.current = cached.history;
+			isFirstMessageRef.current = cached.isFirstMessage;
+			setConversationId(cached.conversationId);
+			conversationPostIdRef.current = activeEditorPostId;
+		} else {
+			handleNewChat();
+		}
+	}, [activeEditorPostId, readOnly, handleNewChat, conversationId, messages, setConversationId]);
 
 	// ── handleStopRequest ──
 	const handleStopRequest = useCallback(() => {

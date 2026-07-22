@@ -19,7 +19,7 @@ const getStorageKey = () => {
 
 // Always return fresh arrays — callers mutate `history` via chatLoop's push,
 // so a shared constant would leak state across calls.
-const emptyState = () => ({ messages: [], history: [], conversationId: null });
+const emptyState = () => ({ messages: [], history: [], conversationId: null, postId: null });
 
 export const loadActiveChat = () => {
 	const key = getStorageKey();
@@ -42,6 +42,7 @@ export const loadActiveChat = () => {
 			messages,
 			history: parsed.history || [],
 			conversationId: parsed.conversationId ?? null,
+			postId: parsed.postId ?? null,
 		};
 	} catch (err) {
 		// eslint-disable-next-line no-console
@@ -50,7 +51,7 @@ export const loadActiveChat = () => {
 	}
 };
 
-export const saveActiveChat = (messages, history, conversationId = null) => {
+export const saveActiveChat = (messages, history, conversationId = null, postId = null) => {
 	try {
 		const key = getStorageKey();
 		if ((!messages || messages.length === 0) && (!history || history.length === 0)) {
@@ -67,6 +68,7 @@ export const saveActiveChat = (messages, history, conversationId = null) => {
 				messages: trimmedMessages,
 				history: history || [],
 				conversationId: conversationId ?? null,
+				postId: postId ?? null,
 				savedAt: new Date().toISOString(),
 			})
 		);

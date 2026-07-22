@@ -25,12 +25,14 @@ const DEBOUNCE_MS = 1000;
  * @param {Array}       deps.messages                Chat messages array (triggers the debounce)
  * @param {Object}      deps.conversationHistoryRef  Ref to the model-visible history (sent alongside messages)
  * @param {number|null} [deps.initialConversationId] Conversation id restored from the local fallback cache, if any — avoids re-creating a row after a page reload.
+ * @param {Function}    [deps.onConversationCreated] (id, postId) => void, called right after an auto-create succeeds
  * @return {{conversationId: (number|null), setConversationId: Function, readOnly: boolean, setReadOnly: Function, resetSync: Function}} Sync state and controls.
  */
 const useConversationSync = ({
 	messages,
 	conversationHistoryRef,
 	initialConversationId = null,
+	onConversationCreated,
 }) => {
 	const [conversationId, setConversationIdState] = useState(initialConversationId);
 	const [readOnly, setReadOnly] = useState(false);
@@ -74,13 +76,15 @@ const useConversationSync = ({
 			try {
 				let id = conversationIdRef.current;
 				if (!id) {
+					const postId = getCurrentPageId();
 					const created = await apiCreateConversation({
-						postId: getCurrentPageId(),
+						postId,
 						postType: getCurrentPageType(),
 						postModifiedSeenAt: getCurrentPageModified(),
 					});
 					id = created.id;
 					setConversationId(id);
+					onConversationCreated?.(id, postId);
 				}
 				await apiUpdateConversation(id, {
 					messages,

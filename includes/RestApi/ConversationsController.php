@@ -19,10 +19,18 @@ final class ConversationsController {
 	 * wp-module-ai-chat's SiteHashHelper::short_hash() (md5, first 8 chars),
 	 * kept as a local implementation to avoid a cross-module PHP dependency.
 	 *
+	 * Hashes host + path only, never the scheme: get_site_url() resolves its
+	 * scheme via is_ssl() on the *current* request (WordPress core behavior),
+	 * so the same site hashes differently on an http vs. https request unless
+	 * the scheme is stripped first — which would silently split one site's
+	 * history in two depending on how each request happened to arrive.
+	 *
 	 * @return string
 	 */
 	private static function get_site_hash() {
-		return \substr( \md5( (string) \get_site_url() ), 0, 8 );
+		$parsed     = \wp_parse_url( (string) \get_site_url() );
+		$normalized = ( $parsed['host'] ?? '' ) . ( $parsed['path'] ?? '' );
+		return \substr( \md5( $normalized ), 0, 8 );
 	}
 
 	/**

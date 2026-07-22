@@ -21,6 +21,7 @@ import { saveActiveChat } from "./activeChatStorage";
  * @param {boolean}     deps.isSaving                  Whether a save is in progress
  * @param {boolean}     deps.isSavingPost              WordPress isSavingPost selector
  * @param {number|null} deps.conversationId            Server-side conversation id, persisted alongside the local fallback so a reload doesn't re-create it
+ * @param {Object}      deps.conversationPostIdRef     Ref to the post id the active conversation is bound to, persisted alongside conversationId
  * @param {Function}    deps.setMessages               Messages state setter
  * @param {Function}    deps.setExecutedTools          Executed tools state setter
  * @param {Function}    deps.setHasGlobalStylesChanges Global styles change flag setter
@@ -36,6 +37,7 @@ const useChatSideEffects = ({
 	isSaving,
 	isSavingPost,
 	conversationId,
+	conversationPostIdRef,
 	setMessages,
 	setExecutedTools,
 	setHasGlobalStylesChanges,
@@ -90,8 +92,13 @@ const useChatSideEffects = ({
 			isInitialMountRef.current = false;
 			return;
 		}
-		saveActiveChat(messages, conversationHistoryRef.current, conversationId);
-		// eslint-disable-next-line react-hooks/exhaustive-deps -- ref deliberately omitted; see note above
+		saveActiveChat(
+			messages,
+			conversationHistoryRef.current,
+			conversationId,
+			conversationPostIdRef.current
+		);
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- refs deliberately omitted; see note above
 	}, [messages, conversationId]);
 };
 
