@@ -2,6 +2,9 @@
 
 namespace NewfoldLabs\WP\Module\EditorChat;
 
+use NewfoldLabs\WP\Module\EditorChat\Database\EditorChatTable;
+use NewfoldLabs\WP\Module\EditorChat\RestApi\ConversationsController;
+
 /**
  * ChatEditor main class
  *
@@ -26,6 +29,7 @@ final class ChatEditor {
 		\add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_site_editor_assets' ) );
 		\add_action( 'rest_api_init', array( __CLASS__, 'register_rest_routes' ) );
 		\add_action( 'init', array( __CLASS__, 'load_text_domain' ), 100 );
+		\add_action( 'init', array( EditorChatTable::class, 'maybe_upgrade' ), 5 );
 		\add_filter( 'load_script_translation_file', array( __CLASS__, 'load_script_translation_file' ), 10, 3 );
 		\add_action( 'admin_bar_menu', array( __CLASS__, 'admin_bar_menu' ), 99 );
 		\add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_admin_bar_assets' ) );
@@ -49,6 +53,9 @@ final class ChatEditor {
 				},
 			)
 		);
+
+		ConversationsController::register_routes();
+
 		\register_rest_route(
 			'nfd-editor-chat/v1',
 			'/upload',
@@ -299,6 +306,7 @@ final class ChatEditor {
 				'site'           => self::get_site_context(),
 				'pagesCount'     => \array_sum( (array) \wp_count_posts( 'page' ) ),
 				'editorType'     => $editor_type,
+				'isEditor'       => Permissions::is_editor(),
 			);
 
 			$upgrade_banner_data = self::get_plan_upgrade_banner_data();

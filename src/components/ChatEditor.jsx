@@ -26,6 +26,7 @@ import { clearAllBlockProcessing, startBlockProcessing, startImageProcessing } f
 import { CHAT_SEND_EVENT } from "../services/blockToolbar/chatBridge";
 import { formatImageEditUserMessage } from "../utils/editorContext";
 import ChatInput from "./chat/ChatInput";
+import InfoBanner from "./chat/InfoBanner";
 import WelcomeScreen from "./chat/WelcomeScreen";
 import SidebarHeader from "./sidebar/SidebarHeader";
 import AILogo from "./ui/AILogo";
@@ -59,6 +60,14 @@ const ChatEditorContent = () => {
 		handleSendMessage,
 		handleNewChat,
 		handleStopRequest,
+		readOnly,
+		resumedPostMissing,
+		pageConflict,
+		handleOpenConversationFromHistory,
+		resolvePageConflict,
+		handleDeleteCurrentConversation,
+		driftInfo,
+		dismissDrift,
 	} = useEditorChatREST();
 
 	// Phase 1: Enable template mode (show header & footer)
@@ -132,7 +141,11 @@ const ChatEditorContent = () => {
 	);
 
 	return (
-		<EditorChatActionsProvider handleNewChat={handleNewChat} isNewChatDisabled={isNewChatDisabled}>
+		<EditorChatActionsProvider
+			handleNewChat={handleNewChat}
+			isNewChatDisabled={isNewChatDisabled}
+			onSelectConversation={handleOpenConversationFromHistory}
+		>
 			<EditorEnhancer />
 			<PluginSidebarMoreMenuItem
 				scope={SIDEBAR_SCOPE}
@@ -152,6 +165,33 @@ const ChatEditorContent = () => {
 				header={<SidebarHeader onNewChat={handleNewChat} isNewChatDisabled={isNewChatDisabled} />}
 			>
 				<div className="nfd-editor-chat-sidebar__content">
+					{pageConflict && (
+						<InfoBanner
+							message={__(
+								"This chat was about a different page. Open that page, or continue here in read-only?",
+								"wp-module-editor-chat"
+							)}
+							actionLabel={__("Open that page", "wp-module-editor-chat")}
+							onAction={() => resolvePageConflict("navigate")}
+							onDismiss={() => resolvePageConflict("continue")}
+						/>
+					)}
+					{resumedPostMissing && !pageConflict && (
+						<InfoBanner
+							message={__("This page no longer exists. This chat is read-only.", "wp-module-editor-chat")}
+							actionLabel={__("Delete chat", "wp-module-editor-chat")}
+							onAction={handleDeleteCurrentConversation}
+						/>
+					)}
+					{driftInfo && !pageConflict && (
+						<InfoBanner
+							message={__(
+								"This page has been edited since the chat. New requests will use the current page.",
+								"wp-module-editor-chat"
+							)}
+							onDismiss={dismissDrift}
+						/>
+					)}
 					{visibleMessages.length === 0 ? (
 						<WelcomeScreen onSendMessage={sendWithBlockFeedback} />
 					) : (
@@ -170,7 +210,7 @@ const ChatEditorContent = () => {
 					<ChatInput
 						onSendMessage={sendWithBlockFeedback}
 						onStopRequest={handleStopRequest}
-						disabled={isLoading}
+						disabled={isLoading || readOnly}
 					/>
 				</div>
 			</PluginSidebar>

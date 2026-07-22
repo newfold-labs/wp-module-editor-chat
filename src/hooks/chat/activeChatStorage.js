@@ -19,7 +19,7 @@ const getStorageKey = () => {
 
 // Always return fresh arrays — callers mutate `history` via chatLoop's push,
 // so a shared constant would leak state across calls.
-const emptyState = () => ({ messages: [], history: [] });
+const emptyState = () => ({ messages: [], history: [], conversationId: null });
 
 export const loadActiveChat = () => {
 	const key = getStorageKey();
@@ -38,7 +38,11 @@ export const loadActiveChat = () => {
 		const messages = (parsed.messages || []).map(
 			({ hasActions: _hasActions, undoData: _undoData, ...rest }) => rest
 		);
-		return { messages, history: parsed.history || [] };
+		return {
+			messages,
+			history: parsed.history || [],
+			conversationId: parsed.conversationId ?? null,
+		};
 	} catch (err) {
 		// eslint-disable-next-line no-console
 		console.warn("[EditorChat] Failed to load active chat:", err);
@@ -46,7 +50,7 @@ export const loadActiveChat = () => {
 	}
 };
 
-export const saveActiveChat = (messages, history) => {
+export const saveActiveChat = (messages, history, conversationId = null) => {
 	try {
 		const key = getStorageKey();
 		if ((!messages || messages.length === 0) && (!history || history.length === 0)) {
@@ -62,6 +66,7 @@ export const saveActiveChat = (messages, history) => {
 			JSON.stringify({
 				messages: trimmedMessages,
 				history: history || [],
+				conversationId: conversationId ?? null,
 				savedAt: new Date().toISOString(),
 			})
 		);

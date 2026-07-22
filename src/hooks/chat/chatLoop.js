@@ -81,6 +81,7 @@ export async function runChatLoop(userMessage, deps) {
 	const {
 		conversationHistoryRef,
 		isFirstMessageRef,
+		needsResumeNoticeRef,
 		setMessages,
 		setStatus,
 		openaiTools,
@@ -96,6 +97,19 @@ export async function runChatLoop(userMessage, deps) {
 	if (isFirstMessageRef.current) {
 		conversationHistoryRef.current = [];
 		isFirstMessageRef.current = false;
+	}
+
+	// After resuming from history, prior tool_calls/tool_results may reference
+	// clientIds that no longer exist on the (possibly-edited) current page.
+	// One-time note so the model re-reads the live block tree instead of
+	// trusting stale references — never persisted into the saved history.
+	if (needsResumeNoticeRef?.current) {
+		conversationHistoryRef.current.push({
+			role: "system",
+			content:
+				"Prior tool results in this conversation may reference block clientIds that no longer exist on the current page. Always re-read the current block tree before acting on them.",
+		});
+		needsResumeNoticeRef.current = false;
 	}
 
 	// Store clean user message — editor context is injected per-request, not persisted

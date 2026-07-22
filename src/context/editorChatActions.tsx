@@ -18,6 +18,8 @@ type EditorChatActions = {
 	handleNewChat: () => void;
 	/** True when there is nothing to clear (a brand-new chat). */
 	isNewChatDisabled: boolean;
+	/** Resolve and hydrate a conversation selected from the history dropdown. */
+	onSelectConversation: (_item: { id: number }) => void;
 };
 
 const noop = () => {};
@@ -25,6 +27,7 @@ const noop = () => {};
 const Context = createContext<EditorChatActions>({
 	handleNewChat: noop,
 	isNewChatDisabled: true,
+	onSelectConversation: noop,
 });
 
 export const useEditorChatActions = () => useContext(Context);
@@ -32,11 +35,12 @@ export const useEditorChatActions = () => useContext(Context);
 export default function EditorChatActionsProvider({
 	handleNewChat,
 	isNewChatDisabled,
+	onSelectConversation,
 	children,
 }: EditorChatActions & { children: ReactNode }) {
 	const value = useMemo(
-		() => ({ handleNewChat, isNewChatDisabled }),
-		[handleNewChat, isNewChatDisabled]
+		() => ({ handleNewChat, isNewChatDisabled, onSelectConversation }),
+		[handleNewChat, isNewChatDisabled, onSelectConversation]
 	);
 
 	return <Context.Provider value={value}>{children}</Context.Provider>;

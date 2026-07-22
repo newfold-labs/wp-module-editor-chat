@@ -106,6 +106,27 @@ export function MessageCirclePlusIcon(props: SvgProps) {
 	);
 }
 
+export function HistoryIcon(props: SvgProps) {
+	return (
+		<svg
+			fill="none"
+			strokeWidth={1.5}
+			stroke="currentColor"
+			viewBox="0 0 24 24"
+			xmlns="http://www.w3.org/2000/svg"
+			aria-hidden="true"
+			width="1em"
+			{...props}
+		>
+			<path
+				strokeLinecap="round"
+				strokeLinejoin="round"
+				d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+			/>
+		</svg>
+	);
+}
+
 export function PanelLeftCloseIcon(props: SvgProps) {
 	return (
 		<svg

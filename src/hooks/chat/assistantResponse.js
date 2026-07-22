@@ -50,7 +50,7 @@ export function parseAssistantResponse(content) {
 
 	const trimmed = content.trim();
 	const direct = safeParseJSON(trimmed);
-	const fromDirect = normalize(direct.value);
+	let fromDirect = normalize(direct.value);
 
 	// Only return early if we actually got a non-empty message — normalize({})
 	// returns { message: "" } (truthy) when safeParseJSON falls back to {}, which
@@ -59,10 +59,35 @@ export function parseAssistantResponse(content) {
 		return fromDirect;
 	}
 
+	// The model occasionally over-escapes quotes inside the message value
+	// (\\" instead of \"), especially when its own prior JSON replies appear
+	// earlier in the conversation history (e.g. after resuming a chat). Try
+	// once with that specific pattern repaired before falling back to raw text.
+	const repaired = safeParseJSON(trimmed.replace(/\\\\"/g, '\\"'));
+	fromDirect = normalize(repaired.value);
+	if (fromDirect?.message) {
+		return fromDirect;
+	}
+
 	const match = trimmed.match(/\{[\s\S]*"message"[\s\S]*\}/);
 	if (match) {
 		const extracted = safeParseJSON(match[0]);
-		return normalize(extracted.value);
+		const fromMatch = normalize(extracted.value);
+		if (fromMatch?.message) {
+			return fromMatch;
+		}
+	}
+
+	// Last resort: the model left quotes inside the message value completely
+	// unescaped (e.g. `"...to "Click here"."}`), which breaks JSON parsing in
+	// a way no amount of repair above can fix — there's no way to tell content
+	// quotes from structural ones without knowing where the value ends. Since
+	// the format is always a single top-level "message" field, assume greedily
+	// that everything between the first `"message":"` and the last `"}` at the
+	// end of the string IS the message, unescaped quotes and all.
+	const lenient = trimmed.match(/"message"\s*:\s*"([\s\S]*)"\s*\}\s*$/);
+	if (lenient && lenient[1]) {
+		return { message: lenient[1].trim() };
 	}
 
 	return null;

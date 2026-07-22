@@ -20,11 +20,23 @@ import { streamCompletion as streamCompletionFn } from "./chat/streamCompletion"
 import useDisplayMessages from "./chat/useDisplayMessages";
 import { runChatLoop } from "./chat/chatLoop";
 import useChatSideEffects from "./chat/useChatSideEffects";
+import useConversationSync from "./chat/useConversationSync";
 import useChangeActions from "./chat/useChangeActions";
 import { loadActiveChat, clearActiveChat } from "./chat/activeChatStorage";
 import { resetGeneratedImageCache } from "../services/toolDispatcher";
 import { setActiveImageEditTarget } from "../services/imageCache";
 import { useEditorNavigation } from "../context/editorNavigation";
+import {
+	createConversation,
+	updateConversation,
+	getConversation,
+	deleteConversation,
+} from "../services/conversationsApi";
+import {
+	getCurrentPageId,
+	getCurrentPageType,
+	getCurrentPageModified,
+} from "../utils/editorHelpers";
 import logger from "../utils/logger";
 
 /**
@@ -62,10 +74,137 @@ const useEditorChatREST = () => {
 	// Skip re-adding the system prompt only when the restored history actually
 	// starts with one — safer than trusting history.length alone.
 	const isFirstMessageRef = useRef(persisted.history[0]?.role !== "system");
+	// Set true when hydrating a past conversation from history; tells chatLoop
+	// to prepend a one-time note that prior tool results may reference
+	// clientIds that no longer exist on the (possibly-edited) current page.
+	const needsResumeNoticeRef = useRef(false);
 	const originalGlobalStylesRef = useRef(null);
 	const blockSnapshotRef = useRef(null);
 	const executedToolsRef = useRef([]);
 	const messagesRef = useRef(messages);
+
+	// ── Server-side conversation sync ──
+	const { conversationId, setConversationId, readOnly, setReadOnly, resetSync } =
+		useConversationSync({
+			messages,
+			conversationHistoryRef,
+			initialConversationId: persisted.conversationId,
+		});
+
+	// One-time migration: push any pre-existing localStorage chat (within its
+	// 24h TTL) to the server, then stop checking. Simplest possible retry
+	// story: on any failure, don't set the flag and don't clear localStorage —
+	// the whole migration (including a fresh POST) just runs again next load.
+	// A rare partial failure can leave one extra empty row server-side; that
+	// has no functional impact and isn't worth guarding against.
+	// Gate on the post actually being loaded — at first mount getCurrentPostId()
+	// can still be 0 (Site Editor resolves the current post async), which would
+	// send post_id: 0 and get a 400 back. Re-checks on every render until the
+	// post resolves, then runs exactly once.
+	const migrationPostId = useSelect((select) => select("core/editor").getCurrentPostId(), []);
+	const migrationAttemptedRef = useRef(false);
+	useEffect(() => {
+		if (migrationAttemptedRef.current || !migrationPostId) {
+			return;
+		}
+		migrationAttemptedRef.current = true;
+
+		if (localStorage.getItem("nfd-editor-chat-migrated")) {
+			return;
+		}
+
+		(async () => {
+			try {
+				const legacy = loadActiveChat();
+				if (legacy.messages.length > 0) {
+					const created = await createConversation({
+						postId: getCurrentPageId(),
+						postType: getCurrentPageType(),
+						postModifiedSeenAt: getCurrentPageModified(),
+					});
+					await updateConversation(created.id, {
+						messages: legacy.messages,
+						history: legacy.history,
+						postModifiedSeenAt: getCurrentPageModified(),
+					});
+					setConversationId(created.id);
+				}
+				localStorage.setItem("nfd-editor-chat-migrated", "1");
+				clearActiveChat();
+			} catch (err) {
+				logger.warn("[EditorChat] Legacy chat migration failed, will retry next load:", err);
+			}
+		})();
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- runs once, as soon as migrationPostId resolves
+	}, [migrationPostId]);
+
+	// ── History resume: hydration + page-conflict resolution ──
+	const [pageConflict, setPageConflict] = useState(null); // { conversation } | null
+	// Distinguishes "read-only because the page was trashed/deleted" (shows the
+	// persistent note + delete action) from "read-only because the user chose
+	// to continue here after a different-page conflict" (no ongoing banner —
+	// the conflict prompt already explained it before being dismissed).
+	const [resumedPostMissing, setResumedPostMissing] = useState(false);
+	const [driftInfo, setDriftInfo] = useState(null); // { seenAt: string } | null
+
+	const applyHydratedConversation = useCallback(
+		(conversation, { readOnly: ro }) => {
+			const { messages: msgs = [], history = [] } = conversation.messages || {};
+			setMessages(msgs);
+			conversationHistoryRef.current = history;
+			// Unlike the localStorage-restore case (where an ambiguous heuristic is
+			// needed), we know definitively whether this conversation has prior
+			// turns — only treat the next message as "first" if it truly has none.
+			isFirstMessageRef.current = history.length === 0;
+			needsResumeNoticeRef.current = true;
+			setConversationId(conversation.id);
+			setReadOnly(ro);
+			setResumedPostMissing(!conversation.post_exists);
+
+			const currentModified = getCurrentPageModified();
+			const seenAt = conversation.post_modified_seen_at;
+			setDriftInfo(currentModified && seenAt && currentModified !== seenAt ? { seenAt } : null);
+		},
+		[setConversationId, setReadOnly]
+	);
+
+	const dismissDrift = useCallback(() => setDriftInfo(null), []);
+
+	const handleOpenConversationFromHistory = useCallback(
+		async (item) => {
+			const conversation = await getConversation(item.id);
+
+			if (!conversation.post_exists) {
+				applyHydratedConversation(conversation, { readOnly: true });
+				return;
+			}
+
+			const currentPostId = getCurrentPageId();
+			if (conversation.post_id !== currentPostId) {
+				setPageConflict({ conversation });
+				return;
+			}
+
+			applyHydratedConversation(conversation, { readOnly: false });
+		},
+		[applyHydratedConversation]
+	);
+
+	const resolvePageConflict = useCallback(
+		(action) => {
+			if (!pageConflict) {
+				return;
+			}
+			const { conversation } = pageConflict;
+			if (action === "navigate" && conversation.edit_url) {
+				window.location.href = conversation.edit_url;
+				return;
+			}
+			applyHydratedConversation(conversation, { readOnly: true });
+			setPageConflict(null);
+		},
+		[pageConflict, applyHydratedConversation]
+	);
 
 	// ── Session config (handles init + token refresh) ──
 	const {
@@ -168,6 +307,7 @@ const useEditorChatREST = () => {
 		executedToolsRef,
 		isSaving,
 		isSavingPost,
+		conversationId,
 		setMessages,
 		setExecutedTools,
 		setHasGlobalStylesChanges,
@@ -189,6 +329,9 @@ const useEditorChatREST = () => {
 			setActiveToolCall(null);
 			setToolProgress(null);
 			setError(null);
+			setPageConflict(null);
+			setResumedPostMissing(false);
+			setDriftInfo(null);
 			resetGeneratedImageCache();
 			// Record the image block being edited AFTER the reset, so the dispatcher
 			// can route generate→edit even though the chat sidebar steals selection.
@@ -199,6 +342,7 @@ const useEditorChatREST = () => {
 				await runChatLoop(messageContent, {
 					conversationHistoryRef,
 					isFirstMessageRef,
+					needsResumeNoticeRef,
 					setMessages,
 					setStatus,
 					openaiTools,
@@ -240,11 +384,23 @@ const useEditorChatREST = () => {
 				setPendingTools([]);
 			}
 		},
-		[configStatus, openaiClientRef, openaiTools, streamCompletion, buildToolCtx, abortControllerRef, getSessionConfig]
+		[
+			configStatus,
+			openaiClientRef,
+			openaiTools,
+			streamCompletion,
+			buildToolCtx,
+			abortControllerRef,
+			getSessionConfig,
+		]
 	);
 
 	// ── handleNewChat ──
 	const handleNewChat = useCallback(() => {
+		resetSync();
+		setPageConflict(null);
+		setResumedPostMissing(false);
+		setDriftInfo(null);
 		// Drop the persisted active chat — we're starting fresh.
 		clearActiveChat();
 
@@ -263,7 +419,16 @@ const useEditorChatREST = () => {
 		setStatus(CHAT_STATUS.IDLE);
 		originalGlobalStylesRef.current = null;
 		blockSnapshotRef.current = null;
-	}, []);
+	}, [resetSync]);
+
+	// ── handleDeleteCurrentConversation ──
+	const handleDeleteCurrentConversation = useCallback(async () => {
+		if (!conversationId) {
+			return;
+		}
+		await deleteConversation(conversationId);
+		handleNewChat();
+	}, [conversationId, handleNewChat]);
 
 	// ── handleStopRequest ──
 	const handleStopRequest = useCallback(() => {
@@ -309,6 +474,15 @@ const useEditorChatREST = () => {
 		handleSendMessage,
 		handleNewChat,
 		handleStopRequest,
+		conversationId,
+		readOnly,
+		resumedPostMissing,
+		pageConflict,
+		handleOpenConversationFromHistory,
+		resolvePageConflict,
+		handleDeleteCurrentConversation,
+		driftInfo,
+		dismissDrift,
 	};
 };
 

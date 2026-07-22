@@ -11,19 +11,20 @@ import { CHAT_STATUS } from "./constants";
 import { saveActiveChat } from "./activeChatStorage";
 
 /**
- * @param {Object}   deps                           All state and refs needed by the side effects
- * @param {Array}    deps.messages                  Chat messages array
- * @param {Object}   deps.messagesRef               Ref kept in sync with messages
- * @param {Object}   deps.conversationHistoryRef    Ref to the model-visible history (for persistence)
- * @param {string}   deps.status                    Current chat status
- * @param {Array}    deps.executedTools             Executed tools array
- * @param {Object}   deps.executedToolsRef          Ref to executed tools
- * @param {boolean}  deps.isSaving                  Whether a save is in progress
- * @param {boolean}  deps.isSavingPost              WordPress isSavingPost selector
- * @param {Function} deps.setMessages               Messages state setter
- * @param {Function} deps.setExecutedTools          Executed tools state setter
- * @param {Function} deps.setHasGlobalStylesChanges Global styles change flag setter
- * @param {Function} deps.setIsSaving               Saving state setter
+ * @param {Object}      deps                           All state and refs needed by the side effects
+ * @param {Array}       deps.messages                  Chat messages array
+ * @param {Object}      deps.messagesRef               Ref kept in sync with messages
+ * @param {Object}      deps.conversationHistoryRef    Ref to the model-visible history (for persistence)
+ * @param {string}      deps.status                    Current chat status
+ * @param {Array}       deps.executedTools             Executed tools array
+ * @param {Object}      deps.executedToolsRef          Ref to executed tools
+ * @param {boolean}     deps.isSaving                  Whether a save is in progress
+ * @param {boolean}     deps.isSavingPost              WordPress isSavingPost selector
+ * @param {number|null} deps.conversationId            Server-side conversation id, persisted alongside the local fallback so a reload doesn't re-create it
+ * @param {Function}    deps.setMessages               Messages state setter
+ * @param {Function}    deps.setExecutedTools          Executed tools state setter
+ * @param {Function}    deps.setHasGlobalStylesChanges Global styles change flag setter
+ * @param {Function}    deps.setIsSaving               Saving state setter
  */
 const useChatSideEffects = ({
 	messages,
@@ -34,6 +35,7 @@ const useChatSideEffects = ({
 	executedToolsRef,
 	isSaving,
 	isSavingPost,
+	conversationId,
 	setMessages,
 	setExecutedTools,
 	setHasGlobalStylesChanges,
@@ -88,9 +90,9 @@ const useChatSideEffects = ({
 			isInitialMountRef.current = false;
 			return;
 		}
-		saveActiveChat(messages, conversationHistoryRef.current);
+		saveActiveChat(messages, conversationHistoryRef.current, conversationId);
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- ref deliberately omitted; see note above
-	}, [messages]);
+	}, [messages, conversationId]);
 };
 
 export default useChatSideEffects;

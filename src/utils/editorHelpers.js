@@ -210,6 +210,28 @@ export const getCurrentPageTitle = () => {
 };
 
 /**
+ * Get the current post type slug (e.g. "page", "post").
+ *
+ * @return {string} The post type slug
+ */
+export const getCurrentPageType = () => {
+	const editor = select("core/editor");
+	return editor.getCurrentPostType();
+};
+
+/**
+ * Get the last-saved post_modified timestamp for the current post (the raw
+ * persisted value, not the possibly-unsaved edited attribute — this is what
+ * we compare against to detect drift since a chat was last touched).
+ *
+ * @return {string|null} MySQL datetime string, or null if unavailable
+ */
+export const getCurrentPageModified = () => {
+	const editor = select("core/editor");
+	return editor.getCurrentPost()?.modified || null;
+};
+
+/**
  * Get all currently selected blocks.
  *
  * @return {Array} Array of selected block objects (may be empty)
