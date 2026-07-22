@@ -48,7 +48,7 @@
 		"@newfold/wp-module-ai-chat": "^1.1.7",
 		"@wordpress/interface": "^9.36.0",
 		"classnames": "^2.5.1",
-		"dompurify": "^3.4.7",
+		"dompurify": "^3.4.12",
 		"lucide-react": "^1.24.0",
 		"openai": "^4.86.0"
 	},
