@@ -60,7 +60,7 @@ const closingStreamId = (ts) => `assistant-${ts}-closing`;
  *
  * @param {Object} intent      Classified intent for this turn
  * @param {Array}  openaiTools All available MCP tools
- * @return {Array}
+ * @return {Array} Tools to send to the model for this intent
  */
 function getToolsForIntent(intent, openaiTools) {
 	if (intentNeedsAllTools(intent)) {
