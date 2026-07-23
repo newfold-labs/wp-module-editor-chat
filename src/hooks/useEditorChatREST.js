@@ -183,12 +183,7 @@ const useEditorChatREST = () => {
 
 	// ── handleSendMessage ──
 	const handleSendMessage = useCallback(
-		async (
-			messageContent,
-			displayMessage = messageContent,
-			editClientId = null,
-			attachments = []
-		) => {
+		async (messageContent, displayMessage = messageContent, editClientId = null) => {
 			if (!openaiClientRef.current || configStatus !== "ready") {
 				setError("Chat is not ready. Please wait for initialization.");
 				return;
@@ -219,7 +214,6 @@ const useEditorChatREST = () => {
 					buildToolCtx,
 					abortControllerRef,
 					displayMessage,
-					attachments,
 					getSessionConfig,
 				});
 
