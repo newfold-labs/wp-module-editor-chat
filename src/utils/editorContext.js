@@ -154,6 +154,24 @@ export const SUMMARIZE_NUDGE = `All requested changes are applied. Respond with 
 {"message":"One brief sentence confirming what was done."}`;
 
 /**
+ * Nudge injected after blu-generate-color-palette returns option(s) the user
+ * must choose between before anything is applied. The default "one brief
+ * sentence" / "under 20 words" instruction (ASSISTANT_JSON_FORMAT,
+ * SUMMARIZE_NUDGE) is right for confirmations but wrong here — it leads the
+ * model to say "here are N options" without ever listing them, leaving the
+ * user nothing to actually choose from.
+ */
+export const PRESENT_PALETTE_OPTIONS_NUDGE = `Your entire text output MUST be a single JSON object — no markdown fences, no text before or after:
+{"message":"..."}
+
+The tool result above contains the generated color palette option(s), each with its own hex codes. In "message", list every option in full using markdown (a heading or bold label per palette, then a bullet per color with its exact hex code as returned — do not paraphrase, invent, or omit any value). End by asking which one to apply. Do not call any tools in this response.
+
+Output rules:
+- Return ONLY valid JSON.
+- No explanations, no comments, no extra text.
+`;
+
+/**
  * Build a summarize nudge after successful content creation.
  *
  * @param {Object} outcome Creation outcome from handleContentCreation.
