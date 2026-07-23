@@ -66,6 +66,13 @@ const useEditorChatREST = () => {
 	const blockSnapshotRef = useRef(null);
 	const executedToolsRef = useRef([]);
 	const messagesRef = useRef(messages);
+	// Carries an actionable intent (site_management/create_content) forward by
+	// exactly one turn when the assistant proposed an action but didn't execute
+	// it (e.g. "Shall I apply this palette?"). Without this, a short confirmation
+	// reply ("yes") gets classified as `conversational` in isolation, which zeroes
+	// out all tools for that turn — so the AI claims it applied the change when
+	// it never actually could. See chatLoop.js for how this is consumed/armed.
+	const pendingIntentRef = useRef(null);
 
 	// ── Session config (handles init + token refresh) ──
 	const {
@@ -199,6 +206,7 @@ const useEditorChatREST = () => {
 				await runChatLoop(messageContent, {
 					conversationHistoryRef,
 					isFirstMessageRef,
+					pendingIntentRef,
 					setMessages,
 					setStatus,
 					openaiTools,
@@ -240,7 +248,15 @@ const useEditorChatREST = () => {
 				setPendingTools([]);
 			}
 		},
-		[configStatus, openaiClientRef, openaiTools, streamCompletion, buildToolCtx, abortControllerRef, getSessionConfig]
+		[
+			configStatus,
+			openaiClientRef,
+			openaiTools,
+			streamCompletion,
+			buildToolCtx,
+			abortControllerRef,
+			getSessionConfig,
+		]
 	);
 
 	// ── handleNewChat ──
@@ -253,6 +269,7 @@ const useEditorChatREST = () => {
 		setMessages([]);
 		conversationHistoryRef.current = [];
 		isFirstMessageRef.current = true;
+		pendingIntentRef.current = null;
 		setHasGlobalStylesChanges(false);
 		setExecutedTools([]);
 		executedToolsRef.current = [];
