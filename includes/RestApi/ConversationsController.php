@@ -79,6 +79,12 @@ final class ConversationsController {
 	/**
 	 * Format a full DB row (incl. messages) for a single-conversation response.
 	 *
+	 * No edit_url here: this site edits "page" posts through a custom Site
+	 * Editor URL scheme (?p=/page/{id}&referrer=...), not the classic
+	 * get_edit_post_link() editor — building that URL is a client-side
+	 * concern (see services/contentNavigation.js's getEditUrl()), which
+	 * already knows the right scheme per post type.
+	 *
 	 * @param object $row Row from find_row().
 	 * @return array
 	 */
@@ -98,7 +104,6 @@ final class ConversationsController {
 			'updated_at'            => $row->updated_at,
 			'post_exists'           => $post_exists,
 			'post_status'           => $post_status,
-			'edit_url'              => $post_exists ? \get_edit_post_link( (int) $row->post_id, 'raw' ) : null,
 		);
 	}
 

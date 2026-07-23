@@ -11,24 +11,52 @@
 	line-height: 1.5;
 	color: #92400e;
 
+	&__body {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 8px;
+		min-width: 0;
+	}
+
 	p {
 		margin: 0;
-		flex: 1;
 	}
 
 	&__btn {
+		align-self: flex-start;
 		flex-shrink: 0;
-		padding: 4px 10px;
+		padding: 3px 8px;
 		border: 1px solid #d97706;
 		border-radius: 4px;
 		background: #fff;
 		color: #92400e;
-		font-size: var(--nfd-editor-chat-font-size-base, 14px);
+		font-size: 12px;
 		cursor: pointer;
 		white-space: nowrap;
 
 		&:hover {
 			background: #fef3c7;
+		}
+	}
+
+	&__dismiss {
+		flex-shrink: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 24px;
+		height: 24px;
+		padding: 0;
+		border: none;
+		border-radius: 4px;
+		background: transparent;
+		color: #92400e;
+		cursor: pointer;
+
+		&:hover {
+			background: rgba(217, 119, 6, 0.15);
 		}
 	}
 }

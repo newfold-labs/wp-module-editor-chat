@@ -4,6 +4,7 @@
  * exists" read-only note.
  */
 import { __ } from "@wordpress/i18n";
+import { X } from "lucide-react";
 
 /**
  * @param {Object}   props
@@ -15,20 +16,22 @@ import { __ } from "@wordpress/i18n";
  */
 const InfoBanner = ({ message, actionLabel, onAction, onDismiss }) => (
 	<div className="nfd-editor-chat-context-warning" role="status">
-		<p>{message}</p>
-		{actionLabel && onAction && (
-			<button type="button" className="nfd-editor-chat-context-warning__btn" onClick={onAction}>
-				{actionLabel}
-			</button>
-		)}
+		<div className="nfd-editor-chat-context-warning__body">
+			<p>{message}</p>
+			{actionLabel && onAction && (
+				<button type="button" className="nfd-editor-chat-context-warning__btn" onClick={onAction}>
+					{actionLabel}
+				</button>
+			)}
+		</div>
 		{onDismiss && (
 			<button
 				type="button"
-				className="nfd-editor-chat-context-warning__btn"
+				className="nfd-editor-chat-context-warning__dismiss"
 				onClick={onDismiss}
 				aria-label={__("Dismiss", "wp-module-editor-chat")}
 			>
-				{__("Dismiss", "wp-module-editor-chat")}
+				<X width={14} height={14} aria-hidden="true" />
 			</button>
 		)}
 	</div>

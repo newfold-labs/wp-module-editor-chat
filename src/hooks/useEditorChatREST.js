@@ -26,6 +26,7 @@ import { loadActiveChat, clearActiveChat } from "./chat/activeChatStorage";
 import { resetGeneratedImageCache } from "../services/toolDispatcher";
 import { setActiveImageEditTarget } from "../services/imageCache";
 import { useEditorNavigation } from "../context/editorNavigation";
+import { getEditUrl } from "../services/contentNavigation";
 import {
 	createConversation,
 	updateConversation,
@@ -234,8 +235,8 @@ const useEditorChatREST = () => {
 				return;
 			}
 			const { conversation } = pageConflict;
-			if (action === "navigate" && conversation.edit_url) {
-				window.location.href = conversation.edit_url;
+			if (action === "navigate") {
+				window.location.href = getEditUrl(conversation.post_type, conversation.post_id);
 				return;
 			}
 			applyHydratedConversation(conversation, { readOnly: true });
