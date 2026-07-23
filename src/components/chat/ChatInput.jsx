@@ -177,7 +177,15 @@ const ChatInput = ({ onSendMessage, onStopRequest, disabled = false, maxFiles = 
 	const handleSubmit = () => {
 		if (canSend && !disabled) {
 			const enrichedMessage = buildMessageWithAttachments(message, attachments);
-			onSendMessage(enrichedMessage, message);
+			// Carry the uploaded (server) URL, not the local blob previewUrl — the
+			// latter is revoked on unmount and never survives a page reload, so the
+			// sent message's thumbnail would go blank once persisted history is
+			// restored. Only successfully uploaded attachments are shown; ones still
+			// mid-upload can't reach here since canSend requires !isUploading.
+			const sentAttachments = attachments
+				.filter((att) => att.status === "ready" && att.url)
+				.map((att) => ({ id: att.id, name: att.name, type: att.type, url: att.url }));
+			onSendMessage(enrichedMessage, message, sentAttachments);
 			setMessage("");
 			setAttachments([]);
 			// Reset textarea height and maintain focus
