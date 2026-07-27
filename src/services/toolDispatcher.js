@@ -35,6 +35,7 @@ import { handleHighlightBlock } from "./toolHandlers/highlightBlock";
 import { handleInsertInnerBlock } from "./toolHandlers/insertInnerBlock";
 import { handleMoveBlock } from "./toolHandlers/moveBlock";
 import { handleRegenerateLogo } from "./toolHandlers/regenerateLogo";
+import { handleEditLogo } from "./toolHandlers/editLogo";
 import { handleSetLogoFromImage } from "./toolHandlers/setLogoFromImage";
 import { handleUpdateBlockAttrs } from "./toolHandlers/updateBlockAttrs";
 import { handleEditImage } from "./toolHandlers/editImage";
@@ -145,6 +146,7 @@ const READ_TOOLS = new Set([
 	"blu-generate-image",
 	"blu-edit-image",
 	"blu-regenerate-logo",
+	"blu-edit-logo",
 	"blu-set-logo-from-image", // write tool, but AI needs the full result (URL) to confirm success
 	"blu-read-document",
 	"blu-extract-image-colors",
@@ -505,6 +507,27 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 					};
 				} else {
 					result = await handleRegenerateLogo(toolCall, args, ctx);
+				}
+			} else if (toolName === "blu-edit-logo") {
+				if (!args.prompt) {
+					result = {
+						id: toolCall.id,
+						result: [
+							{
+								type: "text",
+								text: JSON.stringify({
+									error:
+										"Missing required parameter: prompt. Describe how to edit the existing logo (colors, text, layout, etc.).",
+								}),
+							},
+						],
+						isError: true,
+					};
+				} else {
+					result = await handleEditLogo(toolCall, args, ctx);
+					if (!result.isError) {
+						hasBlockEdits = true;
+					}
 				}
 			} else if (toolName === "blu-set-logo-from-image" && args.source_url) {
 				result = await handleSetLogoFromImage(toolCall, args, ctx);
