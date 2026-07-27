@@ -15,7 +15,10 @@
 import { CHAT_STATUS } from "@newfold/wp-module-ai-chat";
 import { __ } from "@wordpress/i18n";
 
-import { validateEntityContentArgs, abilityUsesBlockContent } from "../utils/entityContentValidation";
+import {
+	validateEntityContentArgs,
+	abilityUsesBlockContent,
+} from "../utils/entityContentValidation";
 import { snapshotBlocks } from "../utils/editorContext";
 import { safeParseJSON } from "../utils/jsonUtils";
 import { callAbility } from "./callAbility";
@@ -539,16 +542,9 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 				let contentValidationFailed = false;
 				if (abilityUsesBlockContent(toolName)) {
 					const hasContent =
-						args.content ||
-						args.block_content ||
-						args.markup ||
-						args.html ||
-						args.block_markup;
+						args.content || args.block_content || args.markup || args.html || args.block_markup;
 					if (hasContent) {
-						await ctx.updateProgress(
-							__("Validating block markup…", "wp-module-editor-chat"),
-							300
-						);
+						await ctx.updateProgress(__("Validating block markup…", "wp-module-editor-chat"), 300);
 						const contentCheck = validateEntityContentArgs(toolName, args);
 						if (!contentCheck.ok) {
 							contentValidationFailed = true;

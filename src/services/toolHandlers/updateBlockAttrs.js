@@ -30,9 +30,7 @@ function isCssColorPatch(attributes) {
 			return true;
 		}
 		if (style.elements && typeof style.elements === "object") {
-			return Object.values(style.elements).some(
-				(el) => el && typeof el === "object" && el.color
-			);
+			return Object.values(style.elements).some((el) => el && typeof el === "object" && el.color);
 		}
 	}
 	return false;
