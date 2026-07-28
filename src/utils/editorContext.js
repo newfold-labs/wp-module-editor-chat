@@ -154,6 +154,24 @@ export const SUMMARIZE_NUDGE = `All requested changes are applied. Respond with 
 {"message":"One brief sentence confirming what was done."}`;
 
 /**
+ * Nudge injected after blu-generate-color-palette returns option(s) the user
+ * must choose between before anything is applied. The default "one brief
+ * sentence" / "under 20 words" instruction (ASSISTANT_JSON_FORMAT,
+ * SUMMARIZE_NUDGE) is right for confirmations but wrong here — it leads the
+ * model to say "here are N options" without ever listing them, leaving the
+ * user nothing to actually choose from.
+ */
+export const PRESENT_PALETTE_OPTIONS_NUDGE = `Your entire text output MUST be a single JSON object — no markdown fences, no text before or after:
+{"message":"..."}
+
+The tool result above contains the generated color palette option(s), each with its own hex codes. In "message", list every option in full using markdown (a heading or bold label per palette, then a bullet per color with its exact hex code as returned — do not paraphrase, invent, or omit any value). End by asking which one to apply. Do not call any tools in this response.
+
+Output rules:
+- Return ONLY valid JSON.
+- No explanations, no comments, no extra text.
+`;
+
+/**
  * Build a summarize nudge after successful content creation.
  *
  * @param {Object} outcome Creation outcome from handleContentCreation.
@@ -306,8 +324,42 @@ export const buildEditorContext = ({ extraClientIds = [] } = {}) => {
 		context += `\n\nNFD utility class reference (these classes are from the site's design system — preserve them, do not remove or replace unless the user specifically asks to change the property they control):\n${NFD_CLASS_REFERENCE}`;
 	}
 
+	// Site logo is a raster/SVG image — CSS color attrs on core/site-logo (or its
+	// header/template-part ancestors) do not edit it. Always steer logo tweak
+	// requests to blu/edit-logo, even when only the header is selected.
+	if (blockTreeContainsName(blocks, LOGO_BLOCK) || context.includes("core/site-logo")) {
+		context +=
+			"\n\nSite logo guidance (CRITICAL):" +
+			"\n- core/site-logo is an IMAGE. NEVER use blu/update-block-attrs (textColor, backgroundColor, style.color, etc.) to change its appearance — CSS cannot edit the logo image." +
+			"\n- To modify the existing logo (colors, text, layout, elements): call blu/edit-logo(prompt=<what to change>). Works even when only the header/template-part is selected — you do NOT need to select the logo block." +
+			"\n- To create a brand-new logo design from scratch: call blu/regenerate-logo." +
+			"\n- To use an uploaded image as the logo: blu/edit-image then blu/set-logo-from-image.";
+	}
+
 	return context;
 };
+
+/**
+ * Recursively check whether a block tree contains a block with the given name.
+ *
+ * @param {Array}  blocks Top-level blocks.
+ * @param {string} name   Block name to find.
+ * @return {boolean} True if found.
+ */
+function blockTreeContainsName(blocks, name) {
+	if (!Array.isArray(blocks)) {
+		return false;
+	}
+	for (const block of blocks) {
+		if (block?.name === name) {
+			return true;
+		}
+		if (blockTreeContainsName(block?.innerBlocks, name)) {
+			return true;
+		}
+	}
+	return false;
+}
 
 /**
  * Deep clone blocks for snapshot undo.

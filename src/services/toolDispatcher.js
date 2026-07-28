@@ -15,7 +15,10 @@
 import { CHAT_STATUS } from "@newfold/wp-module-ai-chat";
 import { __ } from "@wordpress/i18n";
 
-import { validateEntityContentArgs, abilityUsesBlockContent } from "../utils/entityContentValidation";
+import {
+	validateEntityContentArgs,
+	abilityUsesBlockContent,
+} from "../utils/entityContentValidation";
 import { snapshotBlocks } from "../utils/editorContext";
 import { safeParseJSON } from "../utils/jsonUtils";
 import { callAbility } from "./callAbility";
@@ -35,6 +38,7 @@ import { handleHighlightBlock } from "./toolHandlers/highlightBlock";
 import { handleInsertInnerBlock } from "./toolHandlers/insertInnerBlock";
 import { handleMoveBlock } from "./toolHandlers/moveBlock";
 import { handleRegenerateLogo } from "./toolHandlers/regenerateLogo";
+import { handleEditLogo } from "./toolHandlers/editLogo";
 import { handleSetLogoFromImage } from "./toolHandlers/setLogoFromImage";
 import { handleUpdateBlockAttrs } from "./toolHandlers/updateBlockAttrs";
 import { handleEditImage } from "./toolHandlers/editImage";
@@ -145,6 +149,7 @@ const READ_TOOLS = new Set([
 	"blu-generate-image",
 	"blu-edit-image",
 	"blu-regenerate-logo",
+	"blu-edit-logo",
 	"blu-set-logo-from-image", // write tool, but AI needs the full result (URL) to confirm success
 	"blu-read-document",
 	"blu-extract-image-colors",
@@ -506,6 +511,27 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 				} else {
 					result = await handleRegenerateLogo(toolCall, args, ctx);
 				}
+			} else if (toolName === "blu-edit-logo") {
+				if (!args.prompt) {
+					result = {
+						id: toolCall.id,
+						result: [
+							{
+								type: "text",
+								text: JSON.stringify({
+									error:
+										"Missing required parameter: prompt. Describe how to edit the existing logo (colors, text, layout, etc.).",
+								}),
+							},
+						],
+						isError: true,
+					};
+				} else {
+					result = await handleEditLogo(toolCall, args, ctx);
+					if (!result.isError) {
+						hasBlockEdits = true;
+					}
+				}
 			} else if (toolName === "blu-set-logo-from-image" && args.source_url) {
 				result = await handleSetLogoFromImage(toolCall, args, ctx);
 				if (!result.isError) {
@@ -516,16 +542,9 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 				let contentValidationFailed = false;
 				if (abilityUsesBlockContent(toolName)) {
 					const hasContent =
-						args.content ||
-						args.block_content ||
-						args.markup ||
-						args.html ||
-						args.block_markup;
+						args.content || args.block_content || args.markup || args.html || args.block_markup;
 					if (hasContent) {
-						await ctx.updateProgress(
-							__("Validating block markup…", "wp-module-editor-chat"),
-							300
-						);
+						await ctx.updateProgress(__("Validating block markup…", "wp-module-editor-chat"), 300);
 						const contentCheck = validateEntityContentArgs(toolName, args);
 						if (!contentCheck.ok) {
 							contentValidationFailed = true;

@@ -23,6 +23,7 @@ import {
 	ASSISTANT_JSON_FORMAT,
 	EXECUTE_NUDGE,
 	SUMMARIZE_NUDGE,
+	PRESENT_PALETTE_OPTIONS_NUDGE,
 	buildCreationSummarizeNudge,
 	buildEditorContext,
 } from "../../utils/editorContext";
@@ -59,7 +60,7 @@ const closingStreamId = (ts) => `assistant-${ts}-closing`;
  *
  * @param {Object} intent      Classified intent for this turn
  * @param {Array}  openaiTools All available MCP tools
- * @return {Array}
+ * @return {Array} Tools to send to the model for this intent
  */
 function getToolsForIntent(intent, openaiTools) {
 	if (intentNeedsAllTools(intent)) {
@@ -81,6 +82,7 @@ export async function runChatLoop(userMessage, deps) {
 	const {
 		conversationHistoryRef,
 		isFirstMessageRef,
+		pendingIntentRef,
 		setMessages,
 		setStatus,
 		openaiTools,
@@ -136,14 +138,35 @@ export async function runChatLoop(userMessage, deps) {
 	const extraClientIds = [];
 	const markupRequestCount = { current: 0 };
 	let markupJustProvided = false;
+	let paletteOptionsJustGenerated = false;
 	let lastCreationOutcome = null;
+	// Whether any tool actually changed something this turn (across all passes).
+	// Distinct from `toolsJustExecuted`, which is reset/recomputed each pass.
+	let anyMutationThisTurn = false;
 	const intentMessage = displayMessage || userMessage;
 
 	setStatus(CHAT_STATUS.GENERATING);
 	const sessionConfig = getSessionConfig?.() || null;
-	const intent = sessionConfig
-		? await classifyUserIntent(intentMessage, sessionConfig)
-		: DEFAULT_INTENT;
+
+	// If the previous turn proposed an actionable change but ended without
+	// executing it (e.g. "Shall I apply this palette?"), reuse that intent for
+	// this turn instead of re-classifying. A short confirmation like "yes" is
+	// ambiguous in isolation and the classifier reasonably calls it
+	// `conversational`, which would otherwise strip every tool from this pass
+	// and leave the AI unable to actually do what it just offered to do.
+	// Consumed exactly once so it can't leak into unrelated later turns.
+	let intent;
+	let usedPendingIntent = false;
+	if (pendingIntentRef?.current) {
+		intent = pendingIntentRef.current;
+		pendingIntentRef.current = null;
+		usedPendingIntent = true;
+		logger.log("[EditorChat] Reusing pending intent from prior proposal:", intent.task);
+	} else {
+		intent = sessionConfig
+			? await classifyUserIntent(intentMessage, sessionConfig)
+			: DEFAULT_INTENT;
+	}
 	logger.log("[EditorChat] User intent:", intent.task, intent.content_type);
 
 	while (iterations++ < MAX_TOOL_ITERATIONS) {
@@ -176,6 +199,9 @@ export async function runChatLoop(userMessage, deps) {
 		} else if (markupJustProvided) {
 			nudge = MARKUP_PROVIDED_NUDGE;
 			markupJustProvided = false;
+		} else if (paletteOptionsJustGenerated) {
+			nudge = PRESENT_PALETTE_OPTIONS_NUDGE;
+			paletteOptionsJustGenerated = false;
 		} else {
 			nudge = getIntentNudge(intent, EXECUTE_NUDGE, ASSISTANT_JSON_FORMAT);
 		}
@@ -417,6 +443,14 @@ export async function runChatLoop(userMessage, deps) {
 		// with a confirmation without ever running the write tool.
 		lastCreationOutcome = results.find((r) => r.creationMeta)?.creationMeta ?? null;
 		toolsJustExecuted = results.some((r) => r.hasChanges === true || r.isContentCreation === true);
+		anyMutationThisTurn = anyMutationThisTurn || toolsJustExecuted;
+		// blu-generate-color-palette returns option(s) to choose from, not a
+		// change already applied — the default brief-confirmation nudges would
+		// otherwise make the model announce "N options" without listing them.
+		paletteOptionsJustGenerated = results.some((r) => {
+			const name = effectiveName.get(r.tool_call_id) || "";
+			return name === "blu-generate-color-palette" && !r.isError;
+		});
 		if (toolsJustExecuted) {
 			restoreAnimatedBlocksInEditor();
 		}
@@ -470,6 +504,25 @@ export async function runChatLoop(userMessage, deps) {
 		} else {
 			removeStreamingMessage(setMessages, closingId);
 		}
+	}
+
+	// Arm the pending-intent carry-over for the next turn when this one proposed
+	// an actionable change but never executed it (a pure text reply/question).
+	// Any non-conversational task qualifies here, not just
+	// intentNeedsAllTools() (create_content/site_management) — edit_page is the
+	// common default classification and its tool set (EDITOR_TOOLS) is what
+	// let this turn call blu-generate-color-palette etc. in the first place, so
+	// it must carry forward too, or a short confirmation next turn falls back
+	// to a fresh (likely `conversational`, zero-tool) classification.
+	// Skip re-arming when this turn itself was a reused pending intent, so the
+	// carry-over can't chain past one hop into unrelated later turns.
+	if (
+		pendingIntentRef &&
+		!usedPendingIntent &&
+		!anyMutationThisTurn &&
+		intent?.task !== "conversational"
+	) {
+		pendingIntentRef.current = intent;
 	}
 
 	// Compress older exchanges to keep history lean for next turn
