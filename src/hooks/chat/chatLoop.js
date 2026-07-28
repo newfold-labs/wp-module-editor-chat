@@ -90,6 +90,7 @@ export async function runChatLoop(userMessage, deps) {
 		buildToolCtx,
 		abortControllerRef,
 		displayMessage = userMessage,
+		attachments = [],
 		getSessionConfig,
 		classifyUserIntent = classifyUserIntentDefault,
 	} = deps;
@@ -116,6 +117,8 @@ export async function runChatLoop(userMessage, deps) {
 			type: "user",
 			role: "user",
 			content: displayMessage,
+			// Allegati immagine (solo con URL server) mostrati nella bolla utente.
+			...(Array.isArray(attachments) && attachments.length > 0 ? { attachments } : {}),
 			timestamp: new Date(),
 		},
 	]);
