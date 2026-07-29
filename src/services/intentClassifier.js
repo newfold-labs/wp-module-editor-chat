@@ -77,7 +77,7 @@ export async function classifyUserIntent(message, sessionConfig) {
  * Whether the intent requires all MCP site-management tools.
  *
  * @param {{ task: string }} intent Classified intent
- * @return {boolean}
+ * @return {boolean} True when the full tool set should be sent
  */
 export function intentNeedsAllTools(intent) {
 	return intent?.task === "create_content" || intent?.task === "site_management";
@@ -89,7 +89,7 @@ export function intentNeedsAllTools(intent) {
  * @param {{ task: string }} intent       Classified intent
  * @param {string}           executeNudge EXECUTE_NUDGE constant
  * @param {string}           jsonFormat   ASSISTANT_JSON_FORMAT constant
- * @return {string}
+ * @return {string} Nudge to send with the first pass
  */
 export function getIntentNudge(intent, executeNudge, jsonFormat) {
 	switch (intent?.task) {
