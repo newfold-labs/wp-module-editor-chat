@@ -8,6 +8,7 @@ export const DEFAULT_INTENT = {
 	task: "edit_page",
 	content_type: null,
 	menu_edit: null,
+	steps: [],
 };
 
 /**
@@ -58,11 +59,18 @@ export async function classifyUserIntent(message, sessionConfig) {
 			return DEFAULT_INTENT;
 		}
 
-		logger.log("[IntentClassifier] Classified:", data.task, data.content_type, data.menu_edit);
+		logger.log(
+			"[IntentClassifier] Classified:",
+			data.task,
+			data.content_type,
+			data.menu_edit,
+			data.steps
+		);
 		return {
 			task: data.task,
 			content_type: data.content_type ?? null,
 			menu_edit: data.menu_edit ?? null,
+			steps: Array.isArray(data.steps) ? data.steps : [],
 		};
 	} catch (err) {
 		logger.warn("[IntentClassifier] Request failed:", err?.message || err);

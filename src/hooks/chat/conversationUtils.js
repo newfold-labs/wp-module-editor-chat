@@ -329,7 +329,8 @@ export function buildMessageWithAttachments(message, attachments) {
 				"\n- To blend/edit a block image: use the URL as reference_url in blu/edit-image." +
 				"\n- To replace the site logo (two mandatory steps in order):" +
 				"\n  Step 1: call blu/edit-image(source_url=<uploaded_url>, prompt='remove background and trim whitespace', background:transparent, trim:true)" +
-				"\n  Step 2: call blu/set-logo-from-image(source_url=<url_returned_by_step_1>) — use the URL from Step 1, not the original uploaded URL.";
+				"\n  Step 2: call blu/set-logo-from-image(source_url=<url_returned_by_step_1>) — use the URL from Step 1, not the original uploaded URL." +
+				"\n- To modify the existing site logo (colors, text, layout, elements): call blu/edit-logo(prompt=<what to change>). Do NOT use blu/regenerate-logo for tweaks to the current logo.";
 		}
 	}
 
