@@ -16,11 +16,11 @@ import classNames from "classnames";
  * Internal dependencies.
  */
 import { GlobeIcon } from "../icons";
-import { saveDirtyEditorEntities } from "../../../../services/entitySaveService";
+import { publishEditedPost } from "../../../../services/postPublishService";
 
 export default function SaveButton() {
 	const classes = classNames(["nfd-editor-chat__header-save-button"]);
-	const { savePost } = useDispatch(editorStore);
+	const { savePost, editPost } = useDispatch(editorStore);
 	const { isSaving, isSaveable, hasNonPostEntityChanges, isSavingNonPostEntityChanges } = useSelect(
 		(select) => {
 			const {
@@ -46,9 +46,7 @@ export default function SaveButton() {
 	const handleSave = async () => {
 		if (isButtonDisabled) return;
 
-		await saveDirtyEditorEntities(saveEditedEntityRecord);
-
-		await savePost();
+		await publishEditedPost({ editPost, savePost, saveEditedEntityRecord });
 	};
 
 	return (
