@@ -21,6 +21,10 @@ import { safeParseJSON } from "../utils/jsonUtils";
 import { callAbility } from "./callAbility";
 import { handleContentCreation, CREATE_ABILITIES } from "./contentNavigation";
 import {
+	findHeaderRefNavigationBlock,
+	hydrateAllRefNavigationBlocks,
+} from "./navigationEditor";
+import {
 	appendGeneratedImageUrl,
 	getActiveImageEditTarget,
 	resetGeneratedImageCache,
@@ -129,6 +133,261 @@ const BLOCK_TOOL_NAMES = [
 	"blu-update-block-attrs",
 ];
 
+/**
+ * Short names the model often emits (from prompts or habit) instead of the
+ * registered MCP hyphen names. Normalized after blu-call-ability unwrap.
+ */
+const BLOCK_TOOL_ALIASES = {
+	"blu-duplicate": "blu-duplicate-block",
+	"blu-delete": "blu-delete-block",
+	"blu-insert": "blu-insert-inner-block",
+	"blu-insert-block": "blu-insert-inner-block",
+	"blu-update": "blu-update-block-attrs",
+	"blu-update-attrs": "blu-update-block-attrs",
+	"blu-move": "blu-move-block",
+	"blu-edit": "blu-edit-block",
+	"blu-add": "blu-add-section",
+	"blu-add-block": "blu-add-section",
+};
+
+/** Server stub actions from block-editor abilities → client handler dispatch. */
+const CLIENT_ACTION_TOOLS = {
+	duplicate: "blu-duplicate-block",
+	delete_block: "blu-delete-block",
+	update_block_attrs: "blu-update-block-attrs",
+	insert_inner_block: "blu-insert-inner-block",
+	move_block: "blu-move-block",
+	edit_block: "blu-edit-block",
+	add_section: "blu-add-section",
+};
+
+function normalizeBlockToolName(toolName) {
+	return BLOCK_TOOL_ALIASES[toolName] || toolName;
+}
+
+/**
+ * Unwrap blu-call-ability and normalize slash/alias names to the client handler name.
+ *
+ * @param {string} toolName
+ * @param {Object} args
+ * @return {{ toolName: string, args: Object }}
+ */
+function resolveClientToolCall(toolName, args) {
+	let resolvedName = toolName || "";
+	let resolvedArgs = args || {};
+
+	if (typeof resolvedArgs === "string") {
+		resolvedArgs = safeParseJSON(resolvedArgs).value || {};
+	}
+
+	if (resolvedName === "blu-call-ability" && resolvedArgs.ability_name) {
+		const { ability_name, parameters, ...rest } = resolvedArgs;
+		resolvedName = String(ability_name).replace(/\//g, "-");
+
+		let innerParams = parameters ?? {};
+		if (typeof innerParams === "string") {
+			innerParams = safeParseJSON(innerParams).value || {};
+		}
+		if (!innerParams || typeof innerParams !== "object" || Array.isArray(innerParams)) {
+			innerParams = {};
+		}
+
+		// Models often emit ability params beside ability_name instead of inside `parameters`.
+		resolvedArgs = { ...rest, ...innerParams };
+	}
+
+	return {
+		toolName: normalizeBlockToolName(resolvedName),
+		args: resolvedArgs,
+	};
+}
+
+/**
+ * Normalize common alias param names for blu-insert-inner-block.
+ *
+ * @param {Object} args
+ * @return {Object}
+ */
+function normalizeInsertInnerBlockArgs(args) {
+	if (!args.parent_client_id) {
+		args.parent_client_id =
+			args.parent_clientId || args.parentClientId || args.client_id || args.clientId;
+	}
+	if (!args.block_content) {
+		const alt = args.content || args.markup || args.html || args.block_markup;
+		if (alt) {
+			args.block_content = alt;
+		}
+	}
+	if (args.index == null && args.position != null) {
+		if (typeof args.position === "number") {
+			args.index = args.position;
+		} else if (args.position === "first") {
+			args.index = 0;
+		} else if (args.position === "last") {
+			args.index = null;
+		}
+	}
+	return args;
+}
+
+/**
+ * Resolve parent navigation block when inserting a menu link without parent_client_id.
+ *
+ * @param {Object} args
+ * @return {Promise<Object>}
+ */
+async function resolveInsertInnerBlockArgs(args) {
+	normalizeInsertInnerBlockArgs(args);
+	if (
+		!args.parent_client_id &&
+		args.block_content &&
+		/navigation-link/.test(args.block_content)
+	) {
+		await hydrateAllRefNavigationBlocks();
+		const nav = findHeaderRefNavigationBlock();
+		if (nav) {
+			args.parent_client_id = nav.clientId;
+		}
+	}
+	return args;
+}
+
+/**
+ * MCP tools that return data the model must read (not "Applied successfully").
+ *
+ * @param {string} toolName
+ * @return {boolean}
+ */
+function isMcpDataTool(toolName) {
+	if (READ_TOOLS.has(toolName)) {
+		return true;
+	}
+	if (/^blu-(pages|posts|media|users|products)-search$/.test(toolName)) {
+		return true;
+	}
+	if (toolName.startsWith("blu-get-") && !BLOCK_TOOL_NAMES.includes(toolName)) {
+		return true;
+	}
+	return false;
+}
+
+/**
+ * @param {string} text
+ * @return {boolean}
+ */
+function isClientActionStubText(text) {
+	try {
+		const parsed = JSON.parse(text);
+		const payload =
+			parsed?.message && typeof parsed.message === "object" ? parsed.message : parsed;
+		return Boolean(payload?.action && CLIENT_ACTION_TOOLS[payload.action]);
+	} catch {
+		return false;
+	}
+}
+
+function toolCallUsesBlockMutation(tc) {
+	let args = tc.arguments || {};
+	if (typeof args === "string") {
+		args = safeParseJSON(args).value;
+	}
+	const { toolName } = resolveClientToolCall(tc.name || "", args);
+	return BLOCK_TOOL_NAMES.includes(toolName);
+}
+
+/**
+ * Parse MCP ability responses that only authorize client-side block execution.
+ *
+ * @param {Object} mcpResult
+ * @return {Object|null}
+ */
+function parseMcpClientActionStub(mcpResult) {
+	const text = mcpResult?.content?.[0]?.text;
+	if (!text) {
+		return null;
+	}
+	try {
+		const parsed = JSON.parse(text);
+		const payload =
+			parsed?.message && typeof parsed.message === "object" ? parsed.message : parsed;
+		if (payload?.action && CLIENT_ACTION_TOOLS[payload.action]) {
+			return payload;
+		}
+	} catch {
+		/* not JSON */
+	}
+	return null;
+}
+
+/**
+ * Run a block mutation locally when the server returned a client-action stub.
+ *
+ * @param {Object} stub
+ * @param {Object} args      Original tool args (merged with stub fields).
+ * @param {Object} toolCall
+ * @param {Object} ctx
+ * @return {Promise<Object|null>}
+ */
+async function executeClientActionFromStub(stub, args, toolCall, ctx) {
+	const merged = { ...args };
+	for (const key of [
+		"client_id",
+		"kind",
+		"scope",
+		"position",
+		"parent_client_id",
+		"block_content",
+		"label",
+		"target_client_id",
+		"as_child_of",
+		"attributes",
+		"before_client_id",
+		"after_client_id",
+	]) {
+		if (stub[key] !== undefined && merged[key] === undefined) {
+			merged[key] = stub[key];
+		}
+	}
+
+	const toolName = CLIENT_ACTION_TOOLS[stub.action];
+	if (toolName === "blu-duplicate-block" && (merged.client_id || merged.kind)) {
+		return handleDuplicate(toolCall, merged, ctx);
+	}
+	if (toolName === "blu-delete-block" && (merged.client_id || merged.label)) {
+		return handleDeleteBlock(toolCall, merged, ctx);
+	}
+	if (toolName === "blu-update-block-attrs" && merged.client_id) {
+		const attrs = merged.attributes || merged;
+		return handleUpdateBlockAttrs(
+			toolCall,
+			{ client_id: merged.client_id, attributes: attrs, image_prompt: merged.image_prompt },
+			ctx
+		);
+	}
+	if (toolName === "blu-insert-inner-block") {
+		await resolveInsertInnerBlockArgs(merged);
+		if (merged.parent_client_id && merged.block_content) {
+			return handleInsertInnerBlock(toolCall, merged, ctx);
+		}
+	}
+	if (
+		toolName === "blu-move-block" &&
+		merged.client_id &&
+		((merged.target_client_id && merged.position) || merged.as_child_of)
+	) {
+		return handleMoveBlock(toolCall, merged, ctx);
+	}
+	if (toolName === "blu-edit-block" && merged.client_id && merged.block_content) {
+		return handleEditBlock(toolCall, merged, ctx);
+	}
+	if (toolName === "blu-add-section" && merged.block_content) {
+		return handleAddSection(toolCall, merged, ctx);
+	}
+
+	return null;
+}
+
 // ─────────────────────────────────────────────────────────────
 // Tool execution (for CF AI Gateway / OpenAI function calling)
 // ─────────────────────────────────────────────────────────────
@@ -216,7 +475,7 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 	}
 
 	// Capture block snapshot before any tool execution for atomic undo
-	const hasBlockTools = clientToolCalls.some((tc) => BLOCK_TOOL_NAMES.includes(tc.name || ""));
+	const hasBlockTools = clientToolCalls.some((tc) => toolCallUsesBlockMutation(tc));
 	if (hasBlockTools && !ctx.blockSnapshotRef.current) {
 		const { select: wpSelect } = wp.data;
 		const allBlocks = wpSelect("core/block-editor").getBlocks();
@@ -266,21 +525,29 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 				args = safeParseJSON(args).value;
 			}
 
-			// Unwrap gateway calls: blu-call-ability wraps an inner ability name
-			// and parameters. Extract them so client-side handlers can execute,
-			// and so the UI shows the real ability name (e.g. "Delete Block").
-			// Models sometimes emit the slash form ("blu/edit-block") that matches
-			// how abilities are registered server-side; MCP's tools/list exposes
-			// the hyphen form, so normalize here before dispatch.
-			if (toolName === "blu-call-ability" && args.ability_name) {
-				toolName = String(args.ability_name).replace(/\//g, "-");
-				args = args.parameters || {};
-				toolCall = { ...toolCall, name: toolName };
+			// Unwrap gateway calls and normalize slash/alias ability names.
+			({ toolName, args } = resolveClientToolCall(toolName, args));
+			toolCall = { ...toolCall, name: toolName };
+			if (toolCall.name !== (toolCall.arguments?.ability_name || toolCall.name)) {
+				logger.log(`[ToolExecutor:REST] Resolved tool: ${toolName}`, args);
 			}
 
 			// Normalize alt param names
 			if (!args.client_id && args.clientId) {
 				args.client_id = args.clientId;
+			}
+			if (toolName === "blu-delete-block") {
+				if (!args.label && typeof args.item_label === "string") {
+					args.label = args.item_label;
+				}
+				if (!args.label && typeof args.menu_item_label === "string") {
+					args.label = args.menu_item_label;
+				}
+				// Nav menu client_ids go stale after every entity edit — never mix with label.
+				if (args.label) {
+					delete args.client_id;
+					delete args.clientId;
+				}
 			}
 			// The model commonly sends `instruction` (singular) even though the
 			// ability schema is `instructions` — accept both.
@@ -288,13 +555,19 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 				args.instructions = args.instruction;
 			}
 			if (
-				(toolName === "blu-edit-block" || toolName === "blu-add-section") &&
+				(toolName === "blu-edit-block" ||
+					toolName === "blu-add-section" ||
+					toolName === "blu-insert-inner-block") &&
 				!args.block_content
 			) {
 				const alt = args.content || args.markup || args.html || args.block_markup;
 				if (alt) {
 					args.block_content = alt;
 				}
+			}
+
+			if (toolName === "blu-insert-inner-block") {
+				await resolveInsertInnerBlockArgs(args);
 			}
 
 			// edit-block without client_id → treat as add-section
@@ -333,7 +606,7 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 				if (!result.isError && result.hasChanges) {
 					hasBlockEdits = true;
 				}
-			} else if (toolName === "blu-delete-block" && args.client_id) {
+			} else if (toolName === "blu-delete-block" && (args.client_id || args.label)) {
 				result = await handleDeleteBlock(toolCall, args, ctx);
 				if (!result.isError && result.hasChanges) {
 					hasBlockEdits = true;
@@ -343,11 +616,7 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 				if (!result.isError && result.hasChanges) {
 					hasBlockEdits = true;
 				}
-			} else if (
-				toolName === "blu-insert-inner-block" &&
-				args.parent_client_id &&
-				args.block_content
-			) {
+			} else if (toolName === "blu-insert-inner-block" && args.parent_client_id && args.block_content) {
 				result = await handleInsertInnerBlock(toolCall, args, ctx);
 				if (!result.isError && result.hasChanges) {
 					hasBlockEdits = true;
@@ -551,11 +820,28 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 					logger.log(`[ToolExecutor:REST] Forwarding to MCP: ${toolName}`, args);
 					try {
 						const mcpResult = await callAbility(ctx.mcpClient, toolName, args);
-						result = {
-							id: toolCall.id,
-							result: mcpResult.content,
-							isError: mcpResult.isError || false,
-						};
+						const stub = !mcpResult.isError ? parseMcpClientActionStub(mcpResult) : null;
+						if (stub) {
+							const stubResult = await executeClientActionFromStub(stub, args, toolCall, ctx);
+							if (stubResult) {
+								result = stubResult;
+								if (!stubResult.isError && stubResult.hasChanges) {
+									hasBlockEdits = true;
+								}
+							} else {
+								result = {
+									id: toolCall.id,
+									result: mcpResult.content,
+									isError: mcpResult.isError || false,
+								};
+							}
+						} else {
+							result = {
+								id: toolCall.id,
+								result: mcpResult.content,
+								isError: mcpResult.isError || false,
+							};
+						}
 					} catch (mcpErr) {
 						result = {
 							id: toolCall.id,
@@ -587,6 +873,12 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 				} else {
 					content = result.result[0].text;
 				}
+			} else if (
+				result?.result?.[0]?.text &&
+				(isMcpDataTool(toolName) ||
+					(!result?.hasChanges && !isClientActionStubText(result.result[0].text)))
+			) {
+				content = result.result[0].text;
 			} else {
 				// Extract human-readable .message from handler's JSON result
 				const msg = (() => {

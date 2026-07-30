@@ -7,6 +7,7 @@ import logger from "../utils/logger";
 export const DEFAULT_INTENT = {
 	task: "edit_page",
 	content_type: null,
+	menu_edit: null,
 };
 
 /**
@@ -57,10 +58,11 @@ export async function classifyUserIntent(message, sessionConfig) {
 			return DEFAULT_INTENT;
 		}
 
-		logger.log("[IntentClassifier] Classified:", data.task, data.content_type);
+		logger.log("[IntentClassifier] Classified:", data.task, data.content_type, data.menu_edit);
 		return {
 			task: data.task,
 			content_type: data.content_type ?? null,
+			menu_edit: data.menu_edit ?? null,
 		};
 	} catch (err) {
 		logger.warn("[IntentClassifier] Request failed:", err?.message || err);
