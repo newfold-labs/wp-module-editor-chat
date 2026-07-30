@@ -302,32 +302,40 @@ export async function getPageTitleForNavigationLink(pageId, type = "page") {
 }
 
 /**
- * Whether an intended menu label matches the WordPress page/post title.
+ * Normalize menu query strings for comparison.
+ *
+ * @param {string} value
+ * @return {string}
+ */
+export function normalizeNavigationMenuQuery(value) {
+	return String(value || "")
+		.trim()
+		.toLowerCase()
+		.replace(/\s+/g, " ");
+}
+
+/**
+ * Whether an intended menu label matches the WordPress page/post title (exact).
  *
  * @param {string} intendedLabel
  * @param {string} pageTitle
  * @return {boolean}
  */
 export function navigationPageLabelsMatch(intendedLabel, pageTitle) {
-	const normalize = (value) =>
-		String(value || "")
-			.trim()
-			.toLowerCase()
-			.replace(/\s+/g, " ");
-	const intended = normalize(intendedLabel);
+	const intended = normalizeNavigationMenuQuery(intendedLabel);
 	if (!intended) {
 		return true;
 	}
-	return intended === normalize(pageTitle);
+	return intended === normalizeNavigationMenuQuery(pageTitle);
 }
 
 /**
- * Reject navigation links whose label does not match the target page title.
+ * Ensure a navigation link's page/post id resolves in WordPress.
  *
- * @param {Object} attrs navigation-link attributes with id + label.
+ * @param {Object} attrs navigation-link attributes with id.
  * @return {Promise<void>}
  */
-export async function assertNavigationLinkPageMatch(attrs) {
+export async function assertNavigationPageExists(attrs) {
 	if (attrs?.id == null || attrs.id === "") {
 		return;
 	}
@@ -335,20 +343,17 @@ export async function assertNavigationLinkPageMatch(attrs) {
 	if (type !== "page" && type !== "post") {
 		return;
 	}
-	const intendedLabel = String(attrs.label || "").trim();
-	if (!intendedLabel) {
-		return;
-	}
 	const pageTitle = await getPageTitleForNavigationLink(attrs.id, type);
 	if (!pageTitle) {
-		return;
-	}
-	if (!navigationPageLabelsMatch(intendedLabel, pageTitle)) {
 		throw new Error(
-			`Cannot link menu item "${intendedLabel}" to page id ${attrs.id}: that page is titled "${pageTitle}". ` +
-				`Call blu/pages-search for "${intendedLabel}" and use the id and title from the matching result only.`
+			`Page id ${attrs.id} was not found. Use blu/pages-search or the current page id from editor_context.`
 		);
 	}
+}
+
+/** @deprecated Use assertNavigationPageExists — custom menu labels are allowed. */
+export async function assertNavigationLinkPageMatch(attrs) {
+	return assertNavigationPageExists(attrs);
 }
 
 /**
@@ -1170,18 +1175,126 @@ export function summarizeNavigationMenuItems(navBlock) {
  * @param {Object} navBlock core/navigation block with ref.
  * @return {Promise<Array<{label: string, page_id: number|null, type: string|null}>>}
  */
-export async function summarizeNavigationMenuItemsFromEntity(navBlock) {
+export async function summarizeNavigationMenuItemsFromEntity(navBlock, options = {}) {
+	const { includePageTitles = false } = options;
 	const parsed = await getNavigationParsedBlocksForEdit(navBlock);
-	return parsed
-		.filter((block) => (block.name || block.blockName) === "core/navigation-link")
-		.map((block) => {
-			const attrs = navigationLinkAttrsFromBlock(block);
-			return {
-				label: attrs.label || "",
-				type: attrs.type || null,
-				page_id: attrs.id ?? null,
-			};
+	const items = [];
+	for (const block of parsed) {
+		if ((block.name || block.blockName) !== "core/navigation-link") {
+			continue;
+		}
+		const attrs = navigationLinkAttrsFromBlock(block);
+		const item = {
+			label: attrs.label || "",
+			type: attrs.type || null,
+			page_id: attrs.id ?? null,
+		};
+		if (includePageTitles && attrs.id != null && attrs.id !== "") {
+			item.page_title = await getPageTitleForNavigationLink(attrs.id, attrs.type || "page");
+		}
+		items.push(item);
+	}
+	return items;
+}
+
+/**
+ * Search page ids via REST (for menu delete fallback).
+ *
+ * @param {string} query
+ * @return {Promise<Set<number>>}
+ */
+async function searchPageIdsMatchingQuery(query) {
+	const needle = String(query || "").trim();
+	if (!needle) {
+		return new Set();
+	}
+	try {
+		const pages = await apiFetch({
+			path: `/wp/v2/pages?search=${encodeURIComponent(needle)}&per_page=20&status=publish,future,draft,pending,private&context=edit`,
 		});
+		return new Set(
+			(Array.isArray(pages) ? pages : [])
+				.map((page) => Number(page?.id))
+				.filter((id) => !Number.isNaN(id))
+		);
+	} catch {
+		return new Set();
+	}
+}
+
+/**
+ * Resolve which parsed menu block indices should be removed for a query.
+ *
+ * @param {Array} parsedBlocks
+ * @param {string} query User-provided label or page title.
+ * @return {Promise<{ indices: Set<number>, matchedVia: string|null }>}
+ */
+async function resolveMenuBlockIndicesToRemove(parsedBlocks, query) {
+	const needle = normalizeNavigationMenuQuery(query);
+	const indices = new Set();
+	const titleCache = new Map();
+
+	if (!needle) {
+		return { indices, matchedVia: null };
+	}
+
+	for (let i = 0; i < parsedBlocks.length; i++) {
+		const block = parsedBlocks[i];
+		const name = block.name || block.blockName;
+		if (name !== "core/navigation-link") {
+			continue;
+		}
+		const attrs = navigationLinkAttrsFromBlock(block);
+		if (normalizeNavigationMenuQuery(attrs.label) === needle) {
+			indices.add(i);
+		}
+	}
+	if (indices.size > 0) {
+		return { indices, matchedVia: "menu_label" };
+	}
+
+	for (let i = 0; i < parsedBlocks.length; i++) {
+		const block = parsedBlocks[i];
+		const name = block.name || block.blockName;
+		if (name !== "core/navigation-link") {
+			continue;
+		}
+		const attrs = navigationLinkAttrsFromBlock(block);
+		if (attrs.id == null || attrs.id === "") {
+			continue;
+		}
+		const type = attrs.type || "page";
+		const cacheKey = `${type}:${attrs.id}`;
+		let pageTitle = titleCache.get(cacheKey);
+		if (pageTitle === undefined) {
+			pageTitle = await getPageTitleForNavigationLink(attrs.id, type);
+			titleCache.set(cacheKey, pageTitle);
+		}
+		if (pageTitle && normalizeNavigationMenuQuery(pageTitle) === needle) {
+			indices.add(i);
+		}
+	}
+	if (indices.size > 0) {
+		return { indices, matchedVia: "page_title" };
+	}
+
+	const searchIds = await searchPageIdsMatchingQuery(query);
+	if (searchIds.size > 0) {
+		for (let i = 0; i < parsedBlocks.length; i++) {
+			const block = parsedBlocks[i];
+			const name = block.name || block.blockName;
+			if (name !== "core/navigation-link") {
+				continue;
+			}
+			const attrs = navigationLinkAttrsFromBlock(block);
+			const pageId = Number(attrs.id);
+			if (!Number.isNaN(pageId) && searchIds.has(pageId)) {
+				indices.add(i);
+			}
+		}
+	}
+
+	return { indices, matchedVia: indices.size > 0 ? "page_search" : null };
 }
 
 /**
@@ -1216,12 +1329,13 @@ export function parseNavigationLinkAttrsFromMarkup(markup) {
  */
 export async function deleteNavigationMenuItemsByLabel(label, options = {}) {
 	const { once = false, headerOnly = false } = options;
-	const needle = String(label || "").trim().toLowerCase();
-	if (!needle) {
-		return { removed: 0, menu_items: [] };
+	const query = String(label || "").trim();
+	if (!query) {
+		return { removed: 0, menu_items: [], matched_via: null };
 	}
 
 	let removed = 0;
+	let matchedVia = null;
 	let navBlocks = await hydrateAllRefNavigationBlocks();
 	if (headerOnly) {
 		const header = findHeaderRefNavigationBlock();
@@ -1230,20 +1344,32 @@ export async function deleteNavigationMenuItemsByLabel(label, options = {}) {
 	const menuItems = [];
 
 	for (const nav of navBlocks) {
-		let removedFromNav = 0;
+		const parsedBlocks = await getNavigationParsedBlocksForEdit(nav);
+		const { indices, matchedVia: via } = await resolveMenuBlockIndicesToRemove(
+			parsedBlocks,
+			query
+		);
+		if (!indices.size) {
+			menuItems.push(
+				...(await summarizeNavigationMenuItemsFromEntity(nav, { includePageTitles: true }))
+			);
+			continue;
+		}
+
+		if (!matchedVia) {
+			matchedVia = via;
+		}
+
 		await modifyNavigationEntity(nav, (blocks) => {
 			const next = [];
-			for (const block of blocks) {
+			for (let i = 0; i < blocks.length; i++) {
+				const block = blocks[i];
 				const name = block.name || block.blockName;
-				if (name !== "core/navigation-link" && name !== "core/navigation-submenu") {
-					next.push(block);
-					continue;
-				}
-				const linkLabel = (block.attributes?.label || block.attrs?.label || "")
-					.trim()
-					.toLowerCase();
-				if (linkLabel === needle && (!once || removed === 0)) {
-					removedFromNav++;
+				if (
+					(name === "core/navigation-link" || name === "core/navigation-submenu") &&
+					indices.has(i) &&
+					(!once || removed === 0)
+				) {
 					removed++;
 					continue;
 				}
@@ -1251,13 +1377,15 @@ export async function deleteNavigationMenuItemsByLabel(label, options = {}) {
 			}
 			return next;
 		});
-		menuItems.push(...(await summarizeNavigationMenuItemsFromEntity(nav)));
+		menuItems.push(
+			...(await summarizeNavigationMenuItemsFromEntity(nav, { includePageTitles: true }))
+		);
 		if (once && removed > 0) {
 			break;
 		}
 	}
 
-	return { removed, menu_items: menuItems };
+	return { removed, menu_items: menuItems, matched_via: matchedVia };
 }
 
 /**
@@ -1342,6 +1470,20 @@ export async function updateNavigationLinkAttributes(navBlock, targetClientId, m
  * @param {Object} blockEditor core/block-editor selector.
  * @return {string[]} Context lines (may be empty).
  */
+function getPageTitleSync(pageId, type = "page") {
+	const postType = type === "post" ? "post" : "page";
+	const numericId = Number(pageId);
+	if (Number.isNaN(numericId)) {
+		return "";
+	}
+	try {
+		const rec = select("core").getEntityRecord("postType", postType, numericId);
+		return pageTitleFromRecord(rec) || "";
+	} catch {
+		return "";
+	}
+}
+
 export function buildNavigationMenuContextLines(navBlock, blockEditor) {
 	const inner = blockEditor.getBlocks(navBlock.clientId);
 	const lines = [];
@@ -1356,9 +1498,14 @@ export function buildNavigationMenuContextLines(navBlock, blockEditor) {
 			}
 			const label = link.attributes?.label || "(untitled)";
 			const pageId = link.attributes?.id;
+			const pageType = link.attributes?.type || "page";
+			const pageTitle =
+				pageId != null && pageId !== "" ? getPageTitleSync(pageId, pageType) : "";
 			const pageHint = pageId != null && pageId !== "" ? ` page:${pageId}` : "";
+			const titleHint =
+				pageTitle && pageTitle !== label ? ` page_title:"${pageTitle}"` : "";
 			lines.push(
-				`  [${index}] "${label}"${pageHint} (id:${link.clientId}) — delete by label with blu-delete-block`
+				`  [${index}] "${label}"${pageHint}${titleHint} (id:${link.clientId}) — delete by label with blu-delete-block`
 			);
 		});
 		return lines;
@@ -1386,7 +1533,14 @@ export function buildNavigationMenuContextLines(navBlock, blockEditor) {
 			return;
 		}
 		const label = link.attributes?.label || link.attrs?.label || "(untitled)";
-		lines.push(`  [${index}] "${label}" (entity item — hydrate via navigation id:${navBlock.clientId})`);
+		const pageId = link.attributes?.id ?? link.attrs?.id;
+		const pageType = link.attributes?.type || link.attrs?.type || "page";
+		const pageTitle =
+			pageId != null && pageId !== "" ? getPageTitleSync(pageId, pageType) : "";
+		const titleHint = pageTitle && pageTitle !== label ? ` page_title:"${pageTitle}"` : "";
+		lines.push(
+			`  [${index}] "${label}"${titleHint} (entity item — hydrate via navigation id:${navBlock.clientId})`
+		);
 	});
 
 	return lines;

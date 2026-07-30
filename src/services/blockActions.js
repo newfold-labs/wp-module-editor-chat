@@ -49,7 +49,7 @@ import {
 	normalizeParsedNavigationLinks,
 	parseNavigationLinkAttrsFromMarkup,
 	resolvePageNavigationAttrs,
-	assertNavigationLinkPageMatch,
+	assertNavigationPageExists,
 	resolveNavigationMenuLinkTarget,
 	resolveRefNavigationForEdit,
 	summarizeNavigationMenuItems,
@@ -211,7 +211,9 @@ export async function handleDeleteAction(clientIdOrParams) {
 		}
 
 		const header = findHeaderRefNavigationBlock();
-		const menuItems = header ? await summarizeNavigationMenuItemsFromEntity(header) : [];
+		const menuItems = header
+			? await summarizeNavigationMenuItemsFromEntity(header, { includePageTitles: true })
+			: [];
 		throw new Error(
 			`No header menu item matched label "${label}"` +
 				(menuItems.length ? `. Current items: ${JSON.stringify(menuItems)}` : "")
@@ -813,7 +815,7 @@ export async function handleInsertInnerBlockAction(
 			: intendedAttrsRaw;
 
 	if (intendedAttrs?.id != null) {
-		await assertNavigationLinkPageMatch(intendedAttrs);
+		await assertNavigationPageExists(intendedAttrs);
 	}
 
 	let parsed = null;
@@ -858,6 +860,33 @@ export async function handleInsertInnerBlockAction(
 				hasChanges: false,
 				alreadyPresent: true,
 				message: `"${intendedAttrs.label || "Page"}" is already in the header navigation menu.`,
+			};
+		}
+
+		if (linkState.present && !linkState.labelMatches && intendedAttrs.label) {
+			const wantLabel = intendedAttrs.label;
+			await modifyNavigationEntity(liveParent, (blocks) =>
+				blocks.map((block) => {
+					if ((block.name || block.blockName) !== "core/navigation-link") {
+						return block;
+					}
+					const attrs = block.attributes || block.attrs || {};
+					if (Number(attrs.id) !== Number(intendedAttrs.id)) {
+						return block;
+					}
+					const nextAttrs = { ...attrs, label: wantLabel };
+					return { ...block, attributes: nextAttrs, attrs: nextAttrs };
+				})
+			);
+			const menuItems = await summarizeNavigationMenuItemsFromEntity(liveParent);
+			return {
+				parentClientId,
+				blockName: parent.name,
+				insertedClientIds: [],
+				menu_items: menuItems,
+				insertedAtIndex: null,
+				hasChanges: true,
+				message: `Updated header menu label to "${wantLabel}". Use menu_items labels for follow-up deletes — do not use client_ids.`,
 			};
 		}
 

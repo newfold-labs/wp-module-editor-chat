@@ -6,7 +6,7 @@ import {
 	buildNavigationLinkMarkup,
 	parseNavigationLinkAttrsFromMarkup,
 	resolvePageNavigationAttrs,
-	assertNavigationLinkPageMatch,
+	assertNavigationPageExists,
 } from "../navigationEditor";
 
 export async function handleInsertInnerBlock(toolCall, args, ctx) {
@@ -20,7 +20,7 @@ export async function handleInsertInnerBlock(toolCall, args, ctx) {
 		let intendedAttrs = parseNavigationLinkAttrsFromMarkup(rawMarkup);
 		if (intendedAttrs?.id != null) {
 			intendedAttrs = await resolvePageNavigationAttrs(intendedAttrs);
-			await assertNavigationLinkPageMatch(intendedAttrs);
+			await assertNavigationPageExists(intendedAttrs);
 		}
 
 		let finalMarkup = rawMarkup;
