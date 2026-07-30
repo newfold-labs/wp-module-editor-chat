@@ -87,20 +87,12 @@
 
 	&::before {
 		top: 0;
-		background: linear-gradient(
-			to bottom,
-			var(--nfd-editor-chat-color-white),
-			transparent
-		);
+		background: linear-gradient(to bottom, var(--nfd-editor-chat-color-white), transparent);
 	}
 
 	&::after {
 		bottom: 0;
-		background: linear-gradient(
-			to top,
-			var(--nfd-editor-chat-color-white),
-			transparent
-		);
+		background: linear-gradient(to top, var(--nfd-editor-chat-color-white), transparent);
 	}
 }
 
