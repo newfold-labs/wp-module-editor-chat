@@ -269,10 +269,13 @@ export function createRetryTracker(maxRetries = MAX_SAME_TOOL_RETRIES) {
 		recordIteration(toolCalls) {
 			const batchKeys = new Set();
 			for (const tc of toolCalls) {
-				if (READ_ONLY_TOOLS.has(tc.name)) {
+				// READ_ONLY_TOOLS holds only the hyphen form, so a slash-form name
+				// would miss the exemption and trip retryLimitHit on exploration.
+				const name = (tc.name || "").replace(/\//g, "-");
+				if (READ_ONLY_TOOLS.has(name)) {
 					continue;
 				}
-				const key = `${tc.name}:${stableArgsHash(tc.arguments)}`;
+				const key = `${name}:${stableArgsHash(tc.arguments)}`;
 				batchKeys.add(key);
 			}
 			for (const key of batchKeys) {
