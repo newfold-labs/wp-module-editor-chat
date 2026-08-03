@@ -12,6 +12,10 @@ import {
 	getSelectedBlocks,
 } from "./editorHelpers";
 import { getCurrentGlobalStyles } from "../services/globalStylesService";
+import {
+	buildNavigationMenuContextLines,
+	findRefNavigationBlocks,
+} from "../services/navigationEditor";
 import { IMAGE_BLOCKS, LOGO_BLOCK } from "../services/blockToolbar/blockAI";
 import { getBlockImageUrl } from "../services/imageAbility";
 import { NFD_CLASS_REFERENCE } from "./nfdClassReference";
@@ -49,9 +53,19 @@ function serializeBlockMarkup(blockEditor, clientId) {
 	}
 	const { serialize: wpSerialize } = wp.blocks;
 	let markup;
-	if (fullBlock.name === "core/template-part") {
+	if (fullBlock.name === "core/template-part" || fullBlock.name === "core/navigation") {
 		const innerBlocks = blockEditor.getBlocks(clientId);
 		markup = innerBlocks.map((b) => wpSerialize(b)).join("\n");
+		if (!markup && fullBlock.name === "core/navigation" && fullBlock.attributes?.ref) {
+			const entity = wp.data.select("core").getEntityRecord(
+				"postType",
+				"wp_navigation",
+				fullBlock.attributes.ref
+			);
+			const raw =
+				entity?.content?.raw || entity?.content?.rendered || entity?.content || "";
+			markup = typeof raw === "string" ? raw : "";
+		}
 	} else {
 		markup = wpSerialize(fullBlock);
 	}
@@ -128,7 +142,7 @@ function appendMarkupSections(context, blockEditor, clientIds, label) {
 export const ASSISTANT_JSON_FORMAT = `Your entire text output MUST be a single JSON object — no markdown fences, no text before or after:
 {"message":"Short sentence for the user (under 20 words)"}
 
-When you will call editing tools in the same response, put your plan ONLY in "message", then call the tool(s). Do not mention tool names or client IDs in message.
+When you will call editing tools in the same response, put your plan ONLY in "message", then call the tool(s). Do not mention tool names, client IDs, UUIDs, ref IDs, or block type slugs (core/…) in message — write for a non-technical site owner.
 
 If no block is selected and you need serialized block markup before editing, reply with JSON only (no tool calls):
 {"message":"Brief note","need_blocks_markup":["exact-clientId-from-block-tree"]}
@@ -268,8 +282,13 @@ export const buildEditorContext = ({ extraClientIds = [] } = {}) => {
 	const selectedBlocks = getSelectedBlocks();
 	const selectedClientIds = selectedBlocks.map((b) => b.clientId);
 	const selectedSet = new Set(selectedClientIds);
-	const extraTargets = (extraClientIds || [])
+	const refNavBlocks = findRefNavigationBlocks(blocks);
+	const autoNavMarkupIds = refNavBlocks
+		.map((b) => b.clientId)
+		.filter((id) => id && !selectedSet.has(id));
+	const extraTargets = [...autoNavMarkupIds, ...(extraClientIds || [])]
 		.filter((id) => id && !selectedSet.has(id))
+		.filter((id, index, arr) => arr.indexOf(id) === index)
 		.slice(0, MAX_CONTEXT_TARGET_BLOCKS);
 
 	const pageTitle = getCurrentPageTitle();
@@ -296,6 +315,15 @@ export const buildEditorContext = ({ extraClientIds = [] } = {}) => {
 	context += buildCompactBlockTree(blocks, selectedClientIds, {
 		collapseUnselected: selectedBlocks.length > 0,
 	});
+
+	if (refNavBlocks.length > 0) {
+		context += "\n\nHeader/footer navigation menus (edit navigation-link children below):";
+		for (const nav of refNavBlocks) {
+			context += `\nMenu block (id:${nav.clientId}):`;
+			const menuLines = buildNavigationMenuContextLines(nav, blockEditor);
+			context += menuLines.length ? `\n${menuLines.join("\n")}` : "\n  (no items loaded yet)";
+		}
+	}
 
 	// Layer 2a: Ancestor chains for selected and AI-requested target blocks.
 	const ancestorBlocks = [...selectedBlocks];

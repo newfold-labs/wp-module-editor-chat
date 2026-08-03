@@ -16,10 +16,11 @@ import classNames from "classnames";
  * Internal dependencies.
  */
 import { GlobeIcon } from "../icons";
+import { publishEditedPost } from "../../../../services/postPublishService";
 
 export default function SaveButton() {
 	const classes = classNames(["nfd-editor-chat__header-save-button"]);
-	const { savePost } = useDispatch(editorStore);
+	const { savePost, editPost } = useDispatch(editorStore);
 	const { isSaving, isSaveable, hasNonPostEntityChanges, isSavingNonPostEntityChanges } = useSelect(
 		(select) => {
 			const {
@@ -37,34 +38,15 @@ export default function SaveButton() {
 		}
 	);
 
-	const { getDirtyRecords } = useSelect((select) => {
-		const { __experimentalGetDirtyEntityRecords, getDirtyEntityRecords } = select(coreStore) as any;
-		return {
-			getDirtyRecords: __experimentalGetDirtyEntityRecords || getDirtyEntityRecords,
-		};
-	});
-
 	const { saveEditedEntityRecord } = useDispatch(coreStore);
 
 	const isButtonDisabled =
 		(isSaving || !isSaveable) && (!hasNonPostEntityChanges || isSavingNonPostEntityChanges);
 
-	const saveDirtyTemplateParts = async () => {
-		if (getDirtyRecords) {
-			const dirtyTemplateParts = getDirtyRecords().filter(
-				(_: any) => _.kind === "postType" && _.name === "wp_template_part"
-			);
-			for (const record of dirtyTemplateParts) {
-				await saveEditedEntityRecord("postType", "wp_template_part", record.key);
-			}
-		}
-	};
 	const handleSave = async () => {
 		if (isButtonDisabled) return;
 
-		await saveDirtyTemplateParts();
-
-		await savePost();
+		await publishEditedPost({ editPost, savePost, saveEditedEntityRecord });
 	};
 
 	return (

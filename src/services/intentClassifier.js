@@ -7,6 +7,7 @@ import logger from "../utils/logger";
 export const DEFAULT_INTENT = {
 	task: "edit_page",
 	content_type: null,
+	menu_edit: null,
 	steps: [],
 };
 
@@ -15,7 +16,7 @@ export const DEFAULT_INTENT = {
  *
  * @param {string} message       User-facing message text
  * @param {Object} sessionConfig Session config with workerUrl and sessionToken
- * @return {Promise<{ task: string, content_type: string|null, steps: string[] }>} Classified intent
+ * @return {Promise<{ task: string, content_type: string|null, menu_edit: Object|null, steps: string[] }>} Classified intent
  */
 export async function classifyUserIntent(message, sessionConfig) {
 	if (!message?.trim()) {
@@ -61,10 +62,17 @@ export async function classifyUserIntent(message, sessionConfig) {
 		}
 
 		const steps = Array.isArray(data.steps) ? data.steps.filter(Boolean) : [];
-		logger.log("[IntentClassifier] Classified:", data.task, data.content_type, steps);
+		logger.log(
+			"[IntentClassifier] Classified:",
+			data.task,
+			data.content_type,
+			data.menu_edit,
+			steps
+		);
 		return {
 			task: data.task,
 			content_type: data.content_type ?? null,
+			menu_edit: data.menu_edit ?? null,
 			steps,
 		};
 	} catch (err) {

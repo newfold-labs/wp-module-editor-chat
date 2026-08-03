@@ -20,6 +20,9 @@ export async function handleDuplicate(toolCall, args, ctx) {
 			block_name: dupResult.blockName,
 			new_subtree: dupResult.newSubtree,
 		};
+		if (dupResult.menu_items) {
+			payload.menu_items = dupResult.menu_items;
+		}
 		if (dupResult.resolution) {
 			payload.resolution = dupResult.resolution;
 		}
