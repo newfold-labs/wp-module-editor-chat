@@ -277,7 +277,10 @@ export const buildEditorContext = ({ extraClientIds = [] } = {}) => {
 	const contentLabel = postType === "post" ? "Post" : "Page";
 
 	const site = window.nfdEditorChat?.site || {};
-	const siteUrl = window.location.origin;
+	// homeUrl comes from get_home_url() and keeps the subdirectory of installs
+	// served under a path (e.g. https://example.com/website_123). Deriving it from
+	// window.location.origin drops that path and produces 404 links.
+	const siteUrl = (window.nfdEditorChat?.homeUrl || window.location.origin).replace(/\/+$/, "");
 
 	let context = `Site: ${site.title || ""}`;
 	if (site.description) {
@@ -363,6 +366,13 @@ export const buildEditorContext = ({ extraClientIds = [] } = {}) => {
 			"\n- To create a brand-new logo design from scratch: call blu/regenerate-logo." +
 			"\n- To use an uploaded image as the logo: blu/edit-image then blu/set-logo-from-image.";
 	}
+
+	context +=
+		"\n\nInternal link guidance (CRITICAL):" +
+		`\n- The site URL above (${siteUrl}) is the ONLY valid base for internal links. This site may be installed in a subdirectory, so NEVER build links from the bare domain.` +
+		`\n- Every internal href MUST start with "${siteUrl}/" (e.g. "${siteUrl}/contact"). A link like "/contact" or "https://<domain>/contact" that skips the base path returns a 404.` +
+		"\n- Only link to pages that actually exist. Prefer a page listed in the block tree, the navigation menus above, or one you just created with a create tool (use the URL it returned)." +
+		"\n- If the user asks to link to a page that does not exist yet, either link to an existing relevant page or say so in your message — do not invent a slug.";
 
 	return context;
 };
