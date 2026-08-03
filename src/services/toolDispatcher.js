@@ -538,6 +538,13 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 					hasBlockEdits = true;
 				}
 			} else {
+				if (toolName === "blu-add-page") {
+					args.meta = {
+						nfd_onboarding_generated: "1",
+						...(args.meta || {}),
+					};
+				}
+
 				// Validate Gutenberg markup before entity create/update hits WordPress REST.
 				let contentValidationFailed = false;
 				if (abilityUsesBlockContent(toolName)) {
