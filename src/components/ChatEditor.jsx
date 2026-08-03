@@ -22,10 +22,15 @@ import useEditorChatREST from "../hooks/useEditorChatREST";
 import useEditorControls from "../hooks/useEditorControls";
 import { IMAGE_BLOCKS, LOGO_BLOCK } from "../services/blockToolbar/blockAI";
 import { CHAT_STATUS } from "../hooks/chat/constants";
-import { clearAllBlockProcessing, startBlockProcessing, startImageProcessing } from "../services/blockToolbar/blockHighlight";
+import {
+	clearAllBlockProcessing,
+	startBlockProcessing,
+	startImageProcessing,
+} from "../services/blockToolbar/blockHighlight";
 import { CHAT_SEND_EVENT } from "../services/blockToolbar/chatBridge";
 import { formatImageEditUserMessage } from "../utils/editorContext";
 import ChatInput from "./chat/ChatInput";
+import StoppedNotice from "./chat/StoppedNotice";
 import WelcomeScreen from "./chat/WelcomeScreen";
 import SidebarHeader from "./sidebar/SidebarHeader";
 import AILogo from "./ui/AILogo";
@@ -35,9 +40,11 @@ const SIDEBAR_NAME = "nfd-editor-chat";
 const SIDEBAR_SCOPE = "core";
 
 const ChatEditor = () => {
-	return <EditorNavigationProvider>
-		<ChatEditorContent />
-	</EditorNavigationProvider>
+	return (
+		<EditorNavigationProvider>
+			<ChatEditorContent />
+		</EditorNavigationProvider>
+	);
 };
 
 const ChatEditorContent = () => {
@@ -59,6 +66,7 @@ const ChatEditorContent = () => {
 		handleSendMessage,
 		handleNewChat,
 		handleStopRequest,
+		wasStopped,
 	} = useEditorChatREST();
 
 	// Phase 1: Enable template mode (show header & footer)
@@ -167,6 +175,7 @@ const ChatEditorContent = () => {
 							textDomain="wp-module-editor-chat"
 						/>
 					)}
+					{wasStopped && visibleMessages.length > 0 && <StoppedNotice />}
 					<ChatInput
 						onSendMessage={sendWithBlockFeedback}
 						onStopRequest={handleStopRequest}

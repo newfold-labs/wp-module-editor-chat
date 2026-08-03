@@ -19,6 +19,7 @@ import {
 	validateEntityContentArgs,
 	abilityUsesBlockContent,
 } from "../utils/entityContentValidation";
+import { createAbortError } from "../utils/abortControl";
 import { snapshotBlocks } from "../utils/editorContext";
 import { safeParseJSON } from "../utils/jsonUtils";
 import { callAbility } from "./callAbility";
@@ -162,16 +163,60 @@ const READ_TOOLS = new Set([
 ]);
 
 /**
+ * Placeholder result for a tool the user stopped before it ran. Every tool_call
+ * needs a reply — one without is a hard 400 on the next request.
+ *
+ * @param {Object} toolCall The tool call that never executed
+ * @return {Object} Result entry for the conversation
+ */
+const cancelledResult = (toolCall) => ({
+	tool_call_id: toolCall.id,
+	content: "Cancelled: the user stopped this request before the tool ran.",
+	isError: true,
+});
+
+/**
+ * MCP client that refuses to deliver a result once the turn is stopped.
+ *
+ * Abilities are the slow part of a tool — image generation takes seconds — and
+ * handlers write to the editor with whatever comes back. Guarding here rather
+ * than in each handler means a stopped turn can't produce an edit, and new
+ * tools inherit that without having to remember anything.
+ *
+ * @param {Object}      mcpClient   The MCP client instance
+ * @param {AbortSignal} abortSignal Signal captured when the turn started
+ * @return {Object} Client delegating to the original, minus post-stop results
+ */
+function abortAwareClient(mcpClient, abortSignal) {
+	const guarded = Object.create(mcpClient);
+	guarded.callTool = async (...args) => {
+		const result = await mcpClient.callTool(...args);
+		if (abortSignal?.aborted) {
+			throw createAbortError();
+		}
+		return result;
+	};
+	return guarded;
+}
+
+/**
  * Execute tool calls for the function-calling loop.
  *
  * - RETURNS results (for appending to conversation as tool messages)
  * - Executes server-side tools via mcpClient.callTool()
  *
  * @param {Array}  toolCalls Tool calls from the OpenAI streaming response
- * @param {Object} ctx       Shared context object with clients, state setters, refs, helpers
+ * @param {Object} rawCtx    Shared context object with clients, state setters, refs, helpers
  * @return {Promise<Array>}  Array of { tool_call_id, content, isError } for the conversation
  */
-export async function executeToolCallsForREST(toolCalls, ctx) {
+export async function executeToolCallsForREST(toolCalls, rawCtx) {
+	// Every handler reaches MCP through ctx.mcpClient, so wrapping it once here
+	// stops any of them writing to the editor after the user pressed Stop.
+	const ctx = {
+		...rawCtx,
+		mcpClient: abortAwareClient(rawCtx.mcpClient, rawCtx.abortSignal),
+	};
+
 	const toolResults = [];
 	const completedToolsList = [];
 	let globalStylesUndoData = null;
@@ -191,6 +236,11 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 
 	// Execute server-side tools via MCP
 	for (const tc of serverToolCalls) {
+		if (ctx.abortSignal?.aborted) {
+			toolResults.push(cancelledResult(tc));
+			continue;
+		}
+
 		const mcpName = tc.name || "";
 		try {
 			const mcpResult = await ctx.mcpClient.callTool(mcpName, tc.arguments || {});
@@ -245,6 +295,13 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 
 	// Execute client-side tools sequentially
 	for (let i = 0; i < clientToolCalls.length; i++) {
+		if (ctx.abortSignal?.aborted) {
+			const remaining = clientToolCalls.slice(i);
+			logger.log(`[ToolExecutor:REST] Stopped — cancelling ${remaining.length} pending tool(s)`);
+			toolResults.push(...remaining.map(cancelledResult));
+			break;
+		}
+
 		let toolCall = clientToolCalls[i];
 		const toolIndex = i + 1;
 		const totalTools = clientToolCalls.length;

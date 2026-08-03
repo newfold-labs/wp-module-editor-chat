@@ -10,11 +10,14 @@ export const DEFAULT_INTENT = {
 };
 
 /**
- * @param {string} message User-facing message text
- * @param {Object} sessionConfig Session config with workerUrl and sessionToken
- * @return {Promise<{ task: string, content_type: string|null }>}
+ * Classify a user message into a task intent via the Worker.
+ *
+ * @param {string}      message       User-facing message text
+ * @param {Object}      sessionConfig Session config with workerUrl and sessionToken
+ * @param {AbortSignal} [signal]      Turn abort signal, so Stop cancels this request
+ * @return {Promise<{ task: string, content_type: string|null }>} Classified intent
  */
-export async function classifyUserIntent(message, sessionConfig) {
+export async function classifyUserIntent(message, sessionConfig, signal) {
 	if (!message?.trim()) {
 		return DEFAULT_INTENT;
 	}
@@ -45,6 +48,7 @@ export async function classifyUserIntent(message, sessionConfig) {
 				locale,
 				context: currentPageTitle ? { current_page_title: currentPageTitle } : undefined,
 			}),
+			signal,
 		});
 
 		if (!response.ok) {
@@ -72,7 +76,7 @@ export async function classifyUserIntent(message, sessionConfig) {
  * Whether the intent requires all MCP site-management tools.
  *
  * @param {{ task: string }} intent Classified intent
- * @return {boolean}
+ * @return {boolean} True when the full site-management tool set should be sent
  */
 export function intentNeedsAllTools(intent) {
 	return intent?.task === "create_content" || intent?.task === "site_management";
@@ -81,10 +85,10 @@ export function intentNeedsAllTools(intent) {
 /**
  * Pick the nudge for the first tool-calling pass based on classified intent.
  *
- * @param {{ task: string }} intent Classified intent
- * @param {string} executeNudge EXECUTE_NUDGE constant
- * @param {string} jsonFormat ASSISTANT_JSON_FORMAT constant
- * @return {string}
+ * @param {{ task: string }} intent       Classified intent
+ * @param {string}           executeNudge EXECUTE_NUDGE constant
+ * @param {string}           jsonFormat   ASSISTANT_JSON_FORMAT constant
+ * @return {string} Nudge text to append to the pass prompt
  */
 export function getIntentNudge(intent, executeNudge, jsonFormat) {
 	switch (intent?.task) {

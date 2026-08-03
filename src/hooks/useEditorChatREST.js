@@ -18,13 +18,14 @@ import { CHAT_STATUS } from "./chat/constants";
 import useSessionConfig from "./chat/useSessionConfig";
 import { streamCompletion as streamCompletionFn } from "./chat/streamCompletion";
 import useDisplayMessages from "./chat/useDisplayMessages";
-import { runChatLoop } from "./chat/chatLoop";
+import { runChatLoop, markTurnStopped } from "./chat/chatLoop";
 import useChatSideEffects from "./chat/useChatSideEffects";
 import useChangeActions from "./chat/useChangeActions";
 import { loadActiveChat, clearActiveChat } from "./chat/activeChatStorage";
 import { resetGeneratedImageCache } from "../services/toolDispatcher";
 import { setActiveImageEditTarget } from "../services/imageCache";
 import { useEditorNavigation } from "../context/editorNavigation";
+import { isAbortError } from "../utils/abortControl";
 import logger from "../utils/logger";
 
 /**
@@ -55,6 +56,8 @@ const useEditorChatREST = () => {
 
 	// ── Editor state ──
 	const [isSaving, setIsSaving] = useState(false);
+	// Shows the "stopped" marker for the most recent turn; cleared on the next send.
+	const [wasStopped, setWasStopped] = useState(false);
 	const [hasGlobalStylesChanges, setHasGlobalStylesChanges] = useState(false);
 
 	// ── Refs ──
@@ -73,6 +76,8 @@ const useEditorChatREST = () => {
 	// out all tools for that turn — so the AI claims it applied the change when
 	// it never actually could. See chatLoop.js for how this is consumed/armed.
 	const pendingIntentRef = useRef(null);
+	// Promise for the turn currently in flight, so a new send can wait it out.
+	const runningTurnRef = useRef(null);
 
 	// ── Session config (handles init + token refresh) ──
 	const {
@@ -181,13 +186,19 @@ const useEditorChatREST = () => {
 		setIsSaving,
 	});
 
-	// ── handleSendMessage ──
-	const handleSendMessage = useCallback(
-		async (messageContent, displayMessage = messageContent, editClientId = null) => {
+	// ── One chat turn (serialized by handleSendMessage below) ──
+	const runTurn = useCallback(
+		async (messageContent, displayMessage, editClientId) => {
 			if (!openaiClientRef.current || configStatus !== "ready") {
 				setError("Chat is not ready. Please wait for initialization.");
 				return;
 			}
+
+			setWasStopped(false);
+
+			// One controller per turn, so Stop cancels tool execution too.
+			const turnController = new AbortController();
+			abortControllerRef.current = turnController;
 
 			// Reset state
 			setExecutedTools([]);
@@ -202,6 +213,8 @@ const useEditorChatREST = () => {
 			setActiveImageEditTarget(editClientId);
 
 			const requestStart = performance.now();
+			// Rollback point for a stopped turn — runChatLoop appends from here.
+			const historyStartLength = conversationHistoryRef.current.length;
 			try {
 				await runChatLoop(messageContent, {
 					conversationHistoryRef,
@@ -223,8 +236,11 @@ const useEditorChatREST = () => {
 				setStatus(CHAT_STATUS.COMPLETED);
 				setTimeout(() => setStatus(CHAT_STATUS.IDLE), 500);
 			} catch (err) {
-				if (err.name === "AbortError") {
+				// Stopping is not an error. A throw skips the loop's own cleanup, so
+				// run it here.
+				if (isAbortError(err, turnController.signal)) {
 					logger.log("[EditorChat] Request aborted");
+					markTurnStopped(conversationHistoryRef, pendingIntentRef, historyStartLength);
 					setStatus(CHAT_STATUS.IDLE);
 					return;
 				}
@@ -259,6 +275,33 @@ const useEditorChatREST = () => {
 		]
 	);
 
+	// ── handleSendMessage ──
+	const handleSendMessage = useCallback(
+		async (messageContent, displayMessage = messageContent, editClientId = null) => {
+			// Turns run one at a time. Stop sets IDLE immediately, which re-enables the
+			// input while the previous turn is still unwinding — an in-flight ability
+			// has to resolve before it can exit. Two loops sharing conversationHistoryRef
+			// corrupt it, so wait the previous one out (aborting to hurry it along).
+			const previous = runningTurnRef.current;
+			if (previous) {
+				abortControllerRef.current?.abort();
+				// Swallow: a failed previous turn must not block this one forever.
+				await previous.catch(() => {});
+			}
+
+			const turn = runTurn(messageContent, displayMessage, editClientId);
+			runningTurnRef.current = turn;
+			try {
+				await turn;
+			} finally {
+				if (runningTurnRef.current === turn) {
+					runningTurnRef.current = null;
+				}
+			}
+		},
+		[runTurn, abortControllerRef]
+	);
+
 	// ── handleNewChat ──
 	const handleNewChat = useCallback(() => {
 		// Drop the persisted active chat — we're starting fresh.
@@ -277,6 +320,7 @@ const useEditorChatREST = () => {
 		setActiveToolCall(null);
 		setToolProgress(null);
 		setError(null);
+		setWasStopped(false);
 		setStatus(CHAT_STATUS.IDLE);
 		originalGlobalStylesRef.current = null;
 		blockSnapshotRef.current = null;
@@ -284,13 +328,14 @@ const useEditorChatREST = () => {
 
 	// ── handleStopRequest ──
 	const handleStopRequest = useCallback(() => {
-		if (abortControllerRef.current) {
-			abortControllerRef.current.abort();
-			abortControllerRef.current = null;
-		}
+		// Keep the controller — its signal is how the loop and dispatcher learn the
+		// user stopped. handleSendMessage installs a fresh one next turn.
+		abortControllerRef.current?.abort();
+		setWasStopped(true);
 		setActiveToolCall(null);
 		setToolProgress(null);
 		setPendingTools([]);
+		setError(null);
 		setMessages((prev) => prev.map((m) => (m.isStreaming ? { ...m, isStreaming: false } : m)));
 		setStatus(CHAT_STATUS.IDLE);
 	}, [abortControllerRef, setMessages]);
@@ -323,6 +368,7 @@ const useEditorChatREST = () => {
 		toolProgress,
 		executedTools,
 		pendingTools,
+		wasStopped,
 		handleSendMessage,
 		handleNewChat,
 		handleStopRequest,

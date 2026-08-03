@@ -56,6 +56,24 @@ const replyStreamId = (ts) => `assistant-${ts}-reply`;
 const closingStreamId = (ts) => `assistant-${ts}-closing`;
 
 /**
+ * Roll model-facing history back to where a stopped turn began, from either
+ * abort path (loop break, or a throw out of streamCompletion).
+ *
+ * Deleting the instruction is what makes Stop stick. Leaving it in — even with a
+ * "this was cancelled" note — means the model still sees an unanswered request
+ * and completes it on the next turn. Edits that did land stay visible, because
+ * the next turn rebuilds editor context from the live document.
+ *
+ * @param {Object} conversationHistoryRef Ref holding the model-facing history
+ * @param {Object} [pendingIntentRef]     Ref holding the carry-over intent
+ * @param {number} startLength            History length before the turn began
+ */
+export function markTurnStopped(conversationHistoryRef, pendingIntentRef, startLength) {
+	pendingIntentRef.current = null;
+	conversationHistoryRef.current = conversationHistoryRef.current.slice(0, startLength);
+}
+
+/**
  * Select tools for a pass based on classified user intent.
  *
  * @param {Object} intent      Classified intent for this turn
@@ -99,6 +117,13 @@ export async function runChatLoop(userMessage, deps) {
 		conversationHistoryRef.current = [];
 		isFirstMessageRef.current = false;
 	}
+
+	// Captured once: every abort check below tests THIS signal, never
+	// abortControllerRef.current, which a later turn replaces.
+	const turnSignal = abortControllerRef?.current?.signal;
+
+	// Rollback point if the user stops this turn.
+	const historyStartLength = conversationHistoryRef.current.length;
 
 	// Store clean user message — editor context is injected per-request, not persisted
 	conversationHistoryRef.current.push({
@@ -164,14 +189,14 @@ export async function runChatLoop(userMessage, deps) {
 		logger.log("[EditorChat] Reusing pending intent from prior proposal:", intent.task);
 	} else {
 		intent = sessionConfig
-			? await classifyUserIntent(intentMessage, sessionConfig)
+			? await classifyUserIntent(intentMessage, sessionConfig, turnSignal)
 			: DEFAULT_INTENT;
 	}
 	logger.log("[EditorChat] User intent:", intent.task, intent.content_type);
 
 	while (iterations++ < MAX_TOOL_ITERATIONS) {
 		// Check if user aborted between iterations (e.g. during tool execution)
-		if (abortControllerRef?.current?.signal?.aborted) {
+		if (turnSignal?.aborted) {
 			userAborted = true;
 			break;
 		}
@@ -225,6 +250,13 @@ export async function runChatLoop(userMessage, deps) {
 		logger.log(
 			`[EditorChat] Tool pass #${iterations} LLM: ${(performance.now() - toolPassStart).toFixed(0)}ms (${toolCalls?.length || 0} tool calls)`
 		);
+
+		// Bail before writing to history, so it stays valid for the next request.
+		if (turnSignal?.aborted) {
+			removeStreamingMessage(setMessages, streamMessageId);
+			userAborted = true;
+			break;
+		}
 
 		const assistantDisplayMessage = getAssistantDisplayMessage(content);
 
@@ -387,7 +419,10 @@ export async function runChatLoop(userMessage, deps) {
 		const toolExecStart = performance.now();
 		const results =
 			executableCalls.length > 0
-				? await executeToolCallsForREST(executableCalls, buildToolCtx())
+				? await executeToolCallsForREST(executableCalls, {
+						...buildToolCtx(),
+						abortSignal: turnSignal,
+					})
 				: [];
 		if (executableCalls.length > 0) {
 			logger.log(
@@ -477,11 +512,18 @@ export async function runChatLoop(userMessage, deps) {
 		// Loop continues — next iteration will get the AI's response
 	}
 
+	// Stopped: roll the turn back and skip the closing summary, which would
+	// otherwise narrate work that never finished.
+	if (userAborted || turnSignal?.aborted) {
+		markTurnStopped(conversationHistoryRef, pendingIntentRef, historyStartLength);
+		return;
+	}
+
 	// Closing pass. If we exited mid-task — hit the iteration ceiling, broke a
 	// retry/read loop, or the model never produced a final reply — the user is
 	// left with dangling reasoning and no answer. Make one tool-free pass so the
 	// turn ends with a coherent response (or a clear "here's what I need").
-	if (!endedNaturally && !userAborted && !abortControllerRef?.current?.signal?.aborted) {
+	if (!endedNaturally) {
 		setStatus(CHAT_STATUS.SUMMARIZING);
 		const closingId = closingStreamId(ts);
 		const closingContext = buildEditorContext({ extraClientIds });
