@@ -31,7 +31,7 @@
 		"@wordpress/scripts": "^34.0.0",
 		"autoprefixer": "^10.5.4",
 		"baseline-browser-mapping": "^2.11.0",
-		"concurrently": "^10.0.3",
+		"concurrently": "^10.0.4",
 		"cssnano": "^8.0.2",
 		"esbuild": "^0.28.1",
 		"eslint": "^10.8.0",
