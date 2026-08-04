@@ -19,6 +19,7 @@ import {
 	validateEntityContentArgs,
 	abilityUsesBlockContent,
 } from "../utils/entityContentValidation";
+import { resolveAlt } from "../utils/imageAlt";
 import { snapshotBlocks } from "../utils/editorContext";
 import { safeParseJSON } from "../utils/jsonUtils";
 import { callAbility } from "./callAbility";
@@ -42,7 +43,12 @@ import { handleEditLogo } from "./toolHandlers/editLogo";
 import { handleSetLogoFromImage } from "./toolHandlers/setLogoFromImage";
 import { handleUpdateBlockAttrs } from "./toolHandlers/updateBlockAttrs";
 import { handleEditImage } from "./toolHandlers/editImage";
-import { callImageAbility, getBlockImageUrl, parseImageAbilityUrl } from "./imageAbility";
+import {
+	applyImageToBlock,
+	callImageAbility,
+	getBlockImageUrl,
+	parseImageAbilityUrl,
+} from "./imageAbility";
 import { IMAGE_BLOCKS } from "./blockToolbar/blockAI";
 import logger from "../utils/logger";
 
@@ -433,11 +439,10 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 					});
 					const url = parseImageAbilityUrl(mcpResult);
 					if (url) {
-						appendGeneratedImageUrl(url);
+						const alt = resolveAlt(args.alt, args.prompt);
+						appendGeneratedImageUrl(url, alt);
 						if (targetBlock && IMAGE_BLOCKS.has(targetBlock.name)) {
-							wp.data
-								.dispatch("core/block-editor")
-								.updateBlockAttributes(targetBlock.clientId, { url, id: 0 });
+							applyImageToBlock(targetBlock.clientId, url, alt);
 						}
 					}
 					result = {

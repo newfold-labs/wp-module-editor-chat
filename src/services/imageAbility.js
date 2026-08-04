@@ -1,5 +1,25 @@
+import { dispatch } from "@wordpress/data";
+
 import { callAbility } from "./callAbility";
 import { IMAGE_BLOCKS } from "./blockToolbar/blockAI";
+
+/**
+ * Apply a generated image to an image block, alt text included.
+ *
+ * Gutenberg merges partial attribute patches, so writing only `{ url }` leaves
+ * the previous alt in place, describing an image no longer on the page.
+ *
+ * @param {string} clientId Target block clientId
+ * @param {string} url      New image URL
+ * @param {string} [alt]    Alt text describing the new image
+ */
+export function applyImageToBlock(clientId, url, alt) {
+	dispatch("core/block-editor").updateBlockAttributes(clientId, {
+		url,
+		id: 0,
+		...(alt ? { alt } : {}),
+	});
+}
 
 /**
  * Get the image URL for a block.
