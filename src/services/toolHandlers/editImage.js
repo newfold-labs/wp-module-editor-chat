@@ -1,7 +1,8 @@
 import { __ } from "@wordpress/i18n";
 
 import { appendGeneratedImageUrl, getActiveImageEditTarget } from "../imageCache";
-import { callImageAbility, parseImageAbilityUrl } from "../imageAbility";
+import { applyImageToBlock, callImageAbility, parseImageAbilityUrl } from "../imageAbility";
+import { resolveAlt } from "../../utils/imageAlt";
 import { IMAGE_BLOCKS, LOGO_BLOCK } from "../blockToolbar/blockAI";
 
 export async function handleEditImage(toolCall, args, ctx) {
@@ -51,8 +52,9 @@ export async function handleEditImage(toolCall, args, ctx) {
 		});
 
 		const url = parseImageAbilityUrl(mcpResult);
+		const alt = resolveAlt(args.alt, args.prompt);
 		if (url) {
-			appendGeneratedImageUrl(url);
+			appendGeneratedImageUrl(url, alt);
 		}
 
 		// Detect logo context — if the target block is core/site-logo, do NOT update
@@ -64,10 +66,7 @@ export async function handleEditImage(toolCall, args, ctx) {
 			!!url && !isLogoContext && !!targetBlock && IMAGE_BLOCKS.has(targetBlock.name);
 
 		if (appliedToBlock) {
-			wp.data.dispatch("core/block-editor").updateBlockAttributes(clientId, {
-				url,
-				id: 0,
-			});
+			applyImageToBlock(clientId, url, alt);
 		}
 
 		let resultPayload;
