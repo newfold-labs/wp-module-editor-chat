@@ -176,8 +176,13 @@ const ChatInput = ({ onSendMessage, onStopRequest, disabled = false, maxFiles = 
 
 	const handleSubmit = () => {
 		if (canSend && !disabled) {
+			// Solo immagini pronte, con URL server durevole (non il blob previewUrl,
+			// che viene revocato) — queste vengono mostrate nella bolla del messaggio.
+			const imageAttachments = attachments
+				.filter((att) => att.status === "ready" && att.url && att.type.startsWith("image/"))
+				.map((att) => ({ url: att.url, name: att.name, type: att.type }));
 			const enrichedMessage = buildMessageWithAttachments(message, attachments);
-			onSendMessage(enrichedMessage, message);
+			onSendMessage(enrichedMessage, message, imageAttachments);
 			setMessage("");
 			setAttachments([]);
 			// Reset textarea height and maintain focus
