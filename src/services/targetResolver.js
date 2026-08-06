@@ -16,6 +16,7 @@
  */
 import { select } from "@wordpress/data";
 import { BLOCK_LEXICON, normalizeKind, blockMatchesKind } from "../utils/blockLexicon";
+import { isRefNavigation } from "./navigationEditor";
 
 /**
  * Walk a block subtree, pushing every block that matches `lexEntry` into `out`.
@@ -37,6 +38,45 @@ function collectMatches(block, lexEntry, out) {
 			collectMatches(child, lexEntry, out);
 		}
 	}
+}
+
+/**
+ * Collect menu-item matches only from navigation menu containers.
+ *
+ * @param {Object} blockEditor core/block-editor selector.
+ * @param {Object} lexEntry    Lexicon entry for menu-item.
+ * @return {Array<Object>} Matching navigation-link blocks.
+ */
+function collectMenuItemsFromNavigationBlocks(blockEditor, lexEntry) {
+	const navBlocks = [];
+	const walk = (parentClientId) => {
+		const blocks = parentClientId ? blockEditor.getBlocks(parentClientId) : blockEditor.getBlocks();
+		for (const block of blocks) {
+			if (block.name === "core/navigation") {
+				navBlocks.push(block);
+			}
+			walk(block.clientId);
+		}
+	};
+	walk(null);
+
+	navBlocks.sort((a, b) => {
+		const aLinked = isRefNavigation(a) ? 0 : 1;
+		const bLinked = isRefNavigation(b) ? 0 : 1;
+		return aLinked - bLinked;
+	});
+
+	const matches = [];
+	for (const nav of navBlocks) {
+		const children = blockEditor.getBlocks(nav.clientId);
+		for (const child of children) {
+			collectMatches(child, lexEntry, matches);
+		}
+		if (matches.length > 0) {
+			break;
+		}
+	}
+	return matches;
 }
 
 /**
@@ -62,6 +102,28 @@ export function resolveTarget({ kind, scope, position = "last" }) {
 	const lexEntry = BLOCK_LEXICON[canonicalKind];
 
 	const blockEditor = select("core/block-editor");
+
+	// Menu items must resolve inside a navigation menu — never arbitrary page links.
+	if (canonicalKind === "menu-item") {
+		const menuMatches = collectMenuItemsFromNavigationBlocks(blockEditor, lexEntry);
+		if (menuMatches.length === 0) {
+			throw new Error(
+				`No "${canonicalKind}" blocks (${lexEntry.names.join("|")}) found in the header/footer navigation menu. ` +
+					`Ensure template mode is on and the navigation menu is visible in the block tree.`
+			);
+		}
+		const picked = pickByPosition(menuMatches, position);
+		const parentClientId = blockEditor.getBlockRootClientId(picked.clientId) || null;
+		return {
+			client_id: picked.clientId,
+			parent_client_id: parentClientId,
+			kind_matched: canonicalKind,
+			candidates: menuMatches.map((b) => ({ client_id: b.clientId, name: b.name })),
+			why:
+				`kind="${canonicalKind}" resolved to ${picked.name} (id:${picked.clientId}) ` +
+				`from ${menuMatches.length} navigation menu item(s); position=${position}`,
+		};
+	}
 
 	// Build ordered list of search roots.
 	const searchRoots = buildSearchRoots(scope, blockEditor);

@@ -144,6 +144,9 @@ export async function runChatLoop(userMessage, deps) {
 	// Distinct from `toolsJustExecuted`, which is reset/recomputed each pass.
 	let anyMutationThisTurn = false;
 	const intentMessage = displayMessage || userMessage;
+	let menuDeleteDone = false;
+	let menuLinkConfigured = false;
+	let menuIncompleteNudges = 0;
 
 	setStatus(CHAT_STATUS.GENERATING);
 	const sessionConfig = getSessionConfig?.() || null;
@@ -167,7 +170,17 @@ export async function runChatLoop(userMessage, deps) {
 			? await classifyUserIntent(intentMessage, sessionConfig)
 			: DEFAULT_INTENT;
 	}
-	logger.log("[EditorChat] User intent:", intent.task, intent.content_type);
+	const menuEdit = intent.menu_edit;
+	const menuEditRequested = menuEdit?.requested === true;
+	const wantsMenuAdd = menuEdit?.add === true;
+	const wantsMenuRemove = menuEdit?.remove === true;
+	logger.log(
+		"[EditorChat] User intent:",
+		intent.task,
+		intent.content_type,
+		intent.menu_edit,
+		intent.steps
+	);
 
 	while (iterations++ < MAX_TOOL_ITERATIONS) {
 		// Check if user aborted between iterations (e.g. during tool execution)
@@ -260,6 +273,32 @@ export async function runChatLoop(userMessage, deps) {
 					role: "system",
 					content:
 						"ERROR: need_blocks_markup client_ids were not found in the block tree. Use exact ids from the block tree, or call blu-get-block-markup instead.",
+				});
+				readOnlyStreak = 0;
+				continue;
+			}
+
+			const menuStillIncomplete =
+				menuEditRequested &&
+				((wantsMenuRemove && !menuDeleteDone) || (wantsMenuAdd && !menuLinkConfigured));
+
+			if (menuStillIncomplete && menuIncompleteNudges < 2 && iterations < MAX_TOOL_ITERATIONS) {
+				menuIncompleteNudges++;
+				conversationHistoryRef.current.push({ role: "assistant", content });
+				removeStreamingMessage(setMessages, streamMessageId);
+				let detail =
+					"MENU EDIT INCOMPLETE: You must finish the menu edit with write tools before confirming.";
+				if (wantsMenuRemove && !menuDeleteDone) {
+					detail +=
+						' Call blu-delete-block with { label: "<item label>" } e.g. { label: "Our Story" }. Do not reuse client_ids from the block tree — they are stale after menu edits.';
+				}
+				if (wantsMenuAdd && !menuLinkConfigured) {
+					detail +=
+						" Add the page with blu-insert-inner-block on the core/navigation block (linked-menu): pass a navigation-link block with label, type page, id from pages-search, kind post-type — no url. If insert reports already_present, still complete any remove step. Do not duplicate then patch.";
+				}
+				conversationHistoryRef.current.push({
+					role: "system",
+					content: detail,
 				});
 				readOnlyStreak = 0;
 				continue;
@@ -451,6 +490,29 @@ export async function runChatLoop(userMessage, deps) {
 			const name = effectiveName.get(r.tool_call_id) || "";
 			return name === "blu-generate-color-palette" && !r.isError;
 		});
+		if (menuEditRequested) {
+			for (const uc of unwrappedCalls) {
+				const toolName = (uc.name || "").replace(/\//g, "-");
+				const matched = results.find((r) => r.tool_call_id === uc.id);
+				if (!matched || matched.isError || !matched.hasChanges) {
+					continue;
+				}
+				if (toolName === "blu-delete-block") {
+					menuDeleteDone = true;
+				}
+				if (toolName === "blu-update-block-attrs") {
+					const args =
+						typeof uc.arguments === "object" && uc.arguments !== null ? uc.arguments : {};
+					const attrs = args.attributes || args;
+					if (attrs.id || (attrs.type && attrs.label)) {
+						menuLinkConfigured = true;
+					}
+				}
+				if (toolName === "blu-insert-inner-block") {
+					menuLinkConfigured = true;
+				}
+			}
+		}
 		if (toolsJustExecuted) {
 			restoreAnimatedBlocksInEditor();
 		}
