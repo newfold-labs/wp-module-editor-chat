@@ -3,7 +3,7 @@
  *
  * Read-only utilities for building AI context: block tree, page content,
  * selection state, and block markup. Template-part entity CRUD lives in
- * services/templatePartEditor.js.
+ * services/templatePartEditor.js; linked navigation menus in navigationEditor.js.
  */
 import { select } from "@wordpress/data";
 import { serialize } from "@wordpress/blocks";
@@ -44,6 +44,22 @@ export const buildCompactBlockTree = (
 	};
 
 	const extractTextPreview = (block) => {
+		// Navigation links use label (and optionally url for custom links)
+		if (block.name === "core/navigation-link" || block.name === "core/navigation-submenu") {
+			const label = block.attributes?.label;
+			if (label) {
+				const trimmed = label.length > 30 ? label.substring(0, 30) + "…" : label;
+				const url = block.attributes?.url;
+				if (url && !block.attributes?.id) {
+					return `${trimmed} → ${url.length > 24 ? url.substring(0, 24) + "…" : url}`;
+				}
+				if (block.attributes?.type && block.attributes?.id) {
+					return `${trimmed} (${block.attributes.type}:${block.attributes.id})`;
+				}
+				return trimmed;
+			}
+		}
+
 		// Try common text attributes first
 		const content = block.attributes?.content;
 		if (content) {
@@ -98,6 +114,11 @@ export const buildCompactBlockTree = (
 				}
 			}
 
+			// Linked navigation menu (wp_navigation entity) — internal context only
+			if (block.name === "core/navigation" && block.attributes?.ref) {
+				line += " linked-menu";
+			}
+
 			// Add text preview
 			const preview = extractTextPreview(block);
 			if (preview) {
@@ -108,10 +129,10 @@ export const buildCompactBlockTree = (
 			lines.push(line);
 
 			// Recurse into inner blocks.
-			// Always expand children of selected blocks so the AI can see
-			// all descendant clientIds (needed for tools like replace-image).
+			// Always expand children of selected blocks and navigation menus.
 			if (block.innerBlocks && block.innerBlocks.length > 0) {
-				const expandChildren = isSelected || insideSelected;
+				const expandChildren =
+					isSelected || insideSelected || block.name === "core/navigation";
 				if (hasSelection && !expandChildren && !subtreeHasSelected(block.innerBlocks)) {
 					lines.push(`${"  ".repeat(depth + 1)}... (${block.innerBlocks.length} inner blocks)`);
 				} else {
@@ -139,12 +160,22 @@ export const getBlockMarkup = (clientId) => {
 		return null;
 	}
 
-	// Template parts serialize to a self-closing comment (<!-- wp:template-part /-->).
-	// The AI needs the actual inner blocks content to be able to modify it.
+	// Template parts and linked navigation serialize to self-closing comments.
+	// The AI needs the actual inner blocks content to be able to modify them.
 	let blockContent;
-	if (block.name === "core/template-part") {
+	if (block.name === "core/template-part" || block.name === "core/navigation") {
 		const innerBlocks = blockEditor.getBlocks(clientId);
 		blockContent = innerBlocks.map((b) => serialize(b)).join("\n");
+		if (!blockContent && block.name === "core/navigation" && block.attributes?.ref) {
+			const entity = select("core").getEntityRecord(
+				"postType",
+				"wp_navigation",
+				block.attributes.ref
+			);
+			const raw =
+				entity?.content?.raw || entity?.content?.rendered || entity?.content || "";
+			blockContent = typeof raw === "string" ? raw : "";
+		}
 	} else {
 		blockContent = serialize(block);
 	}
@@ -157,7 +188,7 @@ export const getBlockMarkup = (clientId) => {
 };
 
 const maybeLoadInnerBlocks = (block) => {
-	const CONTAINERS = ["core/post-content", "core/template-part", "core/group"];
+	const CONTAINERS = ["core/post-content", "core/template-part", "core/group", "core/navigation"];
 	const blockEditor = select("core/block-editor");
 
 	if (CONTAINERS.includes(block.name)) {

@@ -23,8 +23,10 @@ import {
 	ASSISTANT_JSON_FORMAT,
 	EXECUTE_NUDGE,
 	SUMMARIZE_NUDGE,
+	PRESENT_PALETTE_OPTIONS_NUDGE,
 	buildCreationSummarizeNudge,
 	buildEditorContext,
+	buildRemainingStepsNudge,
 } from "../../utils/editorContext";
 import { executeToolCallsForREST } from "../../services/toolDispatcher";
 import { appendCreationLinkIfNeeded } from "../../services/contentNavigation";
@@ -59,13 +61,13 @@ const closingStreamId = (ts) => `assistant-${ts}-closing`;
  *
  * @param {Object} intent      Classified intent for this turn
  * @param {Array}  openaiTools All available MCP tools
- * @return {Array}
+ * @return {Array} Tools to send to the model for this intent
  */
 function getToolsForIntent(intent, openaiTools) {
 	if (intentNeedsAllTools(intent)) {
 		return openaiTools;
 	}
-	if (intent?.task === "conversational") {
+	if (intent?.task === "conversational" && !intent?.steps?.length) {
 		return [];
 	}
 	return openaiTools.filter((t) => EDITOR_TOOLS.has(t.function.name));
@@ -82,6 +84,7 @@ export async function runChatLoop(userMessage, deps) {
 		conversationHistoryRef,
 		isFirstMessageRef,
 		needsResumeNoticeRef,
+		pendingIntentRef,
 		setMessages,
 		setStatus,
 		openaiTools,
@@ -89,6 +92,7 @@ export async function runChatLoop(userMessage, deps) {
 		buildToolCtx,
 		abortControllerRef,
 		displayMessage = userMessage,
+		attachments = [],
 		getSessionConfig,
 		classifyUserIntent = classifyUserIntentDefault,
 	} = deps;
@@ -128,6 +132,8 @@ export async function runChatLoop(userMessage, deps) {
 			type: "user",
 			role: "user",
 			content: displayMessage,
+			// Allegati immagine (solo con URL server) mostrati nella bolla utente.
+			...(Array.isArray(attachments) && attachments.length > 0 ? { attachments } : {}),
 			timestamp: new Date(),
 		},
 	]);
@@ -142,6 +148,14 @@ export async function runChatLoop(userMessage, deps) {
 	let planShown = false;
 	// Consecutive passes that only gathered info (read-only tools, no change).
 	let readOnlyStreak = 0;
+	// Steps for a multi-part request, from the intent classifier. Empty, or 2+.
+	// While steps remain the turn keeps going instead of summarizing after the
+	// first tool round and dropping the rest of the request.
+	let plannedSteps = [];
+	// Tool rounds that changed something — N steps never need more than N.
+	let writeRounds = 0;
+	// One corrective pass per turn when the model signs off with steps unapplied.
+	let unfinishedNudgeUsed = false;
 	// True once the model has emitted a final tool-free reply for this turn.
 	let endedNaturally = false;
 	// True if the user stopped generation mid-turn (suppresses the closing pass).
@@ -150,15 +164,53 @@ export async function runChatLoop(userMessage, deps) {
 	const extraClientIds = [];
 	const markupRequestCount = { current: 0 };
 	let markupJustProvided = false;
+	let paletteOptionsJustGenerated = false;
 	let lastCreationOutcome = null;
+	// Whether any tool actually changed something this turn (across all passes).
+	// Distinct from `toolsJustExecuted`, which is reset/recomputed each pass.
+	let anyMutationThisTurn = false;
 	const intentMessage = displayMessage || userMessage;
+	let menuDeleteDone = false;
+	let menuLinkConfigured = false;
+	let menuIncompleteNudges = 0;
 
 	setStatus(CHAT_STATUS.GENERATING);
 	const sessionConfig = getSessionConfig?.() || null;
-	const intent = sessionConfig
-		? await classifyUserIntent(intentMessage, sessionConfig)
-		: DEFAULT_INTENT;
-	logger.log("[EditorChat] User intent:", intent.task, intent.content_type);
+
+	// If the previous turn proposed an actionable change but ended without
+	// executing it (e.g. "Shall I apply this palette?"), reuse that intent for
+	// this turn instead of re-classifying. A short confirmation like "yes" is
+	// ambiguous in isolation and the classifier reasonably calls it
+	// `conversational`, which would otherwise strip every tool from this pass
+	// and leave the AI unable to actually do what it just offered to do.
+	// Consumed exactly once so it can't leak into unrelated later turns.
+	let intent;
+	let usedPendingIntent = false;
+	if (pendingIntentRef?.current) {
+		intent = pendingIntentRef.current;
+		pendingIntentRef.current = null;
+		usedPendingIntent = true;
+		logger.log("[EditorChat] Reusing pending intent from prior proposal:", intent.task);
+	} else {
+		intent = sessionConfig
+			? await classifyUserIntent(intentMessage, sessionConfig)
+			: DEFAULT_INTENT;
+	}
+	const menuEdit = intent.menu_edit;
+	const menuEditRequested = menuEdit?.requested === true;
+	const wantsMenuAdd = menuEdit?.add === true;
+	const wantsMenuRemove = menuEdit?.remove === true;
+	logger.log(
+		"[EditorChat] User intent:",
+		intent.task,
+		intent.content_type,
+		intent.menu_edit,
+		intent.steps
+	);
+	if (intent.steps?.length > 1) {
+		plannedSteps = intent.steps;
+		logger.log("[EditorChat] Multi-step request:", plannedSteps);
+	}
 
 	while (iterations++ < MAX_TOOL_ITERATIONS) {
 		// Check if user aborted between iterations (e.g. during tool execution)
@@ -184,12 +236,19 @@ export async function runChatLoop(userMessage, deps) {
 
 		let nudge;
 		if (toolsJustExecuted) {
-			nudge = lastCreationOutcome
-				? buildCreationSummarizeNudge(lastCreationOutcome)
-				: SUMMARIZE_NUDGE;
+			if (lastCreationOutcome) {
+				nudge = buildCreationSummarizeNudge(lastCreationOutcome);
+			} else if (writeRounds < plannedSteps.length) {
+				nudge = buildRemainingStepsNudge(plannedSteps.slice(writeRounds));
+			} else {
+				nudge = SUMMARIZE_NUDGE;
+			}
 		} else if (markupJustProvided) {
 			nudge = MARKUP_PROVIDED_NUDGE;
 			markupJustProvided = false;
+		} else if (paletteOptionsJustGenerated) {
+			nudge = PRESENT_PALETTE_OPTIONS_NUDGE;
+			paletteOptionsJustGenerated = false;
 		} else {
 			nudge = getIntentNudge(intent, EXECUTE_NUDGE, ASSISTANT_JSON_FORMAT);
 		}
@@ -214,10 +273,10 @@ export async function runChatLoop(userMessage, deps) {
 			`[EditorChat] Tool pass #${iterations} LLM: ${(performance.now() - toolPassStart).toFixed(0)}ms (${toolCalls?.length || 0} tool calls)`
 		);
 
-		const assistantDisplayMessage = getAssistantDisplayMessage(content);
+		const parsed = parseAssistantResponse(content);
+		const assistantDisplayMessage = parsed?.message || content || "";
 
 		if (!toolCalls || toolCalls.length === 0) {
-			const parsed = parseAssistantResponse(content);
 			if (
 				parsed?.need_blocks_markup?.length &&
 				canRequestBlockMarkup() &&
@@ -253,6 +312,49 @@ export async function runChatLoop(userMessage, deps) {
 				continue;
 			}
 
+			// Signing off with planned work unapplied — this is where the model tells
+			// the user it added two services it never created. One corrective pass.
+			if (!unfinishedNudgeUsed && writeRounds < plannedSteps.length) {
+				unfinishedNudgeUsed = true;
+				conversationHistoryRef.current.push({ role: "assistant", content });
+				removeStreamingMessage(setMessages, streamMessageId);
+				conversationHistoryRef.current.push({
+					role: "system",
+					content: buildRemainingStepsNudge(plannedSteps.slice(writeRounds)),
+				});
+				readOnlyStreak = 0;
+				logger.log(
+					`[EditorChat] ${plannedSteps.length - writeRounds} step(s) unapplied — prompting once more`
+				);
+				continue;
+			}
+
+			const menuStillIncomplete =
+				menuEditRequested &&
+				((wantsMenuRemove && !menuDeleteDone) || (wantsMenuAdd && !menuLinkConfigured));
+
+			if (menuStillIncomplete && menuIncompleteNudges < 2 && iterations < MAX_TOOL_ITERATIONS) {
+				menuIncompleteNudges++;
+				conversationHistoryRef.current.push({ role: "assistant", content });
+				removeStreamingMessage(setMessages, streamMessageId);
+				let detail =
+					"MENU EDIT INCOMPLETE: You must finish the menu edit with write tools before confirming.";
+				if (wantsMenuRemove && !menuDeleteDone) {
+					detail +=
+						' Call blu-delete-block with { label: "<item label>" } e.g. { label: "Our Story" }. Do not reuse client_ids from the block tree — they are stale after menu edits.';
+				}
+				if (wantsMenuAdd && !menuLinkConfigured) {
+					detail +=
+						" Add the page with blu-insert-inner-block on the core/navigation block (linked-menu): pass a navigation-link block with label, type page, id from pages-search, kind post-type — no url. If insert reports already_present, still complete any remove step. Do not duplicate then patch.";
+				}
+				conversationHistoryRef.current.push({
+					role: "system",
+					content: detail,
+				});
+				readOnlyStreak = 0;
+				continue;
+			}
+
 			conversationHistoryRef.current.push({
 				role: "assistant",
 				content,
@@ -276,7 +378,7 @@ export async function runChatLoop(userMessage, deps) {
 			if (tc.name !== "blu-call-ability") {
 				return { ...tc };
 			}
-			const parsed =
+			const envelope =
 				typeof tc.arguments === "string"
 					? (() => {
 							try {
@@ -288,8 +390,8 @@ export async function runChatLoop(userMessage, deps) {
 					: tc.arguments || {};
 			return {
 				...tc,
-				name: parsed.ability_name || tc.name,
-				arguments: parsed.parameters || {},
+				name: envelope.ability_name || tc.name,
+				arguments: envelope.parameters || {},
 			};
 		});
 		const { allRetried, retryLimitHit } = retryTracker.recordIteration(unwrappedCalls);
@@ -431,7 +533,39 @@ export async function runChatLoop(userMessage, deps) {
 		// with a confirmation without ever running the write tool.
 		lastCreationOutcome = results.find((r) => r.creationMeta)?.creationMeta ?? null;
 		toolsJustExecuted = results.some((r) => r.hasChanges === true || r.isContentCreation === true);
+		anyMutationThisTurn = anyMutationThisTurn || toolsJustExecuted;
+		// blu-generate-color-palette returns option(s) to choose from, not a
+		// change already applied — the default brief-confirmation nudges would
+		// otherwise make the model announce "N options" without listing them.
+		paletteOptionsJustGenerated = results.some((r) => {
+			const name = effectiveName.get(r.tool_call_id) || "";
+			return name === "blu-generate-color-palette" && !r.isError;
+		});
+		if (menuEditRequested) {
+			for (const uc of unwrappedCalls) {
+				const toolName = (uc.name || "").replace(/\//g, "-");
+				const matched = results.find((r) => r.tool_call_id === uc.id);
+				if (!matched || matched.isError || !matched.hasChanges) {
+					continue;
+				}
+				if (toolName === "blu-delete-block") {
+					menuDeleteDone = true;
+				}
+				if (toolName === "blu-update-block-attrs") {
+					const args =
+						typeof uc.arguments === "object" && uc.arguments !== null ? uc.arguments : {};
+					const attrs = args.attributes || args;
+					if (attrs.id || (attrs.type && attrs.label)) {
+						menuLinkConfigured = true;
+					}
+				}
+				if (toolName === "blu-insert-inner-block") {
+					menuLinkConfigured = true;
+				}
+			}
+		}
 		if (toolsJustExecuted) {
+			writeRounds++;
 			restoreAnimatedBlocksInEditor();
 		}
 
@@ -484,6 +618,25 @@ export async function runChatLoop(userMessage, deps) {
 		} else {
 			removeStreamingMessage(setMessages, closingId);
 		}
+	}
+
+	// Arm the pending-intent carry-over for the next turn when this one proposed
+	// an actionable change but never executed it (a pure text reply/question).
+	// Any non-conversational task qualifies here, not just
+	// intentNeedsAllTools() (create_content/site_management) — edit_page is the
+	// common default classification and its tool set (EDITOR_TOOLS) is what
+	// let this turn call blu-generate-color-palette etc. in the first place, so
+	// it must carry forward too, or a short confirmation next turn falls back
+	// to a fresh (likely `conversational`, zero-tool) classification.
+	// Skip re-arming when this turn itself was a reused pending intent, so the
+	// carry-over can't chain past one hop into unrelated later turns.
+	if (
+		pendingIntentRef &&
+		!usedPendingIntent &&
+		!anyMutationThisTurn &&
+		intent?.task !== "conversational"
+	) {
+		pendingIntentRef.current = intent;
 	}
 
 	// Compress older exchanges to keep history lean for next turn

@@ -12,6 +12,10 @@ import {
 	getSelectedBlocks,
 } from "./editorHelpers";
 import { getCurrentGlobalStyles } from "../services/globalStylesService";
+import {
+	buildNavigationMenuContextLines,
+	findRefNavigationBlocks,
+} from "../services/navigationEditor";
 import { IMAGE_BLOCKS, LOGO_BLOCK } from "../services/blockToolbar/blockAI";
 import { getBlockImageUrl } from "../services/imageAbility";
 import { NFD_CLASS_REFERENCE } from "./nfdClassReference";
@@ -49,9 +53,19 @@ function serializeBlockMarkup(blockEditor, clientId) {
 	}
 	const { serialize: wpSerialize } = wp.blocks;
 	let markup;
-	if (fullBlock.name === "core/template-part") {
+	if (fullBlock.name === "core/template-part" || fullBlock.name === "core/navigation") {
 		const innerBlocks = blockEditor.getBlocks(clientId);
 		markup = innerBlocks.map((b) => wpSerialize(b)).join("\n");
+		if (!markup && fullBlock.name === "core/navigation" && fullBlock.attributes?.ref) {
+			const entity = wp.data.select("core").getEntityRecord(
+				"postType",
+				"wp_navigation",
+				fullBlock.attributes.ref
+			);
+			const raw =
+				entity?.content?.raw || entity?.content?.rendered || entity?.content || "";
+			markup = typeof raw === "string" ? raw : "";
+		}
 	} else {
 		markup = wpSerialize(fullBlock);
 	}
@@ -128,7 +142,7 @@ function appendMarkupSections(context, blockEditor, clientIds, label) {
 export const ASSISTANT_JSON_FORMAT = `Your entire text output MUST be a single JSON object — no markdown fences, no text before or after:
 {"message":"Short sentence for the user (under 20 words)"}
 
-When you will call editing tools in the same response, put your plan ONLY in "message", then call the tool(s). Do not mention tool names or client IDs in message.
+When you will call editing tools in the same response, put your plan ONLY in "message", then call the tool(s). Do not mention tool names, client IDs, UUIDs, ref IDs, or block type slugs (core/…) in message — write for a non-technical site owner.
 
 If no block is selected and you need serialized block markup before editing, reply with JSON only (no tool calls):
 {"message":"Brief note","need_blocks_markup":["exact-clientId-from-block-tree"]}
@@ -144,7 +158,9 @@ Output rules:
 
 export const EXECUTE_NUDGE = `${ASSISTANT_JSON_FORMAT}
 
-For editing tasks where reasonable defaults exist (matching existing design, plausible placeholder content, standard icon choices), EXECUTE directly — do not ask clarifying questions unless the request is genuinely ambiguous.`;
+For editing tasks where reasonable defaults exist (matching existing design, plausible placeholder content, standard icon choices), EXECUTE directly — do not ask clarifying questions unless the request is genuinely ambiguous.
+
+Complete every change listed in <user_intent> steps — call all the tools needed in this same response. Do not stop after the first one.`;
 
 /**
  * Nudge injected after tools have been executed successfully.
@@ -152,6 +168,42 @@ For editing tasks where reasonable defaults exist (matching existing design, pla
  */
 export const SUMMARIZE_NUDGE = `All requested changes are applied. Respond with JSON only — no tool calls:
 {"message":"One brief sentence confirming what was done."}`;
+
+/**
+ * Nudge injected after blu-generate-color-palette returns option(s) the user
+ * must choose between before anything is applied. The default "one brief
+ * sentence" / "under 20 words" instruction (ASSISTANT_JSON_FORMAT,
+ * SUMMARIZE_NUDGE) is right for confirmations but wrong here — it leads the
+ * model to say "here are N options" without ever listing them, leaving the
+ * user nothing to actually choose from.
+ */
+export const PRESENT_PALETTE_OPTIONS_NUDGE = `Your entire text output MUST be a single JSON object — no markdown fences, no text before or after:
+{"message":"..."}
+
+The tool result above contains the generated color palette option(s), each with its own hex codes. In "message", list every option in full using markdown (a heading or bold label per palette, then a bullet per color with its exact hex code as returned — do not paraphrase, invent, or omit any value). End by asking which one to apply. Do not call any tools in this response.
+
+Output rules:
+- Return ONLY valid JSON.
+- No explanations, no comments, no extra text.
+`;
+
+/**
+ * Nudge for a turn with steps still unapplied. Replaces {@link SUMMARIZE_NUDGE},
+ * whose "All requested changes are applied" is false mid-plan — the model would
+ * otherwise confirm a job it only half did.
+ *
+ * @param {string[]} remaining Steps not yet applied.
+ * @return {string} Nudge string for the next pass.
+ */
+export function buildRemainingStepsNudge(remaining) {
+	return `Not every requested change has been applied yet. Still to do:
+${remaining.map((step) => `- ${step}`).join("\n")}
+
+Call the tool(s) for the next unfinished item now. If one genuinely cannot be done, say which and why — never report work that no tool call performed.
+
+When everything is done, reply with JSON only and no tool calls:
+{"message":"One brief sentence covering what was done."}`;
+}
 
 /**
  * Build a summarize nudge after successful content creation.
@@ -230,8 +282,13 @@ export const buildEditorContext = ({ extraClientIds = [] } = {}) => {
 	const selectedBlocks = getSelectedBlocks();
 	const selectedClientIds = selectedBlocks.map((b) => b.clientId);
 	const selectedSet = new Set(selectedClientIds);
-	const extraTargets = (extraClientIds || [])
+	const refNavBlocks = findRefNavigationBlocks(blocks);
+	const autoNavMarkupIds = refNavBlocks
+		.map((b) => b.clientId)
+		.filter((id) => id && !selectedSet.has(id));
+	const extraTargets = [...autoNavMarkupIds, ...(extraClientIds || [])]
 		.filter((id) => id && !selectedSet.has(id))
+		.filter((id, index, arr) => arr.indexOf(id) === index)
 		.slice(0, MAX_CONTEXT_TARGET_BLOCKS);
 
 	const pageTitle = getCurrentPageTitle();
@@ -258,6 +315,15 @@ export const buildEditorContext = ({ extraClientIds = [] } = {}) => {
 	context += buildCompactBlockTree(blocks, selectedClientIds, {
 		collapseUnselected: selectedBlocks.length > 0,
 	});
+
+	if (refNavBlocks.length > 0) {
+		context += "\n\nHeader/footer navigation menus (edit navigation-link children below):";
+		for (const nav of refNavBlocks) {
+			context += `\nMenu block (id:${nav.clientId}):`;
+			const menuLines = buildNavigationMenuContextLines(nav, blockEditor);
+			context += menuLines.length ? `\n${menuLines.join("\n")}` : "\n  (no items loaded yet)";
+		}
+	}
 
 	// Layer 2a: Ancestor chains for selected and AI-requested target blocks.
 	const ancestorBlocks = [...selectedBlocks];
@@ -306,8 +372,42 @@ export const buildEditorContext = ({ extraClientIds = [] } = {}) => {
 		context += `\n\nNFD utility class reference (these classes are from the site's design system — preserve them, do not remove or replace unless the user specifically asks to change the property they control):\n${NFD_CLASS_REFERENCE}`;
 	}
 
+	// Site logo is a raster/SVG image — CSS color attrs on core/site-logo (or its
+	// header/template-part ancestors) do not edit it. Always steer logo tweak
+	// requests to blu/edit-logo, even when only the header is selected.
+	if (blockTreeContainsName(blocks, LOGO_BLOCK) || context.includes("core/site-logo")) {
+		context +=
+			"\n\nSite logo guidance (CRITICAL):" +
+			"\n- core/site-logo is an IMAGE. NEVER use blu/update-block-attrs (textColor, backgroundColor, style.color, etc.) to change its appearance — CSS cannot edit the logo image." +
+			"\n- To modify the existing logo (colors, text, layout, elements): call blu/edit-logo(prompt=<what to change>). Works even when only the header/template-part is selected — you do NOT need to select the logo block." +
+			"\n- To create a brand-new logo design from scratch: call blu/regenerate-logo." +
+			"\n- To use an uploaded image as the logo: blu/edit-image then blu/set-logo-from-image.";
+	}
+
 	return context;
 };
+
+/**
+ * Recursively check whether a block tree contains a block with the given name.
+ *
+ * @param {Array}  blocks Top-level blocks.
+ * @param {string} name   Block name to find.
+ * @return {boolean} True if found.
+ */
+function blockTreeContainsName(blocks, name) {
+	if (!Array.isArray(blocks)) {
+		return false;
+	}
+	for (const block of blocks) {
+		if (block?.name === name) {
+			return true;
+		}
+		if (blockTreeContainsName(block?.innerBlocks, name)) {
+			return true;
+		}
+	}
+	return false;
+}
 
 /**
  * Deep clone blocks for snapshot undo.

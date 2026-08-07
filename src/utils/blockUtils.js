@@ -17,7 +17,10 @@ export function createBlockFromParsed(parsedBlock) {
 		? parsedBlock.innerBlocks.map((inner) => createBlockFromParsed(inner))
 		: [];
 
-	return createBlock(parsedBlock.name, parsedBlock.attributes || {}, innerBlocks);
+	const name = parsedBlock.name || parsedBlock.blockName;
+	const attributes = parsedBlock.attributes || parsedBlock.attrs || {};
+
+	return createBlock(name, attributes, innerBlocks);
 }
 
 /**

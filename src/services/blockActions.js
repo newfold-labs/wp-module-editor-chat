@@ -29,10 +29,67 @@ import {
 	removeBlockAtPath,
 	replaceBlockAtPath,
 } from "./templatePartEditor";
+import {
+	deleteNavigationMenuItemsByLabel,
+	duplicateEditorBlockInNavigation,
+	ensureMenuBlockAccessible,
+	ensureNavigationInnerBlocksLoaded,
+	findAncestorRefNavigation,
+	findHeaderRefNavigationBlock,
+	hydrateAllRefNavigationBlocks,
+	getBlockPathInNavigation,
+	getNavigationMenuLinks,
+	insertBlocksInNavigation,
+	isRefNavigation,
+	modifyNavigationEntity,
+	buildParsedNavigationLinkFromAttrs,
+	createNavigationEditorBlocks,
+	findNavigationPageLinkInMenu,
+	getNavigationParsedBlocksForEdit,
+	normalizeParsedNavigationLinks,
+	parseNavigationLinkAttrsFromMarkup,
+	resolvePageNavigationAttrs,
+	assertNavigationPageExists,
+	resolveNavigationMenuLinkTarget,
+	resolveRefNavigationForEdit,
+	summarizeNavigationMenuItems,
+	summarizeNavigationMenuItemsFromEntity,
+	updateNavigationLinkAttributes,
+	syncNavigationEntityFromEditor,
+} from "./navigationEditor";
 
 // ────────────────────────────────────────────────────────────────
 // Block CRUD operations
 // ────────────────────────────────────────────────────────────────
+
+/**
+ * Load the site header's linked navigation menu for menu-item edits.
+ *
+ * @return {Promise<Object|null>}
+ */
+async function hydrateHeaderNavigation() {
+	const nav = findHeaderRefNavigationBlock();
+	if (!nav) {
+		return null;
+	}
+	await ensureNavigationInnerBlocksLoaded(nav);
+	return nav;
+}
+
+/**
+ * Resolve header navigation when a menu-link clientId belongs to it.
+ *
+ * @param {string} clientId Block inside a navigation menu.
+ * @return {Promise<Object|null>}
+ */
+async function resolveHeaderNavigationForClient(clientId) {
+	const headerNav = await hydrateHeaderNavigation();
+	if (!headerNav) {
+		return null;
+	}
+	const path = getBlockPathInNavigation(headerNav.clientId, clientId);
+	return path ? headerNav : null;
+}
 
 /**
  * Replace entire block content.
@@ -64,6 +121,26 @@ export async function handleRewriteAction(clientId, blockContent) {
 
 	if (!updatedBlocks || updatedBlocks.length === 0) {
 		throw new Error("Failed to parse block_content into blocks");
+	}
+
+	const ancestorNav =
+		(await resolveRefNavigationForEdit(clientId)) || (await resolveHeaderNavigationForClient(clientId));
+
+	if (ancestorNav) {
+		const path = getBlockPathInNavigation(ancestorNav.clientId, clientId);
+		if (!path) {
+			throw new Error(`Could not compute path for block ${clientId} in navigation menu`);
+		}
+		await modifyNavigationEntity(ancestorNav, (blocks) =>
+			replaceBlockAtPath(blocks, path, updatedBlocks)
+		);
+
+		return {
+			clientId,
+			blockName: block.name,
+			message: `Block ${block.name} content rewritten in navigation menu successfully`,
+			originalBlock,
+		};
 	}
 
 	const ancestorTemplatePart = findAncestorTemplatePart(clientId);
@@ -102,16 +179,82 @@ export async function handleRewriteAction(clientId, blockContent) {
 /**
  * Remove a block from the editor.
  *
- * @param {string} clientId The block's client ID to delete.
+ * @param {string|Object} clientIdOrParams Block clientId, or { client_id, label } for menu items.
  * @return {Promise<Object>} Result of the deletion.
  */
-export async function handleDeleteAction(clientId) {
+export async function handleDeleteAction(clientIdOrParams) {
 	const { getBlock } = select("core/block-editor");
-	const block = getBlock(clientId);
+	const params =
+		typeof clientIdOrParams === "object" && clientIdOrParams !== null
+			? clientIdOrParams
+			: { client_id: clientIdOrParams };
+	const label = params.label;
+	let clientId = params.client_id;
+
+	// Navigation menu: label wins over client_id (ids go stale and often point at the wrong link).
+	if (label) {
+		const byLabel = await deleteNavigationMenuItemsByLabel(label, {
+			once: true,
+			headerOnly: true,
+		});
+		if (byLabel.removed > 0) {
+			const header = findHeaderRefNavigationBlock();
+			const menuItems = header
+				? await summarizeNavigationMenuItemsFromEntity(header)
+				: byLabel.menu_items;
+			return {
+				clientId: clientId || null,
+				blockName: "core/navigation-link",
+				message: `Removed menu item "${label}" from header navigation`,
+				menu_items: menuItems,
+			};
+		}
+
+		const header = findHeaderRefNavigationBlock();
+		const menuItems = header
+			? await summarizeNavigationMenuItemsFromEntity(header, { includePageTitles: true })
+			: [];
+		throw new Error(
+			`No header menu item matched label "${label}"` +
+				(menuItems.length ? `. Current items: ${JSON.stringify(menuItems)}` : "")
+		);
+	}
+
+	if (clientId) {
+		const headerNav = findHeaderRefNavigationBlock();
+		if (headerNav) {
+			const path = getBlockPathInNavigation(headerNav.clientId, clientId);
+			if (path) {
+				throw new Error(
+					'Navigation menu deletes must use { "label": "Item label" } — client_ids go stale after every menu edit.'
+				);
+			}
+		}
+	}
+
+	let block =
+		(clientId ? await ensureMenuBlockAccessible(clientId) : null) ||
+		(clientId ? getBlock(clientId) : null);
+
+	if (!block && (clientId || label)) {
+		const resolved = await resolveNavigationMenuLinkTarget({ client_id: clientId, label });
+		if (resolved) {
+			clientId = resolved.client_id;
+			block = resolved.block;
+		}
+	}
 
 	if (!block) {
-		throw new Error(`Block with clientId ${clientId} not found`);
+		const navs = await hydrateAllRefNavigationBlocks();
+		const menuItems = navs.flatMap((nav) => summarizeNavigationMenuItems(nav));
+		throw new Error(
+			`Block with clientId ${clientId || "(none)"} not found` +
+				(label ? ` and no menu item matched label "${label}"` : "") +
+				(menuItems.length ? `. Current menu items: ${JSON.stringify(menuItems)}` : "")
+		);
 	}
+
+	clientId = block.clientId;
 
 	if (isTemplatePart(block)) {
 		return handleDeleteTemplatePart(clientId, block);
@@ -123,6 +266,25 @@ export async function handleDeleteAction(clientId) {
 		attributes: { ...block.attributes },
 		innerBlocks: block.innerBlocks ? [...block.innerBlocks] : [],
 	};
+
+	const ancestorNav =
+		(await resolveRefNavigationForEdit(clientId)) || (await resolveHeaderNavigationForClient(clientId));
+
+	if (ancestorNav) {
+		const path = getBlockPathInNavigation(ancestorNav.clientId, clientId);
+		if (!path) {
+			throw new Error(`Could not compute path for block ${clientId} in navigation menu`);
+		}
+		await modifyNavigationEntity(ancestorNav, (blocks) => removeBlockAtPath(blocks, path));
+
+		return {
+			clientId,
+			blockName: block.name,
+			message: `Block ${block.name} deleted from navigation menu successfully`,
+			originalBlock,
+			menu_items: summarizeNavigationMenuItems(ancestorNav),
+		};
+	}
 
 	const ancestorTemplatePart = findAncestorTemplatePart(clientId);
 
@@ -190,6 +352,13 @@ export async function handleMoveAction(clientId, targetClientId, position, asChi
 		const { moveBlockToPosition } = dispatch("core/block-editor");
 		moveBlockToPosition(clientId, originalRootClientId, asChildOf, childCount);
 
+		const ancestorNav =
+			(await resolveRefNavigationForEdit(clientId)) ||
+			(await resolveRefNavigationForEdit(asChildOf));
+		if (ancestorNav) {
+			await syncNavigationEntityFromEditor(ancestorNav);
+		}
+
 		return {
 			clientId,
 			blockName: block.name,
@@ -207,6 +376,75 @@ export async function handleMoveAction(clientId, targetClientId, position, asChi
 		throw new Error(`Target block with clientId ${targetClientId} not found`);
 	}
 
+	const sourceAncestorNav = await resolveRefNavigationForEdit(clientId);
+	const targetAncestorNav = await resolveRefNavigationForEdit(targetClientId);
+
+	if (sourceAncestorNav || targetAncestorNav) {
+		if (
+			sourceAncestorNav &&
+			targetAncestorNav &&
+			sourceAncestorNav.clientId === targetAncestorNav.clientId
+		) {
+			const sourcePath = getBlockPathInNavigation(sourceAncestorNav.clientId, clientId);
+			const targetPath = getBlockPathInNavigation(targetAncestorNav.clientId, targetClientId);
+
+			if (!sourcePath || !targetPath) {
+				throw new Error("Could not compute paths for move within navigation menu");
+			}
+
+			await modifyNavigationEntity(sourceAncestorNav, (blocks) => {
+				let movedBlock = null;
+				const findBlockInTree = (tree, path) => {
+					if (path.length === 1) {
+						return tree[path[0]];
+					}
+					return findBlockInTree(tree[path[0]].innerBlocks || [], path.slice(1));
+				};
+				movedBlock = findBlockInTree(blocks, sourcePath);
+				if (!movedBlock) {
+					return blocks;
+				}
+
+				let modified = removeBlockAtPath(blocks, sourcePath);
+
+				const adjustedTarget = [...targetPath];
+				const srcParent = sourcePath.slice(0, -1);
+				const tgtParent = targetPath.slice(0, -1);
+				if (
+					srcParent.length === tgtParent.length &&
+					srcParent.every((v, i) => v === tgtParent[i]) &&
+					sourcePath[sourcePath.length - 1] < targetPath[targetPath.length - 1]
+				) {
+					adjustedTarget[adjustedTarget.length - 1] -= 1;
+				}
+
+				if (position === "after") {
+					modified = insertBlocksAtPath(modified, adjustedTarget, [movedBlock]);
+				} else {
+					modified = insertBlocksBeforePath(modified, adjustedTarget, [movedBlock]);
+				}
+
+				return modified;
+			});
+		} else {
+			const { moveBlockToPosition } = dispatch("core/block-editor");
+			const targetRootClientId = getBlockRootClientId(targetClientId) || "";
+			let targetIndex = getBlockIndex(targetClientId);
+			if (position === "after") {
+				targetIndex += 1;
+			}
+			if (originalRootClientId === targetRootClientId && originalIndex < targetIndex) {
+				targetIndex -= 1;
+			}
+			moveBlockToPosition(clientId, originalRootClientId, targetRootClientId, targetIndex);
+			if (sourceAncestorNav) {
+				await syncNavigationEntityFromEditor(sourceAncestorNav);
+			}
+			if (targetAncestorNav && targetAncestorNav.clientId !== sourceAncestorNav?.clientId) {
+				await syncNavigationEntityFromEditor(targetAncestorNav);
+			}
+		}
+	} else {
 	const sourceAncestor = findAncestorTemplatePart(clientId);
 	const targetAncestor = findAncestorTemplatePart(targetClientId);
 
@@ -281,6 +519,7 @@ export async function handleMoveAction(clientId, targetClientId, position, asChi
 		}
 		moveBlockToPosition(clientId, originalRootClientId, targetRootClientId, targetIndex);
 	}
+	}
 
 	return {
 		clientId,
@@ -346,6 +585,16 @@ export async function handleAddAction(clientId, changes, position = "after") {
 		throw new Error("No valid blocks to insert (all freeform/null)");
 	}
 
+	const ancestorNav = clientId ? await resolveRefNavigationForEdit(clientId) : null;
+
+	if (ancestorNav) {
+		const path = getBlockPathInNavigation(ancestorNav.clientId, clientId);
+		if (!path) {
+			throw new Error(`Could not compute path for block ${clientId} in navigation menu`);
+		}
+		const inserter = position === "before" ? insertBlocksBeforePath : insertBlocksAtPath;
+		await modifyNavigationEntity(ancestorNav, (blocks) => inserter(blocks, path, parsedBlocksList));
+	} else {
 	const ancestorTemplatePart = clientId ? findAncestorTemplatePart(clientId) : null;
 
 	if (ancestorTemplatePart) {
@@ -387,6 +636,7 @@ export async function handleAddAction(clientId, changes, position = "after") {
 
 		const insertIndex = position === "before" ? context.index : context.index + 1;
 		insertBlocks(blockInstances, insertIndex, context.parentClientId || undefined);
+	}
 	}
 
 	const insertedClientIds = blockInstances.map((b) => b.clientId || null).filter(Boolean);
@@ -433,6 +683,9 @@ export async function handleDuplicateAction(params = {}) {
 				"Duplicate requires either client_id (explicit) or kind (intent mode). Neither was provided."
 			);
 		}
+		if (kind === "menu-item") {
+			await hydrateAllRefNavigationBlocks();
+		}
 		resolution = resolveTarget({ kind, scope, position });
 		targetClientId = resolution.client_id;
 	}
@@ -445,6 +698,31 @@ export async function handleDuplicateAction(params = {}) {
 	const context = findBlockContext(targetClientId);
 	if (!context) {
 		throw new Error(`Block ${targetClientId} not found in the block tree`);
+	}
+
+	const ancestorNav =
+		(await resolveRefNavigationForEdit(targetClientId)) ||
+		(kind === "menu-item" ? await hydrateHeaderNavigation() : null);
+
+	if (ancestorNav) {
+		const { newClientId, menu_items: menuItems } = await duplicateEditorBlockInNavigation(
+			ancestorNav,
+			targetClientId
+		);
+		const clone = newClientId ? getBlock(newClientId) : null;
+		const newLeaves = clone ? summarizeNewSubtree(clone) : [];
+
+		return {
+			clientId: targetClientId,
+			newClientId: newClientId || null,
+			blockName: block.name,
+			newSubtree: newLeaves,
+			menu_items: menuItems,
+			message: resolution
+				? `Duplicated ${resolution.kind_matched} (${block.name}) in navigation menu — ${resolution.why}`
+				: `Block ${block.name} duplicated in navigation menu successfully`,
+			resolution,
+		};
 	}
 
 	const clone = cloneBlock(block);
@@ -484,7 +762,11 @@ function summarizeNewSubtree(root) {
 			return;
 		}
 		const textAttr =
-			block.attributes?.content ?? block.attributes?.text ?? block.attributes?.url ?? null;
+			block.attributes?.content ??
+			block.attributes?.label ??
+			block.attributes?.text ??
+			block.attributes?.url ??
+			null;
 		const entry = {
 			client_id: block.clientId,
 			name: block.name,
@@ -508,9 +790,15 @@ function summarizeNewSubtree(root) {
  * @param {string}      parentClientId The parent (container) block's client ID.
  * @param {string}      blockContent   WordPress block markup for the new child.
  * @param {number|null} index          0-based insert position; null/undefined = append.
+ * @param {Object|null} intendedAttrsOverride Parsed navigation-link attrs from raw tool markup.
  * @return {Promise<Object>} Result of the insertion.
  */
-export async function handleInsertInnerBlockAction(parentClientId, blockContent, index = null) {
+export async function handleInsertInnerBlockAction(
+	parentClientId,
+	blockContent,
+	index = null,
+	intendedAttrsOverride = null
+) {
 	const { getBlock } = select("core/block-editor");
 	const { insertBlocks } = dispatch("core/block-editor");
 
@@ -519,14 +807,125 @@ export async function handleInsertInnerBlockAction(parentClientId, blockContent,
 		throw new Error(`Parent block with clientId ${parentClientId} not found`);
 	}
 
-	const parsed = parse(blockContent);
+	const intendedAttrsRaw =
+		intendedAttrsOverride || parseNavigationLinkAttrsFromMarkup(blockContent);
+	let intendedAttrs =
+		intendedAttrsRaw?.id != null
+			? await resolvePageNavigationAttrs(intendedAttrsRaw)
+			: intendedAttrsRaw;
+
+	if (intendedAttrs?.id != null) {
+		await assertNavigationPageExists(intendedAttrs);
+	}
+
+	let parsed = null;
+	if (intendedAttrs?.id != null) {
+		parsed = buildParsedNavigationLinkFromAttrs(intendedAttrs);
+		if (!parsed?.length) {
+			throw new Error(
+				`Failed to build navigation link for page id ${intendedAttrs.id}`
+			);
+		}
+	} else {
+		parsed = normalizeParsedNavigationLinks(parse(blockContent));
+	}
 	if (!parsed || parsed.length === 0) {
 		throw new Error("Failed to parse block_content into blocks");
 	}
 
-	const blockInstances = parsed
-		.filter((b) => b.name || b.blockName)
-		.map((b) => createBlockFromParsed(b));
+	let parentNav = isRefNavigation(parent) ? parent : findAncestorRefNavigation(parentClientId);
+	if (isRefNavigation(parent)) {
+		parentNav = getBlock(parentClientId) || parent;
+	} else if (parentNav) {
+		await ensureNavigationInnerBlocksLoaded(parentNav);
+	}
+
+	if (parentNav) {
+		const liveParent = getBlock(parentNav.clientId) || parentNav;
+		const entityBlocks = await getNavigationParsedBlocksForEdit(liveParent);
+		const linkState = await findNavigationPageLinkInMenu(
+			liveParent,
+			intendedAttrs.id,
+			intendedAttrs.label
+		);
+
+		if (linkState.present && linkState.labelMatches) {
+			const menuItems = await summarizeNavigationMenuItemsFromEntity(liveParent);
+			return {
+				parentClientId,
+				blockName: parent.name,
+				insertedClientIds: [],
+				menu_items: menuItems,
+				insertedAtIndex: null,
+				hasChanges: false,
+				alreadyPresent: true,
+				message: `"${intendedAttrs.label || "Page"}" is already in the header navigation menu.`,
+			};
+		}
+
+		if (linkState.present && !linkState.labelMatches && intendedAttrs.label) {
+			const wantLabel = intendedAttrs.label;
+			await modifyNavigationEntity(liveParent, (blocks) =>
+				blocks.map((block) => {
+					if ((block.name || block.blockName) !== "core/navigation-link") {
+						return block;
+					}
+					const attrs = block.attributes || block.attrs || {};
+					if (Number(attrs.id) !== Number(intendedAttrs.id)) {
+						return block;
+					}
+					const nextAttrs = { ...attrs, label: wantLabel };
+					return { ...block, attributes: nextAttrs, attrs: nextAttrs };
+				})
+			);
+			const menuItems = await summarizeNavigationMenuItemsFromEntity(liveParent);
+			return {
+				parentClientId,
+				blockName: parent.name,
+				insertedClientIds: [],
+				menu_items: menuItems,
+				insertedAtIndex: null,
+				hasChanges: true,
+				message: `Updated header menu label to "${wantLabel}". Use menu_items labels for follow-up deletes — do not use client_ids.`,
+			};
+		}
+
+		const insertAt =
+			typeof index === "number" && index >= 0
+				? Math.min(index, entityBlocks.length)
+				: entityBlocks.length;
+
+		if (isRefNavigation(liveParent)) {
+			const blocksToInsert = parsed;
+			await modifyNavigationEntity(liveParent, (blocks) => {
+				return [
+					...blocks.slice(0, insertAt),
+					...blocksToInsert,
+					...blocks.slice(insertAt),
+				];
+			});
+		} else {
+			const parentPath = getBlockPathInNavigation(parentNav.clientId, parentClientId);
+			await insertBlocksInNavigation(parentNav, parentPath, parsed, index);
+		}
+
+		const menuItems = await summarizeNavigationMenuItemsFromEntity(liveParent);
+		const insertedLabel = intendedAttrs?.label || "";
+
+		return {
+			parentClientId,
+			blockName: parent.name,
+			insertedClientIds: [],
+			menu_items: menuItems,
+			insertedAtIndex: insertAt,
+			hasChanges: true,
+			message: `Inserted 1 block(s) into header navigation menu${
+				insertedLabel ? ` (${insertedLabel})` : ""
+			}. Use menu_items labels for follow-up deletes — do not use client_ids.`,
+		};
+	}
+
+	const blockInstances = createNavigationEditorBlocks(parsed);
 	if (blockInstances.length === 0) {
 		throw new Error("No valid blocks to insert");
 	}

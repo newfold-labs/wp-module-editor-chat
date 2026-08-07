@@ -2,7 +2,7 @@ import { __ } from "@wordpress/i18n";
 
 import { validateBlockMarkup } from "../../utils/blockValidator";
 import { handleRewriteAction } from "../blockActions";
-import { callAbility } from "../callAbility";
+import { callImageAbility, getBlockImageUrl } from "../imageAbility";
 import { appendGeneratedImageUrl, deduplicateImages, getGeneratedImageUrls } from "../imageCache";
 import logger from "../../utils/logger";
 
@@ -28,22 +28,38 @@ export async function handleEditBlock(toolCall, args, ctx) {
 		if (args.image_prompts && Array.isArray(args.image_prompts) && args.image_prompts.length > 0) {
 			const promptCount = Math.min(args.image_prompts.length, uniquePlaceholders.length);
 
+			// If this block already has an image, the first placeholder is almost
+			// always that same image being rewritten — route it through
+			// blu-edit-image (via callImageAbility) so we modify the existing
+			// photo instead of discarding it and generating a brand-new one.
+			// Mirrors the redirect in toolDispatcher's blu-generate-image branch.
+			const { select: wpSelectForImage } = wp.data;
+			const originalImageBlock = wpSelectForImage("core/block-editor").getBlock(args.client_id);
+			const existingImageUrl = getBlockImageUrl(originalImageBlock);
+
 			const imageUrls = [];
 			for (let i = 0; i < promptCount; i++) {
 				const prompt = args.image_prompts[i];
-				const imgArgs =
+				const { prompt: promptText, ...restPromptOpts } =
 					typeof prompt === "string" ? { prompt } : { prompt: prompt.prompt, ...prompt };
+				const sourceUrl = i === 0 ? existingImageUrl : null;
 
 				await ctx.updateProgress(
-					__("Generating image…", "wp-module-editor-chat") + ` (${i + 1}/${promptCount})`,
+					(sourceUrl
+						? __("Editing image…", "wp-module-editor-chat")
+						: __("Generating image…", "wp-module-editor-chat")) + ` (${i + 1}/${promptCount})`,
 					500
 				);
 				logger.log(
-					`[ToolExecutor:REST] edit-block: generating image ${i + 1}/${promptCount}`,
-					imgArgs
+					`[ToolExecutor:REST] edit-block: ${sourceUrl ? "editing" : "generating"} image ${i + 1}/${promptCount}`,
+					{ prompt: promptText, sourceUrl, ...restPromptOpts }
 				);
 				try {
-					const mcpResult = await callAbility(ctx.mcpClient, "blu-generate-image", imgArgs);
+					const mcpResult = await callImageAbility(ctx.mcpClient, {
+						prompt: promptText,
+						sourceUrl,
+						...restPromptOpts,
+					});
 					logger.log(`[ToolExecutor:REST] edit-block: image ${i + 1} MCP result`, mcpResult);
 					if (!mcpResult.isError && mcpResult.content?.[0]?.text) {
 						const parsed = JSON.parse(mcpResult.content[0].text);

@@ -72,25 +72,64 @@ export function parseAssistantResponse(content) {
 	const match = trimmed.match(/\{[\s\S]*"message"[\s\S]*\}/);
 	if (match) {
 		const extracted = safeParseJSON(match[0]);
-		const fromMatch = normalize(extracted.value);
-		if (fromMatch?.message) {
-			return fromMatch;
+		const fromExtracted = normalize(extracted.value);
+		if (fromExtracted?.message) {
+			return fromExtracted;
 		}
 	}
 
 	// Last resort: the model left quotes inside the message value completely
-	// unescaped (e.g. `"...to "Click here"."}`), which breaks JSON parsing in
-	// a way no amount of repair above can fix — there's no way to tell content
-	// quotes from structural ones without knowing where the value ends. Since
-	// the format is always a single top-level "message" field, assume greedily
-	// that everything between the first `"message":"` and the last `"}` at the
-	// end of the string IS the message, unescaped quotes and all.
-	const lenient = trimmed.match(/"message"\s*:\s*"([\s\S]*)"\s*\}\s*$/);
-	if (lenient && lenient[1]) {
-		return { message: lenient[1].trim() };
+	// unescaped, which breaks JSON parsing in a way no amount of repair above
+	// can fix — there's no way to tell content quotes from structural ones
+	// without knowing where the value ends. extractMessageLoosely() assumes
+	// greedily that everything between the first `"message":"` and the last
+	// `"}` (or `need_blocks_markup`) IS the message, unescaped quotes and all.
+	const loose = extractMessageLoosely(trimmed);
+	return loose ? { message: loose } : null;
+}
+
+/**
+ * Salvage the message from JSON the model broke — usually an unescaped quote in
+ * the message itself, which otherwise leaks the whole raw object into the chat.
+ * The greedy capture stops at the last quote before the close, keeping inner ones.
+ *
+ * @param {string} text Trimmed assistant output
+ * @return {string|null} Message text, or null if not recoverable
+ */
+function extractMessageLoosely(text) {
+	const match = text.match(/"message"\s*:\s*"([\s\S]*)"\s*(?:,\s*"need_blocks_markup"|\}|$)/);
+	if (!match) {
+		return null;
+	}
+	return match[1].replace(/\\"/g, '"').replace(/\\n/g, "\n").trim() || null;
+}
+
+/**
+ * Strip developer-facing tokens from text shown to site owners.
+ *
+ * @param {string} text Raw assistant message
+ * @return {string} Sanitized message
+ */
+export function sanitizeUserFacingMessage(text) {
+	if (!text || typeof text !== "string") {
+		return text || "";
 	}
 
-	return null;
+	let out = text;
+	// UUIDs (block clientIds leaked into prose)
+	out = out.replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, "");
+	// id:uuid / (id:uuid) patterns from block-tree citations
+	out = out.replace(/\(?\s*id:\s*[0-9a-f-]{36}\s*\)?/gi, "");
+	// Linked navigation entity refs
+	out = out.replace(/\bref:\s*\d+/gi, "");
+	out = out.replace(/\bref:N\b/gi, "");
+	// Block type slugs
+	out = out.replace(/\bcore\/[\w-]+\b/g, "");
+	// wp_navigation and similar internal terms
+	out = out.replace(/\bwp_navigation\b/gi, "");
+	out = out.replace(/\s+([,.;:!?])/g, "$1");
+	out = out.replace(/\s{2,}/g, " ").trim();
+	return out;
 }
 
 /**
@@ -102,9 +141,9 @@ export function parseAssistantResponse(content) {
 export function getAssistantDisplayMessage(content) {
 	const parsed = parseAssistantResponse(content);
 	if (parsed?.message) {
-		return parsed.message;
+		return sanitizeUserFacingMessage(parsed.message);
 	}
-	return content || "";
+	return sanitizeUserFacingMessage(content || "");
 }
 
 /**

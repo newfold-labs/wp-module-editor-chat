@@ -26,7 +26,7 @@ import { loadActiveChat, clearActiveChat } from "./chat/activeChatStorage";
 import { resetGeneratedImageCache } from "../services/toolDispatcher";
 import { setActiveImageEditTarget } from "../services/imageCache";
 import { useEditorNavigation } from "../context/editorNavigation";
-import { getEditUrl } from "../services/contentNavigation";
+import { loadEditorEntity } from "../services/contentNavigation";
 import {
 	createConversation,
 	updateConversation,
@@ -39,6 +39,41 @@ import {
 	getCurrentPageModified,
 } from "../utils/editorHelpers";
 import logger from "../utils/logger";
+
+/**
+ * Where the "open that page" conflict resolution parks the target
+ * conversation id across a navigation — a full reload (post types other
+ * than "page") clears all React state, so a ref can't survive the trip;
+ * sessionStorage does, and works just as well for the SPA pushState case
+ * page navigation actually uses.
+ */
+const PENDING_CONVERSATION_KEY = "nfd-editor-chat-pending-conversation";
+
+const readPendingConversationTarget = () => {
+	try {
+		const raw = sessionStorage.getItem(PENDING_CONVERSATION_KEY);
+		return raw ? JSON.parse(raw) : null;
+	} catch {
+		return null;
+	}
+};
+
+const writePendingConversationTarget = (target) => {
+	try {
+		sessionStorage.setItem(PENDING_CONVERSATION_KEY, JSON.stringify(target));
+	} catch {
+		// sessionStorage unavailable (e.g. private mode) — the destination page
+		// just won't auto-open the conversation; harmless.
+	}
+};
+
+const clearPendingConversationTarget = () => {
+	try {
+		sessionStorage.removeItem(PENDING_CONVERSATION_KEY);
+	} catch {
+		// noop
+	}
+};
 
 /**
  * useEditorChatREST Hook
@@ -94,6 +129,13 @@ const useEditorChatREST = () => {
 	const blockSnapshotRef = useRef(null);
 	const executedToolsRef = useRef([]);
 	const messagesRef = useRef(messages);
+	// Carries an actionable intent (site_management/create_content) forward by
+	// exactly one turn when the assistant proposed an action but didn't execute
+	// it (e.g. "Shall I apply this palette?"). Without this, a short confirmation
+	// reply ("yes") gets classified as `conversational` in isolation, which zeroes
+	// out all tools for that turn — so the AI claims it applied the change when
+	// it never actually could. See chatLoop.js for how this is consumed/armed.
+	const pendingIntentRef = useRef(null);
 
 	// ── Server-side conversation sync ──
 	const { conversationId, setConversationId, readOnly, setReadOnly, resetSync } =
@@ -236,7 +278,9 @@ const useEditorChatREST = () => {
 			}
 			const { conversation } = pageConflict;
 			if (action === "navigate") {
-				window.location.href = getEditUrl(conversation.post_type, conversation.post_id);
+				writePendingConversationTarget({ id: conversation.id, postId: conversation.post_id });
+				setPageConflict(null);
+				loadEditorEntity(conversation.post_type, conversation.post_id);
 				return;
 			}
 			applyHydratedConversation(conversation, { readOnly: true });
@@ -356,7 +400,12 @@ const useEditorChatREST = () => {
 
 	// ── handleSendMessage ──
 	const handleSendMessage = useCallback(
-		async (messageContent, displayMessage = messageContent, editClientId = null) => {
+		async (
+			messageContent,
+			displayMessage = messageContent,
+			editClientId = null,
+			attachments = []
+		) => {
 			if (!openaiClientRef.current || configStatus !== "ready") {
 				setError("Chat is not ready. Please wait for initialization.");
 				return;
@@ -383,6 +432,7 @@ const useEditorChatREST = () => {
 					conversationHistoryRef,
 					isFirstMessageRef,
 					needsResumeNoticeRef,
+					pendingIntentRef,
 					setMessages,
 					setStatus,
 					openaiTools,
@@ -390,6 +440,7 @@ const useEditorChatREST = () => {
 					buildToolCtx,
 					abortControllerRef,
 					displayMessage,
+					attachments,
 					getSessionConfig,
 				});
 
@@ -450,6 +501,7 @@ const useEditorChatREST = () => {
 		conversationHistoryRef.current = [];
 		isFirstMessageRef.current = true;
 		conversationPostIdRef.current = null;
+		pendingIntentRef.current = null;
 		setHasGlobalStylesChanges(false);
 		setExecutedTools([]);
 		executedToolsRef.current = [];
@@ -483,6 +535,31 @@ const useEditorChatREST = () => {
 	// discarded: if the destination page was already visited this session,
 	// its chat is restored; otherwise a fresh chat starts, same as "+ New Chat".
 	const activeEditorPostId = useSelect((select) => select("core/editor").getCurrentPostId(), []);
+
+	// After a page-conflict is resolved via "Open that page", the target
+	// conversation id is parked in sessionStorage (see resolvePageConflict)
+	// and consumed here once the destination page has actually loaded —
+	// this is what makes the navigation actually re-open the chat, instead
+	// of landing on a blank welcome screen.
+	useEffect(() => {
+		if (!activeEditorPostId) {
+			return;
+		}
+		const pending = readPendingConversationTarget();
+		if (!pending || pending.postId !== activeEditorPostId) {
+			return;
+		}
+		clearPendingConversationTarget();
+		(async () => {
+			try {
+				const conversation = await getConversation(pending.id);
+				applyHydratedConversation(conversation, { readOnly: false });
+			} catch (err) {
+				logger.warn("[EditorChat] Could not load pending conversation after navigation:", err);
+			}
+		})();
+	}, [activeEditorPostId, applyHydratedConversation]);
+
 	useEffect(() => {
 		if (
 			readOnly ||
@@ -490,6 +567,13 @@ const useEditorChatREST = () => {
 			!activeEditorPostId ||
 			conversationPostIdRef.current === activeEditorPostId
 		) {
+			return;
+		}
+
+		const pending = readPendingConversationTarget();
+		if (pending && pending.postId === activeEditorPostId) {
+			// The effect above will hydrate this page's chat explicitly —
+			// skip the cache swap to avoid a flash of the wrong conversation.
 			return;
 		}
 

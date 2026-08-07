@@ -3,12 +3,51 @@ import { __ } from "@wordpress/i18n";
 import { deepMergeAttrs as deepMerge } from "../../utils/deepMerge";
 import { appendGeneratedImageUrl } from "../imageCache";
 import { callImageAbility, getBlockImageUrl, parseImageAbilityUrl } from "../imageAbility";
-import { IMAGE_BLOCKS } from "../blockToolbar/blockAI";
+import { IMAGE_BLOCKS, LOGO_BLOCK } from "../blockToolbar/blockAI";
+import {
+	findAncestorRefNavigation,
+	applyNavigationLinkAttrPatch,
+	normalizeNavigationLinkAttrs,
+	resolveRefNavigationForEdit,
+	updateNavigationLinkAttributes,
+	ensureMenuBlockAccessible,
+} from "../navigationEditor";
+
+/**
+ * Detect attribute patches that try to recolor via CSS.
+ *
+ * @param {Object} attributes Block attribute patch.
+ * @return {boolean} True when the patch is a color-only CSS change.
+ */
+function isCssColorPatch(attributes) {
+	if (!attributes || typeof attributes !== "object") {
+		return false;
+	}
+	if (
+		"textColor" in attributes ||
+		"backgroundColor" in attributes ||
+		"gradient" in attributes ||
+		"overlayColor" in attributes ||
+		"customOverlayColor" in attributes
+	) {
+		return true;
+	}
+	const style = attributes.style;
+	if (style && typeof style === "object") {
+		if (style.color) {
+			return true;
+		}
+		if (style.elements && typeof style.elements === "object") {
+			return Object.values(style.elements).some((el) => el && typeof el === "object" && el.color);
+		}
+	}
+	return false;
+}
 
 export async function handleUpdateBlockAttrs(toolCall, args, ctx) {
 	const { select: wpSelect, dispatch: wpDispatch } = wp.data;
 	const blockEditor = wpSelect("core/block-editor");
-	const block = blockEditor.getBlock(args.client_id);
+	const block = await ensureMenuBlockAccessible(args.client_id);
 
 	if (!block) {
 		return {
@@ -23,6 +62,27 @@ export async function handleUpdateBlockAttrs(toolCall, args, ctx) {
 	try {
 		// Ensure attributes is always an object so `in` / property access is safe.
 		args.attributes = args.attributes || {};
+
+		// Site logo is an image — CSS color attrs cannot edit it. Force the
+		// model onto blu/edit-logo (works even when only the header is selected).
+		if (block.name === LOGO_BLOCK && isCssColorPatch(args.attributes)) {
+			return {
+				id: toolCall.id,
+				result: [
+					{
+						type: "text",
+						text: JSON.stringify({
+							success: false,
+							error:
+								"core/site-logo is an image — CSS color attributes cannot change its appearance. Call blu/edit-logo(prompt=<what to change>) instead. You do not need the logo block selected.",
+							next_step:
+								'Call blu/edit-logo with a prompt describing the change (e.g. prompt="change the logo color to navy blue").',
+						}),
+					},
+				],
+				isError: true,
+			};
+		}
 
 		// ── Generate or edit image from prompt if provided ──
 		// Routes to blu-edit-image when the block already has a URL, otherwise blu-generate-image.
@@ -74,6 +134,27 @@ export async function handleUpdateBlockAttrs(toolCall, args, ctx) {
 
 		if (args.attributes.url && IMAGE_BLOCKS.has(block.name) && !("id" in args.attributes)) {
 			args.attributes.id = 0;
+		}
+
+		// Navigation links use label, not content.
+		if (
+			(block.name === "core/navigation-link" || block.name === "core/navigation-submenu") &&
+			"content" in args.attributes &&
+			!("label" in args.attributes)
+		) {
+			args.attributes.label = args.attributes.content;
+			delete args.attributes.content;
+		}
+
+		if (block.name === "core/navigation-link" || block.name === "core/navigation-submenu") {
+			if (
+				args.attributes.id != null &&
+				(args.attributes.type === "page" || args.attributes.type === "post") &&
+				!("url" in args.attributes)
+			) {
+				args.attributes.url = null;
+			}
+			args.attributes = normalizeNavigationLinkAttrs(args.attributes);
 		}
 
 		// Detect no-op for content changes (text already matches)
@@ -133,8 +214,21 @@ export async function handleUpdateBlockAttrs(toolCall, args, ctx) {
 		}
 
 		// Deep-merge new attributes into existing ones (null removes keys)
-		const merged = deepMerge(block.attributes, args.attributes);
-		wpDispatch("core/block-editor").updateBlockAttributes(args.client_id, merged);
+		let merged =
+			block.name === "core/navigation-link" || block.name === "core/navigation-submenu"
+				? applyNavigationLinkAttrPatch(block.attributes, args.attributes)
+				: deepMerge(block.attributes, args.attributes);
+
+		const ancestorNav = await resolveRefNavigationForEdit(args.client_id);
+		let menuItems = null;
+		if (
+			ancestorNav &&
+			(block.name === "core/navigation-link" || block.name === "core/navigation-submenu")
+		) {
+			menuItems = await updateNavigationLinkAttributes(ancestorNav, args.client_id, merged);
+		} else {
+			wpDispatch("core/block-editor").updateBlockAttributes(args.client_id, merged);
+		}
 
 		// Build descriptive result message
 		let message = "Attributes updated";
@@ -142,13 +236,24 @@ export async function handleUpdateBlockAttrs(toolCall, args, ctx) {
 			const stripTags = (html) => (html || "").replace(/<[^>]+>/g, "").trim();
 			const newPlain = stripTags(args.attributes.content || "");
 			message = `Text set to "${newPlain.substring(0, 60)}"`;
+		} else if ("label" in args.attributes) {
+			message = `Label set to "${String(args.attributes.label).substring(0, 60)}"`;
 		} else if ("url" in args.attributes) {
 			message = "Image URL updated";
 		}
 
 		return {
 			id: toolCall.id,
-			result: [{ type: "text", text: JSON.stringify({ success: true, message }) }],
+			result: [
+				{
+					type: "text",
+					text: JSON.stringify({
+						success: true,
+						message,
+						...(menuItems ? { menu_items: menuItems } : {}),
+					}),
+				},
+			],
 			isError: false,
 			hasChanges: true,
 		};

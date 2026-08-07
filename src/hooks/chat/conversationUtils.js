@@ -269,10 +269,13 @@ export function createRetryTracker(maxRetries = MAX_SAME_TOOL_RETRIES) {
 		recordIteration(toolCalls) {
 			const batchKeys = new Set();
 			for (const tc of toolCalls) {
-				if (READ_ONLY_TOOLS.has(tc.name)) {
+				// READ_ONLY_TOOLS holds only the hyphen form, so a slash-form name
+				// would miss the exemption and trip retryLimitHit on exploration.
+				const name = (tc.name || "").replace(/\//g, "-");
+				if (READ_ONLY_TOOLS.has(name)) {
 					continue;
 				}
-				const key = `${tc.name}:${stableArgsHash(tc.arguments)}`;
+				const key = `${name}:${stableArgsHash(tc.arguments)}`;
 				batchKeys.add(key);
 			}
 			for (const key of batchKeys) {
@@ -329,7 +332,8 @@ export function buildMessageWithAttachments(message, attachments) {
 				"\n- To blend/edit a block image: use the URL as reference_url in blu/edit-image." +
 				"\n- To replace the site logo (two mandatory steps in order):" +
 				"\n  Step 1: call blu/edit-image(source_url=<uploaded_url>, prompt='remove background and trim whitespace', background:transparent, trim:true)" +
-				"\n  Step 2: call blu/set-logo-from-image(source_url=<url_returned_by_step_1>) — use the URL from Step 1, not the original uploaded URL.";
+				"\n  Step 2: call blu/set-logo-from-image(source_url=<url_returned_by_step_1>) — use the URL from Step 1, not the original uploaded URL." +
+				"\n- To modify the existing site logo (colors, text, layout, elements): call blu/edit-logo(prompt=<what to change>). Do NOT use blu/regenerate-logo for tweaks to the current logo.";
 		}
 	}
 
