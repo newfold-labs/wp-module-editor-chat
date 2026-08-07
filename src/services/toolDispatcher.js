@@ -23,10 +23,7 @@ import { snapshotBlocks } from "../utils/editorContext";
 import { safeParseJSON } from "../utils/jsonUtils";
 import { callAbility } from "./callAbility";
 import { handleContentCreation, CREATE_ABILITIES } from "./contentNavigation";
-import {
-	findHeaderRefNavigationBlock,
-	hydrateAllRefNavigationBlocks,
-} from "./navigationEditor";
+import { findHeaderRefNavigationBlock, hydrateAllRefNavigationBlocks } from "./navigationEditor";
 import {
 	appendGeneratedImageUrl,
 	getActiveImageEditTarget,
@@ -174,7 +171,7 @@ function normalizeBlockToolName(toolName) {
  *
  * @param {string} toolName
  * @param {Object} args
- * @return {{ toolName: string, args: Object }}
+ * @return {{ toolName: string, args: Object }} Resolved tool name and arguments.
  */
 function resolveClientToolCall(toolName, args) {
 	let resolvedName = toolName || "";
@@ -185,8 +182,8 @@ function resolveClientToolCall(toolName, args) {
 	}
 
 	if (resolvedName === "blu-call-ability" && resolvedArgs.ability_name) {
-		const { ability_name, parameters, ...rest } = resolvedArgs;
-		resolvedName = String(ability_name).replace(/\//g, "-");
+		const { ability_name: abilityName, parameters, ...rest } = resolvedArgs;
+		resolvedName = String(abilityName).replace(/\//g, "-");
 
 		let innerParams = parameters ?? {};
 		if (typeof innerParams === "string") {
@@ -210,7 +207,7 @@ function resolveClientToolCall(toolName, args) {
  * Normalize common alias param names for blu-insert-inner-block.
  *
  * @param {Object} args
- * @return {Object}
+ * @return {Object} Normalized args with parent navigation block resolved.
  */
 function normalizeInsertInnerBlockArgs(args) {
 	if (!args.parent_client_id) {
@@ -239,15 +236,11 @@ function normalizeInsertInnerBlockArgs(args) {
  * Resolve parent navigation block when inserting a menu link without parent_client_id.
  *
  * @param {Object} args
- * @return {Promise<Object>}
+ * @return {Promise<Object>} Normalized args with parent navigation block resolved.
  */
 async function resolveInsertInnerBlockArgs(args) {
 	normalizeInsertInnerBlockArgs(args);
-	if (
-		!args.parent_client_id &&
-		args.block_content &&
-		/navigation-link/.test(args.block_content)
-	) {
+	if (!args.parent_client_id && args.block_content && /navigation-link/.test(args.block_content)) {
 		await hydrateAllRefNavigationBlocks();
 		const nav = findHeaderRefNavigationBlock();
 		if (nav) {
@@ -261,7 +254,7 @@ async function resolveInsertInnerBlockArgs(args) {
  * MCP tools that return data the model must read (not "Applied successfully").
  *
  * @param {string} toolName
- * @return {boolean}
+ * @return {boolean} True if the tool returns data the model must read.
  */
 function isMcpDataTool(toolName) {
 	if (READ_TOOLS.has(toolName)) {
@@ -278,13 +271,12 @@ function isMcpDataTool(toolName) {
 
 /**
  * @param {string} text
- * @return {boolean}
+ * @return {boolean} True if the text is a client action stub.
  */
 function isClientActionStubText(text) {
 	try {
 		const parsed = JSON.parse(text);
-		const payload =
-			parsed?.message && typeof parsed.message === "object" ? parsed.message : parsed;
+		const payload = parsed?.message && typeof parsed.message === "object" ? parsed.message : parsed;
 		return Boolean(payload?.action && CLIENT_ACTION_TOOLS[payload.action]);
 	} catch {
 		return false;
@@ -304,7 +296,7 @@ function toolCallUsesBlockMutation(tc) {
  * Parse MCP ability responses that only authorize client-side block execution.
  *
  * @param {Object} mcpResult
- * @return {Object|null}
+ * @return {Object|null} Client action stub or null if not found.
  */
 function parseMcpClientActionStub(mcpResult) {
 	const text = mcpResult?.content?.[0]?.text;
@@ -313,8 +305,7 @@ function parseMcpClientActionStub(mcpResult) {
 	}
 	try {
 		const parsed = JSON.parse(text);
-		const payload =
-			parsed?.message && typeof parsed.message === "object" ? parsed.message : parsed;
+		const payload = parsed?.message && typeof parsed.message === "object" ? parsed.message : parsed;
 		if (payload?.action && CLIENT_ACTION_TOOLS[payload.action]) {
 			return payload;
 		}
@@ -328,10 +319,10 @@ function parseMcpClientActionStub(mcpResult) {
  * Run a block mutation locally when the server returned a client-action stub.
  *
  * @param {Object} stub
- * @param {Object} args      Original tool args (merged with stub fields).
+ * @param {Object} args     Original tool args (merged with stub fields).
  * @param {Object} toolCall
  * @param {Object} ctx
- * @return {Promise<Object|null>}
+ * @return {Promise<Object|null>} Result of the block mutation or null if not applicable.
  */
 async function executeClientActionFromStub(stub, args, toolCall, ctx) {
 	const merged = { ...args };
@@ -621,7 +612,11 @@ export async function executeToolCallsForREST(toolCalls, ctx) {
 				if (!result.isError && result.hasChanges) {
 					hasBlockEdits = true;
 				}
-			} else if (toolName === "blu-insert-inner-block" && args.parent_client_id && args.block_content) {
+			} else if (
+				toolName === "blu-insert-inner-block" &&
+				args.parent_client_id &&
+				args.block_content
+			) {
 				result = await handleInsertInnerBlock(toolCall, args, ctx);
 				if (!result.isError && result.hasChanges) {
 					hasBlockEdits = true;

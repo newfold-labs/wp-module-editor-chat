@@ -146,7 +146,6 @@ export const validateBlockMarkup = (blockContent) => {
 	// silently drops inner blocks.  This gives the AI a specific, fixable error.
 	const balance = checkTagBalance(blockContent);
 	if (!balance.balanced) {
-		// eslint-disable-next-line no-console
 		console.warn("[blockValidator] Tag balance check failed:", balance.details);
 		return {
 			valid: false,
@@ -206,9 +205,7 @@ export const validateBlockMarkup = (blockContent) => {
 
 	// Self-closing navigation-link: preserve JSON attrs — createBlock()+serialize()
 	// can drop them when the block type is not fully registered in this bundle.
-	const navLinkBlock = validBlocks.find(
-		(b) => (b.name || b.blockName) === "core/navigation-link"
-	);
+	const navLinkBlock = validBlocks.find((b) => (b.name || b.blockName) === "core/navigation-link");
 	if (
 		validBlocks.length === 1 &&
 		navLinkBlock &&
@@ -270,7 +267,7 @@ export const validateBlockMarkup = (blockContent) => {
 		const postNormCount = deepBlockCount(reParsed);
 		if (preNormCount > 0 && postNormCount < preNormCount) {
 			const lost = preNormCount - postNormCount;
-			// eslint-disable-next-line no-console
+
 			console.warn(
 				`[blockValidator] Normalization lost ${lost} of ${preNormCount} blocks (${postNormCount} remain)`
 			);

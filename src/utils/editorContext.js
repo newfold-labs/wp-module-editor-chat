@@ -57,13 +57,10 @@ function serializeBlockMarkup(blockEditor, clientId) {
 		const innerBlocks = blockEditor.getBlocks(clientId);
 		markup = innerBlocks.map((b) => wpSerialize(b)).join("\n");
 		if (!markup && fullBlock.name === "core/navigation" && fullBlock.attributes?.ref) {
-			const entity = wp.data.select("core").getEntityRecord(
-				"postType",
-				"wp_navigation",
-				fullBlock.attributes.ref
-			);
-			const raw =
-				entity?.content?.raw || entity?.content?.rendered || entity?.content || "";
+			const entity = wp.data
+				.select("core")
+				.getEntityRecord("postType", "wp_navigation", fullBlock.attributes.ref);
+			const raw = entity?.content?.raw || entity?.content?.rendered || entity?.content || "";
 			markup = typeof raw === "string" ? raw : "";
 		}
 	} else {

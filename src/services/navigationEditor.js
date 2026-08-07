@@ -26,7 +26,7 @@ const sessionNavigationContentByEntityId = new Map();
 
 /**
  * @param {string|number} entityId
- * @param {string} rawContent
+ * @param {string}        rawContent
  */
 function cacheNavigationSessionContent(entityId, rawContent) {
 	const key = normalizeNavigationEntityId(entityId);
@@ -37,7 +37,7 @@ function cacheNavigationSessionContent(entityId, rawContent) {
 
 /**
  * @param {string|number} entityId
- * @return {string|undefined}
+ * @return {string|undefined} Raw content of the navigation entity or undefined if not found.
  */
 function getCachedNavigationSessionContent(entityId) {
 	const key = normalizeNavigationEntityId(entityId);
@@ -54,7 +54,7 @@ export function markNavigationEntityTouched(entityId) {
 }
 
 /**
- * @return {Array<string|number>}
+ * @return {Array<string|number>} Array of navigation entity IDs that have been touched this session.
  */
 export function getTouchedNavigationEntityIds() {
 	return [...touchedNavigationEntityIds];
@@ -69,7 +69,7 @@ export function clearTouchedNavigationEntityIds() {
  * Normalize wp_navigation entity IDs for consistent core-data lookups.
  *
  * @param {string|number|null|undefined} entityId
- * @return {string|null}
+ * @return {string|null} Normalized navigation entity ID or null if not found.
  */
 function normalizeNavigationEntityId(entityId) {
 	if (entityId == null || entityId === "") {
@@ -82,7 +82,7 @@ function normalizeNavigationEntityId(entityId) {
  * Extract raw block markup from a wp_navigation entity record.
  *
  * @param {Object|null|undefined} record
- * @return {string|null}
+ * @return {string|null} Raw block markup from the navigation entity or null if not found.
  */
 function extractNavigationEntityContentRaw(record) {
 	if (!record?.content) {
@@ -103,9 +103,9 @@ function extractNavigationEntityContentRaw(record) {
 /**
  * Read edited navigation entity content, trying both string and numeric IDs.
  *
- * @param {Object} coreSelect core store selector.
+ * @param {Object}        coreSelect core store selector.
  * @param {string|number} entityId
- * @return {string|null}
+ * @return {string|null} Raw block markup from the navigation entity or null if not found.
  */
 function getEditedNavigationContentRaw(coreSelect, entityId) {
 	const normalized = normalizeNavigationEntityId(entityId);
@@ -134,7 +134,7 @@ function getEditedNavigationContentRaw(coreSelect, entityId) {
  * Normalize navigation-link attrs before persisting to wp_navigation.
  *
  * @param {Object} attrs
- * @return {Object}
+ * @return {Object} Normalized navigation link attributes.
  */
 export function normalizeNavigationLinkAttrs(attrs) {
 	const next = { ...attrs };
@@ -147,8 +147,7 @@ export function normalizeNavigationLinkAttrs(attrs) {
 	}
 
 	const isPostReference =
-		next.id != null &&
-		(next.type === "page" || next.type === "post" || next.kind === "post-type");
+		next.id != null && (next.type === "page" || next.type === "post" || next.kind === "post-type");
 
 	if (isPostReference) {
 		if ((next.type === "page" || next.type === "post") && !next.kind) {
@@ -169,7 +168,7 @@ export function normalizeNavigationLinkAttrs(attrs) {
  * Strip HTML tags from a post title string.
  *
  * @param {string} html
- * @return {string}
+ * @return {string} HTML stripped of tags.
  */
 function stripHtml(html) {
 	if (typeof html !== "string") {
@@ -180,7 +179,7 @@ function stripHtml(html) {
 
 /**
  * @param {Object|null|undefined} rec core entity record.
- * @return {string}
+ * @return {string} Page title from the record or empty string if not found.
  */
 function pageTitleFromRecord(rec) {
 	if (!rec?.title) {
@@ -195,7 +194,7 @@ function pageTitleFromRecord(rec) {
 /**
  * @param {number} id
  * @param {string} postType
- * @return {Promise<string>}
+ * @return {Promise<string>} Page title from the REST API or empty string if not found.
  */
 async function fetchPostTitleViaRest(id, postType = "page") {
 	const endpoint = postType === "post" ? "posts" : "pages";
@@ -217,7 +216,7 @@ async function fetchPostTitleViaRest(id, postType = "page") {
  * Ensure page/post navigation links always have a visible label before save.
  *
  * @param {Object} attrs
- * @return {Object}
+ * @return {Object} Finalized navigation link attributes.
  */
 export function finalizeNavigationLinkLabel(attrs) {
 	const next = { ...attrs };
@@ -239,7 +238,7 @@ export function finalizeNavigationLinkLabel(attrs) {
  *
  * @param {Object} current Existing block attributes.
  * @param {Object} patch   Incoming attribute patch.
- * @return {Object}
+ * @return {Object} Navigation link attributes with clears applied.
  */
 export function applyNavigationLinkAttrPatch(current, patch) {
 	const withClears = { ...patch };
@@ -258,11 +257,12 @@ export function applyNavigationLinkAttrPatch(current, patch) {
  * Build block markup for a new navigation-link (no stale url/id from duplicates).
  *
  * @param {Object} params
- * @param {string} params.label
- * @param {string} [params.type]
- * @param {number} params.id
- * @param {string} [params.kind]
- * @return {string}
+ * @param {string} params.label  Link label.
+ * @param {string} [params.type] Link type (page/post/custom).
+ * @param {number} params.id     Linked page/post id.
+ * @param {string} [params.kind] Link kind.
+ * @param {string} params.url    Link URL.
+ * @return {string} Navigation link markup.
  */
 export function buildNavigationLinkMarkup({ label, type = "page", id, kind = "post-type", url }) {
 	const attrs = normalizeNavigationLinkAttrs({ label, type, id, kind, url });
@@ -271,8 +271,8 @@ export function buildNavigationLinkMarkup({ label, type = "page", id, kind = "po
 
 /**
  * @param {number|string} pageId
- * @param {string} [type]
- * @return {Promise<string>}
+ * @param {string}        [type]
+ * @return {Promise<string>} Page title from the REST API or empty string if not found.
  */
 export async function getPageTitleForNavigationLink(pageId, type = "page") {
 	const postType = type === "post" ? "post" : "page";
@@ -305,7 +305,7 @@ export async function getPageTitleForNavigationLink(pageId, type = "page") {
  * Normalize menu query strings for comparison.
  *
  * @param {string} value
- * @return {string}
+ * @return {string} Normalized menu query string.
  */
 export function normalizeNavigationMenuQuery(value) {
 	return String(value || "")
@@ -319,7 +319,7 @@ export function normalizeNavigationMenuQuery(value) {
  *
  * @param {string} intendedLabel
  * @param {string} pageTitle
- * @return {boolean}
+ * @return {boolean} True if the intended label matches the page title.
  */
 export function navigationPageLabelsMatch(intendedLabel, pageTitle) {
 	const intended = normalizeNavigationMenuQuery(intendedLabel);
@@ -333,7 +333,7 @@ export function navigationPageLabelsMatch(intendedLabel, pageTitle) {
  * Ensure a navigation link's page/post id resolves in WordPress.
  *
  * @param {Object} attrs navigation-link attributes with id.
- * @return {Promise<void>}
+ * @return {Promise<void>} Void if the page/post exists, otherwise throws an error.
  */
 export async function assertNavigationPageExists(attrs) {
 	if (attrs?.id == null || attrs.id === "") {
@@ -351,7 +351,11 @@ export async function assertNavigationPageExists(attrs) {
 	}
 }
 
-/** @deprecated Use assertNavigationPageExists — custom menu labels are allowed. */
+/**
+ * @param {Object} attrs Navigation link attributes.
+ * @return {Promise<void>} Resolves when the linked page exists.
+ * @deprecated Use assertNavigationPageExists — custom menu labels are allowed.
+ */
 export async function assertNavigationLinkPageMatch(attrs) {
 	return assertNavigationPageExists(attrs);
 }
@@ -360,7 +364,7 @@ export async function assertNavigationLinkPageMatch(attrs) {
  * Resolve label/url for a page/post navigation-link from core data.
  *
  * @param {Object} attrs Partial navigation-link attributes.
- * @return {Promise<Object>}
+ * @return {Promise<Object>} Normalized navigation link attributes.
  */
 export async function resolvePageNavigationAttrs(attrs) {
 	const next = { ...(attrs || {}) };
@@ -422,7 +426,7 @@ export async function resolvePageNavigationAttrs(attrs) {
  * Normalize parsed navigation-link blocks before entity insert.
  *
  * @param {Array} parsedBlocks
- * @return {Array}
+ * @return {Array} Normalized parsed navigation links.
  */
 export function normalizeParsedNavigationLinks(parsedBlocks) {
 	return (parsedBlocks || []).map((block) => {
@@ -439,7 +443,7 @@ export function normalizeParsedNavigationLinks(parsedBlocks) {
  * Build parsed navigation-link blocks from normalized attrs (entity-safe insert).
  *
  * @param {Object} attrs navigation-link attributes.
- * @return {Array|null}
+ * @return {Array|null} Parsed navigation link block or null if not found.
  */
 export function buildParsedNavigationLinkFromAttrs(attrs) {
 	if (!attrs || (attrs.id == null && !attrs.url)) {
@@ -462,7 +466,7 @@ export function buildParsedNavigationLinkFromAttrs(attrs) {
  * Convert parsed menu blocks to editor block instances, preserving nav-link attrs.
  *
  * @param {Array} parsedBlocks Parsed block tree from the navigation entity.
- * @return {Array<Object>} Editor-ready block instances.
+ * @return {Array<Object>} Navigation editor blocks.
  */
 export function createNavigationEditorBlocks(parsedBlocks) {
 	return normalizeParsedNavigationLinks(parsedBlocks).map((block) => {
@@ -486,7 +490,7 @@ export function createNavigationEditorBlocks(parsedBlocks) {
  * Build wp_navigation entity markup from editor blocks without serialize().
  *
  * @param {Array<Object>} blocks Navigation menu inner blocks.
- * @return {string}
+ * @return {string} Serialized navigation menu blocks.
  */
 export function serializeNavigationMenuBlocks(blocks) {
 	return (blocks || [])
@@ -513,7 +517,7 @@ export function serializeNavigationMenuBlocks(blocks) {
  * Build wp_navigation entity markup from parsed blocks (source of truth for saves).
  *
  * @param {Array<Object>} parsedBlocks Parsed navigation menu blocks.
- * @return {string}
+ * @return {string} Serialized navigation parsed blocks.
  */
 export function serializeNavigationParsedBlocks(parsedBlocks) {
 	return normalizeParsedNavigationLinks(parsedBlocks)
@@ -548,7 +552,7 @@ export function serializeNavigationParsedBlocks(parsedBlocks) {
  * Whether a block is a linked navigation menu (core/navigation with ref).
  *
  * @param {Object} block Block object.
- * @return {boolean}
+ * @return {boolean} True if the block is a linked navigation menu.
  */
 export const isRefNavigation = (block) => {
 	return block?.name === "core/navigation" && Boolean(block.attributes?.ref);
@@ -558,7 +562,7 @@ export const isRefNavigation = (block) => {
  * Get the wp_navigation entity record for a linked navigation block.
  *
  * @param {Object} navBlock core/navigation block with ref.
- * @return {Promise<Object|null>}
+ * @return {Promise<Object|null>} wp_navigation entity record or null if not found.
  */
 export const getNavigationEntity = async (navBlock) => {
 	if (!navBlock?.attributes?.ref) {
@@ -573,7 +577,7 @@ export const getNavigationEntity = async (navBlock) => {
  * Resolve wp_navigation entity ID from a navigation block.
  *
  * @param {Object} navBlock core/navigation block.
- * @return {Promise<string|number|null>}
+ * @return {Promise<string|number|null>} wp_navigation entity ID or null if not found.
  */
 const getNavigationEntityId = async (navBlock) => {
 	if (navBlock?.attributes?.ref) {
@@ -585,38 +589,8 @@ const getNavigationEntityId = async (navBlock) => {
 };
 
 /**
- * Fetch navigation menu content from the wp_navigation entity.
- *
- * @param {Object} navBlock    core/navigation block with ref.
- * @param {Object} coreResolve Optional core resolve selector.
- * @return {Promise<string>}
- */
-const fetchNavigationContent = async (navBlock, coreResolve = null) => {
-	const entityId = normalizeNavigationEntityId(navBlock?.attributes?.ref);
-	if (!entityId) {
-		return "";
-	}
-
-	const coreSelect = select("core");
-	const editedRaw = getEditedNavigationContentRaw(coreSelect, entityId);
-	if (editedRaw != null) {
-		return editedRaw;
-	}
-
-	const resolve = coreResolve || resolveSelect("core");
-	const numericId = Number(entityId);
-	const rec =
-		(await resolve.getEntityRecord("postType", "wp_navigation", entityId)) ||
-		(!Number.isNaN(numeric)
-			? await resolve.getEntityRecord("postType", "wp_navigation", numericId)
-			: null);
-
-	return extractNavigationEntityContentRaw(rec) || "";
-};
-
-/**
  * @param {Object} block Parsed or editor block.
- * @return {Object}
+ * @return {Object} Navigation link attributes.
  */
 function navigationLinkAttrsFromBlock(block) {
 	return block?.attributes || block?.attrs || {};
@@ -626,7 +600,7 @@ function navigationLinkAttrsFromBlock(block) {
  * Whether parsed navigation links have enough data to be safe edit sources.
  *
  * @param {Array} parsedBlocks
- * @return {boolean}
+ * @return {boolean} True if the parsed navigation links have enough data to be safe edit sources.
  */
 function parsedNavigationLinksLookValid(parsedBlocks) {
 	for (const block of parsedBlocks || []) {
@@ -653,7 +627,7 @@ function parsedNavigationLinksLookValid(parsedBlocks) {
  * Fetch saved (server) navigation entity markup — ignores pending edits.
  *
  * @param {Object} navBlock
- * @return {Promise<string>}
+ * @return {Promise<string>} Saved navigation entity markup or empty string if not found.
  */
 async function fetchSavedNavigationContent(navBlock) {
 	const entityId = normalizeNavigationEntityId(navBlock?.attributes?.ref);
@@ -676,31 +650,24 @@ async function fetchSavedNavigationContent(navBlock) {
  * Load parsed navigation menu blocks for entity edits (entity-first).
  *
  * @param {Object} navBlock core/navigation block with ref.
- * @return {Promise<Array>}
+ * @return {Promise<Array>} Parsed navigation menu blocks.
  */
 export async function getNavigationParsedBlocksForEdit(navBlock) {
 	const entityId = normalizeNavigationEntityId(navBlock?.attributes?.ref);
-	const coreSelect = select("core");
 
 	if (entityId) {
 		const cachedRaw = getCachedNavigationSessionContent(entityId);
 		if (cachedRaw != null) {
 			const cachedParsed = normalizeParsedNavigationLinks(parse(cachedRaw));
-			if (
-				cachedParsed.length === 0 ||
-				parsedNavigationLinksLookValid(cachedParsed)
-			) {
+			if (cachedParsed.length === 0 || parsedNavigationLinksLookValid(cachedParsed)) {
 				return cachedParsed;
 			}
 		}
 
-		const editedRaw = getEditedNavigationContentRaw(coreSelect, entityId);
+		const editedRaw = getEditedNavigationContentRaw(select("core"), entityId);
 		if (editedRaw != null) {
 			const editedParsed = normalizeParsedNavigationLinks(parse(editedRaw));
-			if (
-				editedParsed.length === 0 ||
-				parsedNavigationLinksLookValid(editedParsed)
-			) {
+			if (editedParsed.length === 0 || parsedNavigationLinksLookValid(editedParsed)) {
 				return editedParsed;
 			}
 		}
@@ -713,10 +680,10 @@ export async function getNavigationParsedBlocksForEdit(navBlock) {
 /**
  * Find a page link in the header navigation menu (editor-visible state first).
  *
- * @param {Object} navBlock
+ * @param {Object}        navBlock
  * @param {number|string} pageId
- * @param {string|null} [intendedLabel] When set, labelMatches is false if the link label differs.
- * @return {Promise<{present: boolean, labelMatches: boolean, label: string}>}
+ * @param {string|null}   [intendedLabel] When set, labelMatches is false if the link label differs.
+ * @return {Promise<{present: boolean, labelMatches: boolean, label: string}>} Navigation page link details.
  */
 export async function findNavigationPageLinkInMenu(navBlock, pageId, intendedLabel = null) {
 	await ensureNavigationInnerBlocksLoaded(navBlock);
@@ -768,10 +735,10 @@ export async function findNavigationPageLinkInMenu(navBlock, pageId, intendedLab
 /**
  * Whether a page is already linked in a navigation menu entity.
  *
- * @param {Object} navBlock
+ * @param {Object}        navBlock
  * @param {number|string} pageId
- * @param {string|null} [intendedLabel]
- * @return {Promise<boolean>}
+ * @param {string|null}   [intendedLabel]
+ * @return {Promise<boolean>} True if the navigation entity has a page link.
  */
 export async function navigationEntityHasPageLink(navBlock, pageId, intendedLabel = null) {
 	const found = await findNavigationPageLinkInMenu(navBlock, pageId, intendedLabel);
@@ -781,10 +748,10 @@ export async function navigationEntityHasPageLink(navBlock, pageId, intendedLabe
 /**
  * Reload navigation inner blocks from the wp_navigation entity (never serialize()).
  *
- * @param {Object} navBlock core/navigation block with ref.
- * @param {Object} [options]
+ * @param {Object}  navBlock              core/navigation block with ref.
+ * @param {Object}  [options]
  * @param {boolean} [options.force=false] Replace inner blocks even when already loaded.
- * @return {Promise<Array>}
+ * @return {Promise<Array>} Navigation inner blocks.
  */
 export async function syncNavigationInnerBlocksFromEntity(navBlock, { force = false } = {}) {
 	if (!isRefNavigation(navBlock)) {
@@ -800,14 +767,10 @@ export async function syncNavigationInnerBlocksFromEntity(navBlock, { force = fa
 			ids.push(numericId);
 		}
 		for (const id of ids) {
-			coreDispatch.invalidateResolution("getEntityRecord", [
-				"postType",
-				"wp_navigation",
-				id,
-			]);
+			coreDispatch.invalidateResolution("getEntityRecord", ["postType", "wp_navigation", id]);
 		}
 		await resolveSelect("core").getEntityRecord("postType", "wp_navigation", entityId);
-		await new Promise((resolve) => requestAnimationFrame(resolve));
+		await new Promise((resolve) => setTimeout(resolve, 0));
 	}
 
 	return ensureNavigationInnerBlocksLoaded(navBlock, { force: true });
@@ -816,9 +779,9 @@ export async function syncNavigationInnerBlocksFromEntity(navBlock, { force = fa
 /**
  * Persist parsed navigation blocks to the wp_navigation entity.
  *
- * @param {Object} navBlock       core/navigation block with ref.
+ * @param {Object} navBlock     core/navigation block with ref.
  * @param {Array}  parsedBlocks Parsed menu blocks (post-modifyFn).
- * @return {Promise<Object>}
+ * @return {Promise<Object>} Navigation menu update result (success flag, message, etc.).
  */
 async function updateNavigationContentFromParsed(navBlock, parsedBlocks) {
 	try {
@@ -855,7 +818,6 @@ async function updateNavigationContentFromParsed(navBlock, parsedBlocks) {
 			content: updatedContent,
 		};
 	} catch (error) {
-		// eslint-disable-next-line no-console
 		console.error("Error updating navigation menu:", error);
 		return {
 			success: false,
@@ -870,7 +832,7 @@ async function updateNavigationContentFromParsed(navBlock, parsedBlocks) {
  *
  * @param {Object} navBlock           core/navigation block with ref.
  * @param {Array}  updatedInnerBlocks Serialized inner blocks.
- * @return {Promise<Object>}
+ * @return {Promise<Object>} Navigation menu update result (success flag, message, etc.).
  */
 export const updateNavigationContent = async (navBlock, updatedInnerBlocks) => {
 	try {
@@ -906,7 +868,6 @@ export const updateNavigationContent = async (navBlock, updatedInnerBlocks) => {
 			entityId,
 		};
 	} catch (error) {
-		// eslint-disable-next-line no-console
 		console.error("Error updating navigation menu:", error);
 		return {
 			success: false,
@@ -920,7 +881,7 @@ export const updateNavigationContent = async (navBlock, updatedInnerBlocks) => {
  * Walk up the block tree and return the closest ancestor linked navigation block.
  *
  * @param {string} clientId Target block clientId.
- * @return {Object|null}
+ * @return {Object|null} Closest ancestor linked navigation block or null if not found.
  */
 export function findAncestorRefNavigation(clientId) {
 	const { getBlockRootClientId, getBlock } = select("core/block-editor");
@@ -940,7 +901,7 @@ export function findAncestorRefNavigation(clientId) {
  *
  * @param {string} navigationClientId Navigation block clientId.
  * @param {string} targetClientId     Nested block clientId.
- * @return {Array<number>|null}
+ * @return {Array<number>|null} Index path from the navigation block to the nested block or null if not found.
  */
 export function getBlockPathInNavigation(navigationClientId, targetClientId) {
 	const { getBlockRootClientId, getBlockIndex } = select("core/block-editor");
@@ -958,9 +919,9 @@ export function getBlockPathInNavigation(navigationClientId, targetClientId) {
 /**
  * Modify a linked navigation menu entity and sync the editor.
  *
- * @param {Object}   navBlock  core/navigation block with ref.
+ * @param {Object}   navBlock core/navigation block with ref.
  * @param {Function} modifyFn Takes parsed menu blocks, returns modified blocks.
- * @return {Promise<Object>}
+ * @return {Promise<Object>} Navigation menu update result (success flag, message, etc.).
  */
 export async function modifyNavigationEntity(navBlock, modifyFn) {
 	const parsedBlocks = await getNavigationParsedBlocksForEdit(navBlock);
@@ -982,8 +943,10 @@ export async function modifyNavigationEntity(navBlock, modifyFn) {
  *
  * Ref-based menus may render as self-closing until inner blocks are hydrated.
  *
- * @param {Object} navBlock core/navigation block with ref.
- * @return {Promise<Array>} Inner blocks now present in the editor.
+ * @param {Object}  navBlock        core/navigation block with ref.
+ * @param {Object}  [options]       Options object.
+ * @param {boolean} [options.force] Force re-hydration even if links look valid.
+ * @return {Promise<Array>} Navigation inner blocks that are now present in the editor.
  */
 export async function ensureNavigationInnerBlocksLoaded(navBlock, options = {}) {
 	const { force = false } = options;
@@ -1020,7 +983,7 @@ export async function ensureNavigationInnerBlocksLoaded(navBlock, options = {}) 
  * Resolve a linked navigation block and ensure its menu items are editable.
  *
  * @param {string} clientId Any block inside a linked navigation menu.
- * @return {Promise<Object|null>} Ancestor navigation block with hydrated children.
+ * @return {Promise<Object|null>} Ancestor navigation block with hydrated children or null if not found.
  */
 export async function resolveRefNavigationForEdit(clientId) {
 	const ancestor = findAncestorRefNavigation(clientId);
@@ -1035,7 +998,7 @@ export async function resolveRefNavigationForEdit(clientId) {
  * Find every linked navigation block in a block tree.
  *
  * @param {Array} blocks Block tree from the editor.
- * @return {Array<Object>} core/navigation blocks with a ref attribute.
+ * @return {Array<Object>} Array of core/navigation blocks with a ref attribute.
  */
 export function findRefNavigationBlocks(blocks) {
 	const found = [];
@@ -1056,7 +1019,7 @@ export function findRefNavigationBlocks(blocks) {
 /**
  * Walk the full editor tree and return the first linked header navigation block.
  *
- * @return {Object|null} core/navigation block with ref, if any.
+ * @return {Object|null} core/navigation block with ref or null if not found.
  */
 export function findHeaderRefNavigationBlock() {
 	const blockEditor = select("core/block-editor");
@@ -1102,7 +1065,7 @@ export function findHeaderRefNavigationBlock() {
 /**
  * Load every linked navigation menu in the editor (for menu-item tool targeting).
  *
- * @return {Promise<Array<Object>>}
+ * @return {Promise<Array<Object>>} Array of linked navigation blocks.
  */
 export async function hydrateAllRefNavigationBlocks() {
 	const blockEditor = select("core/block-editor");
@@ -1129,11 +1092,11 @@ export async function hydrateAllRefNavigationBlocks() {
  * Resolve a navigation-link block, hydrating linked menus first when needed.
  *
  * @param {string} clientId
- * @return {Promise<Object|null>}
+ * @return {Promise<Object|null>} Navigation block or null if not found.
  */
 export async function ensureMenuBlockAccessible(clientId) {
 	const blockEditor = select("core/block-editor");
-	let block = blockEditor.getBlock(clientId);
+	const block = blockEditor.getBlock(clientId);
 	if (block) {
 		return block;
 	}
@@ -1145,20 +1108,20 @@ export async function ensureMenuBlockAccessible(clientId) {
  * List navigation-link blocks inside a navigation container.
  *
  * @param {Object} navBlock core/navigation block.
- * @return {Array<Object>} Editor block objects.
+ * @return {Array<Object>} Navigation editor blocks.
  */
 export function getNavigationMenuLinks(navBlock) {
 	const blockEditor = select("core/block-editor");
-	return blockEditor.getBlocks(navBlock.clientId).filter(
-		(b) => b.name === "core/navigation-link" || b.name === "core/navigation-submenu"
-	);
+	return blockEditor
+		.getBlocks(navBlock.clientId)
+		.filter((b) => b.name === "core/navigation-link" || b.name === "core/navigation-submenu");
 }
 
 /**
  * Summarize menu items after a mutation (fresh clientIds for the model).
  *
  * @param {Object} navBlock core/navigation block.
- * @return {Array<{client_id: string, label: string}>}
+ * @return {Array<{client_id: string, label: string}>} Array of navigation menu items.
  */
 export function summarizeNavigationMenuItems(navBlock) {
 	return getNavigationMenuLinks(navBlock).map((link) => ({
@@ -1172,8 +1135,10 @@ export function summarizeNavigationMenuItems(navBlock) {
 /**
  * Summarize menu items from the navigation entity (reliable for tool results).
  *
- * @param {Object} navBlock core/navigation block with ref.
- * @return {Promise<Array<{label: string, page_id: number|null, type: string|null}>>}
+ * @param {Object}  navBlock                    core/navigation block with ref.
+ * @param {Object}  [options]                   Options object.
+ * @param {boolean} [options.includePageTitles] Resolve page titles for linked ids.
+ * @return {Promise<Array<{label: string, page_id: number|null, type: string|null}>>} Array of navigation menu items.
  */
 export async function summarizeNavigationMenuItemsFromEntity(navBlock, options = {}) {
 	const { includePageTitles = false } = options;
@@ -1200,8 +1165,8 @@ export async function summarizeNavigationMenuItemsFromEntity(navBlock, options =
 /**
  * Search page ids via REST (for menu delete fallback).
  *
- * @param {string} query
- * @return {Promise<Set<number>>}
+ * @param {string} query Search query.
+ * @return {Promise<Set<number>>} Matching page ids.
  */
 async function searchPageIdsMatchingQuery(query) {
 	const needle = String(query || "").trim();
@@ -1225,9 +1190,9 @@ async function searchPageIdsMatchingQuery(query) {
 /**
  * Resolve which parsed menu block indices should be removed for a query.
  *
- * @param {Array} parsedBlocks
- * @param {string} query User-provided label or page title.
- * @return {Promise<{ indices: Set<number>, matchedVia: string|null }>}
+ * @param {Array}  parsedBlocks Parsed navigation blocks.
+ * @param {string} query        User-provided label or page title.
+ * @return {Promise<{ indices: Set<number>, matchedVia: string|null }>} Matching indices and match strategy.
  */
 async function resolveMenuBlockIndicesToRemove(parsedBlocks, query) {
 	const needle = normalizeNavigationMenuQuery(query);
@@ -1300,8 +1265,8 @@ async function resolveMenuBlockIndicesToRemove(parsedBlocks, query) {
 /**
  * Parse navigation-link attrs from block markup (for post-insert verification).
  *
- * @param {string} markup
- * @return {Object|null}
+ * @param {string} markup Block markup string.
+ * @return {Object|null} Parsed navigation-link attributes, or null if not found.
  */
 export function parseNavigationLinkAttrsFromMarkup(markup) {
 	if (!markup || !markup.includes("navigation-link")) {
@@ -1321,11 +1286,11 @@ export function parseNavigationLinkAttrsFromMarkup(markup) {
 /**
  * Remove navigation-link items matching a label.
  *
- * @param {string} label Menu item label (case-insensitive).
- * @param {Object} [options]
- * @param {boolean} [options.once=false] Stop after the first matching link removed.
+ * @param {string}  label                      Menu item label (case-insensitive).
+ * @param {Object}  [options]
+ * @param {boolean} [options.once=false]       Stop after the first matching link removed.
  * @param {boolean} [options.headerOnly=false] Only touch the header linked-menu.
- * @return {Promise<{ removed: number, menu_items: Array }>}
+ * @return {Promise<{ removed: number, menu_items: Array }>} Removed count and updated menu items.
  */
 export async function deleteNavigationMenuItemsByLabel(label, options = {}) {
 	const { once = false, headerOnly = false } = options;
@@ -1345,10 +1310,7 @@ export async function deleteNavigationMenuItemsByLabel(label, options = {}) {
 
 	for (const nav of navBlocks) {
 		const parsedBlocks = await getNavigationParsedBlocksForEdit(nav);
-		const { indices, matchedVia: via } = await resolveMenuBlockIndicesToRemove(
-			parsedBlocks,
-			query
-		);
+		const { indices, matchedVia: via } = await resolveMenuBlockIndicesToRemove(parsedBlocks, query);
 		if (!indices.size) {
 			menuItems.push(
 				...(await summarizeNavigationMenuItemsFromEntity(nav, { includePageTitles: true }))
@@ -1392,23 +1354,23 @@ export async function deleteNavigationMenuItemsByLabel(label, options = {}) {
  * Resolve a navigation-link by clientId and/or label (after hydrating menus).
  *
  * @param {Object} params
- * @param {string} [params.client_id]
- * @param {string} [params.label]
- * @return {Promise<{ client_id: string, navBlock: Object, block: Object }|null>}
+ * @param {string} [params.client_id] Block client id.
+ * @param {string} [params.label]     Menu item label.
+ * @return {Promise<{ client_id: string, navBlock: Object, block: Object }|null>} Resolved link target or null.
  */
-export async function resolveNavigationMenuLinkTarget({ client_id, label } = {}) {
+export async function resolveNavigationMenuLinkTarget({ client_id: clientId, label } = {}) {
 	const navBlocks = await hydrateAllRefNavigationBlocks();
 	const blockEditor = select("core/block-editor");
 
-	if (client_id) {
+	if (clientId) {
 		for (const nav of navBlocks) {
-			const path = getBlockPathInNavigation(nav.clientId, client_id);
+			const path = getBlockPathInNavigation(nav.clientId, clientId);
 			if (!path) {
 				continue;
 			}
-			const block = blockEditor.getBlock(client_id);
+			const block = blockEditor.getBlock(clientId);
 			if (block) {
-				return { client_id, navBlock: nav, block };
+				return { client_id: clientId, navBlock: nav, block };
 			}
 		}
 	}
@@ -1464,11 +1426,11 @@ export async function updateNavigationLinkAttributes(navBlock, targetClientId, m
 }
 
 /**
- * Build human-readable menu item lines for AI context.
+ * Sync page title from core entity cache (best-effort).
  *
- * @param {Object} navBlock    core/navigation block.
- * @param {Object} blockEditor core/block-editor selector.
- * @return {string[]} Context lines (may be empty).
+ * @param {number|string} pageId Page or post id.
+ * @param {string}        [type] post type (`page` or `post`).
+ * @return {string} Page title or empty string.
  */
 function getPageTitleSync(pageId, type = "page") {
 	const postType = type === "post" ? "post" : "page";
@@ -1484,26 +1446,28 @@ function getPageTitleSync(pageId, type = "page") {
 	}
 }
 
+/**
+ * Build human-readable menu item lines for AI context.
+ *
+ * @param {Object} navBlock    core/navigation block.
+ * @param {Object} blockEditor core/block-editor selector.
+ * @return {string[]} Context lines (may be empty).
+ */
 export function buildNavigationMenuContextLines(navBlock, blockEditor) {
 	const inner = blockEditor.getBlocks(navBlock.clientId);
 	const lines = [];
 
 	if (inner.length > 0) {
 		inner.forEach((link, index) => {
-			if (
-				link.name !== "core/navigation-link" &&
-				link.name !== "core/navigation-submenu"
-			) {
+			if (link.name !== "core/navigation-link" && link.name !== "core/navigation-submenu") {
 				return;
 			}
 			const label = link.attributes?.label || "(untitled)";
 			const pageId = link.attributes?.id;
 			const pageType = link.attributes?.type || "page";
-			const pageTitle =
-				pageId != null && pageId !== "" ? getPageTitleSync(pageId, pageType) : "";
+			const pageTitle = pageId != null && pageId !== "" ? getPageTitleSync(pageId, pageType) : "";
 			const pageHint = pageId != null && pageId !== "" ? ` page:${pageId}` : "";
-			const titleHint =
-				pageTitle && pageTitle !== label ? ` page_title:"${pageTitle}"` : "";
+			const titleHint = pageTitle && pageTitle !== label ? ` page_title:"${pageTitle}"` : "";
 			lines.push(
 				`  [${index}] "${label}"${pageHint}${titleHint} (id:${link.clientId}) — delete by label with blu-delete-block`
 			);
@@ -1512,13 +1476,8 @@ export function buildNavigationMenuContextLines(navBlock, blockEditor) {
 	}
 
 	const coreStore = select("core");
-	const entity = coreStore.getEntityRecord(
-		"postType",
-		"wp_navigation",
-		navBlock.attributes.ref
-	);
-	const raw =
-		entity?.content?.raw || entity?.content?.rendered || entity?.content || "";
+	const entity = coreStore.getEntityRecord("postType", "wp_navigation", navBlock.attributes.ref);
+	const raw = entity?.content?.raw || entity?.content?.rendered || entity?.content || "";
 	if (!raw) {
 		lines.push(
 			`  (linked menu — call blu-get-block-markup on navigation id:${navBlock.clientId} to load items)`
@@ -1535,8 +1494,7 @@ export function buildNavigationMenuContextLines(navBlock, blockEditor) {
 		const label = link.attributes?.label || link.attrs?.label || "(untitled)";
 		const pageId = link.attributes?.id ?? link.attrs?.id;
 		const pageType = link.attributes?.type || link.attrs?.type || "page";
-		const pageTitle =
-			pageId != null && pageId !== "" ? getPageTitleSync(pageId, pageType) : "";
+		const pageTitle = pageId != null && pageId !== "" ? getPageTitleSync(pageId, pageType) : "";
 		const titleHint = pageTitle && pageTitle !== label ? ` page_title:"${pageTitle}"` : "";
 		lines.push(
 			`  [${index}] "${label}"${titleHint} (entity item — hydrate via navigation id:${navBlock.clientId})`
@@ -1552,7 +1510,7 @@ export function buildNavigationMenuContextLines(navBlock, blockEditor) {
  * Used after attribute updates that go through updateBlockAttributes.
  *
  * @param {Object} navBlock core/navigation block with ref.
- * @return {Promise<Object>}
+ * @return {Promise<Object>} Navigation entity update result (success flag, message, etc.).
  */
 export async function syncNavigationEntityFromEditor(navBlock) {
 	const blockEditor = select("core/block-editor");
@@ -1573,7 +1531,7 @@ function cloneParsedBlock(block) {
  *
  * @param {Array}         blocks Parsed block tree.
  * @param {Array<number>} path   Index path.
- * @return {Object|null}
+ * @return {Object|null} Block at the given path or null if not found.
  */
 function findBlockInParsedTree(blocks, path) {
 	if (!path || path.length === 0) {
@@ -1618,11 +1576,7 @@ export async function insertBlocksInNavigation(navBlock, parentPath, parsedToIns
 		const inner = parentBlock.innerBlocks || [];
 		const insertAt =
 			typeof index === "number" && index >= 0 ? Math.min(index, inner.length) : inner.length;
-		const updatedInner = [
-			...inner.slice(0, insertAt),
-			...parsedToInsert,
-			...inner.slice(insertAt),
-		];
+		const updatedInner = [...inner.slice(0, insertAt), ...parsedToInsert, ...inner.slice(insertAt)];
 
 		return replaceBlockAtPath(blocks, parentPath, [{ ...parentBlock, innerBlocks: updatedInner }]);
 	});
@@ -1633,7 +1587,7 @@ export async function insertBlocksInNavigation(navBlock, parentPath, parsedToIns
  *
  * @param {Object} navBlock       Ancestor core/navigation block.
  * @param {string} targetClientId navigation-link to clone.
- * @return {Promise<{newClientId: string|null, menu_items: Array}>}
+ * @return {Promise<{newClientId: string|null, menu_items: Array}>} New clientId and updated menu items.
  */
 export async function duplicateEditorBlockInNavigation(navBlock, targetClientId) {
 	const path = getBlockPathInNavigation(navBlock.clientId, targetClientId);

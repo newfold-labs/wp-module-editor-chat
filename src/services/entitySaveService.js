@@ -7,10 +7,7 @@
  */
 import { select } from "@wordpress/data";
 
-import {
-	clearTouchedNavigationEntityIds,
-	getTouchedNavigationEntityIds,
-} from "./navigationEditor";
+import { clearTouchedNavigationEntityIds, getTouchedNavigationEntityIds } from "./navigationEditor";
 
 const EDITABLE_ENTITY_TYPES = ["wp_template_part", "wp_navigation"];
 

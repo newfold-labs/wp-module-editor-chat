@@ -131,8 +131,7 @@ export const buildCompactBlockTree = (
 			// Recurse into inner blocks.
 			// Always expand children of selected blocks and navigation menus.
 			if (block.innerBlocks && block.innerBlocks.length > 0) {
-				const expandChildren =
-					isSelected || insideSelected || block.name === "core/navigation";
+				const expandChildren = isSelected || insideSelected || block.name === "core/navigation";
 				if (hasSelection && !expandChildren && !subtreeHasSelected(block.innerBlocks)) {
 					lines.push(`${"  ".repeat(depth + 1)}... (${block.innerBlocks.length} inner blocks)`);
 				} else {
@@ -172,8 +171,7 @@ export const getBlockMarkup = (clientId) => {
 				"wp_navigation",
 				block.attributes.ref
 			);
-			const raw =
-				entity?.content?.raw || entity?.content?.rendered || entity?.content || "";
+			const raw = entity?.content?.raw || entity?.content?.rendered || entity?.content || "";
 			blockContent = typeof raw === "string" ? raw : "";
 		}
 	} else {

@@ -5,7 +5,6 @@ import { appendGeneratedImageUrl } from "../imageCache";
 import { callImageAbility, getBlockImageUrl, parseImageAbilityUrl } from "../imageAbility";
 import { IMAGE_BLOCKS, LOGO_BLOCK } from "../blockToolbar/blockAI";
 import {
-	findAncestorRefNavigation,
 	applyNavigationLinkAttrPatch,
 	normalizeNavigationLinkAttrs,
 	resolveRefNavigationForEdit,
@@ -45,8 +44,6 @@ function isCssColorPatch(attributes) {
 }
 
 export async function handleUpdateBlockAttrs(toolCall, args, ctx) {
-	const { select: wpSelect, dispatch: wpDispatch } = wp.data;
-	const blockEditor = wpSelect("core/block-editor");
 	const block = await ensureMenuBlockAccessible(args.client_id);
 
 	if (!block) {
@@ -214,7 +211,7 @@ export async function handleUpdateBlockAttrs(toolCall, args, ctx) {
 		}
 
 		// Deep-merge new attributes into existing ones (null removes keys)
-		let merged =
+		const merged =
 			block.name === "core/navigation-link" || block.name === "core/navigation-submenu"
 				? applyNavigationLinkAttrPatch(block.attributes, args.attributes)
 				: deepMerge(block.attributes, args.attributes);
@@ -227,7 +224,7 @@ export async function handleUpdateBlockAttrs(toolCall, args, ctx) {
 		) {
 			menuItems = await updateNavigationLinkAttributes(ancestorNav, args.client_id, merged);
 		} else {
-			wpDispatch("core/block-editor").updateBlockAttributes(args.client_id, merged);
+			wp.data.dispatch("core/block-editor").updateBlockAttributes(args.client_id, merged);
 		}
 
 		// Build descriptive result message

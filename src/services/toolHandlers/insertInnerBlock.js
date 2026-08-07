@@ -13,9 +13,7 @@ export async function handleInsertInnerBlock(toolCall, args, ctx) {
 	await ctx.updateProgress(__("Inserting block…", "wp-module-editor-chat"), 400);
 	try {
 		// Strip escaped quotes the LLM may copy from JSON-encoded tool results
-		const rawMarkup = (args.block_content || args.block_markup || "")
-			.replace(/\\"/g, '"')
-			.trim();
+		const rawMarkup = (args.block_content || args.block_markup || "").replace(/\\"/g, '"').trim();
 
 		let intendedAttrs = parseNavigationLinkAttrsFromMarkup(rawMarkup);
 		if (intendedAttrs?.id != null) {
