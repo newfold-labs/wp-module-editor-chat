@@ -25,7 +25,7 @@ const SidebarHeader = ({ onNewChat, isNewChatDisabled = false }) => {
 			<div className="interface-complementary-area-header__title">
 				<Sparkles width={15} height={15} />
 				<h2>
-					{__("Blu Chat", "wp-module-editor-chat")}
+					{__("Bluehost AI", "wp-module-editor-chat")}
 					<span className="nfd-editor-chat-sidebar__beta-badge">Beta</span>
 				</h2>
 			</div>
