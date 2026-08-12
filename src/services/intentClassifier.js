@@ -14,11 +14,12 @@ export const DEFAULT_INTENT = {
 /**
  * Classify a user message and decompose it into the changes it asks for.
  *
- * @param {string} message       User-facing message text
- * @param {Object} sessionConfig Session config with workerUrl and sessionToken
+ * @param {string}      message       User-facing message text
+ * @param {Object}      sessionConfig Session config with workerUrl and sessionToken
+ * @param {AbortSignal} [signal]      Turn abort signal, so Stop cancels this request
  * @return {Promise<{ task: string, content_type: string|null, menu_edit: Object|null, steps: string[] }>} Classified intent
  */
-export async function classifyUserIntent(message, sessionConfig) {
+export async function classifyUserIntent(message, sessionConfig, signal) {
 	if (!message?.trim()) {
 		return DEFAULT_INTENT;
 	}
@@ -49,6 +50,7 @@ export async function classifyUserIntent(message, sessionConfig) {
 				locale,
 				context: currentPageTitle ? { current_page_title: currentPageTitle } : undefined,
 			}),
+			signal,
 		});
 
 		if (!response.ok) {

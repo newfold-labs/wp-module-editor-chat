@@ -3,6 +3,7 @@
  *
  * Plain async function (no React hooks). The orchestrator wraps it in useCallback.
  */
+import { createAbortError } from "../../utils/abortControl";
 import { safeParseJSON } from "../../utils/jsonUtils";
 import logger from "../../utils/logger";
 import { getAssistantDisplayMessage } from "./assistantResponse";
@@ -33,8 +34,14 @@ export async function streamCompletion(msgs, tools, options = {}, deps) {
 	// Model is controlled by the Worker's DEFAULT_MODEL env var.
 	// Only override if explicitly set via wp-config NFD_EDITOR_CHAT_MODEL.
 	const model = options.model || window.nfdEditorChat?.model || undefined;
-	const controller = new AbortController();
-	abortControllerRef.current = controller;
+
+	// Captured now: by the time this stream ends the ref may hold a newer turn's
+	// controller, which would report "not aborted" for work this turn started.
+	const signal = abortControllerRef.current?.signal;
+
+	if (signal?.aborted) {
+		throw createAbortError();
+	}
 
 	const stream = await client.chat.completions.create(
 		{
@@ -47,7 +54,7 @@ export async function streamCompletion(msgs, tools, options = {}, deps) {
 			temperature: options.temperature ?? 0.7,
 			max_completion_tokens: options.max_completion_tokens,
 		},
-		{ signal: controller.signal }
+		{ signal }
 	);
 
 	let fullMessage = "";
@@ -176,6 +183,13 @@ export async function streamCompletion(msgs, tools, options = {}, deps) {
 		}
 	}
 
+	// The SDK ends the iterator without throwing on abort, so a stopped stream
+	// looks complete but carries partial tool calls. Surface it as a real abort.
+	if (signal?.aborted) {
+		window.cancelAnimationFrame(streamUiRafId);
+		throw createAbortError();
+	}
+
 	// Flush any unresolved prefix buffer (response shorter than prefix length)
 	if (!prefixResolved && prefixBuffer && !options.jsonMessageDisplay) {
 		appendDisplayText(prefixBuffer);
@@ -188,7 +202,8 @@ export async function streamCompletion(msgs, tools, options = {}, deps) {
 
 	flushStreamUiNow();
 
-	abortControllerRef.current = null;
+	// Controller is deliberately not cleared — tool execution runs after this
+	// returns and Stop needs it live until the turn ends.
 
 	// Parse accumulated tool calls (with recovery for truncated JSON)
 	const finalToolCalls = Object.values(toolCallsInProgress).map((tc) => {
