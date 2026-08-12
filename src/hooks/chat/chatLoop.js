@@ -26,6 +26,7 @@ import {
 	PRESENT_PALETTE_OPTIONS_NUDGE,
 	buildCreationSummarizeNudge,
 	buildEditorContext,
+	buildRemainingStepsNudge,
 } from "../../utils/editorContext";
 import { executeToolCallsForREST } from "../../services/toolDispatcher";
 import { appendCreationLinkIfNeeded } from "../../services/contentNavigation";
@@ -66,7 +67,7 @@ function getToolsForIntent(intent, openaiTools) {
 	if (intentNeedsAllTools(intent)) {
 		return openaiTools;
 	}
-	if (intent?.task === "conversational") {
+	if (intent?.task === "conversational" && !intent?.steps?.length) {
 		return [];
 	}
 	return openaiTools.filter((t) => EDITOR_TOOLS.has(t.function.name));
@@ -133,6 +134,14 @@ export async function runChatLoop(userMessage, deps) {
 	let planShown = false;
 	// Consecutive passes that only gathered info (read-only tools, no change).
 	let readOnlyStreak = 0;
+	// Steps for a multi-part request, from the intent classifier. Empty, or 2+.
+	// While steps remain the turn keeps going instead of summarizing after the
+	// first tool round and dropping the rest of the request.
+	let plannedSteps = [];
+	// Tool rounds that changed something — N steps never need more than N.
+	let writeRounds = 0;
+	// One corrective pass per turn when the model signs off with steps unapplied.
+	let unfinishedNudgeUsed = false;
 	// True once the model has emitted a final tool-free reply for this turn.
 	let endedNaturally = false;
 	// True if the user stopped generation mid-turn (suppresses the closing pass).
@@ -184,6 +193,10 @@ export async function runChatLoop(userMessage, deps) {
 		intent.menu_edit,
 		intent.steps
 	);
+	if (intent.steps?.length > 1) {
+		plannedSteps = intent.steps;
+		logger.log("[EditorChat] Multi-step request:", plannedSteps);
+	}
 
 	while (iterations++ < MAX_TOOL_ITERATIONS) {
 		// Check if user aborted between iterations (e.g. during tool execution)
@@ -209,9 +222,13 @@ export async function runChatLoop(userMessage, deps) {
 
 		let nudge;
 		if (toolsJustExecuted) {
-			nudge = lastCreationOutcome
-				? buildCreationSummarizeNudge(lastCreationOutcome)
-				: SUMMARIZE_NUDGE;
+			if (lastCreationOutcome) {
+				nudge = buildCreationSummarizeNudge(lastCreationOutcome);
+			} else if (writeRounds < plannedSteps.length) {
+				nudge = buildRemainingStepsNudge(plannedSteps.slice(writeRounds));
+			} else {
+				nudge = SUMMARIZE_NUDGE;
+			}
 		} else if (markupJustProvided) {
 			nudge = MARKUP_PROVIDED_NUDGE;
 			markupJustProvided = false;
@@ -242,10 +259,10 @@ export async function runChatLoop(userMessage, deps) {
 			`[EditorChat] Tool pass #${iterations} LLM: ${(performance.now() - toolPassStart).toFixed(0)}ms (${toolCalls?.length || 0} tool calls)`
 		);
 
-		const assistantDisplayMessage = getAssistantDisplayMessage(content);
+		const parsed = parseAssistantResponse(content);
+		const assistantDisplayMessage = parsed?.message || content || "";
 
 		if (!toolCalls || toolCalls.length === 0) {
-			const parsed = parseAssistantResponse(content);
 			if (
 				parsed?.need_blocks_markup?.length &&
 				canRequestBlockMarkup() &&
@@ -307,6 +324,23 @@ export async function runChatLoop(userMessage, deps) {
 				continue;
 			}
 
+			// Signing off with planned work unapplied — this is where the model tells
+			// the user it added two services it never created. One corrective pass.
+			if (!unfinishedNudgeUsed && writeRounds < plannedSteps.length) {
+				unfinishedNudgeUsed = true;
+				conversationHistoryRef.current.push({ role: "assistant", content });
+				removeStreamingMessage(setMessages, streamMessageId);
+				conversationHistoryRef.current.push({
+					role: "system",
+					content: buildRemainingStepsNudge(plannedSteps.slice(writeRounds)),
+				});
+				readOnlyStreak = 0;
+				logger.log(
+					`[EditorChat] ${plannedSteps.length - writeRounds} step(s) unapplied — prompting once more`
+				);
+				continue;
+			}
+
 			conversationHistoryRef.current.push({
 				role: "assistant",
 				content,
@@ -330,7 +364,7 @@ export async function runChatLoop(userMessage, deps) {
 			if (tc.name !== "blu-call-ability") {
 				return { ...tc };
 			}
-			const parsed =
+			const envelope =
 				typeof tc.arguments === "string"
 					? (() => {
 							try {
@@ -342,8 +376,8 @@ export async function runChatLoop(userMessage, deps) {
 					: tc.arguments || {};
 			return {
 				...tc,
-				name: parsed.ability_name || tc.name,
-				arguments: parsed.parameters || {},
+				name: envelope.ability_name || tc.name,
+				arguments: envelope.parameters || {},
 			};
 		});
 		const { allRetried, retryLimitHit } = retryTracker.recordIteration(unwrappedCalls);
@@ -517,6 +551,7 @@ export async function runChatLoop(userMessage, deps) {
 			}
 		}
 		if (toolsJustExecuted) {
+			writeRounds++;
 			restoreAnimatedBlocksInEditor();
 		}
 

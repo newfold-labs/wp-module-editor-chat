@@ -158,7 +158,9 @@ Output rules:
 
 export const EXECUTE_NUDGE = `${ASSISTANT_JSON_FORMAT}
 
-For editing tasks where reasonable defaults exist (matching existing design, plausible placeholder content, standard icon choices), EXECUTE directly — do not ask clarifying questions unless the request is genuinely ambiguous.`;
+For editing tasks where reasonable defaults exist (matching existing design, plausible placeholder content, standard icon choices), EXECUTE directly — do not ask clarifying questions unless the request is genuinely ambiguous.
+
+Complete every change listed in <user_intent> steps — call all the tools needed in this same response. Do not stop after the first one.`;
 
 /**
  * Nudge injected after tools have been executed successfully.
@@ -184,6 +186,24 @@ Output rules:
 - Return ONLY valid JSON.
 - No explanations, no comments, no extra text.
 `;
+
+/**
+ * Nudge for a turn with steps still unapplied. Replaces {@link SUMMARIZE_NUDGE},
+ * whose "All requested changes are applied" is false mid-plan — the model would
+ * otherwise confirm a job it only half did.
+ *
+ * @param {string[]} remaining Steps not yet applied.
+ * @return {string} Nudge string for the next pass.
+ */
+export function buildRemainingStepsNudge(remaining) {
+	return `Not every requested change has been applied yet. Still to do:
+${remaining.map((step) => `- ${step}`).join("\n")}
+
+Call the tool(s) for the next unfinished item now. If one genuinely cannot be done, say which and why — never report work that no tool call performed.
+
+When everything is done, reply with JSON only and no tool calls:
+{"message":"One brief sentence covering what was done."}`;
+}
 
 /**
  * Build a summarize nudge after successful content creation.

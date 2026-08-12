@@ -146,8 +146,9 @@ export async function streamCompletion(msgs, tools, options = {}, deps) {
 
 		// Tool call deltas
 		if (delta.tool_calls) {
-			for (const toolCall of delta.tool_calls) {
-				const index = toolCall.index;
+			for (let i = 0; i < delta.tool_calls.length; i++) {
+				const toolCall = delta.tool_calls[i];
+				const index = toolCall.index ?? toolCall.id ?? i;
 				if (!toolCallsInProgress[index]) {
 					toolCallsInProgress[index] = {
 						id: toolCall.id || "",

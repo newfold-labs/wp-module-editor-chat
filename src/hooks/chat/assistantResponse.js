@@ -62,10 +62,30 @@ export function parseAssistantResponse(content) {
 	const match = trimmed.match(/\{[\s\S]*"message"[\s\S]*\}/);
 	if (match) {
 		const extracted = safeParseJSON(match[0]);
-		return normalize(extracted.value);
+		const fromExtracted = normalize(extracted.value);
+		if (fromExtracted?.message) {
+			return fromExtracted;
+		}
 	}
 
-	return null;
+	const loose = extractMessageLoosely(trimmed);
+	return loose ? { message: loose } : null;
+}
+
+/**
+ * Salvage the message from JSON the model broke — usually an unescaped quote in
+ * the message itself, which otherwise leaks the whole raw object into the chat.
+ * The greedy capture stops at the last quote before the close, keeping inner ones.
+ *
+ * @param {string} text Trimmed assistant output
+ * @return {string|null} Message text, or null if not recoverable
+ */
+function extractMessageLoosely(text) {
+	const match = text.match(/"message"\s*:\s*"([\s\S]*)"\s*(?:,\s*"need_blocks_markup"|\}|$)/);
+	if (!match) {
+		return null;
+	}
+	return match[1].replace(/\\"/g, '"').replace(/\\n/g, "\n").trim() || null;
 }
 
 /**
