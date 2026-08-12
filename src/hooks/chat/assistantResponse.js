@@ -69,6 +69,34 @@ export function parseAssistantResponse(content) {
 }
 
 /**
+ * Strip developer-facing tokens from text shown to site owners.
+ *
+ * @param {string} text Raw assistant message
+ * @return {string} Sanitized message
+ */
+export function sanitizeUserFacingMessage(text) {
+	if (!text || typeof text !== "string") {
+		return text || "";
+	}
+
+	let out = text;
+	// UUIDs (block clientIds leaked into prose)
+	out = out.replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, "");
+	// id:uuid / (id:uuid) patterns from block-tree citations
+	out = out.replace(/\(?\s*id:\s*[0-9a-f-]{36}\s*\)?/gi, "");
+	// Linked navigation entity refs
+	out = out.replace(/\bref:\s*\d+/gi, "");
+	out = out.replace(/\bref:N\b/gi, "");
+	// Block type slugs
+	out = out.replace(/\bcore\/[\w-]+\b/g, "");
+	// wp_navigation and similar internal terms
+	out = out.replace(/\bwp_navigation\b/gi, "");
+	out = out.replace(/\s+([,.;:!?])/g, "$1");
+	out = out.replace(/\s{2,}/g, " ").trim();
+	return out;
+}
+
+/**
  * User-visible text extracted from an assistant response.
  *
  * @param {string} content Raw assistant text
@@ -77,9 +105,9 @@ export function parseAssistantResponse(content) {
 export function getAssistantDisplayMessage(content) {
 	const parsed = parseAssistantResponse(content);
 	if (parsed?.message) {
-		return parsed.message;
+		return sanitizeUserFacingMessage(parsed.message);
 	}
-	return content || "";
+	return sanitizeUserFacingMessage(content || "");
 }
 
 /**

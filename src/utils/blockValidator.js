@@ -193,11 +193,35 @@ export const validateBlockMarkup = (blockContent) => {
 			if (!alreadyWrapped) {
 				logger.log(`[blockValidator] Auto-wrapping ${parsed[i].name} in ${wrapper}`);
 				const wrappedBlock = createBlock(wrapper, {}, [
-					createBlock(parsed[i].name, parsed[i].attributes || {}, parsed[i].innerBlocks || []),
+					createBlock(
+						parsed[i].name || parsed[i].blockName,
+						parsed[i].attributes || parsed[i].attrs || {},
+						parsed[i].innerBlocks || []
+					),
 				]);
 				parsed.splice(i, 1, wrappedBlock);
 			}
 		}
+	}
+
+	// Self-closing navigation-link: preserve JSON attrs — createBlock()+serialize()
+	// can drop them when the block type is not fully registered in this bundle.
+	const navLinkBlock = validBlocks.find(
+		(b) => (b.name || b.blockName) === "core/navigation-link"
+	);
+	if (
+		validBlocks.length === 1 &&
+		navLinkBlock &&
+		!blockContent.includes("</") &&
+		(navLinkBlock.attributes?.label ||
+			navLinkBlock.attrs?.label ||
+			navLinkBlock.attributes?.id != null ||
+			navLinkBlock.attrs?.id != null ||
+			navLinkBlock.attributes?.url ||
+			navLinkBlock.attrs?.url)
+	) {
+		logger.log("[blockValidator] Preserving self-closing navigation-link markup");
+		return { valid: true, blocks: validBlocks, correctedContent: blockContent.trim() };
 	}
 
 	// ── Always normalize ──
@@ -207,7 +231,9 @@ export const validateBlockMarkup = (blockContent) => {
 	try {
 		const recreate = (block) => {
 			const innerBlocks = (block.innerBlocks || []).map(recreate);
-			return createBlock(block.name, block.attributes || {}, innerBlocks);
+			const name = block.name || block.blockName;
+			const attributes = block.attributes || block.attrs || {};
+			return createBlock(name, attributes, innerBlocks);
 		};
 		const normalizedBlocks = parsed.map(recreate);
 		const normalizedContent = serialize(normalizedBlocks);
