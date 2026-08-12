@@ -1,9 +1,15 @@
 import { __ } from "@wordpress/i18n";
 
 import { validateBlockMarkup } from "../../utils/blockValidator";
+import { resolveAlt } from "../../utils/imageAlt";
 import { handleRewriteAction } from "../blockActions";
 import { callImageAbility, getBlockImageUrl } from "../imageAbility";
-import { appendGeneratedImageUrl, deduplicateImages, getGeneratedImageUrls } from "../imageCache";
+import {
+	appendGeneratedImageUrl,
+	deduplicateImages,
+	getGeneratedImages,
+	substituteImagePlaceholder,
+} from "../imageCache";
 import logger from "../../utils/logger";
 
 /**
@@ -37,11 +43,14 @@ export async function handleEditBlock(toolCall, args, ctx) {
 			const originalImageBlock = wpSelectForImage("core/block-editor").getBlock(args.client_id);
 			const existingImageUrl = getBlockImageUrl(originalImageBlock);
 
-			const imageUrls = [];
+			const images = [];
 			for (let i = 0; i < promptCount; i++) {
 				const prompt = args.image_prompts[i];
-				const { prompt: promptText, ...restPromptOpts } =
-					typeof prompt === "string" ? { prompt } : { prompt: prompt.prompt, ...prompt };
+				const {
+					prompt: promptText,
+					alt: promptAlt,
+					...restPromptOpts
+				} = typeof prompt === "string" ? { prompt } : { prompt: prompt.prompt, ...prompt };
 				const sourceUrl = i === 0 ? existingImageUrl : null;
 
 				await ctx.updateProgress(
@@ -65,8 +74,9 @@ export async function handleEditBlock(toolCall, args, ctx) {
 						const parsed = JSON.parse(mcpResult.content[0].text);
 						const url = parsed?.message?.url || parsed?.url;
 						if (url) {
-							imageUrls.push(url);
-							appendGeneratedImageUrl(url);
+							const alt = resolveAlt(promptAlt, promptText);
+							images.push({ url, alt });
+							appendGeneratedImageUrl(url, alt);
 						} else {
 							console.warn(
 								`[ToolExecutor:REST] edit-block: image ${i + 1} result had no URL`,
@@ -84,17 +94,31 @@ export async function handleEditBlock(toolCall, args, ctx) {
 				}
 			}
 
-			for (let i = 0; i < imageUrls.length; i++) {
-				args.block_content = args.block_content.replaceAll(`__IMG_${i + 1}__`, imageUrls[i]);
+			for (let i = 0; i < images.length; i++) {
+				args.block_content = substituteImagePlaceholder(
+					args.block_content,
+					i + 1,
+					images[i].url,
+					images[i].alt
+				);
 			}
 		} else if (args.image_urls && Array.isArray(args.image_urls) && args.image_urls.length > 0) {
 			for (let i = 0; i < args.image_urls.length; i++) {
-				args.block_content = args.block_content.replaceAll(`__IMG_${i + 1}__`, args.image_urls[i]);
+				args.block_content = substituteImagePlaceholder(
+					args.block_content,
+					i + 1,
+					args.image_urls[i]
+				);
 			}
-		} else if (getGeneratedImageUrls().length > 0) {
-			const cached = getGeneratedImageUrls();
+		} else if (getGeneratedImages().length > 0) {
+			const cached = getGeneratedImages();
 			for (let i = 0; i < Math.min(cached.length, uniquePlaceholders.length); i++) {
-				args.block_content = args.block_content.replaceAll(`__IMG_${i + 1}__`, cached[i]);
+				args.block_content = substituteImagePlaceholder(
+					args.block_content,
+					i + 1,
+					cached[i].url,
+					cached[i].alt
+				);
 			}
 		}
 	}
@@ -115,8 +139,8 @@ export async function handleEditBlock(toolCall, args, ctx) {
 	args.block_content = args.block_content.replace(/\\"/g, '"');
 
 	// ── Auto-deduplicate images ──
-	if (getGeneratedImageUrls().length > 0) {
-		const dedup = deduplicateImages(args.block_content, getGeneratedImageUrls());
+	if (getGeneratedImages().length > 0) {
+		const dedup = deduplicateImages(args.block_content, getGeneratedImages());
 		if (dedup.replacements.length > 0) {
 			args.block_content = dedup.markup;
 		}

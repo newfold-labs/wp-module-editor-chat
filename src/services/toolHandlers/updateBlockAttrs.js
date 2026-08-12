@@ -2,6 +2,7 @@ import { __ } from "@wordpress/i18n";
 
 import { deepMergeAttrs as deepMerge } from "../../utils/deepMerge";
 import { appendGeneratedImageUrl } from "../imageCache";
+import { resolveAlt } from "../../utils/imageAlt";
 import { callImageAbility, getBlockImageUrl, parseImageAbilityUrl } from "../imageAbility";
 import { IMAGE_BLOCKS, LOGO_BLOCK } from "../blockToolbar/blockAI";
 import {
@@ -104,7 +105,13 @@ export async function handleUpdateBlockAttrs(toolCall, args, ctx) {
 				const url = parseImageAbilityUrl(mcpResult);
 				if (url) {
 					args.attributes.url = url;
-					appendGeneratedImageUrl(url);
+					// Keep alt in step with the new image — deepMerge would otherwise
+					// carry the old one through and leave it describing the old photo.
+					const alt = resolveAlt(args.attributes.alt || imgOpts.alt, imgOpts.prompt);
+					if (alt) {
+						args.attributes.alt = alt;
+					}
+					appendGeneratedImageUrl(url, alt);
 				}
 			} catch {
 				// image generation/edit failed — non-critical
