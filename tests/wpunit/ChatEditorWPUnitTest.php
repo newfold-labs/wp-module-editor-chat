@@ -93,9 +93,12 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 		wp_set_current_user( $user_id );
 
 		new ChatEditor();
+
 		$this->assertIsInt(
 			has_action( 'admin_enqueue_scripts', array( ChatEditor::class, 'enqueue_site_editor_assets' ) )
 		);
+
+		wp_set_current_user( 0 );
 	}
 
 	/**
@@ -321,10 +324,13 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 		wp_set_current_user( $user_id );
 
 		new ChatEditor();
+
 		$this->assertSame(
 			10,
 			has_filter( 'block_editor_settings_all', array( ChatEditor::class, 'add_editor_canvas_styles' ) )
 		);
+
+		wp_set_current_user( 0 );
 	}
 
 	/**
