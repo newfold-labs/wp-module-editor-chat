@@ -7,6 +7,8 @@
 import { useCallback } from "@wordpress/element";
 
 import { persistGlobalStyles } from "../../services/globalStylesService";
+import { saveDirtyEditorEntities } from "../../services/entitySaveService";
+import { clearTouchedNavigationEntityIds } from "../../services/navigationEditor";
 import { restoreBlocks, restoreGlobalStyles } from "../../services/restoreHandlers";
 
 /**
@@ -48,22 +50,11 @@ const useChangeActions = ({
 			}
 		}
 
-		// Save dirty template-part entities
+		// Save dirty template-part and navigation menu entities
 		try {
-			const coreSelect = wp.data.select("core");
-			const getDirtyRecords =
-				coreSelect.__experimentalGetDirtyEntityRecords || coreSelect.getDirtyEntityRecords;
-			if (getDirtyRecords) {
-				const allDirty = getDirtyRecords();
-				const dirtyTemplateParts = allDirty.filter(
-					(r) => r.kind === "postType" && r.name === "wp_template_part"
-				);
-				for (const record of dirtyTemplateParts) {
-					await saveEditedEntityRecord("postType", "wp_template_part", record.key);
-				}
-			}
+			await saveDirtyEditorEntities(saveEditedEntityRecord);
 		} catch (tpError) {
-			console.error("[TP-SAVE] Error saving template parts:", tpError);
+			console.error("[Entity save] Error saving template parts / navigation menus:", tpError);
 		}
 
 		blockSnapshotRef.current = null;
@@ -147,6 +138,7 @@ const useChangeActions = ({
 			setHasGlobalStylesChanges(false);
 			originalGlobalStylesRef.current = null;
 			blockSnapshotRef.current = null;
+			clearTouchedNavigationEntityIds();
 		} catch (restoreError) {
 			console.error("Error restoring changes:", restoreError);
 		}
