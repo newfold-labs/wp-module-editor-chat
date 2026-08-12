@@ -87,19 +87,40 @@
 
 	&::before {
 		top: 0;
-		background: linear-gradient(
-			to bottom,
-			var(--nfd-editor-chat-color-white),
-			transparent
-		);
+		background: linear-gradient(to bottom, var(--nfd-editor-chat-color-white), transparent);
 	}
 
 	&::after {
 		bottom: 0;
-		background: linear-gradient(
-			to top,
-			var(--nfd-editor-chat-color-white),
-			transparent
-		);
+		background: linear-gradient(to top, var(--nfd-editor-chat-color-white), transparent);
+	}
+}
+
+// Miniature degli allegati immagine mostrate nella bolla del messaggio utente.
+// Allineate a destra come la bolla utente; aprono l'immagine a piena
+// dimensione in una nuova scheda.
+.nfd-editor-chat-message-attachments {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	gap: 6px;
+	margin: 0 0 4px auto;
+	max-width: 80%;
+
+	&__item {
+		display: block;
+		width: 50px;
+		height: 50px;
+		border-radius: 8px;
+		overflow: hidden;
+		border: 1px solid rgba(0, 0, 0, 0.08);
+		line-height: 0;
+	}
+
+	&__img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		display: block;
 	}
 }

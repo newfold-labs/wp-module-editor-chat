@@ -8,13 +8,9 @@ import { __ } from "@wordpress/i18n";
 import { store as interfaceStore } from "@wordpress/interface";
 
 /**
- * External dependencies - from wp-module-ai-chat
- */
-import { ChatMessages } from "@newfold/wp-module-ai-chat";
-
-/**
  * Internal dependencies
  */
+import EditorChatMessages from "./chat/EditorChatMessages";
 import EditorChatActionsProvider from "../context/editorChatActions";
 import EditorNavigationProvider from "../context/editorNavigation";
 import useChatSlideAnimation from "../hooks/useChatSlideAnimation";
@@ -163,7 +159,7 @@ const ChatEditorContent = () => {
 					{visibleMessages.length === 0 ? (
 						<WelcomeScreen onSendMessage={sendWithBlockFeedback} />
 					) : (
-						<ChatMessages
+						<EditorChatMessages
 							messages={visibleMessages}
 							isLoading={isLoading}
 							error={error}
@@ -172,7 +168,6 @@ const ChatEditorContent = () => {
 							toolProgress={toolProgress}
 							executedTools={executedTools}
 							pendingTools={pendingTools}
-							textDomain="wp-module-editor-chat"
 						/>
 					)}
 					{wasStopped && visibleMessages.length > 0 && <StoppedNotice />}

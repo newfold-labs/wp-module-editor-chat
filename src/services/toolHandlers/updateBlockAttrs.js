@@ -2,8 +2,17 @@ import { __ } from "@wordpress/i18n";
 
 import { deepMergeAttrs as deepMerge } from "../../utils/deepMerge";
 import { appendGeneratedImageUrl } from "../imageCache";
+import { resolveAlt } from "../../utils/imageAlt";
 import { callImageAbility, getBlockImageUrl, parseImageAbilityUrl } from "../imageAbility";
 import { IMAGE_BLOCKS, LOGO_BLOCK } from "../blockToolbar/blockAI";
+import {
+	findAncestorRefNavigation,
+	applyNavigationLinkAttrPatch,
+	normalizeNavigationLinkAttrs,
+	resolveRefNavigationForEdit,
+	updateNavigationLinkAttributes,
+	ensureMenuBlockAccessible,
+} from "../navigationEditor";
 
 /**
  * Detect attribute patches that try to recolor via CSS.
@@ -39,7 +48,7 @@ function isCssColorPatch(attributes) {
 export async function handleUpdateBlockAttrs(toolCall, args, ctx) {
 	const { select: wpSelect, dispatch: wpDispatch } = wp.data;
 	const blockEditor = wpSelect("core/block-editor");
-	const block = blockEditor.getBlock(args.client_id);
+	const block = await ensureMenuBlockAccessible(args.client_id);
 
 	if (!block) {
 		return {
@@ -96,7 +105,13 @@ export async function handleUpdateBlockAttrs(toolCall, args, ctx) {
 				const url = parseImageAbilityUrl(mcpResult);
 				if (url) {
 					args.attributes.url = url;
-					appendGeneratedImageUrl(url);
+					// Keep alt in step with the new image — deepMerge would otherwise
+					// carry the old one through and leave it describing the old photo.
+					const alt = resolveAlt(args.attributes.alt || imgOpts.alt, imgOpts.prompt);
+					if (alt) {
+						args.attributes.alt = alt;
+					}
+					appendGeneratedImageUrl(url, alt);
 				}
 			} catch {
 				// image generation/edit failed — non-critical
@@ -126,6 +141,27 @@ export async function handleUpdateBlockAttrs(toolCall, args, ctx) {
 
 		if (args.attributes.url && IMAGE_BLOCKS.has(block.name) && !("id" in args.attributes)) {
 			args.attributes.id = 0;
+		}
+
+		// Navigation links use label, not content.
+		if (
+			(block.name === "core/navigation-link" || block.name === "core/navigation-submenu") &&
+			"content" in args.attributes &&
+			!("label" in args.attributes)
+		) {
+			args.attributes.label = args.attributes.content;
+			delete args.attributes.content;
+		}
+
+		if (block.name === "core/navigation-link" || block.name === "core/navigation-submenu") {
+			if (
+				args.attributes.id != null &&
+				(args.attributes.type === "page" || args.attributes.type === "post") &&
+				!("url" in args.attributes)
+			) {
+				args.attributes.url = null;
+			}
+			args.attributes = normalizeNavigationLinkAttrs(args.attributes);
 		}
 
 		// Detect no-op for content changes (text already matches)
@@ -185,8 +221,21 @@ export async function handleUpdateBlockAttrs(toolCall, args, ctx) {
 		}
 
 		// Deep-merge new attributes into existing ones (null removes keys)
-		const merged = deepMerge(block.attributes, args.attributes);
-		wpDispatch("core/block-editor").updateBlockAttributes(args.client_id, merged);
+		let merged =
+			block.name === "core/navigation-link" || block.name === "core/navigation-submenu"
+				? applyNavigationLinkAttrPatch(block.attributes, args.attributes)
+				: deepMerge(block.attributes, args.attributes);
+
+		const ancestorNav = await resolveRefNavigationForEdit(args.client_id);
+		let menuItems = null;
+		if (
+			ancestorNav &&
+			(block.name === "core/navigation-link" || block.name === "core/navigation-submenu")
+		) {
+			menuItems = await updateNavigationLinkAttributes(ancestorNav, args.client_id, merged);
+		} else {
+			wpDispatch("core/block-editor").updateBlockAttributes(args.client_id, merged);
+		}
 
 		// Build descriptive result message
 		let message = "Attributes updated";
@@ -194,13 +243,24 @@ export async function handleUpdateBlockAttrs(toolCall, args, ctx) {
 			const stripTags = (html) => (html || "").replace(/<[^>]+>/g, "").trim();
 			const newPlain = stripTags(args.attributes.content || "");
 			message = `Text set to "${newPlain.substring(0, 60)}"`;
+		} else if ("label" in args.attributes) {
+			message = `Label set to "${String(args.attributes.label).substring(0, 60)}"`;
 		} else if ("url" in args.attributes) {
 			message = "Image URL updated";
 		}
 
 		return {
 			id: toolCall.id,
-			result: [{ type: "text", text: JSON.stringify({ success: true, message }) }],
+			result: [
+				{
+					type: "text",
+					text: JSON.stringify({
+						success: true,
+						message,
+						...(menuItems ? { menu_items: menuItems } : {}),
+					}),
+				},
+			],
 			isError: false,
 			hasChanges: true,
 		};

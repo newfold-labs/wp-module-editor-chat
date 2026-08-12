@@ -7,15 +7,17 @@ import logger from "../utils/logger";
 export const DEFAULT_INTENT = {
 	task: "edit_page",
 	content_type: null,
+	menu_edit: null,
+	steps: [],
 };
 
 /**
- * Classify a user message into a task intent via the Worker.
+ * Classify a user message and decompose it into the changes it asks for.
  *
  * @param {string}      message       User-facing message text
  * @param {Object}      sessionConfig Session config with workerUrl and sessionToken
  * @param {AbortSignal} [signal]      Turn abort signal, so Stop cancels this request
- * @return {Promise<{ task: string, content_type: string|null }>} Classified intent
+ * @return {Promise<{ task: string, content_type: string|null, menu_edit: Object|null, steps: string[] }>} Classified intent
  */
 export async function classifyUserIntent(message, sessionConfig, signal) {
 	if (!message?.trim()) {
@@ -61,10 +63,19 @@ export async function classifyUserIntent(message, sessionConfig, signal) {
 			return DEFAULT_INTENT;
 		}
 
-		logger.log("[IntentClassifier] Classified:", data.task, data.content_type);
+		const steps = Array.isArray(data.steps) ? data.steps.filter(Boolean) : [];
+		logger.log(
+			"[IntentClassifier] Classified:",
+			data.task,
+			data.content_type,
+			data.menu_edit,
+			steps
+		);
 		return {
 			task: data.task,
 			content_type: data.content_type ?? null,
+			menu_edit: data.menu_edit ?? null,
+			steps,
 		};
 	} catch (err) {
 		logger.warn("[IntentClassifier] Request failed:", err?.message || err);
@@ -76,7 +87,7 @@ export async function classifyUserIntent(message, sessionConfig, signal) {
  * Whether the intent requires all MCP site-management tools.
  *
  * @param {{ task: string }} intent Classified intent
- * @return {boolean} True when the full site-management tool set should be sent
+ * @return {boolean} True when the full tool set should be sent
  */
 export function intentNeedsAllTools(intent) {
 	return intent?.task === "create_content" || intent?.task === "site_management";
@@ -88,7 +99,7 @@ export function intentNeedsAllTools(intent) {
  * @param {{ task: string }} intent       Classified intent
  * @param {string}           executeNudge EXECUTE_NUDGE constant
  * @param {string}           jsonFormat   ASSISTANT_JSON_FORMAT constant
- * @return {string} Nudge text to append to the pass prompt
+ * @return {string} Nudge to send with the first pass
  */
 export function getIntentNudge(intent, executeNudge, jsonFormat) {
 	switch (intent?.task) {

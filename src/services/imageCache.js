@@ -1,3 +1,5 @@
+import { setAltForImageSrc } from "../utils/imageAlt";
+
 /**
  * Image cache for the current user turn.
  *
@@ -11,7 +13,7 @@
  * Populated by blu-generate-image results, consumed by handleAddSection
  * and handleEditBlock for deduplication.
  */
-let generatedImageUrls = [];
+let generatedImages = [];
 
 /**
  * clientId of the image block the user is currently editing, captured when an
@@ -44,22 +46,22 @@ export function getActiveImageEditTarget() {
 }
 
 /**
- * Get the current list of generated image URLs (live reference, do not mutate
- * externally — use appendGeneratedImageUrl / resetGeneratedImageCache).
+ * Get the images generated this turn, each with the alt text that describes it.
  *
- * @return {string[]} The array of URLs collected so far this turn.
+ * @return {Array<{url: string, alt: string}>} Entries collected so far this turn.
  */
-export function getGeneratedImageUrls() {
-	return generatedImageUrls;
+export function getGeneratedImages() {
+	return generatedImages;
 }
 
 /**
- * Append a newly generated image URL to the turn's cache.
+ * Append a newly generated image to the turn's cache.
  *
- * @param {string} url Image URL returned by blu-generate-image.
+ * @param {string} url   Image URL returned by blu-generate-image.
+ * @param {string} [alt] Alt text describing it (model-supplied or prompt-derived).
  */
-export function appendGeneratedImageUrl(url) {
-	generatedImageUrls.push(url);
+export function appendGeneratedImageUrl(url, alt = "") {
+	generatedImages.push({ url, alt: alt || "" });
 }
 
 /**
@@ -68,8 +70,29 @@ export function appendGeneratedImageUrl(url) {
  * previous request don't contaminate the next request.
  */
 export function resetGeneratedImageCache() {
-	generatedImageUrls = [];
+	generatedImages = [];
 	activeImageEditClientId = null;
+}
+
+/**
+ * Substitute a __IMG_N__ placeholder with a real image, alt text included.
+ *
+ * The placeholder only stands in for the URL, so the model's surrounding
+ * `alt` was written before the image existed (its own examples use alt="").
+ * Applying alt here keeps the description tied to the picture actually used.
+ *
+ * @param {string} markup Block markup containing placeholders
+ * @param {number} index  1-based placeholder number (__IMG_1__ is index 1)
+ * @param {string} url    Resolved image URL
+ * @param {string} [alt]  Alt text describing the image
+ * @return {string} Markup with that placeholder resolved
+ */
+export function substituteImagePlaceholder(markup, index, url, alt = "") {
+	if (!markup || !url) {
+		return markup;
+	}
+	const resolved = markup.replaceAll(`__IMG_${index}__`, url);
+	return alt ? setAltForImageSrc(resolved, url, alt) : resolved;
 }
 
 /**
@@ -91,58 +114,60 @@ export function extractImageUrls(markup) {
 /**
  * Replace duplicate image URLs in block markup with unused generated images.
  *
- * Scans `markup` for <img> src values that appear more than once.  For each
- * duplicate occurrence (after the first), substitutes an unused URL from
- * `availableUrls`.  Returns the patched markup and a list of replacements
- * made (for logging).
+ * Scans `markup` for <img> src values that appear more than once. For each
+ * duplicate occurrence (after the first), substitutes an unused image from
+ * `availableImages`. The substituted tag's alt is rewritten too — the tag now
+ * shows a different picture, so the original alt would describe something that
+ * is no longer there.
  *
- * @param {string}   markup        Block markup HTML string
- * @param {string[]} availableUrls Pool of generated image URLs to draw from
+ * @param {string}                            markup          Block markup HTML string
+ * @param {Array<{url: string, alt: string}>} availableImages Pool of generated images to draw from
  * @return {{ markup: string, replacements: Array<{from: string, to: string}> }} The deduplicated markup and list of replacements made.
  */
-export function deduplicateImages(markup, availableUrls) {
+export function deduplicateImages(markup, availableImages) {
 	const imgUrls = extractImageUrls(markup);
 	if (imgUrls.length === 0) {
 		return { markup, replacements: [] };
 	}
 
 	// Find URLs that appear more than once
-	const seen = new Map(); // url → count
+	const counts = new Map(); // url → count
 	for (const url of imgUrls) {
-		seen.set(url, (seen.get(url) || 0) + 1);
+		counts.set(url, (counts.get(url) || 0) + 1);
 	}
-
-	const duplicateUrls = [...seen.entries()].filter(([, count]) => count > 1).map(([url]) => url);
-
-	if (duplicateUrls.length === 0) {
+	const duplicated = new Set(
+		[...counts.entries()].filter(([, count]) => count > 1).map(([url]) => url)
+	);
+	if (duplicated.size === 0) {
 		return { markup, replacements: [] };
 	}
 
-	// Build pool of unused URLs (generated but not referenced in markup)
+	// Pool of images generated this turn but not already referenced in markup
 	const usedInMarkup = new Set(imgUrls);
-	const unusedPool = availableUrls.filter((u) => !usedInMarkup.has(u));
+	const unusedPool = availableImages.filter((image) => !usedInMarkup.has(image.url));
 
 	const replacements = [];
-	let result = markup;
+	const keptFirst = new Set();
 
-	for (const dupUrl of duplicateUrls) {
-		// Find all occurrences — keep the first, replace subsequent
-		const escaped = dupUrl.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-		const srcRe = new RegExp(`(src=["'])${escaped}(["'])`, "g");
-		let matchIdx = 0;
-		result = result.replace(srcRe, (full, pre, post) => {
-			matchIdx++;
-			if (matchIdx === 1) {
-				return full;
-			} // keep first occurrence
-			if (unusedPool.length > 0) {
-				const replacement = unusedPool.shift();
-				replacements.push({ from: dupUrl, to: replacement });
-				return `${pre}${replacement}${post}`;
-			}
-			return full; // no unused images available
-		});
-	}
+	// Rewrite whole <img> tags rather than the src attribute alone, so alt can
+	// be updated on the same tag.
+	const result = markup.replace(/<img\b[^>]*>/gi, (tag) => {
+		const src = tag.match(/src=["']([^"']+)["']/i)?.[1];
+		if (!src || !duplicated.has(src)) {
+			return tag;
+		}
+		if (!keptFirst.has(src)) {
+			keptFirst.add(src);
+			return tag;
+		}
+		if (unusedPool.length === 0) {
+			return tag;
+		}
+		const image = unusedPool.shift();
+		replacements.push({ from: src, to: image.url });
+		const swapped = tag.replace(/src=["'][^"']+["']/i, `src="${image.url}"`);
+		return setAltForImageSrc(swapped, image.url, image.alt);
+	});
 
 	return { markup: result, replacements };
 }

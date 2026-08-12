@@ -188,7 +188,12 @@ const useEditorChatREST = () => {
 
 	// ── One chat turn (serialized by handleSendMessage below) ──
 	const runTurn = useCallback(
-		async (messageContent, displayMessage, editClientId) => {
+		async (
+			messageContent,
+			displayMessage = messageContent,
+			editClientId = null,
+			attachments = []
+		) => {
 			if (!openaiClientRef.current || configStatus !== "ready") {
 				setError("Chat is not ready. Please wait for initialization.");
 				return;
@@ -227,6 +232,7 @@ const useEditorChatREST = () => {
 					buildToolCtx,
 					abortControllerRef,
 					displayMessage,
+					attachments,
 					getSessionConfig,
 				});
 
@@ -277,7 +283,12 @@ const useEditorChatREST = () => {
 
 	// ── handleSendMessage ──
 	const handleSendMessage = useCallback(
-		async (messageContent, displayMessage = messageContent, editClientId = null) => {
+		async (
+			messageContent,
+			displayMessage = messageContent,
+			editClientId = null,
+			attachments = []
+		) => {
 			// Turns run one at a time. Stop sets IDLE immediately, which re-enables the
 			// input while the previous turn is still unwinding — an in-flight ability
 			// has to resolve before it can exit. Two loops sharing conversationHistoryRef
@@ -289,7 +300,7 @@ const useEditorChatREST = () => {
 				await previous.catch(() => {});
 			}
 
-			const turn = runTurn(messageContent, displayMessage, editClientId);
+			const turn = runTurn(messageContent, displayMessage, editClientId, attachments);
 			runningTurnRef.current = turn;
 			try {
 				await turn;

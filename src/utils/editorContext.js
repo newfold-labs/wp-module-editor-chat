@@ -12,6 +12,10 @@ import {
 	getSelectedBlocks,
 } from "./editorHelpers";
 import { getCurrentGlobalStyles } from "../services/globalStylesService";
+import {
+	buildNavigationMenuContextLines,
+	findRefNavigationBlocks,
+} from "../services/navigationEditor";
 import { IMAGE_BLOCKS, LOGO_BLOCK } from "../services/blockToolbar/blockAI";
 import { getBlockImageUrl } from "../services/imageAbility";
 import { NFD_CLASS_REFERENCE } from "./nfdClassReference";
@@ -49,9 +53,19 @@ function serializeBlockMarkup(blockEditor, clientId) {
 	}
 	const { serialize: wpSerialize } = wp.blocks;
 	let markup;
-	if (fullBlock.name === "core/template-part") {
+	if (fullBlock.name === "core/template-part" || fullBlock.name === "core/navigation") {
 		const innerBlocks = blockEditor.getBlocks(clientId);
 		markup = innerBlocks.map((b) => wpSerialize(b)).join("\n");
+		if (!markup && fullBlock.name === "core/navigation" && fullBlock.attributes?.ref) {
+			const entity = wp.data.select("core").getEntityRecord(
+				"postType",
+				"wp_navigation",
+				fullBlock.attributes.ref
+			);
+			const raw =
+				entity?.content?.raw || entity?.content?.rendered || entity?.content || "";
+			markup = typeof raw === "string" ? raw : "";
+		}
 	} else {
 		markup = wpSerialize(fullBlock);
 	}
@@ -128,7 +142,7 @@ function appendMarkupSections(context, blockEditor, clientIds, label) {
 export const ASSISTANT_JSON_FORMAT = `Your entire text output MUST be a single JSON object — no markdown fences, no text before or after:
 {"message":"Short sentence for the user (under 20 words)"}
 
-When you will call editing tools in the same response, put your plan ONLY in "message", then call the tool(s). Do not mention tool names or client IDs in message.
+When you will call editing tools in the same response, put your plan ONLY in "message", then call the tool(s). Do not mention tool names, client IDs, UUIDs, ref IDs, or block type slugs (core/…) in message — write for a non-technical site owner.
 
 If no block is selected and you need serialized block markup before editing, reply with JSON only (no tool calls):
 {"message":"Brief note","need_blocks_markup":["exact-clientId-from-block-tree"]}
@@ -144,7 +158,9 @@ Output rules:
 
 export const EXECUTE_NUDGE = `${ASSISTANT_JSON_FORMAT}
 
-For editing tasks where reasonable defaults exist (matching existing design, plausible placeholder content, standard icon choices), EXECUTE directly — do not ask clarifying questions unless the request is genuinely ambiguous.`;
+For editing tasks where reasonable defaults exist (matching existing design, plausible placeholder content, standard icon choices), EXECUTE directly — do not ask clarifying questions unless the request is genuinely ambiguous.
+
+Complete every change listed in <user_intent> steps — call all the tools needed in this same response. Do not stop after the first one.`;
 
 /**
  * Nudge injected after tools have been executed successfully.
@@ -170,6 +186,24 @@ Output rules:
 - Return ONLY valid JSON.
 - No explanations, no comments, no extra text.
 `;
+
+/**
+ * Nudge for a turn with steps still unapplied. Replaces {@link SUMMARIZE_NUDGE},
+ * whose "All requested changes are applied" is false mid-plan — the model would
+ * otherwise confirm a job it only half did.
+ *
+ * @param {string[]} remaining Steps not yet applied.
+ * @return {string} Nudge string for the next pass.
+ */
+export function buildRemainingStepsNudge(remaining) {
+	return `Not every requested change has been applied yet. Still to do:
+${remaining.map((step) => `- ${step}`).join("\n")}
+
+Call the tool(s) for the next unfinished item now. If one genuinely cannot be done, say which and why — never report work that no tool call performed.
+
+When everything is done, reply with JSON only and no tool calls:
+{"message":"One brief sentence covering what was done."}`;
+}
 
 /**
  * Build a summarize nudge after successful content creation.
@@ -248,8 +282,13 @@ export const buildEditorContext = ({ extraClientIds = [] } = {}) => {
 	const selectedBlocks = getSelectedBlocks();
 	const selectedClientIds = selectedBlocks.map((b) => b.clientId);
 	const selectedSet = new Set(selectedClientIds);
-	const extraTargets = (extraClientIds || [])
+	const refNavBlocks = findRefNavigationBlocks(blocks);
+	const autoNavMarkupIds = refNavBlocks
+		.map((b) => b.clientId)
+		.filter((id) => id && !selectedSet.has(id));
+	const extraTargets = [...autoNavMarkupIds, ...(extraClientIds || [])]
 		.filter((id) => id && !selectedSet.has(id))
+		.filter((id, index, arr) => arr.indexOf(id) === index)
 		.slice(0, MAX_CONTEXT_TARGET_BLOCKS);
 
 	const pageTitle = getCurrentPageTitle();
@@ -258,7 +297,10 @@ export const buildEditorContext = ({ extraClientIds = [] } = {}) => {
 	const contentLabel = postType === "post" ? "Post" : "Page";
 
 	const site = window.nfdEditorChat?.site || {};
-	const siteUrl = window.location.origin;
+	// homeUrl comes from get_home_url() and keeps the subdirectory of installs
+	// served under a path (e.g. https://example.com/website_123). Deriving it from
+	// window.location.origin drops that path and produces 404 links.
+	const siteUrl = (window.nfdEditorChat?.homeUrl || window.location.origin).replace(/\/+$/, "");
 
 	let context = `Site: ${site.title || ""}`;
 	if (site.description) {
@@ -276,6 +318,15 @@ export const buildEditorContext = ({ extraClientIds = [] } = {}) => {
 	context += buildCompactBlockTree(blocks, selectedClientIds, {
 		collapseUnselected: selectedBlocks.length > 0,
 	});
+
+	if (refNavBlocks.length > 0) {
+		context += "\n\nHeader/footer navigation menus (edit navigation-link children below):";
+		for (const nav of refNavBlocks) {
+			context += `\nMenu block (id:${nav.clientId}):`;
+			const menuLines = buildNavigationMenuContextLines(nav, blockEditor);
+			context += menuLines.length ? `\n${menuLines.join("\n")}` : "\n  (no items loaded yet)";
+		}
+	}
 
 	// Layer 2a: Ancestor chains for selected and AI-requested target blocks.
 	const ancestorBlocks = [...selectedBlocks];
@@ -335,6 +386,13 @@ export const buildEditorContext = ({ extraClientIds = [] } = {}) => {
 			"\n- To create a brand-new logo design from scratch: call blu/regenerate-logo." +
 			"\n- To use an uploaded image as the logo: blu/edit-image then blu/set-logo-from-image.";
 	}
+
+	context +=
+		"\n\nInternal link guidance (CRITICAL):" +
+		`\n- The site URL above (${siteUrl}) is the ONLY valid base for internal links. This site may be installed in a subdirectory, so NEVER build links from the bare domain.` +
+		`\n- Every internal href MUST start with "${siteUrl}/" (e.g. "${siteUrl}/contact"). A link like "/contact" or "https://<domain>/contact" that skips the base path returns a 404.` +
+		"\n- Only link to pages that actually exist. Prefer a page listed in the block tree, the navigation menus above, or one you just created with a create tool (use the URL it returned)." +
+		"\n- If the user asks to link to a page that does not exist yet, either link to an existing relevant page or say so in your message — do not invent a slug.";
 
 	return context;
 };
