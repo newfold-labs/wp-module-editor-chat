@@ -2,6 +2,7 @@
  * WordPress dependencies
  */
 import { __ } from "@wordpress/i18n";
+import { createInterpolateElement } from "@wordpress/element";
 
 /**
  * External dependencies
@@ -55,7 +56,12 @@ const WelcomeScreen = ({ onSendMessage }) => {
 				</div>
 				<div className="nfd-editor-chat-welcome__message">
 					<div className="nfd-editor-chat-welcome__title">
-						{__("Hi, I'm BLU, your AI assistant.", "wp-module-editor-chat")}
+						{createInterpolateElement(
+							__("Hi, I'm <brand>blue</brand>, your AI assistant.", "wp-module-editor-chat"),
+							{
+								brand: <span className="nfd-editor-chat-welcome__brand" />,
+							}
+						)}
 					</div>
 					<div className="nfd-editor-chat-welcome__subtitle">
 						{__("I can help you update page sections and styles,", "wp-module-editor-chat")}
