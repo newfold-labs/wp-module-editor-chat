@@ -9,6 +9,7 @@
 import {
 	CHAT_STATUS,
 	EDITOR_TOOLS,
+	MAX_COMPLETION_TOKENS_RETRY,
 	MAX_TOOL_ITERATIONS,
 	MAX_READ_ONLY_PASSES,
 	MAX_READ_RESULT_CHARS,
@@ -44,6 +45,7 @@ import {
 	getAssistantDisplayMessage,
 	canRequestBlockMarkup,
 	filterValidMarkupClientIds,
+	sanitizeUserFacingMessage,
 	MAX_MARKUP_REQUESTS_PER_TURN,
 } from "./assistantResponse";
 import logger from "../../utils/logger";
@@ -159,6 +161,12 @@ export async function runChatLoop(userMessage, deps) {
 	let planShown = false;
 	// Consecutive passes that only gathered info (read-only tools, no change).
 	let readOnlyStreak = 0;
+	// Whether the previous tool pass produced any failure (truncated arguments or
+	// an isError result). Read by the retry-limit branch so it reports what
+	// actually happened instead of assuming the repeat means "already applied".
+	let lastPassHadErrors = false;
+	// Set after a cut-off so the very next pass gets a larger output ceiling.
+	let retryWithHigherCeiling = false;
 	// Steps for a multi-part request, from the intent classifier. Empty, or 2+.
 	// While steps remain the turn keeps going instead of summarizing after the
 	// first tool round and dropping the rest of the request.
@@ -275,11 +283,19 @@ export async function runChatLoop(userMessage, deps) {
 		];
 
 		const toolPassStart = performance.now();
-		const { content, toolCalls } = await streamCompletion(toolMessages, toolsForPass, {
-			resetStream: planShown,
-			streamMessageId,
-			jsonMessageDisplay: true,
-		});
+		const { content, toolCalls, finishReason } = await streamCompletion(
+			toolMessages,
+			toolsForPass,
+			{
+				resetStream: planShown,
+				streamMessageId,
+				jsonMessageDisplay: true,
+				// Raised for the pass that follows a cut-off, so the retry has
+				// room to finish instead of being truncated at the same point.
+				...(retryWithHigherCeiling ? { max_completion_tokens: MAX_COMPLETION_TOKENS_RETRY } : {}),
+			}
+		);
+		retryWithHigherCeiling = false;
 		logger.log(
 			`[EditorChat] Tool pass #${iterations} LLM: ${(performance.now() - toolPassStart).toFixed(0)}ms (${toolCalls?.length || 0} tool calls)`
 		);
@@ -292,7 +308,11 @@ export async function runChatLoop(userMessage, deps) {
 		}
 
 		const parsed = parseAssistantResponse(content);
-		const assistantDisplayMessage = parsed?.message || content || "";
+		// Sanitize here too: the streaming path already does this via
+		// getAssistantDisplayMessage, but this finalized copy skipped it, so when
+		// the model wrote prose instead of JSON its clientIds, __IMG_N__
+		// placeholders and core/* slugs went straight into the chat.
+		const assistantDisplayMessage = sanitizeUserFacingMessage(parsed?.message || content || "");
 
 		if (!toolCalls || toolCalls.length === 0) {
 			if (
@@ -412,7 +432,16 @@ export async function runChatLoop(userMessage, deps) {
 				arguments: envelope.parameters || {},
 			};
 		});
-		const { allRetried, retryLimitHit } = retryTracker.recordIteration(unwrappedCalls);
+		// Truncated calls must never enter retry detection. Their arguments were
+		// unparseable, so they all collapse to the same `{}` fallback: two
+		// consecutive truncations hash identically and trip the retry guard even
+		// though the model never actually repeated itself and nothing ever ran.
+		// That is what turns a recoverable cut-off into a dead turn.
+		const trackableCalls = unwrappedCalls.filter((tc) => !tc._truncated);
+		const { allRetried, retryLimitHit } =
+			trackableCalls.length > 0
+				? retryTracker.recordIteration(trackableCalls)
+				: { allRetried: false, retryLimitHit: false };
 
 		if (allRetried) {
 			if (retryLimitHit) {
@@ -438,13 +467,18 @@ export async function runChatLoop(userMessage, deps) {
 					},
 				})),
 			});
-			// Inject synthetic tool results — give AI one chance to summarize
+			// Inject synthetic tool results: give AI one chance to summarize.
+			// Never assert that the edit landed: the repeats are just as often a
+			// model retrying something that FAILED (truncated arguments, a
+			// rejected edit). Claiming "already applied" there turns a failure
+			// into a confident success message and the user sees no change.
 			for (const tc of toolCalls) {
 				conversationHistoryRef.current.push({
 					role: "tool",
 					tool_call_id: tc.id,
-					content:
-						"RETRY LIMIT: This tool has already been called multiple times. The edit is already applied. Do NOT call any more tools — respond to the user with a brief summary.",
+					content: lastPassHadErrors
+						? "RETRY LIMIT: This tool was already called with identical arguments and the previous attempt FAILED: see the error in the tool results above. Do NOT call any more tools. Tell the user plainly that the change could not be applied, and why. Do not claim it succeeded."
+						: "RETRY LIMIT: This tool has already been called multiple times with identical arguments. Do NOT call any more tools. Check the previous tool results above and report only what they actually reported: if any of them failed, say so instead of claiming success.",
 				});
 			}
 			continue;
@@ -477,15 +511,27 @@ export async function runChatLoop(userMessage, deps) {
 			removeStreamingMessage(setMessages, streamMessageId);
 		}
 
-		// Handle truncated tool calls — skip execution, return error
+		// Handle truncated tool calls: skip execution, return error.
+		// finish_reason "length" means the model hit the output ceiling mid
+		// tool_use, so the fix is to split the work, not to resend the same
+		// oversized payload: say that explicitly or it retries identically.
 		const truncated = toolCalls.filter((tc) => tc._truncated);
 		if (truncated.length > 0) {
+			// Self-heal rather than surface this. The next pass gets a larger
+			// ceiling AND an instruction to split, so a cut-off costs one extra
+			// round trip instead of ending the turn. The user never sees it:
+			// truncated calls never reach setExecutedTools, so no failed-action
+			// row is rendered, and the loop continues normally.
+			retryWithHigherCeiling = true;
+			logger.log(
+				`[EditorChat] Output cut off mid tool call (finish_reason=${finishReason}): retrying with a higher ceiling`
+			);
 			for (const tc of truncated) {
 				conversationHistoryRef.current.push({
 					role: "tool",
 					tool_call_id: tc.id,
 					content:
-						"ERROR: Tool arguments were truncated and could not be parsed. Try again with shorter content or fewer changes at once.",
+						"NOTE: Your previous output was cut off mid tool call, so nothing was applied. This is not the user's problem and must not be mentioned to them. Immediately redo the work, but split it into several smaller tool calls, one section, column, or card per call, starting with the first piece now.",
 				});
 			}
 		}
@@ -505,6 +551,9 @@ export async function runChatLoop(userMessage, deps) {
 				`[EditorChat] Tool exec #${iterations}: ${(performance.now() - toolExecStart).toFixed(0)}ms (${executableCalls.length} tools)`
 			);
 		}
+
+		// Remembered for the retry-limit branch on the next iteration.
+		lastPassHadErrors = truncated.length > 0 || results.some((r) => r.isError);
 
 		// Append tool results to conversation. Budget by tool kind, keyed off the
 		// UNWRAPPED ability name (toolCalls carry the `blu-call-ability` envelope):

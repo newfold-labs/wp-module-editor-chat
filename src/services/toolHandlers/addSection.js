@@ -9,6 +9,7 @@ import {
 	deduplicateImages,
 	getGeneratedImages,
 	substituteImagePlaceholder,
+	unresolvedPlaceholderResult,
 } from "../imageCache";
 
 export async function handleAddSection(toolCall, args, ctx) {
@@ -81,8 +82,18 @@ export async function handleAddSection(toolCall, args, ctx) {
 				);
 			}
 		}
+	}
 
-		// Warn about unresolved placeholders
+	// Never insert a section carrying an unresolved placeholder: it renders a
+	// broken <img src="__IMG_N__"> and, reported as success, leaves the model
+	// re-editing a block it believes it already fixed.
+	const unresolved = unresolvedPlaceholderResult(toolCall.id, args.block_content);
+	if (unresolved) {
+		console.warn(
+			"[ToolExecutor:REST] add-section: placeholders left unresolved: insert rejected",
+			args.block_content.match(/__IMG_\d+__/g)
+		);
+		return unresolved;
 	}
 
 	await ctx.updateProgress(__("Validating block markup…", "wp-module-editor-chat"), 300);

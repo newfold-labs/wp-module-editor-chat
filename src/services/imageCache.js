@@ -96,6 +96,42 @@ export function substituteImagePlaceholder(markup, index, url, alt = "") {
 }
 
 /**
+ * Build a tool error for markup whose image placeholders never resolved.
+ *
+ * Writing `__IMG_N__` through produces a visibly broken <img> and a 404. Worse,
+ * reporting that as success sends the model into a repair loop it cannot win:
+ * it re-edits the same block, sees "success", and the loop guards eventually
+ * end the turn with nothing applied. Failing here is the honest outcome.
+ *
+ * @param {string} toolCallId The tool call id to answer.
+ * @param {string} markup     Block markup after the image step.
+ * @return {Object|null} An error result, or null when nothing is unresolved.
+ */
+export function unresolvedPlaceholderResult(toolCallId, markup) {
+	const leftover = markup?.match(/__IMG_\d+__/g);
+	if (!leftover || leftover.length === 0) {
+		return null;
+	}
+	const unique = [...new Set(leftover)];
+	return {
+		id: toolCallId,
+		result: [
+			{
+				type: "text",
+				text: JSON.stringify({
+					success: false,
+					error:
+						`Image generation is unavailable, so ${unique.join(", ")} could not be resolved. ` +
+						`Nothing was changed. Tell the user that image generation failed: do not retry ` +
+						`this edit and do not write the placeholder into the page.`,
+				}),
+			},
+		],
+		isError: true,
+	};
+}
+
+/**
  * Extract all image URLs from block markup (src attributes of img tags).
  *
  * @param {string} markup Block markup

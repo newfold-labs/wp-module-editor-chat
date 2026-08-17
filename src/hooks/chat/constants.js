@@ -19,6 +19,17 @@ export const MAX_READ_ONLY_PASSES = 4;
 export const MAX_READ_RESULT_CHARS = 8000;
 export const MAX_HISTORY_MESSAGES = 30;
 export const MAX_HISTORY_CHARS = 16000;
+// Output-token ceiling for a completion. The worker's OpenRouter path is a byte
+// passthrough that injects no max_tokens, so leaving this unset hands the model
+// whatever the upstream default is (4096 for Anthropic models). A single
+// multi-column section with images exceeds that and the tool_use JSON is cut off
+// mid-argument, which surfaces as "arguments were truncated" and no edit. Well
+// under the model's real output limit: this is a ceiling, not a target.
+export const MAX_COMPLETION_TOKENS = 16000;
+// Raised ceiling used for the retry after a cut-off. One escalation is enough:
+// if 32k of markup still isn't sufficient the request genuinely needs splitting,
+// and the retry prompt asks for that. Still well inside the model's output limit.
+export const MAX_COMPLETION_TOKENS_RETRY = 32000;
 
 export const CHAT_STATUS = {
 	IDLE: "idle",

@@ -3,10 +3,41 @@
  *
  * Plain async function (no React hooks). The orchestrator wraps it in useCallback.
  */
+
+/**
+ * Text safe to display from a partially-streamed structured response.
+ *
+ * Only ever returns the `message` field, never the envelope around it. Must not
+ * fall back to the raw buffer the way getAssistantDisplayMessage does: mid-flight
+ * the buffer is often `{"message"` or `{"message":"`, and echoing that flashes
+ * raw JSON into the chat before the first word arrives.
+ *
+ * @param {string} text Accumulated assistant content so far.
+ * @return {string|null} Message text, or null when there is nothing safe to show yet.
+ */
+function partialJsonMessage(text) {
+	const trimmed = text.trimStart();
+	if (!trimmed) {
+		return null;
+	}
+	// Building toward the JSON contract (or a fenced version of it): show the
+	// message field once it has actual characters, and nothing before that.
+	if (trimmed.startsWith("{") || trimmed.startsWith("`")) {
+		const match = trimmed.match(/"message"\s*:\s*"((?:[^"\\]|\\.)*)/);
+		if (!match) {
+			return null;
+		}
+		const value = match[1].replace(/\\"/g, '"').replace(/\\n/g, "\n");
+		return value ? sanitizeUserFacingMessage(value) : null;
+	}
+	// Plain prose: the model ignored the contract, so stream it as written.
+	return text;
+}
 import { createAbortError } from "../../utils/abortControl";
 import { safeParseJSON } from "../../utils/jsonUtils";
 import logger from "../../utils/logger";
-import { getAssistantDisplayMessage } from "./assistantResponse";
+import { getAssistantDisplayMessage, sanitizeUserFacingMessage } from "./assistantResponse";
+import { MAX_COMPLETION_TOKENS } from "./constants";
 import { resetStreamingMessage, upsertStreamingMessage } from "./streamMessageHelpers";
 
 /**
@@ -52,7 +83,7 @@ export async function streamCompletion(msgs, tools, options = {}, deps) {
 			stream: true,
 			stream_options: { include_usage: true },
 			temperature: options.temperature ?? 0.7,
-			max_completion_tokens: options.max_completion_tokens,
+			max_completion_tokens: options.max_completion_tokens ?? MAX_COMPLETION_TOKENS,
 		},
 		{ signal }
 	);
@@ -116,7 +147,22 @@ export async function streamCompletion(msgs, tools, options = {}, deps) {
 			fullMessage += delta.content;
 
 			// Silent mode: accumulate content but don't stream to UI
-			if (options.silent || options.jsonMessageDisplay) {
+			if (options.silent) {
+				continue;
+			}
+
+			// Structured JSON mode: the model emits {"message":"…"} first and its
+			// tool calls after. Render the message field as it streams instead of
+			// waiting for the whole response: on a whole-page edit the tool
+			// arguments are tens of thousands of tokens, so withholding everything
+			// leaves the user watching a frozen indicator for the entire
+			// generation even though the plan was ready in the first second.
+			if (options.jsonMessageDisplay) {
+				const partial = partialJsonMessage(fullMessage);
+				if (partial !== null && partial !== displayMessage) {
+					displayMessage = partial;
+					scheduleStreamUpsert();
+				}
 				continue;
 			}
 

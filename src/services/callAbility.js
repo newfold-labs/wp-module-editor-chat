@@ -31,3 +31,39 @@ export function callAbility(mcpClient, abilityName, parameters) {
 		parameters: parameters || {},
 	});
 }
+
+/**
+ * Whether an MCP result represents a failed ability call.
+ *
+ * The PHP side never sets MCP's own `isError` flag: abilities report failure
+ * in the payload via `blu_prepare_ability_response( $status, … )`, and
+ * blu-call-ability returns the inner ability's response unwrapped. Without
+ * this, a 502 from an ability arrives shaped exactly like a success and gets
+ * reported to the model as one.
+ *
+ * @param {Object} mcpResult Result from callAbility / mcpClient.callTool.
+ * @return {boolean} True when the call failed.
+ */
+export function mcpResultIsError(mcpResult) {
+	if (!mcpResult) {
+		return true;
+	}
+	if (mcpResult.isError) {
+		return true;
+	}
+	const text = mcpResult.content?.[0]?.text;
+	if (typeof text !== "string") {
+		return false;
+	}
+	try {
+		const parsed = JSON.parse(text);
+		if (typeof parsed?.statusCode === "number") {
+			return parsed.statusCode >= 400;
+		}
+		return parsed?.status === "error";
+	} catch {
+		// Not a standardized ability envelope: treat as success and let the
+		// existing content handling deal with it.
+		return false;
+	}
+}
