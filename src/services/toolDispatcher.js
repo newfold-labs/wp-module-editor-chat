@@ -23,7 +23,7 @@ import { createAbortError } from "../utils/abortControl";
 import { resolveAlt } from "../utils/imageAlt";
 import { snapshotBlocks } from "../utils/editorContext";
 import { safeParseJSON } from "../utils/jsonUtils";
-import { callAbility } from "./callAbility";
+import { callAbility, mcpResultIsError } from "./callAbility";
 import { handleContentCreation, CREATE_ABILITIES } from "./contentNavigation";
 import {
 	findHeaderRefNavigationBlock,
@@ -908,7 +908,8 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 					logger.log(`[ToolExecutor:REST] Forwarding to MCP: ${toolName}`, args);
 					try {
 						const mcpResult = await callAbility(ctx.mcpClient, toolName, args);
-						const stub = !mcpResult.isError ? parseMcpClientActionStub(mcpResult) : null;
+						const mcpFailed = mcpResultIsError(mcpResult);
+						const stub = !mcpFailed ? parseMcpClientActionStub(mcpResult) : null;
 						if (stub) {
 							const stubResult = await executeClientActionFromStub(stub, args, toolCall, ctx);
 							if (stubResult) {
@@ -920,14 +921,14 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 								result = {
 									id: toolCall.id,
 									result: mcpResult.content,
-									isError: mcpResult.isError || false,
+									isError: mcpFailed,
 								};
 							}
 						} else {
 							result = {
 								id: toolCall.id,
 								result: mcpResult.content,
-								isError: mcpResult.isError || false,
+								isError: mcpFailed,
 							};
 						}
 					} catch (mcpErr) {

@@ -6,6 +6,7 @@
  *   {"message":"…","need_blocks_markup":[…]} — request block markup (no tools)
  */
 import { select } from "@wordpress/data";
+import { __ } from "@wordpress/i18n";
 
 import { safeParseJSON } from "../../utils/jsonUtils";
 import { getSelectedBlocks } from "../../utils/editorHelpers";
@@ -49,6 +50,16 @@ export function parseAssistantResponse(content) {
 	};
 
 	const trimmed = content.trim();
+
+	// Plain prose — the model ignored the JSON contract entirely. This happens
+	// often enough that it must not be treated as a parse failure: running it
+	// through safeParseJSON is what produced the "[safeParseJSON] Could not
+	// recover JSON" console noise, and returning null makes the caller fall back
+	// to the raw string, skipping sanitization. Detect it before parsing.
+	if (!trimmed.includes('"message"') && !trimmed.includes("need_blocks_markup")) {
+		return { message: trimmed };
+	}
+
 	const direct = safeParseJSON(trimmed);
 	const fromDirect = normalize(direct.value);
 
@@ -69,7 +80,14 @@ export function parseAssistantResponse(content) {
 	}
 
 	const loose = extractMessageLoosely(trimmed);
-	return loose ? { message: loose } : null;
+	const looseIds = extractNeedBlocksLoosely(trimmed);
+	if (loose || looseIds) {
+		return {
+			message: loose || __("Reading the current page content…", "wp-module-editor-chat"),
+			...(looseIds ? { need_blocks_markup: looseIds } : {}),
+		};
+	}
+	return null;
 }
 
 /**
@@ -81,11 +99,42 @@ export function parseAssistantResponse(content) {
  * @return {string|null} Message text, or null if not recoverable
  */
 function extractMessageLoosely(text) {
+	const unescape = (s) => s.replace(/\\"/g, '"').replace(/\\n/g, "\n").trim() || null;
+	// A salvaged "message" still carrying a contract key is structural garbage,
+	// not prose — it means the model broke the object shape itself (seen as
+	// `{"message":"need_blocks_markup":[…]}`). Better no message than that.
+	const clean = (s) => (s && !s.includes("need_blocks_markup") ? s : null);
+
 	const match = text.match(/"message"\s*:\s*"([\s\S]*)"\s*(?:,\s*"need_blocks_markup"|\}|$)/);
+	if (match) {
+		return clean(unescape(match[1]));
+	}
+
+	// Unterminated string — output was cut off mid-message, so there is no
+	// closing quote for the greedy pattern above to anchor on. Take everything
+	// after the opening quote; without this the raw JSON leaks into the chat.
+	const openEnded = text.match(/"message"\s*:\s*"([\s\S]*)$/);
+	return openEnded ? clean(unescape(openEnded[1])) : null;
+}
+
+/**
+ * Salvage need_blocks_markup ids from JSON the model broke structurally.
+ *
+ * Seen in the wild as `{"message":"need_blocks_markup":[…]}` — two colons, no
+ * value for message. Nothing can parse that, so the markup request used to be
+ * dropped silently and the model re-asked for the same blocks every turn without
+ * ever making progress.
+ *
+ * @param {string} text Trimmed assistant output
+ * @return {string[]|null} Client ids, or null if none found
+ */
+function extractNeedBlocksLoosely(text) {
+	const match = text.match(/"need_blocks_markup"\s*:\s*\[([^\]]*)\]/);
 	if (!match) {
 		return null;
 	}
-	return match[1].replace(/\\"/g, '"').replace(/\\n/g, "\n").trim() || null;
+	const ids = match[1].match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi);
+	return ids?.length ? ids.slice(0, MAX_MARKUP_CLIENT_IDS) : null;
 }
 
 /**

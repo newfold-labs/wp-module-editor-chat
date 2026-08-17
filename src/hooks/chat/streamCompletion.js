@@ -7,6 +7,7 @@ import { createAbortError } from "../../utils/abortControl";
 import { safeParseJSON } from "../../utils/jsonUtils";
 import logger from "../../utils/logger";
 import { getAssistantDisplayMessage } from "./assistantResponse";
+import { MAX_COMPLETION_TOKENS } from "./constants";
 import { resetStreamingMessage, upsertStreamingMessage } from "./streamMessageHelpers";
 
 /**
@@ -52,7 +53,7 @@ export async function streamCompletion(msgs, tools, options = {}, deps) {
 			stream: true,
 			stream_options: { include_usage: true },
 			temperature: options.temperature ?? 0.7,
-			max_completion_tokens: options.max_completion_tokens,
+			max_completion_tokens: options.max_completion_tokens ?? MAX_COMPLETION_TOKENS,
 		},
 		{ signal }
 	);

@@ -131,10 +131,47 @@ function checkTagBalance(markup) {
  * @param {string} blockContent The block markup string to validate
  * @return {Object} { valid: boolean, blocks?: Array, correctedContent?: string, error?: string }
  */
-export const validateBlockMarkup = (blockContent) => {
-	if (!blockContent || typeof blockContent !== "string") {
+/**
+ * Give core/list items their block delimiters.
+ *
+ * core/list is apiVersion 3 and keeps its items as core/list-item INNER BLOCKS.
+ * The model routinely emits a plain <ul> with raw <li> children and no
+ * <!-- wp:list-item --> delimiters; parse() then returns a core/list with zero
+ * inner blocks and every bullet is silently discarded — the card renders as a
+ * single empty list item and the editor logs "Block validation failed for
+ * core/list". Repair the markup BEFORE parsing, because afterwards the content
+ * is already gone.
+ *
+ * Only applies when the markup has no list-item delimiters at all. Mixed markup
+ * is left alone — it is rare and rewriting it risks double-wrapping.
+ *
+ * @param {string} markup Raw block markup from the model.
+ * @return {string} Markup with every <li> wrapped in core/list-item delimiters.
+ */
+function normalizeListItems(markup) {
+	if (markup.includes("<!-- wp:list-item")) {
+		return markup;
+	}
+	if (!markup.includes("<!-- wp:list") || !/<li[\s>]/i.test(markup)) {
+		return markup;
+	}
+	const normalized = markup.replace(
+		/<li(\s[^>]*)?>([\s\S]*?)<\/li>/gi,
+		(_match, attrs, inner) =>
+			`<!-- wp:list-item -->\n<li${attrs || ""}>${inner}</li>\n<!-- /wp:list-item -->`
+	);
+	logger.log("[blockValidator] Wrapped bare <li> items in core/list-item delimiters");
+	return normalized;
+}
+
+export const validateBlockMarkup = (rawBlockContent) => {
+	if (!rawBlockContent || typeof rawBlockContent !== "string") {
 		return { valid: false, error: "block_content is empty or not a string" };
 	}
+
+	// Repair bare <li> before anything else reads the markup — the tag-balance
+	// check, parse() and the normalizer all need the delimiters present.
+	const blockContent = normalizeListItems(rawBlockContent);
 
 	// Must contain block comments
 	if (!blockContent.includes("<!-- wp:")) {

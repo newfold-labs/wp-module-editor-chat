@@ -9,6 +9,7 @@ import {
 	deduplicateImages,
 	getGeneratedImages,
 	substituteImagePlaceholder,
+	unresolvedPlaceholderResult,
 } from "../imageCache";
 import logger from "../../utils/logger";
 
@@ -123,14 +124,16 @@ export async function handleEditBlock(toolCall, args, ctx) {
 		}
 	}
 
-	// If any placeholder is still present after the image step, log loudly —
-	// the block would otherwise render a broken <img src="__IMG_N__">.
-	const leftover = args.block_content.match(/__IMG_\d+__/g);
-	if (leftover && leftover.length > 0) {
+	// If any placeholder is still present after the image step, fail — writing it
+	// through renders a broken <img src="__IMG_N__"> and, reported as success,
+	// traps the model in a repair loop it cannot win.
+	const unresolved = unresolvedPlaceholderResult(toolCall.id, args.block_content);
+	if (unresolved) {
 		console.warn(
-			"[ToolExecutor:REST] edit-block: placeholders left unresolved — block will render with broken image URLs",
-			leftover
+			"[ToolExecutor:REST] edit-block: placeholders left unresolved — edit rejected",
+			args.block_content.match(/__IMG_\d+__/g)
 		);
+		return unresolved;
 	}
 
 	await ctx.updateProgress(__("Validating block markup…", "wp-module-editor-chat"), 300);
@@ -151,10 +154,13 @@ export async function handleEditBlock(toolCall, args, ctx) {
 	// we let the edit through — the validation + safe merge path below
 	// catches broken markup and lost inner blocks. Only block truly
 	// massive rewrites that are almost certainly truncated AI output.
+	// core/post-content is exempt: a whole-page redesign is legitimately a large
+	// rewrite, and handleRewriteAction applies it with replaceInnerBlocks, which
+	// is verified rather than silently refused.
 	{
 		const { select: wpSel } = wp.data;
 		const targetBlock = wpSel("core/block-editor").getBlock(args.client_id);
-		if (targetBlock) {
+		if (targetBlock && targetBlock.name !== "core/post-content") {
 			const innerCount = countInnerBlocks(targetBlock);
 			if (innerCount >= 40 && args.block_content.length > 12000) {
 				return {
@@ -191,7 +197,16 @@ export async function handleEditBlock(toolCall, args, ctx) {
 	const { select: wpSelect } = wp.data;
 	const originalBlock = wpSelect("core/block-editor").getBlock(args.client_id);
 
-	if (originalBlock && originalBlock.innerBlocks.length > 0 && validation.blocks?.length >= 1) {
+	// core/post-content is exempt: the replacement is the whole page body, so it
+	// legitimately has many top-level blocks. These guards compare against
+	// validation.blocks[0] only and would read that as catastrophic inner-block
+	// loss. handleRewriteAction verifies the post-content path directly.
+	if (
+		originalBlock &&
+		originalBlock.name !== "core/post-content" &&
+		originalBlock.innerBlocks.length > 0 &&
+		validation.blocks?.length >= 1
+	) {
 		const newTopBlock = validation.blocks[0];
 
 		// ── Wrapper/child mismatch recovery ──
