@@ -92,6 +92,33 @@ async function resolveHeaderNavigationForClient(clientId) {
 }
 
 /**
+ * Reject a replacement WordPress would silently refuse.
+ *
+ * core's replaceBlocks() is a thunk that returns without dispatching when any
+ * replacement block fails canInsertBlockType at the target's root — no throw,
+ * no return value, all-or-nothing. Checking first turns a silent no-op into a
+ * tool error naming the offending block type, which the model can act on.
+ *
+ * @param {string} clientId  The block being replaced.
+ * @param {Array}  newBlocks Replacement blocks.
+ */
+function assertBlocksInsertable(clientId, newBlocks) {
+	const { getBlockRootClientId, canInsertBlockType, getBlockName } = select("core/block-editor");
+	const rootClientId = getBlockRootClientId(clientId);
+
+	for (const candidate of newBlocks) {
+		if (!canInsertBlockType(candidate.name, rootClientId)) {
+			const parentName = rootClientId ? getBlockName(rootClientId) : "the document root";
+			throw new Error(
+				`${candidate.name} cannot be placed inside ${parentName}. Edit this block's ` +
+					`children individually with blu-update-block-attrs, or add new content with ` +
+					`blu-add-section.`
+			);
+		}
+	}
+}
+
+/**
  * Replace entire block content.
  *
  * @param {string} clientId     The block's client ID.
@@ -121,6 +148,28 @@ export async function handleRewriteAction(clientId, blockContent) {
 
 	if (!updatedBlocks || updatedBlocks.length === 0) {
 		throw new Error("Failed to parse block_content into blocks");
+	}
+
+	// core/post-content is the page body inside the site editor's template. The
+	// block itself sits at the template root, which is edit-disabled while a page
+	// is open, so replaceBlocks() would be refused silently. Replacing its inner
+	// blocks is the equivalent operation and writes through to the page entity —
+	// replaceInnerBlocks is a plain action with no canInsertBlockType guard.
+	if (block.name === "core/post-content") {
+		const innerBlocks = updatedBlocks.map((b) => createBlockFromParsed(b));
+		const { replaceInnerBlocks } = dispatch("core/block-editor");
+		replaceInnerBlocks(clientId, innerBlocks, false);
+
+		if (select("core/block-editor").getBlocks(clientId).length !== innerBlocks.length) {
+			throw new Error("Page content replacement did not apply — the page is unchanged.");
+		}
+
+		return {
+			clientId,
+			blockName: block.name,
+			message: `Page content replaced with ${innerBlocks.length} top-level block(s)`,
+			originalBlock,
+		};
 	}
 
 	const ancestorNav =
@@ -166,7 +215,20 @@ export async function handleRewriteAction(clientId, blockContent) {
 	// attributes, especially for RichText content (paragraphs, headings).
 	const newBlocks = updatedBlocks.map((b) => createBlockFromParsed(b));
 	const { replaceBlocks } = dispatch("core/block-editor");
+
+	assertBlocksInsertable(clientId, newBlocks);
 	replaceBlocks(clientId, newBlocks);
+
+	// replaceBlocks removes the old clientId on success (createBlockFromParsed
+	// mints fresh ones). If it survived, the dispatch was refused — template
+	// lock, disabled editing mode, allowedBlocks — and the tree is untouched.
+	// Never report that as a rewrite.
+	if (getBlock(clientId)) {
+		throw new Error(
+			`WordPress refused to replace ${block.name} and the page is unchanged. This block ` +
+				`cannot be replaced in place — edit its children instead.`
+		);
+	}
 
 	return {
 		clientId,

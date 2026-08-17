@@ -151,10 +151,11 @@ export async function handleEditBlock(toolCall, args, ctx) {
 	// we let the edit through — the validation + safe merge path below
 	// catches broken markup and lost inner blocks. Only block truly
 	// massive rewrites that are almost certainly truncated AI output.
+	// Skipped for core/post-content — a whole-page redesign is legitimately this large.
 	{
 		const { select: wpSel } = wp.data;
 		const targetBlock = wpSel("core/block-editor").getBlock(args.client_id);
-		if (targetBlock) {
+		if (targetBlock && targetBlock.name !== "core/post-content") {
 			const innerCount = countInnerBlocks(targetBlock);
 			if (innerCount >= 40 && args.block_content.length > 12000) {
 				return {
@@ -191,7 +192,13 @@ export async function handleEditBlock(toolCall, args, ctx) {
 	const { select: wpSelect } = wp.data;
 	const originalBlock = wpSelect("core/block-editor").getBlock(args.client_id);
 
-	if (originalBlock && originalBlock.innerBlocks.length > 0 && validation.blocks?.length >= 1) {
+	// Skipped for core/post-content — a whole page body legitimately has many top-level blocks.
+	if (
+		originalBlock &&
+		originalBlock.name !== "core/post-content" &&
+		originalBlock.innerBlocks.length > 0 &&
+		validation.blocks?.length >= 1
+	) {
 		const newTopBlock = validation.blocks[0];
 
 		// ── Wrapper/child mismatch recovery ──
