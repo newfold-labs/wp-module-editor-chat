@@ -38,7 +38,6 @@ import {
 	findHeaderRefNavigationBlock,
 	hydrateAllRefNavigationBlocks,
 	getBlockPathInNavigation,
-	getNavigationMenuLinks,
 	insertBlocksInNavigation,
 	isRefNavigation,
 	modifyNavigationEntity,
@@ -54,7 +53,6 @@ import {
 	resolveRefNavigationForEdit,
 	summarizeNavigationMenuItems,
 	summarizeNavigationMenuItemsFromEntity,
-	updateNavigationLinkAttributes,
 	syncNavigationEntityFromEditor,
 } from "./navigationEditor";
 
@@ -65,7 +63,7 @@ import {
 /**
  * Load the site header's linked navigation menu for menu-item edits.
  *
- * @return {Promise<Object|null>}
+ * @return {Promise<Object|null>} The header navigation block, or null if absent.
  */
 async function hydrateHeaderNavigation() {
 	const nav = findHeaderRefNavigationBlock();
@@ -80,7 +78,7 @@ async function hydrateHeaderNavigation() {
  * Resolve header navigation when a menu-link clientId belongs to it.
  *
  * @param {string} clientId Block inside a navigation menu.
- * @return {Promise<Object|null>}
+ * @return {Promise<Object|null>} The header navigation block, or null if the id is not in it.
  */
 async function resolveHeaderNavigationForClient(clientId) {
 	const headerNav = await hydrateHeaderNavigation();
@@ -95,7 +93,7 @@ async function resolveHeaderNavigationForClient(clientId) {
  * Reject a replacement WordPress would silently refuse.
  *
  * core's replaceBlocks() is a thunk that returns without dispatching when any
- * replacement block fails canInsertBlockType at the target's root — no throw,
+ * replacement block fails canInsertBlockType at the target's root: no throw,
  * no return value, all-or-nothing. Checking first turns a silent no-op into a
  * tool error naming the offending block type, which the model can act on.
  *
@@ -153,7 +151,7 @@ export async function handleRewriteAction(clientId, blockContent) {
 	// core/post-content is the page body inside the site editor's template. The
 	// block itself sits at the template root, which is edit-disabled while a page
 	// is open, so replaceBlocks() would be refused silently. Replacing its inner
-	// blocks is the equivalent operation and writes through to the page entity —
+	// blocks is the equivalent operation and writes through to the page entity.
 	// replaceInnerBlocks is a plain action with no canInsertBlockType guard.
 	if (block.name === "core/post-content") {
 		const innerBlocks = updatedBlocks.map((b) => createBlockFromParsed(b));
@@ -161,7 +159,7 @@ export async function handleRewriteAction(clientId, blockContent) {
 		replaceInnerBlocks(clientId, innerBlocks, false);
 
 		if (select("core/block-editor").getBlocks(clientId).length !== innerBlocks.length) {
-			throw new Error("Page content replacement did not apply — the page is unchanged.");
+			throw new Error("Page content replacement did not apply. The page is unchanged.");
 		}
 
 		return {
@@ -173,7 +171,8 @@ export async function handleRewriteAction(clientId, blockContent) {
 	}
 
 	const ancestorNav =
-		(await resolveRefNavigationForEdit(clientId)) || (await resolveHeaderNavigationForClient(clientId));
+		(await resolveRefNavigationForEdit(clientId)) ||
+		(await resolveHeaderNavigationForClient(clientId));
 
 	if (ancestorNav) {
 		const path = getBlockPathInNavigation(ancestorNav.clientId, clientId);
@@ -220,13 +219,14 @@ export async function handleRewriteAction(clientId, blockContent) {
 	replaceBlocks(clientId, newBlocks);
 
 	// replaceBlocks removes the old clientId on success (createBlockFromParsed
-	// mints fresh ones). If it survived, the dispatch was refused — template
-	// lock, disabled editing mode, allowedBlocks — and the tree is untouched.
+	// mints fresh ones). If it survived, the dispatch was refused by
+	// template lock, disabled editing mode or allowedBlocks, and the tree is
+	// untouched.
 	// Never report that as a rewrite.
 	if (getBlock(clientId)) {
 		throw new Error(
 			`WordPress refused to replace ${block.name} and the page is unchanged. This block ` +
-				`cannot be replaced in place — edit its children instead.`
+				`cannot be replaced in place. Edit its children instead.`
 		);
 	}
 
@@ -245,7 +245,6 @@ export async function handleRewriteAction(clientId, blockContent) {
  * @return {Promise<Object>} Result of the deletion.
  */
 export async function handleDeleteAction(clientIdOrParams) {
-	const { getBlock } = select("core/block-editor");
 	const params =
 		typeof clientIdOrParams === "object" && clientIdOrParams !== null
 			? clientIdOrParams
@@ -294,6 +293,7 @@ export async function handleDeleteAction(clientIdOrParams) {
 		}
 	}
 
+	const { getBlock } = select("core/block-editor");
 	let block =
 		(clientId ? await ensureMenuBlockAccessible(clientId) : null) ||
 		(clientId ? getBlock(clientId) : null);
@@ -330,7 +330,8 @@ export async function handleDeleteAction(clientIdOrParams) {
 	};
 
 	const ancestorNav =
-		(await resolveRefNavigationForEdit(clientId)) || (await resolveHeaderNavigationForClient(clientId));
+		(await resolveRefNavigationForEdit(clientId)) ||
+		(await resolveHeaderNavigationForClient(clientId));
 
 	if (ancestorNav) {
 		const path = getBlockPathInNavigation(ancestorNav.clientId, clientId);
@@ -507,57 +508,69 @@ export async function handleMoveAction(clientId, targetClientId, position, asChi
 			}
 		}
 	} else {
-	const sourceAncestor = findAncestorTemplatePart(clientId);
-	const targetAncestor = findAncestorTemplatePart(targetClientId);
+		const sourceAncestor = findAncestorTemplatePart(clientId);
+		const targetAncestor = findAncestorTemplatePart(targetClientId);
 
-	if (sourceAncestor || targetAncestor) {
-		// Move within the SAME template part — use entity-based approach
-		if (sourceAncestor && targetAncestor && sourceAncestor.clientId === targetAncestor.clientId) {
-			const sourcePath = getBlockPathInTemplatePart(sourceAncestor.clientId, clientId);
-			const targetPath = getBlockPathInTemplatePart(targetAncestor.clientId, targetClientId);
+		if (sourceAncestor || targetAncestor) {
+			// Move within the SAME template part — use entity-based approach
+			if (sourceAncestor && targetAncestor && sourceAncestor.clientId === targetAncestor.clientId) {
+				const sourcePath = getBlockPathInTemplatePart(sourceAncestor.clientId, clientId);
+				const targetPath = getBlockPathInTemplatePart(targetAncestor.clientId, targetClientId);
 
-			if (!sourcePath || !targetPath) {
-				throw new Error("Could not compute paths for move within template part");
-			}
+				if (!sourcePath || !targetPath) {
+					throw new Error("Could not compute paths for move within template part");
+				}
 
-			await modifyTemplatePartEntity(sourceAncestor, (blocks) => {
-				let movedBlock = null;
-				const findBlockInTree = (tree, path) => {
-					if (path.length === 1) {
-						return tree[path[0]];
+				await modifyTemplatePartEntity(sourceAncestor, (blocks) => {
+					let movedBlock = null;
+					const findBlockInTree = (tree, path) => {
+						if (path.length === 1) {
+							return tree[path[0]];
+						}
+						return findBlockInTree(tree[path[0]].innerBlocks || [], path.slice(1));
+					};
+					movedBlock = findBlockInTree(blocks, sourcePath);
+					if (!movedBlock) {
+						return blocks;
 					}
-					return findBlockInTree(tree[path[0]].innerBlocks || [], path.slice(1));
-				};
-				movedBlock = findBlockInTree(blocks, sourcePath);
-				if (!movedBlock) {
-					return blocks;
-				}
 
-				let modified = removeBlockAtPath(blocks, sourcePath);
+					let modified = removeBlockAtPath(blocks, sourcePath);
 
-				// After removing the source, adjust target path if source was in the
-				// same parent and at a lower index (indices shift down by 1).
-				const adjustedTarget = [...targetPath];
-				const srcParent = sourcePath.slice(0, -1);
-				const tgtParent = targetPath.slice(0, -1);
-				if (
-					srcParent.length === tgtParent.length &&
-					srcParent.every((v, i) => v === tgtParent[i]) &&
-					sourcePath[sourcePath.length - 1] < targetPath[targetPath.length - 1]
-				) {
-					adjustedTarget[adjustedTarget.length - 1] -= 1;
-				}
+					// After removing the source, adjust target path if source was in the
+					// same parent and at a lower index (indices shift down by 1).
+					const adjustedTarget = [...targetPath];
+					const srcParent = sourcePath.slice(0, -1);
+					const tgtParent = targetPath.slice(0, -1);
+					if (
+						srcParent.length === tgtParent.length &&
+						srcParent.every((v, i) => v === tgtParent[i]) &&
+						sourcePath[sourcePath.length - 1] < targetPath[targetPath.length - 1]
+					) {
+						adjustedTarget[adjustedTarget.length - 1] -= 1;
+					}
 
+					if (position === "after") {
+						modified = insertBlocksAtPath(modified, adjustedTarget, [movedBlock]);
+					} else {
+						modified = insertBlocksBeforePath(modified, adjustedTarget, [movedBlock]);
+					}
+
+					return modified;
+				});
+			} else {
+				// Cross-template-part moves — fall back to standard dispatch
+				const { moveBlockToPosition } = dispatch("core/block-editor");
+				const targetRootClientId = getBlockRootClientId(targetClientId) || "";
+				let targetIndex = getBlockIndex(targetClientId);
 				if (position === "after") {
-					modified = insertBlocksAtPath(modified, adjustedTarget, [movedBlock]);
-				} else {
-					modified = insertBlocksBeforePath(modified, adjustedTarget, [movedBlock]);
+					targetIndex += 1;
 				}
-
-				return modified;
-			});
+				if (originalRootClientId === targetRootClientId && originalIndex < targetIndex) {
+					targetIndex -= 1;
+				}
+				moveBlockToPosition(clientId, originalRootClientId, targetRootClientId, targetIndex);
+			}
 		} else {
-			// Cross-template-part moves — fall back to standard dispatch
 			const { moveBlockToPosition } = dispatch("core/block-editor");
 			const targetRootClientId = getBlockRootClientId(targetClientId) || "";
 			let targetIndex = getBlockIndex(targetClientId);
@@ -569,18 +582,6 @@ export async function handleMoveAction(clientId, targetClientId, position, asChi
 			}
 			moveBlockToPosition(clientId, originalRootClientId, targetRootClientId, targetIndex);
 		}
-	} else {
-		const { moveBlockToPosition } = dispatch("core/block-editor");
-		const targetRootClientId = getBlockRootClientId(targetClientId) || "";
-		let targetIndex = getBlockIndex(targetClientId);
-		if (position === "after") {
-			targetIndex += 1;
-		}
-		if (originalRootClientId === targetRootClientId && originalIndex < targetIndex) {
-			targetIndex -= 1;
-		}
-		moveBlockToPosition(clientId, originalRootClientId, targetRootClientId, targetIndex);
-	}
 	}
 
 	return {
@@ -625,7 +626,7 @@ export async function handleAddAction(clientId, changes, position = "after") {
 			parsedBlocksList.push(...parsedBlocks);
 		} catch (error) {
 			errors.push(`Failed to parse block_content: ${error.message}`);
-			// eslint-disable-next-line no-console
+
 			console.error("Failed to parse block_content:", error);
 		}
 	}
@@ -657,48 +658,48 @@ export async function handleAddAction(clientId, changes, position = "after") {
 		const inserter = position === "before" ? insertBlocksBeforePath : insertBlocksAtPath;
 		await modifyNavigationEntity(ancestorNav, (blocks) => inserter(blocks, path, parsedBlocksList));
 	} else {
-	const ancestorTemplatePart = clientId ? findAncestorTemplatePart(clientId) : null;
+		const ancestorTemplatePart = clientId ? findAncestorTemplatePart(clientId) : null;
 
-	if (ancestorTemplatePart) {
-		const path = getBlockPathInTemplatePart(ancestorTemplatePart.clientId, clientId);
-		if (!path) {
-			throw new Error(`Could not compute path for block ${clientId} in template part`);
-		}
-		const inserter = position === "before" ? insertBlocksBeforePath : insertBlocksAtPath;
-		await modifyTemplatePartEntity(ancestorTemplatePart, (blocks) =>
-			inserter(blocks, path, parsedBlocksList)
-		);
-	} else if (clientId === null) {
-		const effectiveRoot = getEffectiveRootBlocks();
-		if (effectiveRoot.blocks.length > 0) {
-			if (effectiveRoot.parentClientId) {
-				insertBlocks(blockInstances, 0, effectiveRoot.parentClientId);
+		if (ancestorTemplatePart) {
+			const path = getBlockPathInTemplatePart(ancestorTemplatePart.clientId, clientId);
+			if (!path) {
+				throw new Error(`Could not compute path for block ${clientId} in template part`);
+			}
+			const inserter = position === "before" ? insertBlocksBeforePath : insertBlocksAtPath;
+			await modifyTemplatePartEntity(ancestorTemplatePart, (blocks) =>
+				inserter(blocks, path, parsedBlocksList)
+			);
+		} else if (clientId === null) {
+			const effectiveRoot = getEffectiveRootBlocks();
+			if (effectiveRoot.blocks.length > 0) {
+				if (effectiveRoot.parentClientId) {
+					insertBlocks(blockInstances, 0, effectiveRoot.parentClientId);
+				} else {
+					insertBlocks(blockInstances, 0, effectiveRoot.blocks[0].clientId);
+				}
 			} else {
-				insertBlocks(blockInstances, 0, effectiveRoot.blocks[0].clientId);
+				const rootBlocks = getBlocks();
+				const postContentBlock = rootBlocks.find((b) => b.name === "core/post-content");
+				if (postContentBlock) {
+					insertBlocks(blockInstances, 0, postContentBlock.clientId);
+				} else {
+					insertBlocks(blockInstances, 0);
+				}
 			}
 		} else {
-			const rootBlocks = getBlocks();
-			const postContentBlock = rootBlocks.find((b) => b.name === "core/post-content");
-			if (postContentBlock) {
-				insertBlocks(blockInstances, 0, postContentBlock.clientId);
-			} else {
-				insertBlocks(blockInstances, 0);
+			const targetBlock = getBlock(clientId);
+			if (!targetBlock) {
+				throw new Error(`Target block with clientId ${clientId} not found`);
 			}
-		}
-	} else {
-		const targetBlock = getBlock(clientId);
-		if (!targetBlock) {
-			throw new Error(`Target block with clientId ${clientId} not found`);
-		}
 
-		const context = findBlockContext(clientId);
-		if (!context) {
-			throw new Error(`Target block ${clientId} not found in the block tree`);
-		}
+			const context = findBlockContext(clientId);
+			if (!context) {
+				throw new Error(`Target block ${clientId} not found in the block tree`);
+			}
 
-		const insertIndex = position === "before" ? context.index : context.index + 1;
-		insertBlocks(blockInstances, insertIndex, context.parentClientId || undefined);
-	}
+			const insertIndex = position === "before" ? context.index : context.index + 1;
+			insertBlocks(blockInstances, insertIndex, context.parentClientId || undefined);
+		}
 	}
 
 	const insertedClientIds = blockInstances.map((b) => b.clientId || null).filter(Boolean);
@@ -734,8 +735,6 @@ export async function handleAddAction(clientId, changes, position = "after") {
  */
 export async function handleDuplicateAction(params = {}) {
 	const { client_id: explicitClientId, kind, scope, position } = params;
-	const { getBlock } = select("core/block-editor");
-	const { insertBlocks } = dispatch("core/block-editor");
 
 	let targetClientId = explicitClientId;
 	let resolution = null;
@@ -751,6 +750,8 @@ export async function handleDuplicateAction(params = {}) {
 		resolution = resolveTarget({ kind, scope, position });
 		targetClientId = resolution.client_id;
 	}
+
+	const { getBlock } = select("core/block-editor");
 
 	const block = getBlock(targetClientId);
 	if (!block) {
@@ -788,6 +789,7 @@ export async function handleDuplicateAction(params = {}) {
 	}
 
 	const clone = cloneBlock(block);
+	const { insertBlocks } = dispatch("core/block-editor");
 	insertBlocks(clone, context.index + 1, context.parentClientId || undefined);
 
 	// Build a compact leaf summary so the follow-up tool call knows which
@@ -849,9 +851,9 @@ function summarizeNewSubtree(root) {
 /**
  * Insert a new block as a child of an existing parent at the given index.
  *
- * @param {string}      parentClientId The parent (container) block's client ID.
- * @param {string}      blockContent   WordPress block markup for the new child.
- * @param {number|null} index          0-based insert position; null/undefined = append.
+ * @param {string}      parentClientId        The parent (container) block's client ID.
+ * @param {string}      blockContent          WordPress block markup for the new child.
+ * @param {number|null} index                 0-based insert position; null/undefined = append.
  * @param {Object|null} intendedAttrsOverride Parsed navigation-link attrs from raw tool markup.
  * @return {Promise<Object>} Result of the insertion.
  */
@@ -862,7 +864,6 @@ export async function handleInsertInnerBlockAction(
 	intendedAttrsOverride = null
 ) {
 	const { getBlock } = select("core/block-editor");
-	const { insertBlocks } = dispatch("core/block-editor");
 
 	const parent = getBlock(parentClientId);
 	if (!parent) {
@@ -871,22 +872,23 @@ export async function handleInsertInnerBlockAction(
 
 	const intendedAttrsRaw =
 		intendedAttrsOverride || parseNavigationLinkAttrsFromMarkup(blockContent);
-	let intendedAttrs =
+	const intendedAttrs =
+		// eslint-disable-next-line eqeqeq -- intentional loose check: matches null and undefined
 		intendedAttrsRaw?.id != null
 			? await resolvePageNavigationAttrs(intendedAttrsRaw)
 			: intendedAttrsRaw;
 
+	// eslint-disable-next-line eqeqeq -- intentional loose check: matches null and undefined
 	if (intendedAttrs?.id != null) {
 		await assertNavigationPageExists(intendedAttrs);
 	}
 
 	let parsed = null;
+	// eslint-disable-next-line eqeqeq -- intentional loose check: matches null and undefined
 	if (intendedAttrs?.id != null) {
 		parsed = buildParsedNavigationLinkFromAttrs(intendedAttrs);
 		if (!parsed?.length) {
-			throw new Error(
-				`Failed to build navigation link for page id ${intendedAttrs.id}`
-			);
+			throw new Error(`Failed to build navigation link for page id ${intendedAttrs.id}`);
 		}
 	} else {
 		parsed = normalizeParsedNavigationLinks(parse(blockContent));
@@ -960,11 +962,7 @@ export async function handleInsertInnerBlockAction(
 		if (isRefNavigation(liveParent)) {
 			const blocksToInsert = parsed;
 			await modifyNavigationEntity(liveParent, (blocks) => {
-				return [
-					...blocks.slice(0, insertAt),
-					...blocksToInsert,
-					...blocks.slice(insertAt),
-				];
+				return [...blocks.slice(0, insertAt), ...blocksToInsert, ...blocks.slice(insertAt)];
 			});
 		} else {
 			const parentPath = getBlockPathInNavigation(parentNav.clientId, parentClientId);
@@ -996,6 +994,7 @@ export async function handleInsertInnerBlockAction(
 	const insertIndex =
 		typeof index === "number" && index >= 0 ? Math.min(index, childCount) : childCount;
 
+	const { insertBlocks } = dispatch("core/block-editor");
 	insertBlocks(blockInstances, insertIndex, parentClientId);
 
 	return {

@@ -131,8 +131,7 @@ export const buildCompactBlockTree = (
 			// Recurse into inner blocks.
 			// Always expand children of selected blocks and navigation menus.
 			if (block.innerBlocks && block.innerBlocks.length > 0) {
-				const expandChildren =
-					isSelected || insideSelected || block.name === "core/navigation";
+				const expandChildren = isSelected || insideSelected || block.name === "core/navigation";
 				if (hasSelection && !expandChildren && !subtreeHasSelected(block.innerBlocks)) {
 					lines.push(`${"  ".repeat(depth + 1)}... (${block.innerBlocks.length} inner blocks)`);
 				} else {
@@ -162,7 +161,7 @@ export const getBlockMarkup = (clientId) => {
 
 	// Template parts, linked navigation and post-content all serialize to
 	// self-closing comments. The AI needs the actual inner blocks content to be
-	// able to modify them — without this, blu-get-block-markup on the page body
+	// able to modify them. Without this, blu-get-block-markup on the page body
 	// returns "<!-- wp:post-content /-->" and the model has to invent markup.
 	let blockContent;
 	if (
@@ -178,8 +177,7 @@ export const getBlockMarkup = (clientId) => {
 				"wp_navigation",
 				block.attributes.ref
 			);
-			const raw =
-				entity?.content?.raw || entity?.content?.rendered || entity?.content || "";
+			const raw = entity?.content?.raw || entity?.content?.rendered || entity?.content || "";
 			blockContent = typeof raw === "string" ? raw : "";
 		}
 	} else {

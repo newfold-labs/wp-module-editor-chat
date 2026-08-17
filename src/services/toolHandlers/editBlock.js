@@ -151,7 +151,7 @@ export async function handleEditBlock(toolCall, args, ctx) {
 	// we let the edit through — the validation + safe merge path below
 	// catches broken markup and lost inner blocks. Only block truly
 	// massive rewrites that are almost certainly truncated AI output.
-	// Skipped for core/post-content — a whole-page redesign is legitimately this large.
+	// Skipped for core/post-content: a whole-page redesign is legitimately this large.
 	{
 		const { select: wpSel } = wp.data;
 		const targetBlock = wpSel("core/block-editor").getBlock(args.client_id);
@@ -192,7 +192,7 @@ export async function handleEditBlock(toolCall, args, ctx) {
 	const { select: wpSelect } = wp.data;
 	const originalBlock = wpSelect("core/block-editor").getBlock(args.client_id);
 
-	// Skipped for core/post-content — a whole page body legitimately has many top-level blocks.
+	// Skipped for core/post-content: a whole page body legitimately has many top-level blocks.
 	if (
 		originalBlock &&
 		originalBlock.name !== "core/post-content" &&
