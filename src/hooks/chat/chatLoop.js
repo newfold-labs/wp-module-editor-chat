@@ -161,9 +161,7 @@ export async function runChatLoop(userMessage, deps) {
 	let planShown = false;
 	// Consecutive passes that only gathered info (read-only tools, no change).
 	let readOnlyStreak = 0;
-	// Whether the previous tool pass produced any failure (truncated arguments or
-	// an isError result). Read by the retry-limit branch so it reports what
-	// actually happened instead of assuming the repeat means "already applied".
+	// Whether the previous tool pass failed, for the retry-limit branch.
 	let lastPassHadErrors = false;
 	// Set after a cut-off so the very next pass gets a larger output ceiling.
 	let retryWithHigherCeiling = false;
@@ -290,8 +288,7 @@ export async function runChatLoop(userMessage, deps) {
 				resetStream: planShown,
 				streamMessageId,
 				jsonMessageDisplay: true,
-				// Raised for the pass that follows a cut-off, so the retry has
-				// room to finish instead of being truncated at the same point.
+				// Give the retry after a cut-off room to finish.
 				...(retryWithHigherCeiling ? { max_completion_tokens: MAX_COMPLETION_TOKENS_RETRY } : {}),
 			}
 		);
@@ -308,10 +305,7 @@ export async function runChatLoop(userMessage, deps) {
 		}
 
 		const parsed = parseAssistantResponse(content);
-		// Sanitize here too: the streaming path already does this via
-		// getAssistantDisplayMessage, but this finalized copy skipped it, so when
-		// the model wrote prose instead of JSON its clientIds, __IMG_N__
-		// placeholders and core/* slugs went straight into the chat.
+		// Sanitize here too; the streaming path already does.
 		const assistantDisplayMessage = sanitizeUserFacingMessage(parsed?.message || content || "");
 
 		if (!toolCalls || toolCalls.length === 0) {
@@ -432,11 +426,8 @@ export async function runChatLoop(userMessage, deps) {
 				arguments: envelope.parameters || {},
 			};
 		});
-		// Truncated calls must never enter retry detection. Their arguments were
-		// unparseable, so they all collapse to the same `{}` fallback: two
-		// consecutive truncations hash identically and trip the retry guard even
-		// though the model never actually repeated itself and nothing ever ran.
-		// That is what turns a recoverable cut-off into a dead turn.
+		// Truncated calls all collapse to `{}` args, so two cut-offs would hash
+		// identically and trip the retry guard.
 		const trackableCalls = unwrappedCalls.filter((tc) => !tc._truncated);
 		const { allRetried, retryLimitHit } =
 			trackableCalls.length > 0
@@ -467,11 +458,8 @@ export async function runChatLoop(userMessage, deps) {
 					},
 				})),
 			});
-			// Inject synthetic tool results: give AI one chance to summarize.
-			// Never assert that the edit landed: the repeats are just as often a
-			// model retrying something that FAILED (truncated arguments, a
-			// rejected edit). Claiming "already applied" there turns a failure
-			// into a confident success message and the user sees no change.
+			// Synthetic results so the AI can summarize. Never claim the edit
+			// landed; the repeat is often a retry of something that failed.
 			for (const tc of toolCalls) {
 				conversationHistoryRef.current.push({
 					role: "tool",
@@ -511,17 +499,11 @@ export async function runChatLoop(userMessage, deps) {
 			removeStreamingMessage(setMessages, streamMessageId);
 		}
 
-		// Handle truncated tool calls: skip execution, return error.
-		// finish_reason "length" means the model hit the output ceiling mid
-		// tool_use, so the fix is to split the work, not to resend the same
-		// oversized payload: say that explicitly or it retries identically.
+		// Truncated calls never run. On a length stop the fix is to split.
 		const truncated = toolCalls.filter((tc) => tc._truncated);
 		if (truncated.length > 0) {
-			// Self-heal rather than surface this. The next pass gets a larger
-			// ceiling AND an instruction to split, so a cut-off costs one extra
-			// round trip instead of ending the turn. The user never sees it:
-			// truncated calls never reach setExecutedTools, so no failed-action
-			// row is rendered, and the loop continues normally.
+			// Self-heal: bigger ceiling plus a split instruction. Not surfaced,
+			// since truncated calls never reach setExecutedTools.
 			retryWithHigherCeiling = true;
 			logger.log(
 				`[EditorChat] Output cut off mid tool call (finish_reason=${finishReason}): retrying with a higher ceiling`

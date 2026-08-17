@@ -84,9 +84,7 @@ export async function handleAddSection(toolCall, args, ctx) {
 		}
 	}
 
-	// Never insert a section carrying an unresolved placeholder: it renders a
-	// broken <img src="__IMG_N__"> and, reported as success, leaves the model
-	// re-editing a block it believes it already fixed.
+	// Never insert a section carrying an unresolved placeholder.
 	const unresolved = unresolvedPlaceholderResult(toolCall.id, args.block_content);
 	if (unresolved) {
 		console.warn(

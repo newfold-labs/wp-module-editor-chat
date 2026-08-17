@@ -134,16 +134,8 @@ function checkTagBalance(markup) {
 /**
  * Give core/list items their block delimiters.
  *
- * core/list is apiVersion 3 and keeps its items as core/list-item INNER BLOCKS.
- * The model routinely emits a plain <ul> with raw <li> children and no
- * <!-- wp:list-item --> delimiters; parse() then returns a core/list with zero
- * inner blocks and every bullet is silently discarded: the card renders as a
- * single empty list item and the editor logs "Block validation failed for
- * core/list". Repair the markup BEFORE parsing, because afterwards the content
- * is already gone.
- *
- * Only applies when the markup has no list-item delimiters at all. Mixed markup
- * is left alone: it is rare and rewriting it risks double-wrapping.
+ * core/list keeps its items as core/list-item inner blocks, so bare <li>
+ * children are discarded at parse. Only applies when no delimiters are present.
  *
  * @param {string} markup Raw block markup from the model.
  * @return {string} Markup with every <li> wrapped in core/list-item delimiters.
@@ -167,10 +159,8 @@ function normalizeListItems(markup) {
 /**
  * Rewrite `wp:row` as the group block it actually is.
  *
- * There is no core/row block type. "Row" is a variation of core/group with a
- * flex layout, so `<!-- wp:row -->` parses as an unregistered block and the
- * whole section renders invalid. Seen from the model whenever it lays out a
- * single-row band such as a client logo strip.
+ * There is no core/row block type; "Row" is a core/group variation with a flex
+ * layout, so `<!-- wp:row -->` parses as an unregistered block.
  *
  * @param {string} markup Raw block markup from the model.
  * @return {string} Markup with row blocks expressed as flex groups.
@@ -186,8 +176,8 @@ function normalizeRowBlocks(markup) {
 				try {
 					parsedAttrs = JSON.parse(attrs);
 				} catch {
-					// Unparseable attributes: fall back to a bare flex group rather
-					// than leaving an unregistered block behind.
+					// Unparseable attributes; a bare flex group still beats an
+					// unregistered block.
 					parsedAttrs = {};
 				}
 			}
@@ -205,11 +195,8 @@ function normalizeRowBlocks(markup) {
 /**
  * Move a cover block's background image into its attributes.
  *
- * core/cover keeps the background in the `url` attribute and regenerates the
- * <img> from it on save. The model often writes the image only into the HTML
- * and omits `url`, which parses to a cover with no background at all: and
- * because normalization rebuilds HTML from attributes, the <img> is then
- * discarded outright. Lifting the src into `url` is what makes the image stick.
+ * core/cover keeps the background in `url` and regenerates the <img> from it,
+ * so an image written only into the HTML is discarded.
  *
  * @param {string} markup Raw block markup from the model.
  * @return {string} Markup with cover background URLs present in attributes.
@@ -255,9 +242,7 @@ export const validateBlockMarkup = (rawBlockContent) => {
 		return { valid: false, error: "block_content is empty or not a string" };
 	}
 
-	// Repair known model mistakes before anything else reads the markup: the
-	// tag-balance check, parse() and the normalizer all need valid input, and
-	// after parse() the lost content cannot be recovered.
+	// Repair known model mistakes first; after parse() the content is gone.
 	const blockContent = normalizeCoverBackgrounds(
 		normalizeRowBlocks(normalizeListItems(rawBlockContent))
 	);

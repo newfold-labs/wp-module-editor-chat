@@ -51,11 +51,7 @@ export function parseAssistantResponse(content) {
 
 	const trimmed = content.trim();
 
-	// Plain prose: the model ignored the JSON contract entirely. This happens
-	// often enough that it must not be treated as a parse failure: running it
-	// through safeParseJSON is what produced the "[safeParseJSON] Could not
-	// recover JSON" console noise, and returning null makes the caller fall back
-	// to the raw string, skipping sanitization. Detect it before parsing.
+	// Prose, not the JSON contract. Parsing it only adds console noise.
 	if (!trimmed.includes('"message"') && !trimmed.includes("need_blocks_markup")) {
 		return { message: trimmed };
 	}
@@ -100,9 +96,7 @@ export function parseAssistantResponse(content) {
  */
 function extractMessageLoosely(text) {
 	const unescape = (s) => s.replace(/\\"/g, '"').replace(/\\n/g, "\n").trim() || null;
-	// A salvaged "message" still carrying a contract key is structural garbage,
-	// not prose: it means the model broke the object shape itself (seen as
-	// `{"message":"need_blocks_markup":[…]}`). Better no message than that.
+	// A message still carrying a contract key is garbage, not prose.
 	const clean = (s) => (s && !s.includes("need_blocks_markup") ? s : null);
 
 	const match = text.match(/"message"\s*:\s*"([\s\S]*)"\s*(?:,\s*"need_blocks_markup"|\}|$)/);
@@ -110,20 +104,13 @@ function extractMessageLoosely(text) {
 		return clean(unescape(match[1]));
 	}
 
-	// Unterminated string: output was cut off mid-message, so there is no
-	// closing quote for the greedy pattern above to anchor on. Take everything
-	// after the opening quote; without this the raw JSON leaks into the chat.
+	// Cut off mid-message: no closing quote for the pattern above to anchor on.
 	const openEnded = text.match(/"message"\s*:\s*"([\s\S]*)$/);
 	return openEnded ? clean(unescape(openEnded[1])) : null;
 }
 
 /**
- * Salvage need_blocks_markup ids from JSON the model broke structurally.
- *
- * Seen in the wild as `{"message":"need_blocks_markup":[…]}`: two colons, no
- * value for message. Nothing can parse that, so the markup request used to be
- * dropped silently and the model re-asked for the same blocks every turn without
- * ever making progress.
+ * Recover need_blocks_markup ids from structurally broken JSON.
  *
  * @param {string} text Trimmed assistant output
  * @return {string[]|null} Client ids, or null if none found

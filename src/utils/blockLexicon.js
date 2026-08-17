@@ -70,8 +70,7 @@ export const BLOCK_LEXICON = {
 		names: ["core/group", "core/cover"],
 	},
 	row: {
-		// No core/row block type exists: "Row" is a core/group variation with a
-		// flex layout, so matching on it never resolved a real block.
+		// No core/row block type exists; "Row" is a core/group variation.
 		names: ["core/columns", "core/group"],
 	},
 };

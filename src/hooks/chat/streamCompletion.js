@@ -7,10 +7,7 @@
 /**
  * Text safe to display from a partially-streamed structured response.
  *
- * Only ever returns the `message` field, never the envelope around it. Must not
- * fall back to the raw buffer the way getAssistantDisplayMessage does: mid-flight
- * the buffer is often `{"message"` or `{"message":"`, and echoing that flashes
- * raw JSON into the chat before the first word arrives.
+ * Returns the `message` field only, never the envelope around it.
  *
  * @param {string} text Accumulated assistant content so far.
  * @return {string|null} Message text, or null when there is nothing safe to show yet.
@@ -20,8 +17,7 @@ function partialJsonMessage(text) {
 	if (!trimmed) {
 		return null;
 	}
-	// Building toward the JSON contract (or a fenced version of it): show the
-	// message field once it has actual characters, and nothing before that.
+	// JSON contract, possibly fenced. Show the message once it has content.
 	if (trimmed.startsWith("{") || trimmed.startsWith("`")) {
 		const match = trimmed.match(/"message"\s*:\s*"((?:[^"\\]|\\.)*)/);
 		if (!match) {
@@ -30,7 +26,7 @@ function partialJsonMessage(text) {
 		const value = match[1].replace(/\\"/g, '"').replace(/\\n/g, "\n");
 		return value ? sanitizeUserFacingMessage(value) : null;
 	}
-	// Plain prose: the model ignored the contract, so stream it as written.
+	// Prose: stream as written.
 	return text;
 }
 import { createAbortError } from "../../utils/abortControl";
@@ -151,12 +147,8 @@ export async function streamCompletion(msgs, tools, options = {}, deps) {
 				continue;
 			}
 
-			// Structured JSON mode: the model emits {"message":"…"} first and its
-			// tool calls after. Render the message field as it streams instead of
-			// waiting for the whole response: on a whole-page edit the tool
-			// arguments are tens of thousands of tokens, so withholding everything
-			// leaves the user watching a frozen indicator for the entire
-			// generation even though the plan was ready in the first second.
+			// The message field streams before the tool calls. Render it as it
+			// arrives; the arguments that follow can be huge.
 			if (options.jsonMessageDisplay) {
 				const partial = partialJsonMessage(fullMessage);
 				if (partial !== null && partial !== displayMessage) {

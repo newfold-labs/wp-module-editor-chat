@@ -92,10 +92,8 @@ async function resolveHeaderNavigationForClient(clientId) {
 /**
  * Reject a replacement WordPress would silently refuse.
  *
- * core's replaceBlocks() is a thunk that returns without dispatching when any
- * replacement block fails canInsertBlockType at the target's root: no throw,
- * no return value, all-or-nothing. Checking first turns a silent no-op into a
- * tool error naming the offending block type, which the model can act on.
+ * core's replaceBlocks() returns without dispatching, and without throwing, if
+ * any block fails canInsertBlockType at the target root.
  *
  * @param {string} clientId  The block being replaced.
  * @param {Array}  newBlocks Replacement blocks.
@@ -148,11 +146,8 @@ export async function handleRewriteAction(clientId, blockContent) {
 		throw new Error("Failed to parse block_content into blocks");
 	}
 
-	// core/post-content is the page body inside the site editor's template. The
-	// block itself sits at the template root, which is edit-disabled while a page
-	// is open, so replaceBlocks() would be refused silently. Replacing its inner
-	// blocks is the equivalent operation and writes through to the page entity.
-	// replaceInnerBlocks is a plain action with no canInsertBlockType guard.
+	// The page body. Its root is edit-disabled while a page is open, so
+	// replaceBlocks() is refused; replaceInnerBlocks has no such guard.
 	if (block.name === "core/post-content") {
 		const innerBlocks = updatedBlocks.map((b) => createBlockFromParsed(b));
 		const { replaceInnerBlocks } = dispatch("core/block-editor");
@@ -218,11 +213,8 @@ export async function handleRewriteAction(clientId, blockContent) {
 	assertBlocksInsertable(clientId, newBlocks);
 	replaceBlocks(clientId, newBlocks);
 
-	// replaceBlocks removes the old clientId on success (createBlockFromParsed
-	// mints fresh ones). If it survived, the dispatch was refused by
-	// template lock, disabled editing mode or allowedBlocks, and the tree is
-	// untouched.
-	// Never report that as a rewrite.
+	// The old clientId is gone on success. If it survived, the dispatch was
+	// refused and the tree is untouched.
 	if (getBlock(clientId)) {
 		throw new Error(
 			`WordPress refused to replace ${block.name} and the page is unchanged. This block ` +
@@ -512,7 +504,7 @@ export async function handleMoveAction(clientId, targetClientId, position, asChi
 		const targetAncestor = findAncestorTemplatePart(targetClientId);
 
 		if (sourceAncestor || targetAncestor) {
-			// Move within the SAME template part — use entity-based approach
+			// Move within the SAME template part: use entity-based approach
 			if (sourceAncestor && targetAncestor && sourceAncestor.clientId === targetAncestor.clientId) {
 				const sourcePath = getBlockPathInTemplatePart(sourceAncestor.clientId, clientId);
 				const targetPath = getBlockPathInTemplatePart(targetAncestor.clientId, targetClientId);
@@ -558,7 +550,7 @@ export async function handleMoveAction(clientId, targetClientId, position, asChi
 					return modified;
 				});
 			} else {
-				// Cross-template-part moves — fall back to standard dispatch
+				// Cross-template-part moves: fall back to standard dispatch
 				const { moveBlockToPosition } = dispatch("core/block-editor");
 				const targetRootClientId = getBlockRootClientId(targetClientId) || "";
 				let targetIndex = getBlockIndex(targetClientId);

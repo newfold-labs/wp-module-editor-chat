@@ -159,10 +159,8 @@ export const getBlockMarkup = (clientId) => {
 		return null;
 	}
 
-	// Template parts, linked navigation and post-content all serialize to
-	// self-closing comments. The AI needs the actual inner blocks content to be
-	// able to modify them: without this, blu-get-block-markup on the page body
-	// returns "<!-- wp:post-content /-->" and the model has to invent markup.
+	// These serialize to self-closing comments; return their inner blocks so
+	// the AI has something to edit.
 	let blockContent;
 	if (
 		block.name === "core/template-part" ||

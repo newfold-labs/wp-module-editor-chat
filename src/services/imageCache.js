@@ -98,10 +98,8 @@ export function substituteImagePlaceholder(markup, index, url, alt = "") {
 /**
  * Build a tool error for markup whose image placeholders never resolved.
  *
- * Writing `__IMG_N__` through produces a visibly broken <img> and a 404. Worse,
- * reporting that as success sends the model into a repair loop it cannot win:
- * it re-edits the same block, sees "success", and the loop guards eventually
- * end the turn with nothing applied. Failing here is the honest outcome.
+ * Writing the placeholder through renders a broken <img>, and calling that a
+ * success sends the model into a repair loop it cannot win.
  *
  * @param {string} toolCallId The tool call id to answer.
  * @param {string} markup     Block markup after the image step.

@@ -124,9 +124,7 @@ export async function handleEditBlock(toolCall, args, ctx) {
 		}
 	}
 
-	// If any placeholder is still present after the image step, fail: writing it
-	// through renders a broken <img src="__IMG_N__"> and, reported as success,
-	// traps the model in a repair loop it cannot win.
+	// Fail rather than write a placeholder through as a broken image.
 	const unresolved = unresolvedPlaceholderResult(toolCall.id, args.block_content);
 	if (unresolved) {
 		console.warn(
@@ -154,9 +152,7 @@ export async function handleEditBlock(toolCall, args, ctx) {
 	// we let the edit through — the validation + safe merge path below
 	// catches broken markup and lost inner blocks. Only block truly
 	// massive rewrites that are almost certainly truncated AI output.
-	// core/post-content is exempt: a whole-page redesign is legitimately a large
-	// rewrite, and handleRewriteAction applies it with replaceInnerBlocks, which
-	// is verified rather than silently refused.
+	// Skipped for core/post-content: a whole-page redesign is legitimately large.
 	{
 		const { select: wpSel } = wp.data;
 		const targetBlock = wpSel("core/block-editor").getBlock(args.client_id);
@@ -197,10 +193,8 @@ export async function handleEditBlock(toolCall, args, ctx) {
 	const { select: wpSelect } = wp.data;
 	const originalBlock = wpSelect("core/block-editor").getBlock(args.client_id);
 
-	// core/post-content is exempt: the replacement is the whole page body, so it
-	// legitimately has many top-level blocks. These guards compare against
-	// validation.blocks[0] only and would read that as catastrophic inner-block
-	// loss. handleRewriteAction verifies the post-content path directly.
+	// Skipped for core/post-content: a page body legitimately has many top-level
+	// blocks, which these guards would read as inner-block loss.
 	if (
 		originalBlock &&
 		originalBlock.name !== "core/post-content" &&
