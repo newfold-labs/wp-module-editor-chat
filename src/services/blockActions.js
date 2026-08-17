@@ -368,9 +368,10 @@ export async function handleDeleteAction(clientIdOrParams) {
 	// the block is gone.
 	if (getBlock(clientId)) {
 		throw new Error(
-			`WordPress refused to delete ${block.name} and it is still on the page. It is ` +
-				`most likely part of the template rather than the page, and template blocks ` +
-				`cannot be removed while editing a page.`
+			`${block.name} is part of the template, not this page, so it cannot be removed ` +
+				`while editing a page. Tell the user it belongs to the template and ask whether ` +
+				`to remove it from the template, which changes every page using it. Only if they ` +
+				`confirm, call this tool again with the same client_id plus "from_template": true.`
 		);
 	}
 

@@ -538,6 +538,9 @@ export async function runChatLoop(userMessage, deps) {
 				? await executeToolCallsForREST(executableCalls, {
 						...buildToolCtx(),
 						abortSignal: turnSignal,
+						// Handlers that widen scope (e.g. editing the template rather
+						// than the page) need the user's own wording to justify it.
+						userMessage: intentMessage,
 					})
 				: [];
 		if (executableCalls.length > 0) {
