@@ -87,9 +87,10 @@ function getToolsForIntent(intent, openaiTools) {
 	if (intentNeedsAllTools(intent)) {
 		return openaiTools;
 	}
-	if (intent?.task === "conversational" && !intent?.steps?.length) {
-		return [];
-	}
+	// Editor tools go out even for "conversational". The classifier reads short
+	// imperatives like "remove this" as conversational, and withholding every
+	// tool left the model able to promise an edit but not perform one. An unused
+	// tool definition costs a few tokens; a missing one costs the whole turn.
 	return openaiTools.filter((t) => EDITOR_TOOLS.has(t.function.name));
 }
 
@@ -377,13 +378,19 @@ export async function runChatLoop(userMessage, deps) {
 
 			// Signing off with planned work unapplied — this is where the model tells
 			// the user it added two services it never created. One corrective pass.
-			if (!unfinishedNudgeUsed && writeRounds < plannedSteps.length) {
+			// Fires on any editing turn that ends with nothing applied, not just
+			// multi-step ones. plannedSteps is empty whenever the classifier fails
+			// or returns no steps, which is exactly when this is most needed.
+			const stepsOutstanding = writeRounds < plannedSteps.length;
+			const nothingApplied = !anyMutationThisTurn && intent?.task !== "conversational";
+			if (!unfinishedNudgeUsed && (stepsOutstanding || nothingApplied)) {
 				unfinishedNudgeUsed = true;
 				conversationHistoryRef.current.push({ role: "assistant", content });
 				removeStreamingMessage(setMessages, streamMessageId);
+				const remaining = stepsOutstanding ? plannedSteps.slice(writeRounds) : [intentMessage];
 				conversationHistoryRef.current.push({
 					role: "system",
-					content: buildRemainingStepsNudge(plannedSteps.slice(writeRounds)),
+					content: buildRemainingStepsNudge(remaining),
 				});
 				readOnlyStreak = 0;
 				logger.log(
