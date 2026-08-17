@@ -224,9 +224,14 @@ export async function runChatLoop(userMessage, deps) {
 		intent.menu_edit,
 		intent.steps
 	);
-	if (intent.steps?.length > 1) {
+	// Single-step requests count too. Without them the unapplied-steps guard
+	// below never fires, and the model can announce an edit, call nothing, and
+	// end the turn as if it had worked.
+	if (intent.steps?.length) {
 		plannedSteps = intent.steps;
-		logger.log("[EditorChat] Multi-step request:", plannedSteps);
+		if (plannedSteps.length > 1) {
+			logger.log("[EditorChat] Multi-step request:", plannedSteps);
+		}
 	}
 
 	while (iterations++ < MAX_TOOL_ITERATIONS) {

@@ -363,6 +363,17 @@ export async function handleDeleteAction(clientIdOrParams) {
 	const { removeBlock } = dispatch("core/block-editor");
 	removeBlock(clientId);
 
+	// removeBlocks bails silently when canRemoveBlocks is false, which is the
+	// case for template blocks while a page is open. Report that, don't claim
+	// the block is gone.
+	if (getBlock(clientId)) {
+		throw new Error(
+			`WordPress refused to delete ${block.name} and it is still on the page. It is ` +
+				`most likely part of the template rather than the page, and template blocks ` +
+				`cannot be removed while editing a page.`
+		);
+	}
+
 	return {
 		clientId,
 		blockName: block.name,
