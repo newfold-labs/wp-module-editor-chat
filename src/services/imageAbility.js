@@ -1,7 +1,11 @@
 import { dispatch } from "@wordpress/data";
+import { __ } from "@wordpress/i18n";
 
 import { callAbility } from "./callAbility";
+import { appendGeneratedImageUrl } from "./imageCache";
 import { IMAGE_BLOCKS } from "./blockToolbar/blockAI";
+import { resolveAlt } from "../utils/imageAlt";
+import logger from "../utils/logger";
 
 /**
  * Apply a generated image to an image block, alt text included.
@@ -74,4 +78,54 @@ export async function callImageAbility(mcpClient, { prompt, sourceUrl, ...opts }
 	const ability = sourceUrl ? "blu-edit-image" : "blu-generate-image";
 	const parameters = sourceUrl ? { prompt, source_url: sourceUrl, ...opts } : { prompt, ...opts };
 	return callAbility(mcpClient, ability, parameters);
+}
+
+/**
+ * Generate the images for a run of `__IMG_N__` placeholders.
+ *
+ * Shared by add-section, edit-block and insert-inner-block so all three resolve
+ * placeholders the same way. Failures are collected rather than thrown: the
+ * caller's unresolved-placeholder guard decides what a partial run means, and it
+ * is the only place that can tell the model what to do about it.
+ *
+ * @param {Array<string|Object>} prompts                     `image_prompts` entries, string or {prompt, alt?, …}.
+ * @param {Object}               ctx                         Tool context (mcpClient, updateProgress).
+ * @param {Object}               [options]                   Options.
+ * @param {number}               [options.limit]             Stop after this many prompts (the placeholder count).
+ * @param {string|null}          [options.sourceUrlForFirst] Existing image the first prompt should edit rather than replace.
+ * @return {Promise<Array<{url: string, alt: string}>>} Generated images, in prompt order.
+ */
+export async function resolveImagePrompts(prompts, ctx, { limit, sourceUrlForFirst = null } = {}) {
+	const count = Math.min(prompts.length, limit ?? prompts.length);
+	const images = [];
+
+	for (let i = 0; i < count; i++) {
+		const entry = prompts[i];
+		const { prompt, alt, ...opts } = typeof entry === "string" ? { prompt: entry } : { ...entry };
+		const sourceUrl = i === 0 ? sourceUrlForFirst : null;
+
+		await ctx.updateProgress(
+			(sourceUrl
+				? __("Editing image…", "wp-module-editor-chat")
+				: __("Generating image…", "wp-module-editor-chat")) + ` (${i + 1}/${count})`,
+			500
+		);
+
+		try {
+			const mcpResult = await callImageAbility(ctx.mcpClient, { prompt, sourceUrl, ...opts });
+			const url = parseImageAbilityUrl(mcpResult);
+			if (!url) {
+				console.warn(`[imageAbility] image ${i + 1}/${count} returned no URL`, mcpResult);
+				continue;
+			}
+			const resolvedAlt = resolveAlt(alt, prompt);
+			images.push({ url, alt: resolvedAlt });
+			appendGeneratedImageUrl(url, resolvedAlt);
+			logger.log(`[imageAbility] image ${i + 1}/${count} ready`, { prompt, sourceUrl, url });
+		} catch (err) {
+			console.error(`[imageAbility] image ${i + 1}/${count} threw`, err);
+		}
+	}
+
+	return images;
 }

@@ -1,17 +1,10 @@
 import { __ } from "@wordpress/i18n";
 
 import { validateBlockMarkup } from "../../utils/blockValidator";
-import { resolveAlt } from "../../utils/imageAlt";
+import { findImagePlaceholders, substituteImagePlaceholders } from "../../utils/imagePlaceholders";
 import { handleRewriteAction } from "../blockActions";
-import { callImageAbility, getBlockImageUrl } from "../imageAbility";
-import {
-	appendGeneratedImageUrl,
-	deduplicateImages,
-	getGeneratedImages,
-	substituteImagePlaceholder,
-	unresolvedPlaceholderResult,
-} from "../imageCache";
-import logger from "../../utils/logger";
+import { getBlockImageUrl, resolveImagePrompts } from "../imageAbility";
+import { deduplicateImages, getGeneratedImages, unresolvedPlaceholderResult } from "../imageCache";
 
 /**
  * Count all inner blocks recursively.
@@ -28,108 +21,44 @@ function countInnerBlocks(block) {
 
 export async function handleEditBlock(toolCall, args, ctx) {
 	// ── Image placeholder resolution (mirrors add-section) ──
-	const imgPlaceholders = args.block_content.match(/__IMG_\d+__/g) || [];
-	const uniquePlaceholders = [...new Set(imgPlaceholders)];
+	const placeholders = findImagePlaceholders(args.block_content);
+	let generationAttempted = false;
+	let generatedCount = 0;
 
-	if (uniquePlaceholders.length > 0) {
-		if (args.image_prompts && Array.isArray(args.image_prompts) && args.image_prompts.length > 0) {
-			const promptCount = Math.min(args.image_prompts.length, uniquePlaceholders.length);
-
+	if (placeholders.length > 0) {
+		if (Array.isArray(args.image_prompts) && args.image_prompts.length > 0) {
+			generationAttempted = true;
 			// If this block already has an image, the first placeholder is almost
 			// always that same image being rewritten — route it through
-			// blu-edit-image (via callImageAbility) so we modify the existing
-			// photo instead of discarding it and generating a brand-new one.
-			// Mirrors the redirect in toolDispatcher's blu-generate-image branch.
-			const { select: wpSelectForImage } = wp.data;
-			const originalImageBlock = wpSelectForImage("core/block-editor").getBlock(args.client_id);
-			const existingImageUrl = getBlockImageUrl(originalImageBlock);
-
-			const images = [];
-			for (let i = 0; i < promptCount; i++) {
-				const prompt = args.image_prompts[i];
-				const {
-					prompt: promptText,
-					alt: promptAlt,
-					...restPromptOpts
-				} = typeof prompt === "string" ? { prompt } : { prompt: prompt.prompt, ...prompt };
-				const sourceUrl = i === 0 ? existingImageUrl : null;
-
-				await ctx.updateProgress(
-					(sourceUrl
-						? __("Editing image…", "wp-module-editor-chat")
-						: __("Generating image…", "wp-module-editor-chat")) + ` (${i + 1}/${promptCount})`,
-					500
-				);
-				logger.log(
-					`[ToolExecutor:REST] edit-block: ${sourceUrl ? "editing" : "generating"} image ${i + 1}/${promptCount}`,
-					{ prompt: promptText, sourceUrl, ...restPromptOpts }
-				);
-				try {
-					const mcpResult = await callImageAbility(ctx.mcpClient, {
-						prompt: promptText,
-						sourceUrl,
-						...restPromptOpts,
-					});
-					logger.log(`[ToolExecutor:REST] edit-block: image ${i + 1} MCP result`, mcpResult);
-					if (!mcpResult.isError && mcpResult.content?.[0]?.text) {
-						const parsed = JSON.parse(mcpResult.content[0].text);
-						const url = parsed?.message?.url || parsed?.url;
-						if (url) {
-							const alt = resolveAlt(promptAlt, promptText);
-							images.push({ url, alt });
-							appendGeneratedImageUrl(url, alt);
-						} else {
-							console.warn(
-								`[ToolExecutor:REST] edit-block: image ${i + 1} result had no URL`,
-								parsed
-							);
-						}
-					} else {
-						console.warn(
-							`[ToolExecutor:REST] edit-block: image ${i + 1} MCP result flagged as error or empty`,
-							mcpResult
-						);
-					}
-				} catch (imgErr) {
-					console.error(`[ToolExecutor:REST] edit-block: image ${i + 1} generation threw`, imgErr);
-				}
-			}
-
-			for (let i = 0; i < images.length; i++) {
-				args.block_content = substituteImagePlaceholder(
-					args.block_content,
-					i + 1,
-					images[i].url,
-					images[i].alt
-				);
-			}
-		} else if (args.image_urls && Array.isArray(args.image_urls) && args.image_urls.length > 0) {
-			for (let i = 0; i < args.image_urls.length; i++) {
-				args.block_content = substituteImagePlaceholder(
-					args.block_content,
-					i + 1,
-					args.image_urls[i]
-				);
-			}
+			// blu-edit-image so we modify the existing photo instead of discarding
+			// it and generating a brand-new one. Mirrors the redirect in
+			// toolDispatcher's blu-generate-image branch.
+			const originalImageBlock = wp.data.select("core/block-editor").getBlock(args.client_id);
+			const images = await resolveImagePrompts(args.image_prompts, ctx, {
+				limit: placeholders.length,
+				sourceUrlForFirst: getBlockImageUrl(originalImageBlock),
+			});
+			generatedCount = images.length;
+			args.block_content = substituteImagePlaceholders(args.block_content, images);
+		} else if (Array.isArray(args.image_urls) && args.image_urls.length > 0) {
+			args.block_content = substituteImagePlaceholders(
+				args.block_content,
+				args.image_urls.map((url) => ({ url }))
+			);
 		} else if (getGeneratedImages().length > 0) {
-			const cached = getGeneratedImages();
-			for (let i = 0; i < Math.min(cached.length, uniquePlaceholders.length); i++) {
-				args.block_content = substituteImagePlaceholder(
-					args.block_content,
-					i + 1,
-					cached[i].url,
-					cached[i].alt
-				);
-			}
+			args.block_content = substituteImagePlaceholders(args.block_content, getGeneratedImages());
 		}
 	}
 
 	// Fail rather than write a placeholder through as a broken image.
-	const unresolved = unresolvedPlaceholderResult(toolCall.id, args.block_content);
+	const unresolved = unresolvedPlaceholderResult(toolCall.id, args.block_content, {
+		attempted: generationAttempted,
+		generated: generatedCount,
+	});
 	if (unresolved) {
 		console.warn(
 			"[ToolExecutor:REST] edit-block: placeholders left unresolved: edit rejected",
-			args.block_content.match(/__IMG_\d+__/g)
+			findImagePlaceholders(args.block_content)
 		);
 		return unresolved;
 	}

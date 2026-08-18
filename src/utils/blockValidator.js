@@ -6,6 +6,7 @@ import { parse, serialize, createBlock } from "@wordpress/blocks";
 /**
  * Internal dependencies
  */
+import { findImagePlaceholders } from "./imagePlaceholders";
 import logger from "./logger";
 
 /**
@@ -250,6 +251,20 @@ export const validateBlockMarkup = (rawBlockContent) => {
 	// Must contain block comments
 	if (!blockContent.includes("<!-- wp:")) {
 		return { valid: false, error: "Missing block comments (<!-- wp:... -->)" };
+	}
+
+	// Backstop for every write path. A placeholder that reaches the validator was
+	// never resolved — either the caller has no image step (blu-add-page and
+	// friends) or its own generation was skipped. Writing it through renders a
+	// broken <img src="__IMG_1__">, and reporting success sends the model into a
+	// repair loop it cannot win. Handlers that can generate images check earlier
+	// and return a more specific error; this only catches what they miss.
+	const unresolvedImages = findImagePlaceholders(blockContent);
+	if (unresolvedImages.length > 0) {
+		return {
+			valid: false,
+			error: `Unresolved image placeholders: ${unresolvedImages.join(", ")}. Nothing was changed. This tool cannot generate images — use blu/add-section or blu/edit-block with one image_prompts entry per placeholder, or write a real image URL. Never write the placeholder into the page.`,
+		};
 	}
 
 	// ── Pre-check: HTML tag balance ──

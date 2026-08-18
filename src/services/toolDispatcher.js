@@ -348,6 +348,8 @@ async function executeClientActionFromStub(stub, args, toolCall, ctx) {
 		"attributes",
 		"before_client_id",
 		"after_client_id",
+		"image_prompts",
+		"image_urls",
 	]) {
 		if (stub[key] !== undefined && merged[key] === undefined) {
 			merged[key] = stub[key];
