@@ -31,3 +31,35 @@ export function callAbility(mcpClient, abilityName, parameters) {
 		parameters: parameters || {},
 	});
 }
+
+/**
+ * Whether an MCP result represents a failed ability call.
+ *
+ * The PHP side never sets MCP's `isError` flag; failure is reported in the
+ * payload status instead, so without this a 502 looks like a success.
+ *
+ * @param {Object} mcpResult Result from callAbility / mcpClient.callTool.
+ * @return {boolean} True when the call failed.
+ */
+export function mcpResultIsError(mcpResult) {
+	if (!mcpResult) {
+		return true;
+	}
+	if (mcpResult.isError) {
+		return true;
+	}
+	const text = mcpResult.content?.[0]?.text;
+	if (typeof text !== "string") {
+		return false;
+	}
+	try {
+		const parsed = JSON.parse(text);
+		if (typeof parsed?.statusCode === "number") {
+			return parsed.statusCode >= 400;
+		}
+		return parsed?.status === "error";
+	} catch {
+		// Not an ability envelope; leave it to the existing content handling.
+		return false;
+	}
+}

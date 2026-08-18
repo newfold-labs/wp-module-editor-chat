@@ -9,6 +9,7 @@ import {
 	deduplicateImages,
 	getGeneratedImages,
 	substituteImagePlaceholder,
+	unresolvedPlaceholderResult,
 } from "../imageCache";
 
 export async function handleAddSection(toolCall, args, ctx) {
@@ -81,8 +82,16 @@ export async function handleAddSection(toolCall, args, ctx) {
 				);
 			}
 		}
+	}
 
-		// Warn about unresolved placeholders
+	// Never insert a section carrying an unresolved placeholder.
+	const unresolved = unresolvedPlaceholderResult(toolCall.id, args.block_content);
+	if (unresolved) {
+		console.warn(
+			"[ToolExecutor:REST] add-section: placeholders left unresolved: insert rejected",
+			args.block_content.match(/__IMG_\d+__/g)
+		);
+		return unresolved;
 	}
 
 	await ctx.updateProgress(__("Validating block markup…", "wp-module-editor-chat"), 300);

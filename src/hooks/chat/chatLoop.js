@@ -9,6 +9,7 @@
 import {
 	CHAT_STATUS,
 	EDITOR_TOOLS,
+	MAX_COMPLETION_TOKENS_RETRY,
 	MAX_TOOL_ITERATIONS,
 	MAX_READ_ONLY_PASSES,
 	MAX_READ_RESULT_CHARS,
@@ -44,6 +45,7 @@ import {
 	getAssistantDisplayMessage,
 	canRequestBlockMarkup,
 	filterValidMarkupClientIds,
+	sanitizeUserFacingMessage,
 	MAX_MARKUP_REQUESTS_PER_TURN,
 } from "./assistantResponse";
 import logger from "../../utils/logger";
@@ -85,9 +87,10 @@ function getToolsForIntent(intent, openaiTools) {
 	if (intentNeedsAllTools(intent)) {
 		return openaiTools;
 	}
-	if (intent?.task === "conversational" && !intent?.steps?.length) {
-		return [];
-	}
+	// Editor tools go out even for "conversational". The classifier reads short
+	// imperatives like "remove this" as conversational, and withholding every
+	// tool left the model able to promise an edit but not perform one. An unused
+	// tool definition costs a few tokens; a missing one costs the whole turn.
 	return openaiTools.filter((t) => EDITOR_TOOLS.has(t.function.name));
 }
 
@@ -159,6 +162,10 @@ export async function runChatLoop(userMessage, deps) {
 	let planShown = false;
 	// Consecutive passes that only gathered info (read-only tools, no change).
 	let readOnlyStreak = 0;
+	// Whether the previous tool pass failed, for the retry-limit branch.
+	let lastPassHadErrors = false;
+	// Set after a cut-off so the very next pass gets a larger output ceiling.
+	let retryWithHigherCeiling = false;
 	// Steps for a multi-part request, from the intent classifier. Empty, or 2+.
 	// While steps remain the turn keeps going instead of summarizing after the
 	// first tool round and dropping the rest of the request.
@@ -218,9 +225,14 @@ export async function runChatLoop(userMessage, deps) {
 		intent.menu_edit,
 		intent.steps
 	);
-	if (intent.steps?.length > 1) {
+	// Single-step requests count too. Without them the unapplied-steps guard
+	// below never fires, and the model can announce an edit, call nothing, and
+	// end the turn as if it had worked.
+	if (intent.steps?.length) {
 		plannedSteps = intent.steps;
-		logger.log("[EditorChat] Multi-step request:", plannedSteps);
+		if (plannedSteps.length > 1) {
+			logger.log("[EditorChat] Multi-step request:", plannedSteps);
+		}
 	}
 
 	while (iterations++ < MAX_TOOL_ITERATIONS) {
@@ -275,11 +287,18 @@ export async function runChatLoop(userMessage, deps) {
 		];
 
 		const toolPassStart = performance.now();
-		const { content, toolCalls } = await streamCompletion(toolMessages, toolsForPass, {
-			resetStream: planShown,
-			streamMessageId,
-			jsonMessageDisplay: true,
-		});
+		const { content, toolCalls, finishReason } = await streamCompletion(
+			toolMessages,
+			toolsForPass,
+			{
+				resetStream: planShown,
+				streamMessageId,
+				jsonMessageDisplay: true,
+				// Give the retry after a cut-off room to finish.
+				...(retryWithHigherCeiling ? { max_completion_tokens: MAX_COMPLETION_TOKENS_RETRY } : {}),
+			}
+		);
+		retryWithHigherCeiling = false;
 		logger.log(
 			`[EditorChat] Tool pass #${iterations} LLM: ${(performance.now() - toolPassStart).toFixed(0)}ms (${toolCalls?.length || 0} tool calls)`
 		);
@@ -292,7 +311,8 @@ export async function runChatLoop(userMessage, deps) {
 		}
 
 		const parsed = parseAssistantResponse(content);
-		const assistantDisplayMessage = parsed?.message || content || "";
+		// Sanitize here too; the streaming path already does.
+		const assistantDisplayMessage = sanitizeUserFacingMessage(parsed?.message || content || "");
 
 		if (!toolCalls || toolCalls.length === 0) {
 			if (
@@ -358,13 +378,19 @@ export async function runChatLoop(userMessage, deps) {
 
 			// Signing off with planned work unapplied — this is where the model tells
 			// the user it added two services it never created. One corrective pass.
-			if (!unfinishedNudgeUsed && writeRounds < plannedSteps.length) {
+			// Fires on any editing turn that ends with nothing applied, not just
+			// multi-step ones. plannedSteps is empty whenever the classifier fails
+			// or returns no steps, which is exactly when this is most needed.
+			const stepsOutstanding = writeRounds < plannedSteps.length;
+			const nothingApplied = !anyMutationThisTurn && intent?.task !== "conversational";
+			if (!unfinishedNudgeUsed && (stepsOutstanding || nothingApplied)) {
 				unfinishedNudgeUsed = true;
 				conversationHistoryRef.current.push({ role: "assistant", content });
 				removeStreamingMessage(setMessages, streamMessageId);
+				const remaining = stepsOutstanding ? plannedSteps.slice(writeRounds) : [intentMessage];
 				conversationHistoryRef.current.push({
 					role: "system",
-					content: buildRemainingStepsNudge(plannedSteps.slice(writeRounds)),
+					content: buildRemainingStepsNudge(remaining),
 				});
 				readOnlyStreak = 0;
 				logger.log(
@@ -412,7 +438,13 @@ export async function runChatLoop(userMessage, deps) {
 				arguments: envelope.parameters || {},
 			};
 		});
-		const { allRetried, retryLimitHit } = retryTracker.recordIteration(unwrappedCalls);
+		// Truncated calls all collapse to `{}` args, so two cut-offs would hash
+		// identically and trip the retry guard.
+		const trackableCalls = unwrappedCalls.filter((tc) => !tc._truncated);
+		const { allRetried, retryLimitHit } =
+			trackableCalls.length > 0
+				? retryTracker.recordIteration(trackableCalls)
+				: { allRetried: false, retryLimitHit: false };
 
 		if (allRetried) {
 			if (retryLimitHit) {
@@ -438,13 +470,15 @@ export async function runChatLoop(userMessage, deps) {
 					},
 				})),
 			});
-			// Inject synthetic tool results — give AI one chance to summarize
+			// Synthetic results so the AI can summarize. Never claim the edit
+			// landed; the repeat is often a retry of something that failed.
 			for (const tc of toolCalls) {
 				conversationHistoryRef.current.push({
 					role: "tool",
 					tool_call_id: tc.id,
-					content:
-						"RETRY LIMIT: This tool has already been called multiple times. The edit is already applied. Do NOT call any more tools — respond to the user with a brief summary.",
+					content: lastPassHadErrors
+						? "RETRY LIMIT: This tool was already called with identical arguments and the previous attempt FAILED: see the error in the tool results above. Do NOT call any more tools. Tell the user plainly that the change could not be applied, and why. Do not claim it succeeded."
+						: "RETRY LIMIT: This tool has already been called multiple times with identical arguments. Do NOT call any more tools. Check the previous tool results above and report only what they actually reported: if any of them failed, say so instead of claiming success.",
 				});
 			}
 			continue;
@@ -477,15 +511,21 @@ export async function runChatLoop(userMessage, deps) {
 			removeStreamingMessage(setMessages, streamMessageId);
 		}
 
-		// Handle truncated tool calls — skip execution, return error
+		// Truncated calls never run. On a length stop the fix is to split.
 		const truncated = toolCalls.filter((tc) => tc._truncated);
 		if (truncated.length > 0) {
+			// Self-heal: bigger ceiling plus a split instruction. Not surfaced,
+			// since truncated calls never reach setExecutedTools.
+			retryWithHigherCeiling = true;
+			logger.log(
+				`[EditorChat] Output cut off mid tool call (finish_reason=${finishReason}): retrying with a higher ceiling`
+			);
 			for (const tc of truncated) {
 				conversationHistoryRef.current.push({
 					role: "tool",
 					tool_call_id: tc.id,
 					content:
-						"ERROR: Tool arguments were truncated and could not be parsed. Try again with shorter content or fewer changes at once.",
+						"NOTE: Your previous output was cut off mid tool call, so nothing was applied. This is not the user's problem and must not be mentioned to them. Immediately redo the work, but split it into several smaller tool calls, one section, column, or card per call, starting with the first piece now.",
 				});
 			}
 		}
@@ -498,6 +538,9 @@ export async function runChatLoop(userMessage, deps) {
 				? await executeToolCallsForREST(executableCalls, {
 						...buildToolCtx(),
 						abortSignal: turnSignal,
+						// Handlers that widen scope (e.g. editing the template rather
+						// than the page) need the user's own wording to justify it.
+						userMessage: intentMessage,
 					})
 				: [];
 		if (executableCalls.length > 0) {
@@ -505,6 +548,9 @@ export async function runChatLoop(userMessage, deps) {
 				`[EditorChat] Tool exec #${iterations}: ${(performance.now() - toolExecStart).toFixed(0)}ms (${executableCalls.length} tools)`
 			);
 		}
+
+		// Remembered for the retry-limit branch on the next iteration.
+		lastPassHadErrors = truncated.length > 0 || results.some((r) => r.isError);
 
 		// Append tool results to conversation. Budget by tool kind, keyed off the
 		// UNWRAPPED ability name (toolCalls carry the `blu-call-ability` envelope):
