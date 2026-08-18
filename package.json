@@ -39,7 +39,7 @@
 		"eslit": "^6.0.0",
 		"postcss": "^8.5.26",
 		"postcss-cli": "^11.0.1",
-		"postcss-import": "^16.1.1",
+		"postcss-import": "^17.0.0",
 		"postcss-safe-important": "^2.0.1",
 		"prettier": "^3.9.6",
 		"webpack-merge": "^6.0.1"
