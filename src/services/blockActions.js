@@ -90,28 +90,42 @@ async function resolveHeaderNavigationForClient(clientId) {
 }
 
 /**
- * Reject a replacement WordPress would silently refuse.
+ * Reject blocks WordPress would silently refuse to place inside a given parent.
  *
- * core's replaceBlocks() returns without dispatching, and without throwing, if
- * any block fails canInsertBlockType at the target root.
+ * Both replaceBlocks() and insertBlocks() return without dispatching, and
+ * without throwing, if any block fails canInsertBlockType at the target root.
+ * Reporting that as success tells the user their content was added when the
+ * page never changed.
+ *
+ * @param {string|null} rootClientId Container the blocks are destined for; null is the document root.
+ * @param {Array}       newBlocks    Blocks to place.
+ * @param {string}      guidance     What the model should do instead.
+ */
+function assertBlocksInsertableInto(rootClientId, newBlocks, guidance) {
+	const { canInsertBlockType, getBlockName } = select("core/block-editor");
+
+	for (const candidate of newBlocks) {
+		if (!canInsertBlockType(candidate.name, rootClientId)) {
+			const parentName = rootClientId ? getBlockName(rootClientId) : "the document root";
+			throw new Error(`${candidate.name} cannot be placed inside ${parentName}. ${guidance}`);
+		}
+	}
+}
+
+/**
+ * Reject a replacement WordPress would silently refuse.
  *
  * @param {string} clientId  The block being replaced.
  * @param {Array}  newBlocks Replacement blocks.
  */
 function assertBlocksInsertable(clientId, newBlocks) {
-	const { getBlockRootClientId, canInsertBlockType, getBlockName } = select("core/block-editor");
-	const rootClientId = getBlockRootClientId(clientId);
-
-	for (const candidate of newBlocks) {
-		if (!canInsertBlockType(candidate.name, rootClientId)) {
-			const parentName = rootClientId ? getBlockName(rootClientId) : "the document root";
-			throw new Error(
-				`${candidate.name} cannot be placed inside ${parentName}. Edit this block's ` +
-					`children individually with blu-update-block-attrs, or add new content with ` +
-					`blu-add-section.`
-			);
-		}
-	}
+	const { getBlockRootClientId } = select("core/block-editor");
+	assertBlocksInsertableInto(
+		getBlockRootClientId(clientId),
+		newBlocks,
+		`Edit this block's children individually with blu-update-block-attrs, or add new content with ` +
+			`blu-add-section.`
+	);
 }
 
 /**
@@ -994,18 +1008,43 @@ export async function handleInsertInnerBlockAction(
 		throw new Error("No valid blocks to insert");
 	}
 
+	// core silently drops children the container does not accept — core/columns
+	// takes only core/column, so an image aimed at the wrapper disappears while
+	// the dispatch still "succeeds".
+	assertBlocksInsertableInto(
+		parentClientId,
+		blockInstances,
+		`Target the container that actually accepts it — for a core/columns row that means an ` +
+			`individual core/column, not the columns wrapper. Insert a new core/column (with the ` +
+			`content inside it) if the row should grow, or pass the clientId of an existing column.`
+	);
+
 	const childCount = parent.innerBlocks?.length || 0;
 	const insertIndex =
 		typeof index === "number" && index >= 0 ? Math.min(index, childCount) : childCount;
 
 	const { insertBlocks } = dispatch("core/block-editor");
-	insertBlocks(blockInstances, insertIndex, parentClientId);
+	await insertBlocks(blockInstances, insertIndex, parentClientId);
+
+	// Report what landed, not what we built. Anything that fails to attach here
+	// would otherwise be summarised to the user as content they now have.
+	const insertedClientIds = blockInstances.map((b) => b.clientId);
+	const liveChildIds = new Set(
+		(getBlock(parentClientId)?.innerBlocks || []).map((b) => b.clientId)
+	);
+	const landed = insertedClientIds.filter((id) => liveChildIds.has(id));
+	if (landed.length === 0) {
+		throw new Error(
+			`The editor did not accept the block into ${parent.name}; nothing was added. Do not ` +
+				`report this as done — try a different container.`
+		);
+	}
 
 	return {
 		parentClientId,
 		blockName: parent.name,
-		insertedClientIds: blockInstances.map((b) => b.clientId),
+		insertedClientIds: landed,
 		insertedAtIndex: insertIndex,
-		message: `Inserted ${blockInstances.length} block(s) into ${parent.name}`,
+		message: `Inserted ${landed.length} block(s) into ${parent.name}`,
 	};
 }
