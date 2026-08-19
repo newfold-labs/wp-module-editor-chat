@@ -1,47 +1,17 @@
 import { __ } from "@wordpress/i18n";
 
 import { validateBlockMarkup } from "../../utils/blockValidator";
-import { findImagePlaceholders, substituteImagePlaceholders } from "../../utils/imagePlaceholders";
+import { findImagePlaceholders } from "../../utils/imagePlaceholders";
 import { handleAddAction } from "../blockActions";
-import { resolveImagePrompts } from "../imageAbility";
+import { resolveMarkupImages } from "../imageAbility";
 import { deduplicateImages, getGeneratedImages, unresolvedPlaceholderResult } from "../imageCache";
 
 export async function handleAddSection(toolCall, args, ctx) {
-	// ── Image placeholder resolution ──
-	// Matching is tolerant on purpose: a spelling we miss here is never generated
-	// AND slips past the guard below, landing in the page as a broken <img>.
-	const placeholders = findImagePlaceholders(args.block_content);
-	let generationAttempted = false;
-	let generatedCount = 0;
-
-	if (placeholders.length > 0) {
-		// Preferred path: generate images from image_prompts (markup-first flow)
-		if (Array.isArray(args.image_prompts) && args.image_prompts.length > 0) {
-			generationAttempted = true;
-			const images = await resolveImagePrompts(args.image_prompts, ctx, {
-				limit: placeholders.length,
-			});
-			generatedCount = images.length;
-			args.block_content = substituteImagePlaceholders(args.block_content, images);
-		}
-		// Fallback: substitute from pre-supplied image_urls array
-		else if (Array.isArray(args.image_urls) && args.image_urls.length > 0) {
-			args.block_content = substituteImagePlaceholders(
-				args.block_content,
-				args.image_urls.map((url) => ({ url }))
-			);
-		}
-		// Fallback: substitute from previously generated images in this turn
-		else if (getGeneratedImages().length > 0) {
-			args.block_content = substituteImagePlaceholders(args.block_content, getGeneratedImages());
-		}
-	}
+	const images = await resolveMarkupImages(args.block_content, args, ctx);
+	args.block_content = images.markup;
 
 	// Never insert a section carrying an unresolved placeholder.
-	const unresolved = unresolvedPlaceholderResult(toolCall.id, args.block_content, {
-		attempted: generationAttempted,
-		generated: generatedCount,
-	});
+	const unresolved = unresolvedPlaceholderResult(toolCall.id, args.block_content, images);
 	if (unresolved) {
 		console.warn(
 			"[ToolExecutor:REST] add-section: placeholders left unresolved: insert rejected",

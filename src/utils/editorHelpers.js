@@ -8,15 +8,12 @@
 import { select } from "@wordpress/data";
 import { serialize, getBlockTypes } from "@wordpress/blocks";
 
+import { hasImagePlaceholder } from "./imagePlaceholders";
+
 /**
- * Container block name → the block types that may be its direct children.
- *
- * Derived from each block type's own `parent` declaration (core/column declares
- * parent core/columns, core/button declares core/buttons, …) so it stays right
- * as blocks are added or changed, rather than being a list we maintain here.
- *
- * Built once per page load: getBlockTypes() is a full registry scan and the
- * tree is rebuilt on every turn.
+ * Container block name → block types allowed as its direct children, read from
+ * each type's own `parent` declaration. Cached: getBlockTypes() scans the whole
+ * registry and the tree is rebuilt every turn.
  *
  * @type {Map<string, string[]>|null}
  */
@@ -39,11 +36,9 @@ function getRestrictedChildMap() {
 /**
  * Placement facts about one block, as short tags for the AI context tree.
  *
- * The tree used to carry only name, id and a text preview, so every structural
- * decision — what a container accepts, how it lays its children out, whether an
- * image is real — was a guess. Each tag below exists because guessing it wrong
- * produced a silent failure: content inserted into a container that refuses it,
- * a new column rendered at zero width, a broken placeholder copied forward.
+ * Each tag exists because guessing it wrong fails silently: content inserted
+ * into a container that refuses it, a column rendered at zero width, a broken
+ * placeholder copied forward.
  *
  * @param {Object} block Block object from the editor store.
  * @return {string} Space-prefixed tags, or "" when nothing is noteworthy.
@@ -52,8 +47,7 @@ function describeBlockStructure(block) {
 	const tags = [];
 	const attrs = block.attributes || {};
 
-	// What this container will actually accept as a direct child. Inserting
-	// anything else is silently discarded by the editor.
+	// Anything else is silently discarded by the editor.
 	const allowed = getRestrictedChildMap().get(block.name);
 	if (allowed?.length && block.innerBlocks) {
 		tags.push(`accepts:${allowed.join("|")}`);
@@ -91,7 +85,7 @@ function describeBlockStructure(block) {
 		const src = attrs.url || "";
 		if (!src) {
 			tags.push("img:EMPTY");
-		} else if (/__(?:IMG|IMAGE)_?\d*__/i.test(src)) {
+		} else if (hasImagePlaceholder(src)) {
 			tags.push("img:BROKEN-PLACEHOLDER");
 		}
 	}

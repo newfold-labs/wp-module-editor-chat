@@ -566,16 +566,22 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 		index: 0,
 		total: clientToolCalls.length,
 	});
+	// Unwrap the gateway envelope BEFORE anything reads the name. Nearly every
+	// ability arrives as blu-call-ability, so the raw name would label the whole
+	// actions list "Blu Call Ability" and hide discovery calls from the
+	// internal-tool filter, which matches on ability names.
+	const resolvedCalls = clientToolCalls.map((tc) =>
+		resolveClientToolCall(
+			tc.name || "",
+			typeof tc.arguments === "string" ? safeParseJSON(tc.arguments).value : tc.arguments || {}
+		)
+	);
+
 	ctx.setPendingTools(
 		clientToolCalls.map((tc, idx) => ({
 			...tc,
 			id: tc.id || `tool-${idx}`,
-			// Queued entries are shown to the user, so they need the ability name
-			// rather than the blu-call-ability envelope too.
-			name: resolveClientToolCall(
-				tc.name || "",
-				typeof tc.arguments === "string" ? safeParseJSON(tc.arguments).value : tc.arguments
-			).toolName,
+			name: resolvedCalls[idx].toolName,
 		}))
 	);
 
@@ -588,23 +594,12 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 			break;
 		}
 
-		let toolCall = clientToolCalls[i];
 		const toolIndex = i + 1;
 		const totalTools = clientToolCalls.length;
 
-		// Unwrap the gateway envelope BEFORE the UI reads the name. Nearly every
-		// ability arrives as blu-call-ability, so announcing the raw name labels
-		// the whole actions list "Blu Call Ability" instead of the work being
-		// done — and hides discovery calls from the internal-tool filter, which
-		// matches on ability names.
-		let toolName = toolCall.name || "";
-		let args = toolCall.arguments || {};
-		if (typeof args === "string") {
-			args = safeParseJSON(args).value;
-		}
-		({ toolName, args } = resolveClientToolCall(toolName, args));
-		const rawToolName = toolCall.name;
-		toolCall = { ...toolCall, name: toolName };
+		let { toolName, args } = resolvedCalls[i];
+		const rawToolName = clientToolCalls[i].name;
+		const toolCall = { ...clientToolCalls[i], name: toolName };
 
 		ctx.setPendingTools((prev) => prev.filter((_, idx) => idx !== 0));
 		ctx.setActiveToolCall({

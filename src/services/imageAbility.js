@@ -2,9 +2,10 @@ import { dispatch } from "@wordpress/data";
 import { __ } from "@wordpress/i18n";
 
 import { callAbility } from "./callAbility";
-import { appendGeneratedImageUrl } from "./imageCache";
+import { appendGeneratedImageUrl, getGeneratedImages } from "./imageCache";
 import { IMAGE_BLOCKS } from "./blockToolbar/blockAI";
 import { resolveAlt } from "../utils/imageAlt";
+import { findImagePlaceholders, substituteImagePlaceholders } from "../utils/imagePlaceholders";
 import logger from "../utils/logger";
 
 /**
@@ -83,10 +84,8 @@ export async function callImageAbility(mcpClient, { prompt, sourceUrl, ...opts }
 /**
  * Generate the images for a run of `__IMG_N__` placeholders.
  *
- * Shared by add-section, edit-block and insert-inner-block so all three resolve
- * placeholders the same way. Failures are collected rather than thrown: the
- * caller's unresolved-placeholder guard decides what a partial run means, and it
- * is the only place that can tell the model what to do about it.
+ * Failures are collected rather than thrown; the caller's unresolved-placeholder
+ * guard decides what a partial run means.
  *
  * @param {Array<string|Object>} prompts                     `image_prompts` entries, string or {prompt, alt?, …}.
  * @param {Object}               ctx                         Tool context (mcpClient, updateProgress).
@@ -115,7 +114,7 @@ export async function resolveImagePrompts(prompts, ctx, { limit, sourceUrlForFir
 			const mcpResult = await callImageAbility(ctx.mcpClient, { prompt, sourceUrl, ...opts });
 			const url = parseImageAbilityUrl(mcpResult);
 			if (!url) {
-				console.warn(`[imageAbility] image ${i + 1}/${count} returned no URL`, mcpResult);
+				logger.warn(`[imageAbility] image ${i + 1}/${count} returned no URL`, mcpResult);
 				continue;
 			}
 			const resolvedAlt = resolveAlt(alt, prompt);
@@ -123,9 +122,54 @@ export async function resolveImagePrompts(prompts, ctx, { limit, sourceUrlForFir
 			appendGeneratedImageUrl(url, resolvedAlt);
 			logger.log(`[imageAbility] image ${i + 1}/${count} ready`, { prompt, sourceUrl, url });
 		} catch (err) {
-			console.error(`[imageAbility] image ${i + 1}/${count} threw`, err);
+			logger.error(`[imageAbility] image ${i + 1}/${count} threw`, err);
 		}
 	}
 
 	return images;
+}
+
+/**
+ * Resolve every `__IMG_N__` placeholder in `markup`, whichever source is available.
+ *
+ * The write paths (add-section, edit-block, insert-inner-block) all offer the
+ * same three: generate from `image_prompts`, substitute caller-supplied
+ * `image_urls`, or reuse images already generated this turn.
+ *
+ * @param {string} markup                      Block markup, possibly carrying placeholders.
+ * @param {Object} args                        Tool args (image_prompts, image_urls).
+ * @param {Object} ctx                         Tool context.
+ * @param {Object} [options]                   Options.
+ * @param {string} [options.sourceUrlForFirst] Existing image the first prompt should edit.
+ * @return {Promise<{markup: string, attempted: boolean, generated: number}>} Resolved markup and
+ *   what generation did, for unresolvedPlaceholderResult().
+ */
+export async function resolveMarkupImages(markup, args, ctx, { sourceUrlForFirst = null } = {}) {
+	const placeholders = findImagePlaceholders(markup);
+	if (placeholders.length === 0) {
+		return { markup, attempted: false, generated: 0 };
+	}
+
+	if (Array.isArray(args.image_prompts) && args.image_prompts.length > 0) {
+		const images = await resolveImagePrompts(args.image_prompts, ctx, {
+			limit: placeholders.length,
+			sourceUrlForFirst,
+		});
+		return {
+			markup: substituteImagePlaceholders(markup, images),
+			attempted: true,
+			generated: images.length,
+		};
+	}
+
+	const fallback =
+		Array.isArray(args.image_urls) && args.image_urls.length > 0
+			? args.image_urls.map((url) => ({ url }))
+			: getGeneratedImages();
+
+	return {
+		markup: substituteImagePlaceholders(markup, fallback),
+		attempted: false,
+		generated: 0,
+	};
 }

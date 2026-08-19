@@ -592,11 +592,8 @@ export async function runChatLoop(userMessage, deps) {
 				content: "All tool calls above succeeded.",
 			});
 		} else if (results.length > 0) {
-			// Success used to be the only outcome that got a system-level
-			// statement; a failure was left as a JSON blob inside one tool result,
-			// which the model reads past and then reports the edit as done. The
-			// user is told their image was added while the tool said nothing
-			// changed. Say it as plainly as the success case.
+			// A failure left as a JSON blob inside one tool result gets read past,
+			// and the edit is then reported as done. State it as plainly as success.
 			const failed = results.filter((r) => r.isError);
 			const changed = results.filter((r) => !r.isError && r.hasChanges).length;
 			conversationHistoryRef.current.push({

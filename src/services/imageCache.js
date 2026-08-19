@@ -79,11 +79,9 @@ export function resetGeneratedImageCache() {
  * Build a tool error for markup whose image placeholders never resolved.
  *
  * Writing the placeholder through renders a broken <img>, and calling that a
- * success sends the model into a repair loop it cannot win.
- *
- * The three causes need three different answers, and getting this wrong is its
- * own bug: reporting "image generation is unavailable" for a placeholder that
- * simply had no prompt tells the user the service is down when it is working.
+ * success sends the model into a repair loop it cannot win. The three causes
+ * need three different answers — "generation is unavailable" for a call that
+ * simply had no prompt reports an outage that is not happening.
  *
  * @param {string}  toolCallId          The tool call id to answer.
  * @param {string}  markup              Block markup after the image step.

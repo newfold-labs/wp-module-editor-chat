@@ -94,14 +94,9 @@ async function resolveHeaderNavigationForClient(clientId) {
 /**
  * Rebalance a columns row after a new column joins it.
  *
- * core/column widths are explicit percentages, and a column with no width gets
- * whatever the row has left. When the existing columns already account for
- * 100%, that is zero — the new column and everything in it render at zero
- * width. The insert succeeds, the block is in the tree, and the user sees no
- * change at all.
- *
- * Gives the newcomer the average of its siblings, then normalises the row back
- * to 100%, which keeps the existing columns' proportions to each other.
+ * A column with no width gets whatever the row has left — zero when the others
+ * already account for 100%, so it renders invisibly. Gives the newcomer the
+ * average of its siblings, then normalises the row back to 100%.
  *
  * @param {string} columnsClientId The core/columns row that just gained a child.
  */
@@ -145,10 +140,8 @@ function rebalanceColumnWidths(columnsClientId) {
 /**
  * Reject blocks WordPress would silently refuse to place inside a given parent.
  *
- * Both replaceBlocks() and insertBlocks() return without dispatching, and
+ * replaceBlocks() and insertBlocks() both return without dispatching, and
  * without throwing, if any block fails canInsertBlockType at the target root.
- * Reporting that as success tells the user their content was added when the
- * page never changed.
  *
  * @param {string|null} rootClientId Container the blocks are destined for; null is the document root.
  * @param {Array}       newBlocks    Blocks to place.
@@ -1061,9 +1054,8 @@ export async function handleInsertInnerBlockAction(
 		throw new Error("No valid blocks to insert");
 	}
 
-	// core silently drops children the container does not accept — core/columns
-	// takes only core/column, so an image aimed at the wrapper disappears while
-	// the dispatch still "succeeds".
+	// core/columns takes only core/column, so an image aimed at the wrapper is
+	// dropped while the dispatch still "succeeds".
 	assertBlocksInsertableInto(
 		parentClientId,
 		blockInstances,
@@ -1079,13 +1071,10 @@ export async function handleInsertInnerBlockAction(
 	const { insertBlocks } = dispatch("core/block-editor");
 	await insertBlocks(blockInstances, insertIndex, parentClientId);
 
-	// Report what landed, not what we built. Anything that fails to attach here
-	// would otherwise be summarised to the user as content they now have.
-	const insertedClientIds = blockInstances.map((b) => b.clientId);
-	const liveChildIds = new Set(
-		(getBlock(parentClientId)?.innerBlocks || []).map((b) => b.clientId)
-	);
-	const landed = insertedClientIds.filter((id) => liveChildIds.has(id));
+	// Report what landed, not what we built.
+	const children = getBlock(parentClientId)?.innerBlocks || [];
+	const liveChildIds = new Set(children.map((b) => b.clientId));
+	const landed = blockInstances.map((b) => b.clientId).filter((id) => liveChildIds.has(id));
 	if (landed.length === 0) {
 		throw new Error(
 			`The editor did not accept the block into ${parent.name}; nothing was added. Do not ` +
@@ -1098,10 +1087,9 @@ export async function handleInsertInnerBlockAction(
 		rebalanceColumnWidths(parentClientId);
 	}
 
-	// State where it landed, not just that it did. "next to" means a sibling
-	// column for a columns row but a stacked child inside a single column, and
-	// the summary the user reads should reflect which one happened.
-	const siblingCount = getBlock(parentClientId)?.innerBlocks?.length || landed.length;
+	// "next to" means a sibling column in a columns row but a stacked child in a
+	// single column; the summary the user reads should say which one happened.
+	const siblingCount = children.length || landed.length;
 	const stacked = parent.name === "core/column" || parent.name === "core/group";
 	return {
 		parentClientId,

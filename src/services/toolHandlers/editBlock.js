@@ -1,9 +1,9 @@
 import { __ } from "@wordpress/i18n";
 
 import { validateBlockMarkup } from "../../utils/blockValidator";
-import { findImagePlaceholders, substituteImagePlaceholders } from "../../utils/imagePlaceholders";
+import { findImagePlaceholders } from "../../utils/imagePlaceholders";
 import { handleRewriteAction } from "../blockActions";
-import { getBlockImageUrl, resolveImagePrompts } from "../imageAbility";
+import { getBlockImageUrl, resolveMarkupImages } from "../imageAbility";
 import { deduplicateImages, getGeneratedImages, unresolvedPlaceholderResult } from "../imageCache";
 
 /**
@@ -20,41 +20,17 @@ function countInnerBlocks(block) {
 }
 
 export async function handleEditBlock(toolCall, args, ctx) {
-	// ── Image placeholder resolution (mirrors add-section) ──
-	const placeholders = findImagePlaceholders(args.block_content);
-	let generationAttempted = false;
-	let generatedCount = 0;
-
-	if (placeholders.length > 0) {
-		if (Array.isArray(args.image_prompts) && args.image_prompts.length > 0) {
-			generationAttempted = true;
-			// If this block already has an image, the first placeholder is almost
-			// always that same image being rewritten — route it through
-			// blu-edit-image so we modify the existing photo instead of discarding
-			// it and generating a brand-new one. Mirrors the redirect in
-			// toolDispatcher's blu-generate-image branch.
-			const originalImageBlock = wp.data.select("core/block-editor").getBlock(args.client_id);
-			const images = await resolveImagePrompts(args.image_prompts, ctx, {
-				limit: placeholders.length,
-				sourceUrlForFirst: getBlockImageUrl(originalImageBlock),
-			});
-			generatedCount = images.length;
-			args.block_content = substituteImagePlaceholders(args.block_content, images);
-		} else if (Array.isArray(args.image_urls) && args.image_urls.length > 0) {
-			args.block_content = substituteImagePlaceholders(
-				args.block_content,
-				args.image_urls.map((url) => ({ url }))
-			);
-		} else if (getGeneratedImages().length > 0) {
-			args.block_content = substituteImagePlaceholders(args.block_content, getGeneratedImages());
-		}
-	}
+	// If this block already has an image, the first placeholder is almost always
+	// that same image being rewritten — route it through blu-edit-image so we
+	// modify the existing photo instead of generating a brand-new one.
+	const originalImageBlock = wp.data.select("core/block-editor").getBlock(args.client_id);
+	const images = await resolveMarkupImages(args.block_content, args, ctx, {
+		sourceUrlForFirst: getBlockImageUrl(originalImageBlock),
+	});
+	args.block_content = images.markup;
 
 	// Fail rather than write a placeholder through as a broken image.
-	const unresolved = unresolvedPlaceholderResult(toolCall.id, args.block_content, {
-		attempted: generationAttempted,
-		generated: generatedCount,
-	});
+	const unresolved = unresolvedPlaceholderResult(toolCall.id, args.block_content, images);
 	if (unresolved) {
 		console.warn(
 			"[ToolExecutor:REST] edit-block: placeholders left unresolved: edit rejected",

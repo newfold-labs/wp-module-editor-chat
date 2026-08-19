@@ -1,29 +1,22 @@
 /**
  * imagePlaceholders — the `__IMG_N__` contract shared by every write path.
  *
- * The model is told to emit `__IMG_1__`, `__IMG_2__`, … inside block_content and
- * one `image_prompts` entry per placeholder; the client generates the images and
- * swaps the tokens for real URLs.
- *
- * Matching is deliberately looser than the documented form. A spelling we fail
- * to recognise is skipped for generation *and* slips past the unresolved-
- * placeholder guard, so the literal token lands in the page as a broken
- * <img src="__IMG__">. A false positive costs one retry; a miss ships a broken
- * image the user has to delete by hand.
+ * The model emits `__IMG_1__`, `__IMG_2__`, … inside block_content plus one
+ * `image_prompts` entry per placeholder; the client swaps the tokens for real
+ * URLs.
  */
 
 import { setAltForImageSrc } from "./imageAlt";
 
 /**
- * `__IMG_1__` as documented, plus the near-misses seen in practice: a bare
- * `__IMG__` when there is only one image, `__IMG1__` without the separator,
- * `__IMAGE_2__`, and any casing.
+ * Matches the documented form plus the near-misses seen in practice: bare
+ * `__IMG__`, `__IMG1__`, `__IMAGE_2__`, any casing. A miss ships a broken
+ * <img> to the page; a false positive costs one retry.
  */
 const PLACEHOLDER_SOURCE = "__(?:IMG|IMAGE)_?\\d*__";
 
 /**
- * A fresh matcher per call — a shared /g regex carries `lastIndex` between
- * calls, which makes repeated `.test()` alternate true and false.
+ * A fresh regex per call — a shared /g one carries `lastIndex` between calls.
  *
  * @return {RegExp} Global, case-insensitive placeholder matcher.
  */
@@ -34,23 +27,15 @@ function matcher() {
 /**
  * Every distinct placeholder token in `markup`, in order of first appearance.
  *
- * Order, not the digits in the token: `image_prompts` is specified as "one entry
- * per placeholder, in order", and models skip, repeat, and restart the numbering.
+ * Order, not the digits in the token: models skip, repeat and restart the
+ * numbering, while `image_prompts` is specified as one entry per placeholder
+ * in order.
  *
  * @param {string} markup Block markup.
  * @return {string[]} Distinct tokens, first-appearance order.
  */
 export function findImagePlaceholders(markup) {
-	if (!markup) {
-		return [];
-	}
-	const tokens = [];
-	for (const match of markup.matchAll(matcher())) {
-		if (!tokens.includes(match[0])) {
-			tokens.push(match[0]);
-		}
-	}
-	return tokens;
+	return markup ? [...new Set(markup.match(matcher()) ?? [])] : [];
 }
 
 /**
@@ -67,8 +52,7 @@ export function hasImagePlaceholder(value) {
  * Swap placeholders for generated images, pairing them by position.
  *
  * The token stands in for the URL alone, so the surrounding `alt` was written
- * before the image existed. It is rewritten here to describe the picture
- * actually used.
+ * before the image existed and is rewritten here.
  *
  * @param {string}                             markup Block markup.
  * @param {Array<{url: string, alt?: string}>} images Images, in placeholder order.
