@@ -1040,11 +1040,24 @@ export async function handleInsertInnerBlockAction(
 		);
 	}
 
+	// State where it landed, not just that it did. "next to" means a sibling
+	// column for a columns row but a stacked child inside a single column, and
+	// the summary the user reads should reflect which one happened.
+	const siblingCount = getBlock(parentClientId)?.innerBlocks?.length || landed.length;
+	const stacked = parent.name === "core/column" || parent.name === "core/group";
 	return {
 		parentClientId,
 		blockName: parent.name,
 		insertedClientIds: landed,
 		insertedAtIndex: insertIndex,
-		message: `Inserted ${landed.length} block(s) into ${parent.name}`,
+		placement: stacked ? "stacked-below" : "sibling",
+		message:
+			`Inserted ${landed.length} block(s) into ${parent.name} at position ` +
+			`${insertIndex + 1} of ${siblingCount}.` +
+			(stacked
+				? ` ${parent.name} stacks its children vertically, so this sits BELOW the existing` +
+					` content, not beside it. If the user asked for side-by-side, say where it actually` +
+					` went, or move it into its own column.`
+				: ""),
 	};
 }

@@ -550,6 +550,12 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 		clientToolCalls.map((tc, idx) => ({
 			...tc,
 			id: tc.id || `tool-${idx}`,
+			// Queued entries are shown to the user, so they need the ability name
+			// rather than the blu-call-ability envelope too.
+			name: resolveClientToolCall(
+				tc.name || "",
+				typeof tc.arguments === "string" ? safeParseJSON(tc.arguments).value : tc.arguments
+			).toolName,
 		}))
 	);
 
@@ -566,11 +572,25 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 		const toolIndex = i + 1;
 		const totalTools = clientToolCalls.length;
 
+		// Unwrap the gateway envelope BEFORE the UI reads the name. Nearly every
+		// ability arrives as blu-call-ability, so announcing the raw name labels
+		// the whole actions list "Blu Call Ability" instead of the work being
+		// done — and hides discovery calls from the internal-tool filter, which
+		// matches on ability names.
+		let toolName = toolCall.name || "";
+		let args = toolCall.arguments || {};
+		if (typeof args === "string") {
+			args = safeParseJSON(args).value;
+		}
+		({ toolName, args } = resolveClientToolCall(toolName, args));
+		const rawToolName = toolCall.name;
+		toolCall = { ...toolCall, name: toolName };
+
 		ctx.setPendingTools((prev) => prev.filter((_, idx) => idx !== 0));
 		ctx.setActiveToolCall({
 			id: toolCall.id || `tool-${i}`,
-			name: toolCall.name,
-			arguments: toolCall.arguments,
+			name: toolName,
+			arguments: args,
 			index: toolIndex,
 			total: totalTools,
 		});
@@ -578,20 +598,11 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 		await new Promise((r) => requestAnimationFrame(r));
 
 		try {
-			let toolName = toolCall.name || "";
 			logger.log(
 				`[ToolExecutor:REST] Executing ${toolIndex}/${totalTools}: ${toolName}`,
 				toolCall.arguments
 			);
-			let args = toolCall.arguments || {};
-			if (typeof args === "string") {
-				args = safeParseJSON(args).value;
-			}
-
-			// Unwrap gateway calls and normalize slash/alias ability names.
-			({ toolName, args } = resolveClientToolCall(toolName, args));
-			toolCall = { ...toolCall, name: toolName };
-			if (toolCall.name !== (toolCall.arguments?.ability_name || toolCall.name)) {
+			if (toolName !== rawToolName) {
 				logger.log(`[ToolExecutor:REST] Resolved tool: ${toolName}`, args);
 			}
 
