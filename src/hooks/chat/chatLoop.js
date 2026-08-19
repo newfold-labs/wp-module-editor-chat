@@ -591,6 +591,23 @@ export async function runChatLoop(userMessage, deps) {
 				role: "system",
 				content: "All tool calls above succeeded.",
 			});
+		} else if (results.length > 0) {
+			// A failure left as a JSON blob inside one tool result gets read past,
+			// and the edit is then reported as done. State it as plainly as success.
+			const failed = results.filter((r) => r.isError);
+			const changed = results.filter((r) => !r.isError && r.hasChanges).length;
+			conversationHistoryRef.current.push({
+				role: "system",
+				content:
+					`${failed.length} of ${results.length} tool call(s) above FAILED and changed ` +
+					`nothing. Read each failed result and follow the instruction in it — most say ` +
+					`exactly how to resend the call. If you cannot fix it, tell the user which part ` +
+					`did not happen and why. Never describe a failed edit as done, and never claim ` +
+					`content was added when the tool reported an error.` +
+					(changed === 0
+						? " Nothing in this turn changed the page, so there is nothing to confirm."
+						: ` Only ${changed} call(s) actually changed the page — confirm those and no more.`),
+			});
 		}
 
 		// Only switch to SUMMARIZE_NUDGE when at least one tool actually changed

@@ -249,6 +249,26 @@ function normalizeInsertInnerBlockArgs(args) {
  */
 async function resolveInsertInnerBlockArgs(args) {
 	normalizeInsertInnerBlockArgs(args);
+
+	// A sibling reference fixes both the container and the slot, so the model
+	// never has to work out a numeric index from the tree — the case that put a
+	// new column at the end of the row instead of beside the selected one.
+	// The sibling's real parent wins over any parent_client_id sent with it.
+	const sibling = args.after_client_id || args.before_client_id;
+	if (sibling) {
+		const { getBlockRootClientId, getBlockIndex } = wp.data.select("core/block-editor");
+		const siblingParent = getBlockRootClientId(sibling);
+		const siblingIndex = getBlockIndex(sibling);
+		if (siblingParent && typeof siblingIndex === "number" && siblingIndex >= 0) {
+			args.parent_client_id = siblingParent;
+			args.index = args.after_client_id ? siblingIndex + 1 : siblingIndex;
+			logger.log(
+				`[ToolExecutor:REST] insert-inner-block: ${
+					args.after_client_id ? "after" : "before"
+				} ${sibling} → parent ${siblingParent} index ${args.index}`
+			);
+		}
+	}
 	if (!args.parent_client_id && args.block_content && /navigation-link/.test(args.block_content)) {
 		await hydrateAllRefNavigationBlocks();
 		const nav = findHeaderRefNavigationBlock();
@@ -348,6 +368,8 @@ async function executeClientActionFromStub(stub, args, toolCall, ctx) {
 		"attributes",
 		"before_client_id",
 		"after_client_id",
+		"image_prompts",
+		"image_urls",
 	]) {
 		if (stub[key] !== undefined && merged[key] === undefined) {
 			merged[key] = stub[key];
@@ -544,10 +566,22 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 		index: 0,
 		total: clientToolCalls.length,
 	});
+	// Unwrap the gateway envelope BEFORE anything reads the name. Nearly every
+	// ability arrives as blu-call-ability, so the raw name would label the whole
+	// actions list "Blu Call Ability" and hide discovery calls from the
+	// internal-tool filter, which matches on ability names.
+	const resolvedCalls = clientToolCalls.map((tc) =>
+		resolveClientToolCall(
+			tc.name || "",
+			typeof tc.arguments === "string" ? safeParseJSON(tc.arguments).value : tc.arguments || {}
+		)
+	);
+
 	ctx.setPendingTools(
 		clientToolCalls.map((tc, idx) => ({
 			...tc,
 			id: tc.id || `tool-${idx}`,
+			name: resolvedCalls[idx].toolName,
 		}))
 	);
 
@@ -560,15 +594,18 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 			break;
 		}
 
-		let toolCall = clientToolCalls[i];
 		const toolIndex = i + 1;
 		const totalTools = clientToolCalls.length;
+
+		let { toolName, args } = resolvedCalls[i];
+		const rawToolName = clientToolCalls[i].name;
+		const toolCall = { ...clientToolCalls[i], name: toolName };
 
 		ctx.setPendingTools((prev) => prev.filter((_, idx) => idx !== 0));
 		ctx.setActiveToolCall({
 			id: toolCall.id || `tool-${i}`,
-			name: toolCall.name,
-			arguments: toolCall.arguments,
+			name: toolName,
+			arguments: args,
 			index: toolIndex,
 			total: totalTools,
 		});
@@ -576,20 +613,11 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 		await new Promise((r) => requestAnimationFrame(r));
 
 		try {
-			let toolName = toolCall.name || "";
 			logger.log(
 				`[ToolExecutor:REST] Executing ${toolIndex}/${totalTools}: ${toolName}`,
 				toolCall.arguments
 			);
-			let args = toolCall.arguments || {};
-			if (typeof args === "string") {
-				args = safeParseJSON(args).value;
-			}
-
-			// Unwrap gateway calls and normalize slash/alias ability names.
-			({ toolName, args } = resolveClientToolCall(toolName, args));
-			toolCall = { ...toolCall, name: toolName };
-			if (toolCall.name !== (toolCall.arguments?.ability_name || toolCall.name)) {
+			if (toolName !== rawToolName) {
 				logger.log(`[ToolExecutor:REST] Resolved tool: ${toolName}`, args);
 			}
 

@@ -6,7 +6,92 @@
  * services/templatePartEditor.js; linked navigation menus in navigationEditor.js.
  */
 import { select } from "@wordpress/data";
-import { serialize } from "@wordpress/blocks";
+import { serialize, getBlockTypes } from "@wordpress/blocks";
+
+import { hasImagePlaceholder } from "./imagePlaceholders";
+
+/**
+ * Container block name → block types allowed as its direct children, read from
+ * each type's own `parent` declaration. Cached: getBlockTypes() scans the whole
+ * registry and the tree is rebuilt every turn.
+ *
+ * @type {Map<string, string[]>|null}
+ */
+let restrictedChildCache = null;
+
+function getRestrictedChildMap() {
+	if (restrictedChildCache) {
+		return restrictedChildCache;
+	}
+	const map = new Map();
+	for (const type of getBlockTypes()) {
+		for (const parent of type.parent || []) {
+			map.set(parent, [...(map.get(parent) || []), type.name]);
+		}
+	}
+	restrictedChildCache = map;
+	return map;
+}
+
+/**
+ * Placement facts about one block, as short tags for the AI context tree.
+ *
+ * Each tag exists because guessing it wrong fails silently: content inserted
+ * into a container that refuses it, a column rendered at zero width, a broken
+ * placeholder copied forward.
+ *
+ * @param {Object} block Block object from the editor store.
+ * @return {string} Space-prefixed tags, or "" when nothing is noteworthy.
+ */
+function describeBlockStructure(block) {
+	const tags = [];
+	const attrs = block.attributes || {};
+
+	// Anything else is silently discarded by the editor.
+	const allowed = getRestrictedChildMap().get(block.name);
+	if (allowed?.length && block.innerBlocks) {
+		tags.push(`accepts:${allowed.join("|")}`);
+	}
+
+	if (block.name === "core/columns") {
+		const cols = (block.innerBlocks || []).filter((b) => b.name === "core/column");
+		if (cols.length) {
+			// Explicit widths leave no room for a column added without one.
+			const widths = cols.map((c) => c.attributes?.width || "auto");
+			tags.push(`cols:${cols.length}`, `widths:${widths.join("/")}`);
+			if (widths.every((w) => w !== "auto")) {
+				tags.push("widths-explicit");
+			}
+		}
+		tags.push(block.attributes?.isStackedOnMobile === false ? "no-stack" : "side-by-side");
+	}
+
+	if (block.name === "core/column" && attrs.width) {
+		tags.push(`w:${attrs.width}`);
+	}
+
+	// Flow vs flex decides whether a new child lands beside or below the others.
+	const layoutType = attrs.layout?.type;
+	if (layoutType === "flex") {
+		tags.push(attrs.layout?.orientation === "vertical" ? "layout:stack" : "layout:row");
+	} else if (layoutType === "grid") {
+		tags.push("layout:grid");
+	} else if (block.name === "core/group" || block.name === "core/column") {
+		tags.push("layout:stacked");
+	}
+
+	// A placeholder here is a broken image from an earlier failed edit, not a URL.
+	if (block.name === "core/image" || block.name === "core/cover") {
+		const src = attrs.url || "";
+		if (!src) {
+			tags.push("img:EMPTY");
+		} else if (hasImagePlaceholder(src)) {
+			tags.push("img:BROKEN-PLACEHOLDER");
+		}
+	}
+
+	return tags.length ? ` {${tags.join(" ")}}` : "";
+}
 
 /**
  * Build a compact text representation of the block tree for AI context.
@@ -125,6 +210,7 @@ export const buildCompactBlockTree = (
 				line += ` → "${preview}"`;
 			}
 
+			line += describeBlockStructure(block);
 			line += largeMarker + selectedMarker;
 			lines.push(line);
 

@@ -1,7 +1,12 @@
 import { dispatch } from "@wordpress/data";
+import { __ } from "@wordpress/i18n";
 
 import { callAbility } from "./callAbility";
+import { appendGeneratedImageUrl, getGeneratedImages } from "./imageCache";
 import { IMAGE_BLOCKS } from "./blockToolbar/blockAI";
+import { resolveAlt } from "../utils/imageAlt";
+import { findImagePlaceholders, substituteImagePlaceholders } from "../utils/imagePlaceholders";
+import logger from "../utils/logger";
 
 /**
  * Apply a generated image to an image block, alt text included.
@@ -74,4 +79,97 @@ export async function callImageAbility(mcpClient, { prompt, sourceUrl, ...opts }
 	const ability = sourceUrl ? "blu-edit-image" : "blu-generate-image";
 	const parameters = sourceUrl ? { prompt, source_url: sourceUrl, ...opts } : { prompt, ...opts };
 	return callAbility(mcpClient, ability, parameters);
+}
+
+/**
+ * Generate the images for a run of `__IMG_N__` placeholders.
+ *
+ * Failures are collected rather than thrown; the caller's unresolved-placeholder
+ * guard decides what a partial run means.
+ *
+ * @param {Array<string|Object>} prompts                     `image_prompts` entries, string or {prompt, alt?, …}.
+ * @param {Object}               ctx                         Tool context (mcpClient, updateProgress).
+ * @param {Object}               [options]                   Options.
+ * @param {number}               [options.limit]             Stop after this many prompts (the placeholder count).
+ * @param {string|null}          [options.sourceUrlForFirst] Existing image the first prompt should edit rather than replace.
+ * @return {Promise<Array<{url: string, alt: string}>>} Generated images, in prompt order.
+ */
+export async function resolveImagePrompts(prompts, ctx, { limit, sourceUrlForFirst = null } = {}) {
+	const count = Math.min(prompts.length, limit ?? prompts.length);
+	const images = [];
+
+	for (let i = 0; i < count; i++) {
+		const entry = prompts[i];
+		const { prompt, alt, ...opts } = typeof entry === "string" ? { prompt: entry } : { ...entry };
+		const sourceUrl = i === 0 ? sourceUrlForFirst : null;
+
+		await ctx.updateProgress(
+			(sourceUrl
+				? __("Editing image…", "wp-module-editor-chat")
+				: __("Generating image…", "wp-module-editor-chat")) + ` (${i + 1}/${count})`,
+			500
+		);
+
+		try {
+			const mcpResult = await callImageAbility(ctx.mcpClient, { prompt, sourceUrl, ...opts });
+			const url = parseImageAbilityUrl(mcpResult);
+			if (!url) {
+				logger.warn(`[imageAbility] image ${i + 1}/${count} returned no URL`, mcpResult);
+				continue;
+			}
+			const resolvedAlt = resolveAlt(alt, prompt);
+			images.push({ url, alt: resolvedAlt });
+			appendGeneratedImageUrl(url, resolvedAlt);
+			logger.log(`[imageAbility] image ${i + 1}/${count} ready`, { prompt, sourceUrl, url });
+		} catch (err) {
+			logger.error(`[imageAbility] image ${i + 1}/${count} threw`, err);
+		}
+	}
+
+	return images;
+}
+
+/**
+ * Resolve every `__IMG_N__` placeholder in `markup`, whichever source is available.
+ *
+ * The write paths (add-section, edit-block, insert-inner-block) all offer the
+ * same three: generate from `image_prompts`, substitute caller-supplied
+ * `image_urls`, or reuse images already generated this turn.
+ *
+ * @param {string} markup                      Block markup, possibly carrying placeholders.
+ * @param {Object} args                        Tool args (image_prompts, image_urls).
+ * @param {Object} ctx                         Tool context.
+ * @param {Object} [options]                   Options.
+ * @param {string} [options.sourceUrlForFirst] Existing image the first prompt should edit.
+ * @return {Promise<{markup: string, attempted: boolean, generated: number}>} Resolved markup and
+ *   what generation did, for unresolvedPlaceholderResult().
+ */
+export async function resolveMarkupImages(markup, args, ctx, { sourceUrlForFirst = null } = {}) {
+	const placeholders = findImagePlaceholders(markup);
+	if (placeholders.length === 0) {
+		return { markup, attempted: false, generated: 0 };
+	}
+
+	if (Array.isArray(args.image_prompts) && args.image_prompts.length > 0) {
+		const images = await resolveImagePrompts(args.image_prompts, ctx, {
+			limit: placeholders.length,
+			sourceUrlForFirst,
+		});
+		return {
+			markup: substituteImagePlaceholders(markup, images),
+			attempted: true,
+			generated: images.length,
+		};
+	}
+
+	const fallback =
+		Array.isArray(args.image_urls) && args.image_urls.length > 0
+			? args.image_urls.map((url) => ({ url }))
+			: getGeneratedImages();
+
+	return {
+		markup: substituteImagePlaceholders(markup, fallback),
+		attempted: false,
+		generated: 0,
+	};
 }

@@ -3,10 +3,10 @@ import { __ } from "@wordpress/i18n";
 import { deepMergeAttrs as deepMerge } from "../../utils/deepMerge";
 import { appendGeneratedImageUrl } from "../imageCache";
 import { resolveAlt } from "../../utils/imageAlt";
+import { hasImagePlaceholder } from "../../utils/imagePlaceholders";
 import { callImageAbility, getBlockImageUrl, parseImageAbilityUrl } from "../imageAbility";
 import { IMAGE_BLOCKS, LOGO_BLOCK } from "../blockToolbar/blockAI";
 import {
-	findAncestorRefNavigation,
 	applyNavigationLinkAttrPatch,
 	normalizeNavigationLinkAttrs,
 	resolveRefNavigationForEdit,
@@ -46,8 +46,7 @@ function isCssColorPatch(attributes) {
 }
 
 export async function handleUpdateBlockAttrs(toolCall, args, ctx) {
-	const { select: wpSelect, dispatch: wpDispatch } = wp.data;
-	const blockEditor = wpSelect("core/block-editor");
+	const { dispatch: wpDispatch } = wp.data;
 	const block = await ensureMenuBlockAccessible(args.client_id);
 
 	if (!block) {
@@ -83,6 +82,31 @@ export async function handleUpdateBlockAttrs(toolCall, args, ctx) {
 				],
 				isError: true,
 			};
+		}
+
+		// `url` is sometimes filled with an `__IMG_N__` placeholder — a markup
+		// convention that has no meaning on an attribute patch, and would set the
+		// block's image src to the literal token. Drop it so image_prompt can
+		// generate below, and refuse when there is no prompt to generate from.
+		if (hasImagePlaceholder(args.attributes.url)) {
+			delete args.attributes.url;
+			if (!args.image_prompt) {
+				return {
+					id: toolCall.id,
+					result: [
+						{
+							type: "text",
+							text: JSON.stringify({
+								success: false,
+								error:
+									"`url` was an image placeholder, which this tool cannot resolve — nothing was changed. " +
+									"Call blu/update-block-attrs again with image_prompt describing the image you want, and no url.",
+							}),
+						},
+					],
+					isError: true,
+				};
+			}
 		}
 
 		// ── Generate or edit image from prompt if provided ──
@@ -155,7 +179,7 @@ export async function handleUpdateBlockAttrs(toolCall, args, ctx) {
 
 		if (block.name === "core/navigation-link" || block.name === "core/navigation-submenu") {
 			if (
-				args.attributes.id != null &&
+				(args.attributes.id ?? null) !== null &&
 				(args.attributes.type === "page" || args.attributes.type === "post") &&
 				!("url" in args.attributes)
 			) {
@@ -221,7 +245,7 @@ export async function handleUpdateBlockAttrs(toolCall, args, ctx) {
 		}
 
 		// Deep-merge new attributes into existing ones (null removes keys)
-		let merged =
+		const merged =
 			block.name === "core/navigation-link" || block.name === "core/navigation-submenu"
 				? applyNavigationLinkAttrPatch(block.attributes, args.attributes)
 				: deepMerge(block.attributes, args.attributes);

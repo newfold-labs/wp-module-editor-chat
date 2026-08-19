@@ -1,7 +1,10 @@
 import { __ } from "@wordpress/i18n";
 
 import { validateBlockMarkup } from "../../utils/blockValidator";
+import { findImagePlaceholders } from "../../utils/imagePlaceholders";
 import { handleInsertInnerBlockAction } from "../blockActions";
+import { resolveMarkupImages } from "../imageAbility";
+import { unresolvedPlaceholderResult } from "../imageCache";
 import {
 	buildNavigationLinkMarkup,
 	parseNavigationLinkAttrsFromMarkup,
@@ -9,22 +12,45 @@ import {
 	assertNavigationPageExists,
 } from "../navigationEditor";
 
+/**
+ * Whether parsed navigation attrs carry a resolvable page id.
+ *
+ * @param {Object} [attrs] Parsed navigation-link attributes.
+ * @return {boolean} True when `id` is set to something other than null.
+ */
+function hasNavigationPageId(attrs) {
+	return (attrs?.id ?? null) !== null;
+}
+
 export async function handleInsertInnerBlock(toolCall, args, ctx) {
 	await ctx.updateProgress(__("Inserting block…", "wp-module-editor-chat"), 400);
 	try {
 		// Strip escaped quotes the LLM may copy from JSON-encoded tool results
-		const rawMarkup = (args.block_content || args.block_markup || "")
-			.replace(/\\"/g, '"')
-			.trim();
+		const rawMarkup = (args.block_content || args.block_markup || "").replace(/\\"/g, '"').trim();
 
-		let intendedAttrs = parseNavigationLinkAttrsFromMarkup(rawMarkup);
-		if (intendedAttrs?.id != null) {
+		// "Add an image inside this group" routes here rather than to add-section,
+		// so this path needs the same generation and the same refusal to write an
+		// unresolved placeholder into the page.
+		const images = await resolveMarkupImages(rawMarkup, args, ctx);
+		const markup = images.markup;
+
+		const unresolved = unresolvedPlaceholderResult(toolCall.id, markup, images);
+		if (unresolved) {
+			console.warn(
+				"[ToolExecutor:REST] insert-inner-block: placeholders left unresolved: insert rejected",
+				findImagePlaceholders(markup)
+			);
+			return unresolved;
+		}
+
+		let intendedAttrs = parseNavigationLinkAttrsFromMarkup(markup);
+		if (hasNavigationPageId(intendedAttrs)) {
 			intendedAttrs = await resolvePageNavigationAttrs(intendedAttrs);
 			await assertNavigationPageExists(intendedAttrs);
 		}
 
-		let finalMarkup = rawMarkup;
-		if (intendedAttrs?.id != null) {
+		let finalMarkup = markup;
+		if (hasNavigationPageId(intendedAttrs)) {
 			finalMarkup = buildNavigationLinkMarkup({
 				label: intendedAttrs.label,
 				type: intendedAttrs.type || "page",
@@ -33,7 +59,7 @@ export async function handleInsertInnerBlock(toolCall, args, ctx) {
 				url: intendedAttrs.url,
 			});
 		} else {
-			const validation = validateBlockMarkup(rawMarkup);
+			const validation = validateBlockMarkup(markup);
 			if (!validation.valid) {
 				return {
 					id: toolCall.id,
@@ -46,7 +72,7 @@ export async function handleInsertInnerBlock(toolCall, args, ctx) {
 					isError: true,
 				};
 			}
-			finalMarkup = validation.correctedContent || rawMarkup;
+			finalMarkup = validation.correctedContent || markup;
 		}
 
 		const index = typeof args.index === "number" ? args.index : null;

@@ -1,4 +1,5 @@
 import { setAltForImageSrc } from "../utils/imageAlt";
+import { findImagePlaceholders } from "../utils/imagePlaceholders";
 
 /**
  * Image cache for the current user turn.
@@ -75,56 +76,57 @@ export function resetGeneratedImageCache() {
 }
 
 /**
- * Substitute a __IMG_N__ placeholder with a real image, alt text included.
- *
- * The placeholder only stands in for the URL, so the model's surrounding
- * `alt` was written before the image existed (its own examples use alt="").
- * Applying alt here keeps the description tied to the picture actually used.
- *
- * @param {string} markup Block markup containing placeholders
- * @param {number} index  1-based placeholder number (__IMG_1__ is index 1)
- * @param {string} url    Resolved image URL
- * @param {string} [alt]  Alt text describing the image
- * @return {string} Markup with that placeholder resolved
- */
-export function substituteImagePlaceholder(markup, index, url, alt = "") {
-	if (!markup || !url) {
-		return markup;
-	}
-	const resolved = markup.replaceAll(`__IMG_${index}__`, url);
-	return alt ? setAltForImageSrc(resolved, url, alt) : resolved;
-}
-
-/**
  * Build a tool error for markup whose image placeholders never resolved.
  *
  * Writing the placeholder through renders a broken <img>, and calling that a
- * success sends the model into a repair loop it cannot win.
+ * success sends the model into a repair loop it cannot win. The three causes
+ * need three different answers — "generation is unavailable" for a call that
+ * simply had no prompt reports an outage that is not happening.
  *
- * @param {string} toolCallId The tool call id to answer.
- * @param {string} markup     Block markup after the image step.
+ * @param {string}  toolCallId          The tool call id to answer.
+ * @param {string}  markup              Block markup after the image step.
+ * @param {Object}  [options]           Options.
+ * @param {boolean} [options.attempted] Whether generation ran for these placeholders.
+ * @param {number}  [options.generated] How many images generation actually produced.
  * @return {Object|null} An error result, or null when nothing is unresolved.
  */
-export function unresolvedPlaceholderResult(toolCallId, markup) {
-	const leftover = markup?.match(/__IMG_\d+__/g);
-	if (!leftover || leftover.length === 0) {
+export function unresolvedPlaceholderResult(
+	toolCallId,
+	markup,
+	{ attempted = true, generated = 0 } = {}
+) {
+	const leftover = findImagePlaceholders(markup);
+	if (leftover.length === 0) {
 		return null;
 	}
-	const unique = [...new Set(leftover)];
+	const list = leftover.join(", ");
+
+	let error;
+	if (!attempted) {
+		// No prompt was supplied for these — the call is repairable.
+		error =
+			`No image prompt was supplied for ${list}, so nothing was changed. ` +
+			`Resend this call with one image_prompts entry per placeholder, in the order ` +
+			`they appear in block_content. Never write the placeholder into the page.`;
+	} else if (generated === 0) {
+		// Generation ran and produced nothing — retrying will fail the same way.
+		error =
+			`Image generation is unavailable, so ${list} could not be resolved. ` +
+			`Nothing was changed. Tell the user that image generation failed: do not retry ` +
+			`this edit and do not write the placeholder into the page.`;
+	} else {
+		// Images exist; the markup and the prompt list disagree about how many.
+		error =
+			`${generated} image(s) were generated, but ${list} is still unresolved — ` +
+			`block_content and image_prompts do not line up. Nothing was changed. Do NOT ` +
+			`tell the user image generation failed; it worked. Resend this call with the ` +
+			`placeholders numbered __IMG_1__ upward with no gaps, and exactly one ` +
+			`image_prompts entry for each, in the same order.`;
+	}
+
 	return {
 		id: toolCallId,
-		result: [
-			{
-				type: "text",
-				text: JSON.stringify({
-					success: false,
-					error:
-						`Image generation is unavailable, so ${unique.join(", ")} could not be resolved. ` +
-						`Nothing was changed. Tell the user that image generation failed: do not retry ` +
-						`this edit and do not write the placeholder into the page.`,
-				}),
-			},
-		],
+		result: [{ type: "text", text: JSON.stringify({ success: false, error }) }],
 		isError: true,
 	};
 }

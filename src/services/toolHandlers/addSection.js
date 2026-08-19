@@ -1,95 +1,21 @@
 import { __ } from "@wordpress/i18n";
 
 import { validateBlockMarkup } from "../../utils/blockValidator";
-import { resolveAlt } from "../../utils/imageAlt";
+import { findImagePlaceholders } from "../../utils/imagePlaceholders";
 import { handleAddAction } from "../blockActions";
-import { callAbility } from "../callAbility";
-import {
-	appendGeneratedImageUrl,
-	deduplicateImages,
-	getGeneratedImages,
-	substituteImagePlaceholder,
-	unresolvedPlaceholderResult,
-} from "../imageCache";
+import { resolveMarkupImages } from "../imageAbility";
+import { deduplicateImages, getGeneratedImages, unresolvedPlaceholderResult } from "../imageCache";
 
 export async function handleAddSection(toolCall, args, ctx) {
-	// ── Image placeholder resolution ──
-	// Count __IMG_N__ placeholders in the markup
-	const imgPlaceholders = args.block_content.match(/__IMG_\d+__/g) || [];
-	const uniquePlaceholders = [...new Set(imgPlaceholders)];
-
-	if (uniquePlaceholders.length > 0) {
-		// Preferred path: generate images from image_prompts (markup-first flow)
-		if (args.image_prompts && Array.isArray(args.image_prompts) && args.image_prompts.length > 0) {
-			const promptCount = Math.min(args.image_prompts.length, uniquePlaceholders.length);
-
-			const images = [];
-			for (let i = 0; i < promptCount; i++) {
-				const prompt = args.image_prompts[i];
-				const imgArgs =
-					typeof prompt === "string" ? { prompt } : { prompt: prompt.prompt, ...prompt };
-				const suppliedAlt = typeof prompt === "string" ? "" : prompt.alt;
-
-				await ctx.updateProgress(
-					__("Generating image…", "wp-module-editor-chat") + ` (${i + 1}/${promptCount})`,
-					500
-				);
-				try {
-					const mcpResult = await callAbility(ctx.mcpClient, "blu-generate-image", imgArgs);
-					if (!mcpResult.isError && mcpResult.content?.[0]?.text) {
-						const parsed = JSON.parse(mcpResult.content[0].text);
-						const url = parsed?.message?.url || parsed?.url;
-						if (url) {
-							const alt = resolveAlt(suppliedAlt, imgArgs.prompt);
-							images.push({ url, alt });
-							appendGeneratedImageUrl(url, alt);
-						}
-					}
-				} catch {
-					// image generation failed — non-critical
-				}
-			}
-
-			// Substitute placeholders with generated URLs (and their alt text)
-			for (let i = 0; i < images.length; i++) {
-				args.block_content = substituteImagePlaceholder(
-					args.block_content,
-					i + 1,
-					images[i].url,
-					images[i].alt
-				);
-			}
-		}
-		// Fallback: substitute from pre-supplied image_urls array
-		else if (args.image_urls && Array.isArray(args.image_urls) && args.image_urls.length > 0) {
-			for (let i = 0; i < args.image_urls.length; i++) {
-				args.block_content = substituteImagePlaceholder(
-					args.block_content,
-					i + 1,
-					args.image_urls[i]
-				);
-			}
-		}
-		// Fallback: substitute from previously generated images in this turn
-		else if (getGeneratedImages().length > 0) {
-			const cached = getGeneratedImages();
-			for (let i = 0; i < Math.min(cached.length, uniquePlaceholders.length); i++) {
-				args.block_content = substituteImagePlaceholder(
-					args.block_content,
-					i + 1,
-					cached[i].url,
-					cached[i].alt
-				);
-			}
-		}
-	}
+	const images = await resolveMarkupImages(args.block_content, args, ctx);
+	args.block_content = images.markup;
 
 	// Never insert a section carrying an unresolved placeholder.
-	const unresolved = unresolvedPlaceholderResult(toolCall.id, args.block_content);
+	const unresolved = unresolvedPlaceholderResult(toolCall.id, args.block_content, images);
 	if (unresolved) {
 		console.warn(
 			"[ToolExecutor:REST] add-section: placeholders left unresolved: insert rejected",
-			args.block_content.match(/__IMG_\d+__/g)
+			findImagePlaceholders(args.block_content)
 		);
 		return unresolved;
 	}
