@@ -12,6 +12,16 @@ import {
 	assertNavigationPageExists,
 } from "../navigationEditor";
 
+/**
+ * Whether parsed navigation attrs carry a resolvable page id.
+ *
+ * @param {Object} [attrs] Parsed navigation-link attributes.
+ * @return {boolean} True when `id` is set to something other than null.
+ */
+function hasNavigationPageId(attrs) {
+	return (attrs?.id ?? null) !== null;
+}
+
 export async function handleInsertInnerBlock(toolCall, args, ctx) {
 	await ctx.updateProgress(__("Inserting block…", "wp-module-editor-chat"), 400);
 	try {
@@ -34,13 +44,13 @@ export async function handleInsertInnerBlock(toolCall, args, ctx) {
 		}
 
 		let intendedAttrs = parseNavigationLinkAttrsFromMarkup(markup);
-		if (intendedAttrs?.id != null) {
+		if (hasNavigationPageId(intendedAttrs)) {
 			intendedAttrs = await resolvePageNavigationAttrs(intendedAttrs);
 			await assertNavigationPageExists(intendedAttrs);
 		}
 
 		let finalMarkup = markup;
-		if (intendedAttrs?.id != null) {
+		if (hasNavigationPageId(intendedAttrs)) {
 			finalMarkup = buildNavigationLinkMarkup({
 				label: intendedAttrs.label,
 				type: intendedAttrs.type || "page",

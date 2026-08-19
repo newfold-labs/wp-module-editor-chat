@@ -179,7 +179,7 @@ export async function handleUpdateBlockAttrs(toolCall, args, ctx) {
 
 		if (block.name === "core/navigation-link" || block.name === "core/navigation-submenu") {
 			if (
-				args.attributes.id != null &&
+				(args.attributes.id ?? null) !== null &&
 				(args.attributes.type === "page" || args.attributes.type === "post") &&
 				!("url" in args.attributes)
 			) {
