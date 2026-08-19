@@ -11,6 +11,8 @@
 import { parse, cloneBlock } from "@wordpress/blocks";
 import { dispatch, select } from "@wordpress/data";
 
+import logger from "../utils/logger";
+
 import {
 	createBlockFromParsed,
 	findBlockContext,
@@ -87,6 +89,57 @@ async function resolveHeaderNavigationForClient(clientId) {
 	}
 	const path = getBlockPathInNavigation(headerNav.clientId, clientId);
 	return path ? headerNav : null;
+}
+
+/**
+ * Rebalance a columns row after a new column joins it.
+ *
+ * core/column widths are explicit percentages, and a column with no width gets
+ * whatever the row has left. When the existing columns already account for
+ * 100%, that is zero — the new column and everything in it render at zero
+ * width. The insert succeeds, the block is in the tree, and the user sees no
+ * change at all.
+ *
+ * Gives the newcomer the average of its siblings, then normalises the row back
+ * to 100%, which keeps the existing columns' proportions to each other.
+ *
+ * @param {string} columnsClientId The core/columns row that just gained a child.
+ */
+function rebalanceColumnWidths(columnsClientId) {
+	const { getBlock } = select("core/block-editor");
+
+	const row = getBlock(columnsClientId);
+	if (!row || row.name !== "core/columns") {
+		return;
+	}
+	const columns = (row.innerBlocks || []).filter((b) => b.name === "core/column");
+	if (columns.length < 2) {
+		return;
+	}
+
+	const widths = columns.map((c) => parseFloat(String(c.attributes?.width ?? "").replace("%", "")));
+	const known = widths.filter((w) => Number.isFinite(w) && w > 0);
+	// No explicit widths anywhere: flexbox already shares the row evenly.
+	if (known.length === 0) {
+		return;
+	}
+
+	const average = known.reduce((sum, w) => sum + w, 0) / known.length;
+	const filled = widths.map((w) => (Number.isFinite(w) && w > 0 ? w : average));
+	const total = filled.reduce((sum, w) => sum + w, 0);
+	if (!total) {
+		return;
+	}
+
+	const { updateBlockAttributes } = dispatch("core/block-editor");
+	const applied = filled.map((w) => Math.round((w / total) * 10000) / 100);
+	columns.forEach((column, i) => {
+		updateBlockAttributes(column.clientId, { width: `${applied[i]}%` });
+	});
+	logger.log(
+		`[blockActions] Rebalanced ${columns.length} columns`,
+		applied.map((pct) => `${pct}%`)
+	);
 }
 
 /**
@@ -1038,6 +1091,11 @@ export async function handleInsertInnerBlockAction(
 			`The editor did not accept the block into ${parent.name}; nothing was added. Do not ` +
 				`report this as done — try a different container.`
 		);
+	}
+
+	// A new column inherits no width, and an already-full row leaves it none.
+	if (parent.name === "core/columns") {
+		rebalanceColumnWidths(parentClientId);
 	}
 
 	// State where it landed, not just that it did. "next to" means a sibling
