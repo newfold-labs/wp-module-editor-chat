@@ -249,6 +249,26 @@ function normalizeInsertInnerBlockArgs(args) {
  */
 async function resolveInsertInnerBlockArgs(args) {
 	normalizeInsertInnerBlockArgs(args);
+
+	// A sibling reference fixes both the container and the slot, so the model
+	// never has to work out a numeric index from the tree — the case that put a
+	// new column at the end of the row instead of beside the selected one.
+	// The sibling's real parent wins over any parent_client_id sent with it.
+	const sibling = args.after_client_id || args.before_client_id;
+	if (sibling) {
+		const { getBlockRootClientId, getBlockIndex } = wp.data.select("core/block-editor");
+		const siblingParent = getBlockRootClientId(sibling);
+		const siblingIndex = getBlockIndex(sibling);
+		if (siblingParent && typeof siblingIndex === "number" && siblingIndex >= 0) {
+			args.parent_client_id = siblingParent;
+			args.index = args.after_client_id ? siblingIndex + 1 : siblingIndex;
+			logger.log(
+				`[ToolExecutor:REST] insert-inner-block: ${
+					args.after_client_id ? "after" : "before"
+				} ${sibling} → parent ${siblingParent} index ${args.index}`
+			);
+		}
+	}
 	if (!args.parent_client_id && args.block_content && /navigation-link/.test(args.block_content)) {
 		await hydrateAllRefNavigationBlocks();
 		const nav = findHeaderRefNavigationBlock();
