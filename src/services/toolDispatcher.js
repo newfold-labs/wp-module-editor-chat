@@ -18,7 +18,9 @@ import { __ } from "@wordpress/i18n";
 import {
 	validateEntityContentArgs,
 	abilityUsesBlockContent,
+	resolveContentField,
 } from "../utils/entityContentValidation";
+import { resolveMarkupImagePlaceholders } from "./resolveMarkupImages";
 import { createAbortError } from "../utils/abortControl";
 import { resolveAlt } from "../utils/imageAlt";
 import { snapshotBlocks } from "../utils/editorContext";
@@ -879,11 +881,14 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 				// Validate Gutenberg markup before entity create/update hits WordPress REST.
 				let contentValidationFailed = false;
 				if (abilityUsesBlockContent(toolName)) {
-					const hasContent =
-						args.content || args.block_content || args.markup || args.html || args.block_markup;
+					const hasContent = resolveContentField(args);
 					if (hasContent) {
+						if (toolName === "blu-add-page") {
+							const resolvedMarkup = await resolveMarkupImagePlaceholders(hasContent, args, ctx);
+							args.content = resolvedMarkup;
+						}
 						await ctx.updateProgress(__("Validating block markup…", "wp-module-editor-chat"), 300);
-						const contentCheck = validateEntityContentArgs(toolName, args);
+						const contentCheck = validateEntityContentArgs(toolName, args, ctx.intent);
 						if (!contentCheck.ok) {
 							contentValidationFailed = true;
 							result = {
