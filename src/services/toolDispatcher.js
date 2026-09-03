@@ -20,21 +20,28 @@ import {
 	abilityUsesBlockContent,
 	resolveContentField,
 } from "../utils/entityContentValidation";
-import { resolveMarkupImagePlaceholders } from "./resolveMarkupImages";
 import { createAbortError } from "../utils/abortControl";
+import { findImagePlaceholders } from "../utils/imagePlaceholders";
 import { resolveAlt } from "../utils/imageAlt";
 import { snapshotBlocks } from "../utils/editorContext";
 import { safeParseJSON } from "../utils/jsonUtils";
-import { callAbility } from "./callAbility";
+import { callAbility, mcpResultIsError } from "./callAbility";
 import { handleContentCreation, CREATE_ABILITIES } from "./contentNavigation";
+import { findHeaderRefNavigationBlock, hydrateAllRefNavigationBlocks } from "./navigationEditor";
 import {
-	findHeaderRefNavigationBlock,
-	hydrateAllRefNavigationBlocks,
-} from "./navigationEditor";
+	applyImageToBlock,
+	callImageAbility,
+	getBlockImageUrl,
+	parseImageAbilityUrl,
+	resolveMarkupImages,
+} from "./imageAbility";
 import {
 	appendGeneratedImageUrl,
+	deduplicateImages,
 	getActiveImageEditTarget,
+	getGeneratedImages,
 	resetGeneratedImageCache,
+	unresolvedPlaceholderResult,
 } from "./imageCache";
 import { handleAddSection } from "./toolHandlers/addSection";
 import { handleDeleteBlock } from "./toolHandlers/deleteBlock";
@@ -50,12 +57,6 @@ import { handleEditLogo } from "./toolHandlers/editLogo";
 import { handleSetLogoFromImage } from "./toolHandlers/setLogoFromImage";
 import { handleUpdateBlockAttrs } from "./toolHandlers/updateBlockAttrs";
 import { handleEditImage } from "./toolHandlers/editImage";
-import {
-	applyImageToBlock,
-	callImageAbility,
-	getBlockImageUrl,
-	parseImageAbilityUrl,
-} from "./imageAbility";
 import { IMAGE_BLOCKS } from "./blockToolbar/blockAI";
 import logger from "../utils/logger";
 
@@ -183,7 +184,7 @@ function normalizeBlockToolName(toolName) {
  *
  * @param {string} toolName
  * @param {Object} args
- * @return {{ toolName: string, args: Object }}
+ * @return {{ toolName: string, args: Object }} The unwrapped tool name and its arguments.
  */
 function resolveClientToolCall(toolName, args) {
 	let resolvedName = toolName || "";
@@ -194,6 +195,7 @@ function resolveClientToolCall(toolName, args) {
 	}
 
 	if (resolvedName === "blu-call-ability" && resolvedArgs.ability_name) {
+		// eslint-disable-next-line camelcase -- MCP payload field name, not ours to rename
 		const { ability_name, parameters, ...rest } = resolvedArgs;
 		resolvedName = String(ability_name).replace(/\//g, "-");
 
@@ -219,7 +221,7 @@ function resolveClientToolCall(toolName, args) {
  * Normalize common alias param names for blu-insert-inner-block.
  *
  * @param {Object} args
- * @return {Object}
+ * @return {Object} The arguments with index/position normalized.
  */
 function normalizeInsertInnerBlockArgs(args) {
 	if (!args.parent_client_id) {
@@ -232,6 +234,7 @@ function normalizeInsertInnerBlockArgs(args) {
 			args.block_content = alt;
 		}
 	}
+	// eslint-disable-next-line eqeqeq -- intentional loose check: matches null and undefined
 	if (args.index == null && args.position != null) {
 		if (typeof args.position === "number") {
 			args.index = args.position;
@@ -248,15 +251,31 @@ function normalizeInsertInnerBlockArgs(args) {
  * Resolve parent navigation block when inserting a menu link without parent_client_id.
  *
  * @param {Object} args
- * @return {Promise<Object>}
+ * @return {Promise<Object>} The arguments with the parent clientId resolved.
  */
 async function resolveInsertInnerBlockArgs(args) {
 	normalizeInsertInnerBlockArgs(args);
-	if (
-		!args.parent_client_id &&
-		args.block_content &&
-		/navigation-link/.test(args.block_content)
-	) {
+
+	// A sibling reference fixes both the container and the slot, so the model
+	// never has to work out a numeric index from the tree — the case that put a
+	// new column at the end of the row instead of beside the selected one.
+	// The sibling's real parent wins over any parent_client_id sent with it.
+	const sibling = args.after_client_id || args.before_client_id;
+	if (sibling) {
+		const { getBlockRootClientId, getBlockIndex } = wp.data.select("core/block-editor");
+		const siblingParent = getBlockRootClientId(sibling);
+		const siblingIndex = getBlockIndex(sibling);
+		if (siblingParent && typeof siblingIndex === "number" && siblingIndex >= 0) {
+			args.parent_client_id = siblingParent;
+			args.index = args.after_client_id ? siblingIndex + 1 : siblingIndex;
+			logger.log(
+				`[ToolExecutor:REST] insert-inner-block: ${
+					args.after_client_id ? "after" : "before"
+				} ${sibling} → parent ${siblingParent} index ${args.index}`
+			);
+		}
+	}
+	if (!args.parent_client_id && args.block_content && /navigation-link/.test(args.block_content)) {
 		await hydrateAllRefNavigationBlocks();
 		const nav = findHeaderRefNavigationBlock();
 		if (nav) {
@@ -270,7 +289,7 @@ async function resolveInsertInnerBlockArgs(args) {
  * MCP tools that return data the model must read (not "Applied successfully").
  *
  * @param {string} toolName
- * @return {boolean}
+ * @return {boolean} True when the tool returns data rather than editing blocks.
  */
 function isMcpDataTool(toolName) {
 	if (READ_TOOLS.has(toolName)) {
@@ -287,13 +306,12 @@ function isMcpDataTool(toolName) {
 
 /**
  * @param {string} text
- * @return {boolean}
+ * @return {boolean} True when the text is a client-action stub from the MCP server.
  */
 function isClientActionStubText(text) {
 	try {
 		const parsed = JSON.parse(text);
-		const payload =
-			parsed?.message && typeof parsed.message === "object" ? parsed.message : parsed;
+		const payload = parsed?.message && typeof parsed.message === "object" ? parsed.message : parsed;
 		return Boolean(payload?.action && CLIENT_ACTION_TOOLS[payload.action]);
 	} catch {
 		return false;
@@ -313,7 +331,7 @@ function toolCallUsesBlockMutation(tc) {
  * Parse MCP ability responses that only authorize client-side block execution.
  *
  * @param {Object} mcpResult
- * @return {Object|null}
+ * @return {Object|null} The parsed stub, or null when the result is not one.
  */
 function parseMcpClientActionStub(mcpResult) {
 	const text = mcpResult?.content?.[0]?.text;
@@ -322,8 +340,7 @@ function parseMcpClientActionStub(mcpResult) {
 	}
 	try {
 		const parsed = JSON.parse(text);
-		const payload =
-			parsed?.message && typeof parsed.message === "object" ? parsed.message : parsed;
+		const payload = parsed?.message && typeof parsed.message === "object" ? parsed.message : parsed;
 		if (payload?.action && CLIENT_ACTION_TOOLS[payload.action]) {
 			return payload;
 		}
@@ -337,10 +354,10 @@ function parseMcpClientActionStub(mcpResult) {
  * Run a block mutation locally when the server returned a client-action stub.
  *
  * @param {Object} stub
- * @param {Object} args      Original tool args (merged with stub fields).
+ * @param {Object} args     Original tool args (merged with stub fields).
  * @param {Object} toolCall
  * @param {Object} ctx
- * @return {Promise<Object|null>}
+ * @return {Promise<Object|null>} The tool result, or null when the stub is unsupported.
  */
 async function executeClientActionFromStub(stub, args, toolCall, ctx) {
 	const merged = { ...args };
@@ -357,6 +374,8 @@ async function executeClientActionFromStub(stub, args, toolCall, ctx) {
 		"attributes",
 		"before_client_id",
 		"after_client_id",
+		"image_prompts",
+		"image_urls",
 	]) {
 		if (stub[key] !== undefined && merged[key] === undefined) {
 			merged[key] = stub[key];
@@ -553,10 +572,22 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 		index: 0,
 		total: clientToolCalls.length,
 	});
+	// Unwrap the gateway envelope BEFORE anything reads the name. Nearly every
+	// ability arrives as blu-call-ability, so the raw name would label the whole
+	// actions list "Blu Call Ability" and hide discovery calls from the
+	// internal-tool filter, which matches on ability names.
+	const resolvedCalls = clientToolCalls.map((tc) =>
+		resolveClientToolCall(
+			tc.name || "",
+			typeof tc.arguments === "string" ? safeParseJSON(tc.arguments).value : tc.arguments || {}
+		)
+	);
+
 	ctx.setPendingTools(
 		clientToolCalls.map((tc, idx) => ({
 			...tc,
 			id: tc.id || `tool-${idx}`,
+			name: resolvedCalls[idx].toolName,
 		}))
 	);
 
@@ -569,15 +600,18 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 			break;
 		}
 
-		let toolCall = clientToolCalls[i];
 		const toolIndex = i + 1;
 		const totalTools = clientToolCalls.length;
+
+		let { toolName, args } = resolvedCalls[i];
+		const rawToolName = clientToolCalls[i].name;
+		const toolCall = { ...clientToolCalls[i], name: toolName };
 
 		ctx.setPendingTools((prev) => prev.filter((_, idx) => idx !== 0));
 		ctx.setActiveToolCall({
 			id: toolCall.id || `tool-${i}`,
-			name: toolCall.name,
-			arguments: toolCall.arguments,
+			name: toolName,
+			arguments: args,
 			index: toolIndex,
 			total: totalTools,
 		});
@@ -585,20 +619,11 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 		await new Promise((r) => requestAnimationFrame(r));
 
 		try {
-			let toolName = toolCall.name || "";
 			logger.log(
 				`[ToolExecutor:REST] Executing ${toolIndex}/${totalTools}: ${toolName}`,
 				toolCall.arguments
 			);
-			let args = toolCall.arguments || {};
-			if (typeof args === "string") {
-				args = safeParseJSON(args).value;
-			}
-
-			// Unwrap gateway calls and normalize slash/alias ability names.
-			({ toolName, args } = resolveClientToolCall(toolName, args));
-			toolCall = { ...toolCall, name: toolName };
-			if (toolCall.name !== (toolCall.arguments?.ability_name || toolCall.name)) {
+			if (toolName !== rawToolName) {
 				logger.log(`[ToolExecutor:REST] Resolved tool: ${toolName}`, args);
 			}
 
@@ -686,7 +711,11 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 				if (!result.isError && result.hasChanges) {
 					hasBlockEdits = true;
 				}
-			} else if (toolName === "blu-insert-inner-block" && args.parent_client_id && args.block_content) {
+			} else if (
+				toolName === "blu-insert-inner-block" &&
+				args.parent_client_id &&
+				args.block_content
+			) {
 				result = await handleInsertInnerBlock(toolCall, args, ctx);
 				if (!result.isError && result.hasChanges) {
 					hasBlockEdits = true;
@@ -884,26 +913,45 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 					const hasContent = resolveContentField(args);
 					if (hasContent) {
 						if (toolName === "blu-add-page") {
-							const resolvedMarkup = await resolveMarkupImagePlaceholders(hasContent, args, ctx);
-							args.content = resolvedMarkup;
+							const images = await resolveMarkupImages(hasContent, args, ctx);
+							args.content = images.markup;
+							const unresolved = unresolvedPlaceholderResult(toolCall.id, args.content, images);
+							if (unresolved) {
+								console.warn(
+									"[ToolExecutor:REST] add-page: placeholders left unresolved: create rejected",
+									findImagePlaceholders(args.content)
+								);
+								contentValidationFailed = true;
+								result = unresolved;
+							} else if (getGeneratedImages().length > 0) {
+								const dedup = deduplicateImages(args.content, getGeneratedImages());
+								if (dedup.replacements.length > 0) {
+									args.content = dedup.markup;
+								}
+							}
 						}
-						await ctx.updateProgress(__("Validating block markup…", "wp-module-editor-chat"), 300);
-						const contentCheck = validateEntityContentArgs(toolName, args, ctx.intent);
-						if (!contentCheck.ok) {
-							contentValidationFailed = true;
-							result = {
-								id: toolCall.id,
-								result: [
-									{
-										type: "text",
-										text: JSON.stringify({
-											success: false,
-											error: contentCheck.error,
-										}),
-									},
-								],
-								isError: true,
-							};
+						if (!contentValidationFailed) {
+							await ctx.updateProgress(
+								__("Validating block markup…", "wp-module-editor-chat"),
+								300
+							);
+							const contentCheck = validateEntityContentArgs(toolName, args, ctx.intent);
+							if (!contentCheck.ok) {
+								contentValidationFailed = true;
+								result = {
+									id: toolCall.id,
+									result: [
+										{
+											type: "text",
+											text: JSON.stringify({
+												success: false,
+												error: contentCheck.error,
+											}),
+										},
+									],
+									isError: true,
+								};
+							}
 						}
 					}
 				}
@@ -913,7 +961,8 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 					logger.log(`[ToolExecutor:REST] Forwarding to MCP: ${toolName}`, args);
 					try {
 						const mcpResult = await callAbility(ctx.mcpClient, toolName, args);
-						const stub = !mcpResult.isError ? parseMcpClientActionStub(mcpResult) : null;
+						const mcpFailed = mcpResultIsError(mcpResult);
+						const stub = !mcpFailed ? parseMcpClientActionStub(mcpResult) : null;
 						if (stub) {
 							const stubResult = await executeClientActionFromStub(stub, args, toolCall, ctx);
 							if (stubResult) {
@@ -925,14 +974,14 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 								result = {
 									id: toolCall.id,
 									result: mcpResult.content,
-									isError: mcpResult.isError || false,
+									isError: mcpFailed,
 								};
 							}
 						} else {
 							result = {
 								id: toolCall.id,
 								result: mcpResult.content,
-								isError: mcpResult.isError || false,
+								isError: mcpFailed,
 							};
 						}
 					} catch (mcpErr) {

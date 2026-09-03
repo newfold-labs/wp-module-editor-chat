@@ -11,6 +11,8 @@
 import { parse, cloneBlock } from "@wordpress/blocks";
 import { dispatch, select } from "@wordpress/data";
 
+import logger from "../utils/logger";
+
 import {
 	createBlockFromParsed,
 	findBlockContext,
@@ -38,7 +40,6 @@ import {
 	findHeaderRefNavigationBlock,
 	hydrateAllRefNavigationBlocks,
 	getBlockPathInNavigation,
-	getNavigationMenuLinks,
 	insertBlocksInNavigation,
 	isRefNavigation,
 	modifyNavigationEntity,
@@ -54,7 +55,6 @@ import {
 	resolveRefNavigationForEdit,
 	summarizeNavigationMenuItems,
 	summarizeNavigationMenuItemsFromEntity,
-	updateNavigationLinkAttributes,
 	syncNavigationEntityFromEditor,
 } from "./navigationEditor";
 
@@ -65,7 +65,7 @@ import {
 /**
  * Load the site header's linked navigation menu for menu-item edits.
  *
- * @return {Promise<Object|null>}
+ * @return {Promise<Object|null>} The header navigation block, or null if absent.
  */
 async function hydrateHeaderNavigation() {
 	const nav = findHeaderRefNavigationBlock();
@@ -80,7 +80,7 @@ async function hydrateHeaderNavigation() {
  * Resolve header navigation when a menu-link clientId belongs to it.
  *
  * @param {string} clientId Block inside a navigation menu.
- * @return {Promise<Object|null>}
+ * @return {Promise<Object|null>} The header navigation block, or null if the id is not in it.
  */
 async function resolveHeaderNavigationForClient(clientId) {
 	const headerNav = await hydrateHeaderNavigation();
@@ -89,6 +89,89 @@ async function resolveHeaderNavigationForClient(clientId) {
 	}
 	const path = getBlockPathInNavigation(headerNav.clientId, clientId);
 	return path ? headerNav : null;
+}
+
+/**
+ * Rebalance a columns row after a new column joins it.
+ *
+ * A column with no width gets whatever the row has left — zero when the others
+ * already account for 100%, so it renders invisibly. Gives the newcomer the
+ * average of its siblings, then normalises the row back to 100%.
+ *
+ * @param {string} columnsClientId The core/columns row that just gained a child.
+ */
+function rebalanceColumnWidths(columnsClientId) {
+	const { getBlock } = select("core/block-editor");
+
+	const row = getBlock(columnsClientId);
+	if (!row || row.name !== "core/columns") {
+		return;
+	}
+	const columns = (row.innerBlocks || []).filter((b) => b.name === "core/column");
+	if (columns.length < 2) {
+		return;
+	}
+
+	const widths = columns.map((c) => parseFloat(String(c.attributes?.width ?? "").replace("%", "")));
+	const known = widths.filter((w) => Number.isFinite(w) && w > 0);
+	// No explicit widths anywhere: flexbox already shares the row evenly.
+	if (known.length === 0) {
+		return;
+	}
+
+	const average = known.reduce((sum, w) => sum + w, 0) / known.length;
+	const filled = widths.map((w) => (Number.isFinite(w) && w > 0 ? w : average));
+	const total = filled.reduce((sum, w) => sum + w, 0);
+	if (!total) {
+		return;
+	}
+
+	const { updateBlockAttributes } = dispatch("core/block-editor");
+	const applied = filled.map((w) => Math.round((w / total) * 10000) / 100);
+	columns.forEach((column, i) => {
+		updateBlockAttributes(column.clientId, { width: `${applied[i]}%` });
+	});
+	logger.log(
+		`[blockActions] Rebalanced ${columns.length} columns`,
+		applied.map((pct) => `${pct}%`)
+	);
+}
+
+/**
+ * Reject blocks WordPress would silently refuse to place inside a given parent.
+ *
+ * replaceBlocks() and insertBlocks() both return without dispatching, and
+ * without throwing, if any block fails canInsertBlockType at the target root.
+ *
+ * @param {string|null} rootClientId Container the blocks are destined for; null is the document root.
+ * @param {Array}       newBlocks    Blocks to place.
+ * @param {string}      guidance     What the model should do instead.
+ */
+function assertBlocksInsertableInto(rootClientId, newBlocks, guidance) {
+	const { canInsertBlockType, getBlockName } = select("core/block-editor");
+
+	for (const candidate of newBlocks) {
+		if (!canInsertBlockType(candidate.name, rootClientId)) {
+			const parentName = rootClientId ? getBlockName(rootClientId) : "the document root";
+			throw new Error(`${candidate.name} cannot be placed inside ${parentName}. ${guidance}`);
+		}
+	}
+}
+
+/**
+ * Reject a replacement WordPress would silently refuse.
+ *
+ * @param {string} clientId  The block being replaced.
+ * @param {Array}  newBlocks Replacement blocks.
+ */
+function assertBlocksInsertable(clientId, newBlocks) {
+	const { getBlockRootClientId } = select("core/block-editor");
+	assertBlocksInsertableInto(
+		getBlockRootClientId(clientId),
+		newBlocks,
+		`Edit this block's children individually with blu-update-block-attrs, or add new content with ` +
+			`blu-add-section.`
+	);
 }
 
 /**
@@ -123,8 +206,28 @@ export async function handleRewriteAction(clientId, blockContent) {
 		throw new Error("Failed to parse block_content into blocks");
 	}
 
+	// The page body. Its root is edit-disabled while a page is open, so
+	// replaceBlocks() is refused; replaceInnerBlocks has no such guard.
+	if (block.name === "core/post-content") {
+		const innerBlocks = updatedBlocks.map((b) => createBlockFromParsed(b));
+		const { replaceInnerBlocks } = dispatch("core/block-editor");
+		replaceInnerBlocks(clientId, innerBlocks, false);
+
+		if (select("core/block-editor").getBlocks(clientId).length !== innerBlocks.length) {
+			throw new Error("Page content replacement did not apply. The page is unchanged.");
+		}
+
+		return {
+			clientId,
+			blockName: block.name,
+			message: `Page content replaced with ${innerBlocks.length} top-level block(s)`,
+			originalBlock,
+		};
+	}
+
 	const ancestorNav =
-		(await resolveRefNavigationForEdit(clientId)) || (await resolveHeaderNavigationForClient(clientId));
+		(await resolveRefNavigationForEdit(clientId)) ||
+		(await resolveHeaderNavigationForClient(clientId));
 
 	if (ancestorNav) {
 		const path = getBlockPathInNavigation(ancestorNav.clientId, clientId);
@@ -166,7 +269,18 @@ export async function handleRewriteAction(clientId, blockContent) {
 	// attributes, especially for RichText content (paragraphs, headings).
 	const newBlocks = updatedBlocks.map((b) => createBlockFromParsed(b));
 	const { replaceBlocks } = dispatch("core/block-editor");
+
+	assertBlocksInsertable(clientId, newBlocks);
 	replaceBlocks(clientId, newBlocks);
+
+	// The old clientId is gone on success. If it survived, the dispatch was
+	// refused and the tree is untouched.
+	if (getBlock(clientId)) {
+		throw new Error(
+			`WordPress refused to replace ${block.name} and the page is unchanged. This block ` +
+				`cannot be replaced in place. Edit its children instead.`
+		);
+	}
 
 	return {
 		clientId,
@@ -183,7 +297,6 @@ export async function handleRewriteAction(clientId, blockContent) {
  * @return {Promise<Object>} Result of the deletion.
  */
 export async function handleDeleteAction(clientIdOrParams) {
-	const { getBlock } = select("core/block-editor");
 	const params =
 		typeof clientIdOrParams === "object" && clientIdOrParams !== null
 			? clientIdOrParams
@@ -232,6 +345,7 @@ export async function handleDeleteAction(clientIdOrParams) {
 		}
 	}
 
+	const { getBlock } = select("core/block-editor");
 	let block =
 		(clientId ? await ensureMenuBlockAccessible(clientId) : null) ||
 		(clientId ? getBlock(clientId) : null);
@@ -268,7 +382,8 @@ export async function handleDeleteAction(clientIdOrParams) {
 	};
 
 	const ancestorNav =
-		(await resolveRefNavigationForEdit(clientId)) || (await resolveHeaderNavigationForClient(clientId));
+		(await resolveRefNavigationForEdit(clientId)) ||
+		(await resolveHeaderNavigationForClient(clientId));
 
 	if (ancestorNav) {
 		const path = getBlockPathInNavigation(ancestorNav.clientId, clientId);
@@ -307,6 +422,18 @@ export async function handleDeleteAction(clientIdOrParams) {
 
 	const { removeBlock } = dispatch("core/block-editor");
 	removeBlock(clientId);
+
+	// removeBlocks bails silently when canRemoveBlocks is false, which is the
+	// case for template blocks while a page is open. Report that, don't claim
+	// the block is gone.
+	if (getBlock(clientId)) {
+		throw new Error(
+			`${block.name} is part of the template, not this page, so it cannot be removed ` +
+				`while editing a page. Tell the user it belongs to the template and ask whether ` +
+				`to remove it from the template, which changes every page using it. Only if they ` +
+				`confirm, call this tool again with the same client_id plus "from_template": true.`
+		);
+	}
 
 	return {
 		clientId,
@@ -445,57 +572,69 @@ export async function handleMoveAction(clientId, targetClientId, position, asChi
 			}
 		}
 	} else {
-	const sourceAncestor = findAncestorTemplatePart(clientId);
-	const targetAncestor = findAncestorTemplatePart(targetClientId);
+		const sourceAncestor = findAncestorTemplatePart(clientId);
+		const targetAncestor = findAncestorTemplatePart(targetClientId);
 
-	if (sourceAncestor || targetAncestor) {
-		// Move within the SAME template part — use entity-based approach
-		if (sourceAncestor && targetAncestor && sourceAncestor.clientId === targetAncestor.clientId) {
-			const sourcePath = getBlockPathInTemplatePart(sourceAncestor.clientId, clientId);
-			const targetPath = getBlockPathInTemplatePart(targetAncestor.clientId, targetClientId);
+		if (sourceAncestor || targetAncestor) {
+			// Move within the SAME template part: use entity-based approach
+			if (sourceAncestor && targetAncestor && sourceAncestor.clientId === targetAncestor.clientId) {
+				const sourcePath = getBlockPathInTemplatePart(sourceAncestor.clientId, clientId);
+				const targetPath = getBlockPathInTemplatePart(targetAncestor.clientId, targetClientId);
 
-			if (!sourcePath || !targetPath) {
-				throw new Error("Could not compute paths for move within template part");
-			}
+				if (!sourcePath || !targetPath) {
+					throw new Error("Could not compute paths for move within template part");
+				}
 
-			await modifyTemplatePartEntity(sourceAncestor, (blocks) => {
-				let movedBlock = null;
-				const findBlockInTree = (tree, path) => {
-					if (path.length === 1) {
-						return tree[path[0]];
+				await modifyTemplatePartEntity(sourceAncestor, (blocks) => {
+					let movedBlock = null;
+					const findBlockInTree = (tree, path) => {
+						if (path.length === 1) {
+							return tree[path[0]];
+						}
+						return findBlockInTree(tree[path[0]].innerBlocks || [], path.slice(1));
+					};
+					movedBlock = findBlockInTree(blocks, sourcePath);
+					if (!movedBlock) {
+						return blocks;
 					}
-					return findBlockInTree(tree[path[0]].innerBlocks || [], path.slice(1));
-				};
-				movedBlock = findBlockInTree(blocks, sourcePath);
-				if (!movedBlock) {
-					return blocks;
-				}
 
-				let modified = removeBlockAtPath(blocks, sourcePath);
+					let modified = removeBlockAtPath(blocks, sourcePath);
 
-				// After removing the source, adjust target path if source was in the
-				// same parent and at a lower index (indices shift down by 1).
-				const adjustedTarget = [...targetPath];
-				const srcParent = sourcePath.slice(0, -1);
-				const tgtParent = targetPath.slice(0, -1);
-				if (
-					srcParent.length === tgtParent.length &&
-					srcParent.every((v, i) => v === tgtParent[i]) &&
-					sourcePath[sourcePath.length - 1] < targetPath[targetPath.length - 1]
-				) {
-					adjustedTarget[adjustedTarget.length - 1] -= 1;
-				}
+					// After removing the source, adjust target path if source was in the
+					// same parent and at a lower index (indices shift down by 1).
+					const adjustedTarget = [...targetPath];
+					const srcParent = sourcePath.slice(0, -1);
+					const tgtParent = targetPath.slice(0, -1);
+					if (
+						srcParent.length === tgtParent.length &&
+						srcParent.every((v, i) => v === tgtParent[i]) &&
+						sourcePath[sourcePath.length - 1] < targetPath[targetPath.length - 1]
+					) {
+						adjustedTarget[adjustedTarget.length - 1] -= 1;
+					}
 
+					if (position === "after") {
+						modified = insertBlocksAtPath(modified, adjustedTarget, [movedBlock]);
+					} else {
+						modified = insertBlocksBeforePath(modified, adjustedTarget, [movedBlock]);
+					}
+
+					return modified;
+				});
+			} else {
+				// Cross-template-part moves: fall back to standard dispatch
+				const { moveBlockToPosition } = dispatch("core/block-editor");
+				const targetRootClientId = getBlockRootClientId(targetClientId) || "";
+				let targetIndex = getBlockIndex(targetClientId);
 				if (position === "after") {
-					modified = insertBlocksAtPath(modified, adjustedTarget, [movedBlock]);
-				} else {
-					modified = insertBlocksBeforePath(modified, adjustedTarget, [movedBlock]);
+					targetIndex += 1;
 				}
-
-				return modified;
-			});
+				if (originalRootClientId === targetRootClientId && originalIndex < targetIndex) {
+					targetIndex -= 1;
+				}
+				moveBlockToPosition(clientId, originalRootClientId, targetRootClientId, targetIndex);
+			}
 		} else {
-			// Cross-template-part moves — fall back to standard dispatch
 			const { moveBlockToPosition } = dispatch("core/block-editor");
 			const targetRootClientId = getBlockRootClientId(targetClientId) || "";
 			let targetIndex = getBlockIndex(targetClientId);
@@ -507,18 +646,6 @@ export async function handleMoveAction(clientId, targetClientId, position, asChi
 			}
 			moveBlockToPosition(clientId, originalRootClientId, targetRootClientId, targetIndex);
 		}
-	} else {
-		const { moveBlockToPosition } = dispatch("core/block-editor");
-		const targetRootClientId = getBlockRootClientId(targetClientId) || "";
-		let targetIndex = getBlockIndex(targetClientId);
-		if (position === "after") {
-			targetIndex += 1;
-		}
-		if (originalRootClientId === targetRootClientId && originalIndex < targetIndex) {
-			targetIndex -= 1;
-		}
-		moveBlockToPosition(clientId, originalRootClientId, targetRootClientId, targetIndex);
-	}
 	}
 
 	return {
@@ -563,7 +690,7 @@ export async function handleAddAction(clientId, changes, position = "after") {
 			parsedBlocksList.push(...parsedBlocks);
 		} catch (error) {
 			errors.push(`Failed to parse block_content: ${error.message}`);
-			// eslint-disable-next-line no-console
+
 			console.error("Failed to parse block_content:", error);
 		}
 	}
@@ -595,48 +722,48 @@ export async function handleAddAction(clientId, changes, position = "after") {
 		const inserter = position === "before" ? insertBlocksBeforePath : insertBlocksAtPath;
 		await modifyNavigationEntity(ancestorNav, (blocks) => inserter(blocks, path, parsedBlocksList));
 	} else {
-	const ancestorTemplatePart = clientId ? findAncestorTemplatePart(clientId) : null;
+		const ancestorTemplatePart = clientId ? findAncestorTemplatePart(clientId) : null;
 
-	if (ancestorTemplatePart) {
-		const path = getBlockPathInTemplatePart(ancestorTemplatePart.clientId, clientId);
-		if (!path) {
-			throw new Error(`Could not compute path for block ${clientId} in template part`);
-		}
-		const inserter = position === "before" ? insertBlocksBeforePath : insertBlocksAtPath;
-		await modifyTemplatePartEntity(ancestorTemplatePart, (blocks) =>
-			inserter(blocks, path, parsedBlocksList)
-		);
-	} else if (clientId === null) {
-		const effectiveRoot = getEffectiveRootBlocks();
-		if (effectiveRoot.blocks.length > 0) {
-			if (effectiveRoot.parentClientId) {
-				insertBlocks(blockInstances, 0, effectiveRoot.parentClientId);
+		if (ancestorTemplatePart) {
+			const path = getBlockPathInTemplatePart(ancestorTemplatePart.clientId, clientId);
+			if (!path) {
+				throw new Error(`Could not compute path for block ${clientId} in template part`);
+			}
+			const inserter = position === "before" ? insertBlocksBeforePath : insertBlocksAtPath;
+			await modifyTemplatePartEntity(ancestorTemplatePart, (blocks) =>
+				inserter(blocks, path, parsedBlocksList)
+			);
+		} else if (clientId === null) {
+			const effectiveRoot = getEffectiveRootBlocks();
+			if (effectiveRoot.blocks.length > 0) {
+				if (effectiveRoot.parentClientId) {
+					insertBlocks(blockInstances, 0, effectiveRoot.parentClientId);
+				} else {
+					insertBlocks(blockInstances, 0, effectiveRoot.blocks[0].clientId);
+				}
 			} else {
-				insertBlocks(blockInstances, 0, effectiveRoot.blocks[0].clientId);
+				const rootBlocks = getBlocks();
+				const postContentBlock = rootBlocks.find((b) => b.name === "core/post-content");
+				if (postContentBlock) {
+					insertBlocks(blockInstances, 0, postContentBlock.clientId);
+				} else {
+					insertBlocks(blockInstances, 0);
+				}
 			}
 		} else {
-			const rootBlocks = getBlocks();
-			const postContentBlock = rootBlocks.find((b) => b.name === "core/post-content");
-			if (postContentBlock) {
-				insertBlocks(blockInstances, 0, postContentBlock.clientId);
-			} else {
-				insertBlocks(blockInstances, 0);
+			const targetBlock = getBlock(clientId);
+			if (!targetBlock) {
+				throw new Error(`Target block with clientId ${clientId} not found`);
 			}
-		}
-	} else {
-		const targetBlock = getBlock(clientId);
-		if (!targetBlock) {
-			throw new Error(`Target block with clientId ${clientId} not found`);
-		}
 
-		const context = findBlockContext(clientId);
-		if (!context) {
-			throw new Error(`Target block ${clientId} not found in the block tree`);
-		}
+			const context = findBlockContext(clientId);
+			if (!context) {
+				throw new Error(`Target block ${clientId} not found in the block tree`);
+			}
 
-		const insertIndex = position === "before" ? context.index : context.index + 1;
-		insertBlocks(blockInstances, insertIndex, context.parentClientId || undefined);
-	}
+			const insertIndex = position === "before" ? context.index : context.index + 1;
+			insertBlocks(blockInstances, insertIndex, context.parentClientId || undefined);
+		}
 	}
 
 	const insertedClientIds = blockInstances.map((b) => b.clientId || null).filter(Boolean);
@@ -672,8 +799,6 @@ export async function handleAddAction(clientId, changes, position = "after") {
  */
 export async function handleDuplicateAction(params = {}) {
 	const { client_id: explicitClientId, kind, scope, position } = params;
-	const { getBlock } = select("core/block-editor");
-	const { insertBlocks } = dispatch("core/block-editor");
 
 	let targetClientId = explicitClientId;
 	let resolution = null;
@@ -689,6 +814,8 @@ export async function handleDuplicateAction(params = {}) {
 		resolution = resolveTarget({ kind, scope, position });
 		targetClientId = resolution.client_id;
 	}
+
+	const { getBlock } = select("core/block-editor");
 
 	const block = getBlock(targetClientId);
 	if (!block) {
@@ -726,6 +853,7 @@ export async function handleDuplicateAction(params = {}) {
 	}
 
 	const clone = cloneBlock(block);
+	const { insertBlocks } = dispatch("core/block-editor");
 	insertBlocks(clone, context.index + 1, context.parentClientId || undefined);
 
 	// Build a compact leaf summary so the follow-up tool call knows which
@@ -787,9 +915,9 @@ function summarizeNewSubtree(root) {
 /**
  * Insert a new block as a child of an existing parent at the given index.
  *
- * @param {string}      parentClientId The parent (container) block's client ID.
- * @param {string}      blockContent   WordPress block markup for the new child.
- * @param {number|null} index          0-based insert position; null/undefined = append.
+ * @param {string}      parentClientId        The parent (container) block's client ID.
+ * @param {string}      blockContent          WordPress block markup for the new child.
+ * @param {number|null} index                 0-based insert position; null/undefined = append.
  * @param {Object|null} intendedAttrsOverride Parsed navigation-link attrs from raw tool markup.
  * @return {Promise<Object>} Result of the insertion.
  */
@@ -800,7 +928,6 @@ export async function handleInsertInnerBlockAction(
 	intendedAttrsOverride = null
 ) {
 	const { getBlock } = select("core/block-editor");
-	const { insertBlocks } = dispatch("core/block-editor");
 
 	const parent = getBlock(parentClientId);
 	if (!parent) {
@@ -809,22 +936,23 @@ export async function handleInsertInnerBlockAction(
 
 	const intendedAttrsRaw =
 		intendedAttrsOverride || parseNavigationLinkAttrsFromMarkup(blockContent);
-	let intendedAttrs =
+	const intendedAttrs =
+		// eslint-disable-next-line eqeqeq -- intentional loose check: matches null and undefined
 		intendedAttrsRaw?.id != null
 			? await resolvePageNavigationAttrs(intendedAttrsRaw)
 			: intendedAttrsRaw;
 
+	// eslint-disable-next-line eqeqeq -- intentional loose check: matches null and undefined
 	if (intendedAttrs?.id != null) {
 		await assertNavigationPageExists(intendedAttrs);
 	}
 
 	let parsed = null;
+	// eslint-disable-next-line eqeqeq -- intentional loose check: matches null and undefined
 	if (intendedAttrs?.id != null) {
 		parsed = buildParsedNavigationLinkFromAttrs(intendedAttrs);
 		if (!parsed?.length) {
-			throw new Error(
-				`Failed to build navigation link for page id ${intendedAttrs.id}`
-			);
+			throw new Error(`Failed to build navigation link for page id ${intendedAttrs.id}`);
 		}
 	} else {
 		parsed = normalizeParsedNavigationLinks(parse(blockContent));
@@ -898,11 +1026,7 @@ export async function handleInsertInnerBlockAction(
 		if (isRefNavigation(liveParent)) {
 			const blocksToInsert = parsed;
 			await modifyNavigationEntity(liveParent, (blocks) => {
-				return [
-					...blocks.slice(0, insertAt),
-					...blocksToInsert,
-					...blocks.slice(insertAt),
-				];
+				return [...blocks.slice(0, insertAt), ...blocksToInsert, ...blocks.slice(insertAt)];
 			});
 		} else {
 			const parentPath = getBlockPathInNavigation(parentNav.clientId, parentClientId);
@@ -930,17 +1054,56 @@ export async function handleInsertInnerBlockAction(
 		throw new Error("No valid blocks to insert");
 	}
 
+	// core/columns takes only core/column, so an image aimed at the wrapper is
+	// dropped while the dispatch still "succeeds".
+	assertBlocksInsertableInto(
+		parentClientId,
+		blockInstances,
+		`Target the container that actually accepts it — for a core/columns row that means an ` +
+			`individual core/column, not the columns wrapper. Insert a new core/column (with the ` +
+			`content inside it) if the row should grow, or pass the clientId of an existing column.`
+	);
+
 	const childCount = parent.innerBlocks?.length || 0;
 	const insertIndex =
 		typeof index === "number" && index >= 0 ? Math.min(index, childCount) : childCount;
 
-	insertBlocks(blockInstances, insertIndex, parentClientId);
+	const { insertBlocks } = dispatch("core/block-editor");
+	await insertBlocks(blockInstances, insertIndex, parentClientId);
 
+	// Report what landed, not what we built.
+	const children = getBlock(parentClientId)?.innerBlocks || [];
+	const liveChildIds = new Set(children.map((b) => b.clientId));
+	const landed = blockInstances.map((b) => b.clientId).filter((id) => liveChildIds.has(id));
+	if (landed.length === 0) {
+		throw new Error(
+			`The editor did not accept the block into ${parent.name}; nothing was added. Do not ` +
+				`report this as done — try a different container.`
+		);
+	}
+
+	// A new column inherits no width, and an already-full row leaves it none.
+	if (parent.name === "core/columns") {
+		rebalanceColumnWidths(parentClientId);
+	}
+
+	// "next to" means a sibling column in a columns row but a stacked child in a
+	// single column; the summary the user reads should say which one happened.
+	const siblingCount = children.length || landed.length;
+	const stacked = parent.name === "core/column" || parent.name === "core/group";
 	return {
 		parentClientId,
 		blockName: parent.name,
-		insertedClientIds: blockInstances.map((b) => b.clientId),
+		insertedClientIds: landed,
 		insertedAtIndex: insertIndex,
-		message: `Inserted ${blockInstances.length} block(s) into ${parent.name}`,
+		placement: stacked ? "stacked-below" : "sibling",
+		message:
+			`Inserted ${landed.length} block(s) into ${parent.name} at position ` +
+			`${insertIndex + 1} of ${siblingCount}.` +
+			(stacked
+				? ` ${parent.name} stacks its children vertically, so this sits BELOW the existing` +
+					` content, not beside it. If the user asked for side-by-side, say where it actually` +
+					` went, or move it into its own column.`
+				: ""),
 	};
 }

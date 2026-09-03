@@ -3,10 +3,37 @@
  *
  * Plain async function (no React hooks). The orchestrator wraps it in useCallback.
  */
+
+/**
+ * Text safe to display from a partially-streamed structured response.
+ *
+ * Returns the `message` field only, never the envelope around it.
+ *
+ * @param {string} text Accumulated assistant content so far.
+ * @return {string|null} Message text, or null when there is nothing safe to show yet.
+ */
+function partialJsonMessage(text) {
+	const trimmed = text.trimStart();
+	if (!trimmed) {
+		return null;
+	}
+	// JSON contract, possibly fenced. Show the message once it has content.
+	if (trimmed.startsWith("{") || trimmed.startsWith("`")) {
+		const match = trimmed.match(/"message"\s*:\s*"((?:[^"\\]|\\.)*)/);
+		if (!match) {
+			return null;
+		}
+		const value = match[1].replace(/\\"/g, '"').replace(/\\n/g, "\n");
+		return value ? sanitizeUserFacingMessage(value) : null;
+	}
+	// Prose: stream as written.
+	return text;
+}
 import { createAbortError } from "../../utils/abortControl";
 import { safeParseJSON } from "../../utils/jsonUtils";
 import logger from "../../utils/logger";
-import { getAssistantDisplayMessage } from "./assistantResponse";
+import { getAssistantDisplayMessage, sanitizeUserFacingMessage } from "./assistantResponse";
+import { MAX_COMPLETION_TOKENS } from "./constants";
 import { resetStreamingMessage, upsertStreamingMessage } from "./streamMessageHelpers";
 
 /**
@@ -52,7 +79,7 @@ export async function streamCompletion(msgs, tools, options = {}, deps) {
 			stream: true,
 			stream_options: { include_usage: true },
 			temperature: options.temperature ?? 0.7,
-			max_completion_tokens: options.max_completion_tokens,
+			max_completion_tokens: options.max_completion_tokens ?? MAX_COMPLETION_TOKENS,
 		},
 		{ signal }
 	);
@@ -116,7 +143,18 @@ export async function streamCompletion(msgs, tools, options = {}, deps) {
 			fullMessage += delta.content;
 
 			// Silent mode: accumulate content but don't stream to UI
-			if (options.silent || options.jsonMessageDisplay) {
+			if (options.silent) {
+				continue;
+			}
+
+			// The message field streams before the tool calls. Render it as it
+			// arrives; the arguments that follow can be huge.
+			if (options.jsonMessageDisplay) {
+				const partial = partialJsonMessage(fullMessage);
+				if (partial !== null && partial !== displayMessage) {
+					displayMessage = partial;
+					scheduleStreamUpsert();
+				}
 				continue;
 			}
 

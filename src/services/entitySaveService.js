@@ -1,5 +1,5 @@
 /**
- * Persist dirty template-part and navigation-menu entity edits.
+ * Persist dirty template, template-part and navigation-menu entity edits.
  *
  * wp_navigation menus edited entity-first (navigationEditor.js) must be saved
  * explicitly — savePost() does not persist them, and dirty detection can miss
@@ -7,12 +7,12 @@
  */
 import { select } from "@wordpress/data";
 
-import {
-	clearTouchedNavigationEntityIds,
-	getTouchedNavigationEntityIds,
-} from "./navigationEditor";
+import { clearTouchedNavigationEntityIds, getTouchedNavigationEntityIds } from "./navigationEditor";
 
-const EDITABLE_ENTITY_TYPES = ["wp_template_part", "wp_navigation"];
+// wp_template is here so template-scope edits actually reach the database.
+// editEntityRecord only makes a local edit: without this the block disappears
+// from the editor and the front end keeps rendering it.
+const EDITABLE_ENTITY_TYPES = ["wp_template", "wp_template_part", "wp_navigation"];
 
 /**
  * Save all pending template-part and navigation entity edits.

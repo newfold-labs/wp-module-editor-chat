@@ -1,16 +1,10 @@
 import { __ } from "@wordpress/i18n";
 
 import { validateBlockMarkup } from "../../utils/blockValidator";
-import { resolveAlt } from "../../utils/imageAlt";
+import { findImagePlaceholders } from "../../utils/imagePlaceholders";
 import { handleRewriteAction } from "../blockActions";
-import { callImageAbility, getBlockImageUrl } from "../imageAbility";
-import {
-	appendGeneratedImageUrl,
-	deduplicateImages,
-	getGeneratedImages,
-	substituteImagePlaceholder,
-} from "../imageCache";
-import logger from "../../utils/logger";
+import { getBlockImageUrl, resolveMarkupImages } from "../imageAbility";
+import { deduplicateImages, getGeneratedImages, unresolvedPlaceholderResult } from "../imageCache";
 
 /**
  * Count all inner blocks recursively.
@@ -26,111 +20,23 @@ function countInnerBlocks(block) {
 }
 
 export async function handleEditBlock(toolCall, args, ctx) {
-	// ── Image placeholder resolution (mirrors add-section) ──
-	const imgPlaceholders = args.block_content.match(/__IMG_\d+__/g) || [];
-	const uniquePlaceholders = [...new Set(imgPlaceholders)];
+	// If this block already has an image, the first placeholder is almost always
+	// that same image being rewritten — route it through blu-edit-image so we
+	// modify the existing photo instead of generating a brand-new one.
+	const originalImageBlock = wp.data.select("core/block-editor").getBlock(args.client_id);
+	const images = await resolveMarkupImages(args.block_content, args, ctx, {
+		sourceUrlForFirst: getBlockImageUrl(originalImageBlock),
+	});
+	args.block_content = images.markup;
 
-	if (uniquePlaceholders.length > 0) {
-		if (args.image_prompts && Array.isArray(args.image_prompts) && args.image_prompts.length > 0) {
-			const promptCount = Math.min(args.image_prompts.length, uniquePlaceholders.length);
-
-			// If this block already has an image, the first placeholder is almost
-			// always that same image being rewritten — route it through
-			// blu-edit-image (via callImageAbility) so we modify the existing
-			// photo instead of discarding it and generating a brand-new one.
-			// Mirrors the redirect in toolDispatcher's blu-generate-image branch.
-			const { select: wpSelectForImage } = wp.data;
-			const originalImageBlock = wpSelectForImage("core/block-editor").getBlock(args.client_id);
-			const existingImageUrl = getBlockImageUrl(originalImageBlock);
-
-			const images = [];
-			for (let i = 0; i < promptCount; i++) {
-				const prompt = args.image_prompts[i];
-				const {
-					prompt: promptText,
-					alt: promptAlt,
-					...restPromptOpts
-				} = typeof prompt === "string" ? { prompt } : { prompt: prompt.prompt, ...prompt };
-				const sourceUrl = i === 0 ? existingImageUrl : null;
-
-				await ctx.updateProgress(
-					(sourceUrl
-						? __("Editing image…", "wp-module-editor-chat")
-						: __("Generating image…", "wp-module-editor-chat")) + ` (${i + 1}/${promptCount})`,
-					500
-				);
-				logger.log(
-					`[ToolExecutor:REST] edit-block: ${sourceUrl ? "editing" : "generating"} image ${i + 1}/${promptCount}`,
-					{ prompt: promptText, sourceUrl, ...restPromptOpts }
-				);
-				try {
-					const mcpResult = await callImageAbility(ctx.mcpClient, {
-						prompt: promptText,
-						sourceUrl,
-						...restPromptOpts,
-					});
-					logger.log(`[ToolExecutor:REST] edit-block: image ${i + 1} MCP result`, mcpResult);
-					if (!mcpResult.isError && mcpResult.content?.[0]?.text) {
-						const parsed = JSON.parse(mcpResult.content[0].text);
-						const url = parsed?.message?.url || parsed?.url;
-						if (url) {
-							const alt = resolveAlt(promptAlt, promptText);
-							images.push({ url, alt });
-							appendGeneratedImageUrl(url, alt);
-						} else {
-							console.warn(
-								`[ToolExecutor:REST] edit-block: image ${i + 1} result had no URL`,
-								parsed
-							);
-						}
-					} else {
-						console.warn(
-							`[ToolExecutor:REST] edit-block: image ${i + 1} MCP result flagged as error or empty`,
-							mcpResult
-						);
-					}
-				} catch (imgErr) {
-					console.error(`[ToolExecutor:REST] edit-block: image ${i + 1} generation threw`, imgErr);
-				}
-			}
-
-			for (let i = 0; i < images.length; i++) {
-				args.block_content = substituteImagePlaceholder(
-					args.block_content,
-					i + 1,
-					images[i].url,
-					images[i].alt
-				);
-			}
-		} else if (args.image_urls && Array.isArray(args.image_urls) && args.image_urls.length > 0) {
-			for (let i = 0; i < args.image_urls.length; i++) {
-				args.block_content = substituteImagePlaceholder(
-					args.block_content,
-					i + 1,
-					args.image_urls[i]
-				);
-			}
-		} else if (getGeneratedImages().length > 0) {
-			const cached = getGeneratedImages();
-			for (let i = 0; i < Math.min(cached.length, uniquePlaceholders.length); i++) {
-				args.block_content = substituteImagePlaceholder(
-					args.block_content,
-					i + 1,
-					cached[i].url,
-					cached[i].alt
-				);
-			}
-		}
-	}
-
-	// If any placeholder is still present after the image step, log loudly —
-	// the block would otherwise render a broken <img src="__IMG_N__">.
-	const leftover = args.block_content.match(/__IMG_\d+__/g);
-	if (leftover && leftover.length > 0) {
+	// Fail rather than write a placeholder through as a broken image.
+	const unresolved = unresolvedPlaceholderResult(toolCall.id, args.block_content, images);
+	if (unresolved) {
 		console.warn(
-			"[ToolExecutor:REST] edit-block: placeholders left unresolved — block will render with broken image URLs",
-			leftover
+			"[ToolExecutor:REST] edit-block: placeholders left unresolved: edit rejected",
+			findImagePlaceholders(args.block_content)
 		);
+		return unresolved;
 	}
 
 	await ctx.updateProgress(__("Validating block markup…", "wp-module-editor-chat"), 300);
@@ -151,10 +57,11 @@ export async function handleEditBlock(toolCall, args, ctx) {
 	// we let the edit through — the validation + safe merge path below
 	// catches broken markup and lost inner blocks. Only block truly
 	// massive rewrites that are almost certainly truncated AI output.
+	// Skipped for core/post-content: a whole-page redesign is legitimately large.
 	{
 		const { select: wpSel } = wp.data;
 		const targetBlock = wpSel("core/block-editor").getBlock(args.client_id);
-		if (targetBlock) {
+		if (targetBlock && targetBlock.name !== "core/post-content") {
 			const innerCount = countInnerBlocks(targetBlock);
 			if (innerCount >= 40 && args.block_content.length > 12000) {
 				return {
@@ -191,7 +98,14 @@ export async function handleEditBlock(toolCall, args, ctx) {
 	const { select: wpSelect } = wp.data;
 	const originalBlock = wpSelect("core/block-editor").getBlock(args.client_id);
 
-	if (originalBlock && originalBlock.innerBlocks.length > 0 && validation.blocks?.length >= 1) {
+	// Skipped for core/post-content: a page body legitimately has many top-level
+	// blocks, which these guards would read as inner-block loss.
+	if (
+		originalBlock &&
+		originalBlock.name !== "core/post-content" &&
+		originalBlock.innerBlocks.length > 0 &&
+		validation.blocks?.length >= 1
+	) {
 		const newTopBlock = validation.blocks[0];
 
 		// ── Wrapper/child mismatch recovery ──

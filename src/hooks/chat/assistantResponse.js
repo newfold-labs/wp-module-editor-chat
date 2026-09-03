@@ -6,6 +6,7 @@
  *   {"message":"…","need_blocks_markup":[…]} — request block markup (no tools)
  */
 import { select } from "@wordpress/data";
+import { __ } from "@wordpress/i18n";
 
 import { safeParseJSON } from "../../utils/jsonUtils";
 import { getSelectedBlocks } from "../../utils/editorHelpers";
@@ -49,6 +50,12 @@ export function parseAssistantResponse(content) {
 	};
 
 	const trimmed = content.trim();
+
+	// Prose, not the JSON contract. Parsing it only adds console noise.
+	if (!trimmed.includes('"message"') && !trimmed.includes("need_blocks_markup")) {
+		return { message: trimmed };
+	}
+
 	const direct = safeParseJSON(trimmed);
 	const fromDirect = normalize(direct.value);
 
@@ -69,7 +76,14 @@ export function parseAssistantResponse(content) {
 	}
 
 	const loose = extractMessageLoosely(trimmed);
-	return loose ? { message: loose } : null;
+	const looseIds = extractNeedBlocksLoosely(trimmed);
+	if (loose || looseIds) {
+		return {
+			message: loose || __("Reading the current page content…", "wp-module-editor-chat"),
+			...(looseIds ? { need_blocks_markup: looseIds } : {}),
+		};
+	}
+	return null;
 }
 
 /**
@@ -81,11 +95,33 @@ export function parseAssistantResponse(content) {
  * @return {string|null} Message text, or null if not recoverable
  */
 function extractMessageLoosely(text) {
+	const unescape = (s) => s.replace(/\\"/g, '"').replace(/\\n/g, "\n").trim() || null;
+	// A message still carrying a contract key is garbage, not prose.
+	const clean = (s) => (s && !s.includes("need_blocks_markup") ? s : null);
+
 	const match = text.match(/"message"\s*:\s*"([\s\S]*)"\s*(?:,\s*"need_blocks_markup"|\}|$)/);
+	if (match) {
+		return clean(unescape(match[1]));
+	}
+
+	// Cut off mid-message: no closing quote for the pattern above to anchor on.
+	const openEnded = text.match(/"message"\s*:\s*"([\s\S]*)$/);
+	return openEnded ? clean(unescape(openEnded[1])) : null;
+}
+
+/**
+ * Recover need_blocks_markup ids from structurally broken JSON.
+ *
+ * @param {string} text Trimmed assistant output
+ * @return {string[]|null} Client ids, or null if none found
+ */
+function extractNeedBlocksLoosely(text) {
+	const match = text.match(/"need_blocks_markup"\s*:\s*\[([^\]]*)\]/);
 	if (!match) {
 		return null;
 	}
-	return match[1].replace(/\\"/g, '"').replace(/\\n/g, "\n").trim() || null;
+	const ids = match[1].match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi);
+	return ids?.length ? ids.slice(0, MAX_MARKUP_CLIENT_IDS) : null;
 }
 
 /**

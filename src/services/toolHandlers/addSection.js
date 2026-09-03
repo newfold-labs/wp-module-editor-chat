@@ -1,16 +1,39 @@
 import { __ } from "@wordpress/i18n";
 
 import { validateBlockMarkup } from "../../utils/blockValidator";
+import { findImagePlaceholders } from "../../utils/imagePlaceholders";
 import { handleAddAction } from "../blockActions";
-import { resolveMarkupImagePlaceholders } from "../resolveMarkupImages";
+import { resolveMarkupImages } from "../imageAbility";
+import { deduplicateImages, getGeneratedImages, unresolvedPlaceholderResult } from "../imageCache";
 
 export async function handleAddSection(toolCall, args, ctx) {
-	args.block_content = await resolveMarkupImagePlaceholders(args.block_content, args, ctx);
+	const images = await resolveMarkupImages(args.block_content, args, ctx);
+	args.block_content = images.markup;
+
+	// Never insert a section carrying an unresolved placeholder.
+	const unresolved = unresolvedPlaceholderResult(toolCall.id, args.block_content, images);
+	if (unresolved) {
+		console.warn(
+			"[ToolExecutor:REST] add-section: placeholders left unresolved: insert rejected",
+			findImagePlaceholders(args.block_content)
+		);
+		return unresolved;
+	}
 
 	await ctx.updateProgress(__("Validating block markup…", "wp-module-editor-chat"), 300);
 
 	// Strip escaped quotes the LLM may copy from JSON-encoded tool results
 	args.block_content = args.block_content.replace(/\\"/g, '"');
+
+	// ── Auto-deduplicate images ──
+	// If the AI used the same image URL more than once, replace duplicates
+	// with unused generated images from this conversation turn.
+	if (getGeneratedImages().length > 0) {
+		const dedup = deduplicateImages(args.block_content, getGeneratedImages());
+		if (dedup.replacements.length > 0) {
+			args.block_content = dedup.markup;
+		}
+	}
 
 	const validation = validateBlockMarkup(args.block_content);
 	if (!validation.valid) {

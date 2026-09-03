@@ -6,6 +6,7 @@ import { parse, serialize, createBlock } from "@wordpress/blocks";
 /**
  * Internal dependencies
  */
+import { findImagePlaceholders } from "./imagePlaceholders";
 import logger from "./logger";
 
 /**
@@ -131,14 +132,136 @@ function checkTagBalance(markup) {
  * @param {string} blockContent The block markup string to validate
  * @return {Object} { valid: boolean, blocks?: Array, correctedContent?: string, error?: string }
  */
-export const validateBlockMarkup = (blockContent) => {
-	if (!blockContent || typeof blockContent !== "string") {
+/**
+ * Give core/list items their block delimiters.
+ *
+ * core/list keeps its items as core/list-item inner blocks, so bare <li>
+ * children are discarded at parse. Only applies when no delimiters are present.
+ *
+ * @param {string} markup Raw block markup from the model.
+ * @return {string} Markup with every <li> wrapped in core/list-item delimiters.
+ */
+function normalizeListItems(markup) {
+	if (markup.includes("<!-- wp:list-item")) {
+		return markup;
+	}
+	if (!markup.includes("<!-- wp:list") || !/<li[\s>]/i.test(markup)) {
+		return markup;
+	}
+	const normalized = markup.replace(
+		/<li(\s[^>]*)?>([\s\S]*?)<\/li>/gi,
+		(_match, attrs, inner) =>
+			`<!-- wp:list-item -->\n<li${attrs || ""}>${inner}</li>\n<!-- /wp:list-item -->`
+	);
+	logger.log("[blockValidator] Wrapped bare <li> items in core/list-item delimiters");
+	return normalized;
+}
+
+/**
+ * Rewrite `wp:row` as the group block it actually is.
+ *
+ * There is no core/row block type; "Row" is a core/group variation with a flex
+ * layout, so `<!-- wp:row -->` parses as an unregistered block.
+ *
+ * @param {string} markup Raw block markup from the model.
+ * @return {string} Markup with row blocks expressed as flex groups.
+ */
+function normalizeRowBlocks(markup) {
+	if (!markup.includes("<!-- wp:row")) {
+		return markup;
+	}
+	const normalized = markup
+		.replace(/<!-- wp:row(\s+(\{[\s\S]*?\}))?\s*-->/g, (_match, _g1, attrs) => {
+			let parsedAttrs = {};
+			if (attrs) {
+				try {
+					parsedAttrs = JSON.parse(attrs);
+				} catch {
+					// Unparseable attributes; a bare flex group still beats an
+					// unregistered block.
+					parsedAttrs = {};
+				}
+			}
+			if (!parsedAttrs.layout || parsedAttrs.layout.type !== "flex") {
+				parsedAttrs.layout = { ...(parsedAttrs.layout || {}), type: "flex" };
+			}
+			return `<!-- wp:group ${JSON.stringify(parsedAttrs)} -->`;
+		})
+		.replace(/<!-- \/wp:row -->/g, "<!-- /wp:group -->")
+		.replace(/\bwp-block-row\b/g, "wp-block-group");
+	logger.log("[blockValidator] Rewrote wp:row as a flex core/group");
+	return normalized;
+}
+
+/**
+ * Move a cover block's background image into its attributes.
+ *
+ * core/cover keeps the background in `url` and regenerates the <img> from it,
+ * so an image written only into the HTML is discarded.
+ *
+ * @param {string} markup Raw block markup from the model.
+ * @return {string} Markup with cover background URLs present in attributes.
+ */
+function normalizeCoverBackgrounds(markup) {
+	if (!markup.includes("<!-- wp:cover")) {
+		return markup;
+	}
+	let changed = false;
+	const normalized = markup.replace(
+		/<!-- wp:cover(\s+\{[\s\S]*?\})?\s*-->([\s\S]*?)(?=<!-- wp:cover|<!-- \/wp:cover -->)/g,
+		(match, attrs, body) => {
+			let parsedAttrs = {};
+			if (attrs) {
+				try {
+					parsedAttrs = JSON.parse(attrs.trim());
+				} catch {
+					return match;
+				}
+			}
+			if (parsedAttrs.url || parsedAttrs.useFeaturedImage) {
+				return match;
+			}
+			const img = body.match(
+				/<img[^>]*class="[^"]*wp-block-cover__image-background[^"]*"[^>]*src="([^"]+)"/
+			);
+			const src = img?.[1];
+			if (!src || src.includes("__IMG_")) {
+				return match;
+			}
+			changed = true;
+			return `<!-- wp:cover ${JSON.stringify({ ...parsedAttrs, url: src })} -->${body}`;
+		}
+	);
+	if (changed) {
+		logger.log("[blockValidator] Lifted cover background image into the url attribute");
+	}
+	return normalized;
+}
+
+export const validateBlockMarkup = (rawBlockContent) => {
+	if (!rawBlockContent || typeof rawBlockContent !== "string") {
 		return { valid: false, error: "block_content is empty or not a string" };
 	}
+
+	// Repair known model mistakes first; after parse() the content is gone.
+	const blockContent = normalizeCoverBackgrounds(
+		normalizeRowBlocks(normalizeListItems(rawBlockContent))
+	);
 
 	// Must contain block comments
 	if (!blockContent.includes("<!-- wp:")) {
 		return { valid: false, error: "Missing block comments (<!-- wp:... -->)" };
+	}
+
+	// Backstop for write paths with no image step of their own (blu-add-page and
+	// friends). Handlers that can generate images check earlier and return a more
+	// specific error; this only catches what they miss.
+	const unresolvedImages = findImagePlaceholders(blockContent);
+	if (unresolvedImages.length > 0) {
+		return {
+			valid: false,
+			error: `Unresolved image placeholders: ${unresolvedImages.join(", ")}. Nothing was changed. This tool cannot generate images — use blu/add-section or blu/edit-block with one image_prompts entry per placeholder, or write a real image URL. Never write the placeholder into the page.`,
+		};
 	}
 
 	// ── Pre-check: HTML tag balance ──
@@ -146,7 +269,6 @@ export const validateBlockMarkup = (blockContent) => {
 	// silently drops inner blocks.  This gives the AI a specific, fixable error.
 	const balance = checkTagBalance(blockContent);
 	if (!balance.balanced) {
-		// eslint-disable-next-line no-console
 		console.warn("[blockValidator] Tag balance check failed:", balance.details);
 		return {
 			valid: false,
@@ -206,16 +328,16 @@ export const validateBlockMarkup = (blockContent) => {
 
 	// Self-closing navigation-link: preserve JSON attrs — createBlock()+serialize()
 	// can drop them when the block type is not fully registered in this bundle.
-	const navLinkBlock = validBlocks.find(
-		(b) => (b.name || b.blockName) === "core/navigation-link"
-	);
+	const navLinkBlock = validBlocks.find((b) => (b.name || b.blockName) === "core/navigation-link");
 	if (
 		validBlocks.length === 1 &&
 		navLinkBlock &&
 		!blockContent.includes("</") &&
 		(navLinkBlock.attributes?.label ||
 			navLinkBlock.attrs?.label ||
+			// eslint-disable-next-line eqeqeq -- intentional loose check: matches null and undefined
 			navLinkBlock.attributes?.id != null ||
+			// eslint-disable-next-line eqeqeq -- intentional loose check: matches null and undefined
 			navLinkBlock.attrs?.id != null ||
 			navLinkBlock.attributes?.url ||
 			navLinkBlock.attrs?.url)
@@ -270,7 +392,7 @@ export const validateBlockMarkup = (blockContent) => {
 		const postNormCount = deepBlockCount(reParsed);
 		if (preNormCount > 0 && postNormCount < preNormCount) {
 			const lost = preNormCount - postNormCount;
-			// eslint-disable-next-line no-console
+
 			console.warn(
 				`[blockValidator] Normalization lost ${lost} of ${preNormCount} blocks (${postNormCount} remain)`
 			);

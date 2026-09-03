@@ -19,6 +19,11 @@ export const MAX_READ_ONLY_PASSES = 4;
 export const MAX_READ_RESULT_CHARS = 8000;
 export const MAX_HISTORY_MESSAGES = 30;
 export const MAX_HISTORY_CHARS = 16000;
+// Output-token ceiling. Without one the upstream default (4096) truncates
+// tool_use JSON mid-argument on large sections.
+export const MAX_COMPLETION_TOKENS = 16000;
+// Raised ceiling for the retry after a cut-off.
+export const MAX_COMPLETION_TOKENS_RETRY = 32000;
 
 export const CHAT_STATUS = {
 	IDLE: "idle",
