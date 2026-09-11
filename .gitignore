@@ -12,3 +12,5 @@ TODO.txt
 node_modules
 .env.testing
 vendor
+!/js/vendor/
+!/js/vendor/**

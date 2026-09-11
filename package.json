@@ -23,9 +23,11 @@
 		"format": "wp-scripts format ./src",
 		"start": "concurrently \"wp-scripts start ./src/chat-editor.js\"",
 		"lint:js": "wp-scripts lint-js ./src",
-		"lint:js:fix": "wp-scripts lint-js ./src --fix"
+		"lint:js:fix": "wp-scripts lint-js ./src --fix",
+		"vendor": "bash bin/vendor-webmcp-polyfill.sh"
 	},
 	"devDependencies": {
+		"@mcp-b/webmcp-polyfill": "^4.0.0",
 		"@wordpress/eslint-plugin": "^25.7.0",
 		"@wordpress/prettier-config": "^4.54.0",
 		"@wordpress/scripts": "^34.2.0",
