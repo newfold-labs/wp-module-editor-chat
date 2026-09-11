@@ -48,5 +48,6 @@ class Application {
 
 		$initialized = true;
 		new ChatEditor();
+		new LocalAbilities();
 	}
 }
