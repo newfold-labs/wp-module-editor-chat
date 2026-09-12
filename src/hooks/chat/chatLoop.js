@@ -23,6 +23,7 @@ import {
 import {
 	ASSISTANT_JSON_FORMAT,
 	EXECUTE_NUDGE,
+	CREATE_NUDGE,
 	SUMMARIZE_NUDGE,
 	PRESENT_PALETTE_OPTIONS_NUDGE,
 	buildCreationSummarizeNudge,
@@ -222,6 +223,7 @@ export async function runChatLoop(userMessage, deps) {
 		"[EditorChat] User intent:",
 		intent.task,
 		intent.content_type,
+		intent.layout,
 		intent.menu_edit,
 		intent.steps
 	);
@@ -273,7 +275,7 @@ export async function runChatLoop(userMessage, deps) {
 			nudge = PRESENT_PALETTE_OPTIONS_NUDGE;
 			paletteOptionsJustGenerated = false;
 		} else {
-			nudge = getIntentNudge(intent, EXECUTE_NUDGE, ASSISTANT_JSON_FORMAT);
+			nudge = getIntentNudge(intent, EXECUTE_NUDGE, ASSISTANT_JSON_FORMAT, CREATE_NUDGE);
 		}
 		toolsJustExecuted = false;
 
@@ -538,6 +540,7 @@ export async function runChatLoop(userMessage, deps) {
 				? await executeToolCallsForREST(executableCalls, {
 						...buildToolCtx(),
 						abortSignal: turnSignal,
+						intent,
 						// Handlers that widen scope (e.g. editing the template rather
 						// than the page) need the user's own wording to justify it.
 						userMessage: intentMessage,
