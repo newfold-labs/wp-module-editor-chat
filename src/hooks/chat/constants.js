@@ -97,4 +97,14 @@ export const READ_ONLY_TOOLS = new Set([
 	"blu-get-site-info",
 	"blu-get-general-settings",
 	"blu-get-current-user",
+	// Local (in-browser) editor abilities — all read-only (readonly: true in
+	// their meta.annotations, see js/abilities/abilities.js). Without these
+	// here, calling one more than once in a conversation (e.g. checking the
+	// selection again after the user clicks a different block) would trip
+	// the retry-limit tracker as if it were a stuck mistake.
+	"editor_get-editor-tree",
+	"editor_find-editor-blocks",
+	"editor_get-block-location",
+	"editor_get-editor-selection",
+	"editor_can-insert-block",
 ]);
