@@ -107,7 +107,10 @@ final class LocalAbilities {
 	public static function get_enabled_ability_names() {
 		return (array) \apply_filters(
 			'nfd_editor_chat_local_ability_names',
-			array( 'editor/get-editor-tree' )
+			array(
+				'editor/get-editor-tree',
+				'editor/find-editor-blocks',
+			)
 		);
 	}
 }
