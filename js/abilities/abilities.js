@@ -313,6 +313,159 @@ function assertNotSpecialEntityBlock(store, clientId) {
 }
 
 /**
+ * @return {{ createBlock: Function, getBlockType: Function }} The WordPress blocks API.
+ */
+function getBlocksApi() {
+	const { blocks } = window.wp || {};
+	if (!blocks?.createBlock || !blocks?.getBlockType) {
+		throw new Error("WordPress blocks API is not available.");
+	}
+	return blocks;
+}
+
+/**
+ * @param {unknown} value
+ * @return {boolean} Whether the value is a plain object.
+ */
+function isPlainObject(value) {
+	return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
+/**
+ * @param {unknown} value
+ * @return {string} A description of the value's type.
+ */
+function describeValue(value) {
+	if (value === null) {
+		return "null";
+	}
+	if (Array.isArray(value)) {
+		return "an array";
+	}
+	return `a ${typeof value}`;
+}
+
+const ATTRIBUTE_TYPE_CHECKS = {
+	string: (value) => typeof value === "string",
+	"rich-text": (value) => typeof value === "string",
+	number: (value) => typeof value === "number",
+	integer: (value) => Number.isInteger(value),
+	boolean: (value) => typeof value === "boolean",
+	array: (value) => Array.isArray(value),
+	object: (value) => isPlainObject(value),
+	null: (value) => value === null,
+};
+
+/**
+ * @param {string|string[]} type
+ * @param {unknown}         value
+ * @return {boolean} Whether the value matches the attribute type.
+ */
+function matchesAttributeType(type, value) {
+	const types = Array.isArray(type) ? type : [type];
+	return types.some((name) => {
+		const check = ATTRIBUTE_TYPE_CHECKS[name];
+		// An unfamiliar type keyword is not a reason to reject a value.
+		return check ? check(value) : true;
+	});
+}
+
+/**
+ * Complete one item of a query-sourced attribute against its sub-schema.
+ *
+ * Defaults declared inside a `query` are only applied while parsing saved
+ * markup, so attributes set programmatically arrive incomplete. A table cell
+ * without its `tag` default renders as an undefined element and breaks the
+ * block, so the defaults are filled in here.
+ *
+ * @param {unknown} item
+ * @param {Object}  query Attribute sub-schema keyed by field.
+ * @param {string}  path  Field path, used in error messages.
+ * @return {Object} The normalized query item.
+ */
+function normalizeQueryItem(item, query, path) {
+	if (!isPlainObject(item)) {
+		throw new Error(`${path} must be an object, received ${describeValue(item)}.`);
+	}
+
+	const unknown = Object.keys(item).filter((key) => !(key in query));
+	if (unknown.length) {
+		throw new Error(
+			`${path} has no field(s): ${unknown.join(", ")}. Supported fields: ${Object.keys(query).join(", ")}.`
+		);
+	}
+
+	const normalized = {};
+	for (const [key, schema] of Object.entries(query)) {
+		if (item[key] === undefined) {
+			if (schema?.default !== undefined) {
+				normalized[key] = schema.default;
+			}
+			continue;
+		}
+		normalized[key] = normalizeAttributeValue(item[key], schema, `${path}.${key}`);
+	}
+	return normalized;
+}
+
+/**
+ * Validate one attribute value against its schema and complete nested rows.
+ *
+ * @param {unknown} value
+ * @param {Object}  [schema]
+ * @param {string}  path
+ * @return {unknown} The normalized attribute value.
+ */
+function normalizeAttributeValue(value, schema, path) {
+	if (schema?.type && !matchesAttributeType(schema.type, value)) {
+		const expected = Array.isArray(schema.type) ? schema.type.join(" or ") : schema.type;
+		throw new Error(`${path} must be of type ${expected}, received ${describeValue(value)}.`);
+	}
+
+	if (schema?.query && Array.isArray(value)) {
+		return value.map((item, index) => normalizeQueryItem(item, schema.query, `${path}[${index}]`));
+	}
+
+	return value;
+}
+
+/**
+ * Validate attribute keys and values against what the block type declares.
+ *
+ * @param {string} blockName
+ * @param {Object} attributes
+ * @return {Object} The normalized attributes.
+ */
+function normalizeAttributes(blockName, attributes) {
+	const { getBlockType } = getBlocksApi();
+
+	if (!isPlainObject(attributes)) {
+		throw new Error("attributes must be an object.");
+	}
+
+	// Unknown keys are stored but never serialized, so fail loudly with the
+	// list the block actually accepts.
+	const supported = getBlockType(blockName)?.attributes;
+	if (!supported) {
+		return { ...attributes };
+	}
+
+	const keys = Object.keys(attributes);
+	const unknown = keys.filter((key) => !(key in supported));
+	if (unknown.length) {
+		throw new Error(
+			`Block "${blockName}" has no attribute(s): ${unknown.join(", ")}. Supported attributes: ${Object.keys(supported).join(", ")}.`
+		);
+	}
+
+	const normalized = {};
+	for (const key of keys) {
+		normalized[key] = normalizeAttributeValue(attributes[key], supported[key], key);
+	}
+	return normalized;
+}
+
+/**
  * @param {string} slug
  * @param {Object} args
  */
@@ -887,6 +1040,78 @@ export function registerEditorAbilities() {
 		},
 	});
 	abilityNames.push("editor/remove-block");
+
+	ensureAbility({
+		name: "editor/update-block",
+		label: "Update Block",
+		description:
+			"Updates attributes on an existing block. Supplied attributes are merged into the current ones, and each value must match the shape the block type declares.",
+		category: "block-editor",
+		input_schema: {
+			type: "object",
+			properties: {
+				clientId: {
+					type: "string",
+					description: "Client ID of the block to update.",
+				},
+				attributes: {
+					type: "object",
+					description:
+						"Attributes to merge into the block. Omitted attributes keep their current values.",
+				},
+			},
+			required: ["clientId", "attributes"],
+			additionalProperties: false,
+		},
+		output_schema: {
+			type: "object",
+			properties: {
+				clientId: { type: "string" },
+				name: { type: "string" },
+				attributes: { type: "object" },
+				updatedAttributes: { type: "array" },
+			},
+			required: ["clientId", "name", "attributes"],
+		},
+		meta: {
+			annotations: {
+				readonly: false,
+				destructive: true,
+				idempotent: true,
+			},
+		},
+		callback: async (input = {}) => {
+			assertEditorReady();
+			const { select, dispatch } = getData();
+			const store = select(BLOCK_EDITOR_STORE);
+			const actions = dispatch(BLOCK_EDITOR_STORE);
+
+			const block = requireBlock(store, input.clientId);
+			assertNotSpecialEntityBlock(store, input.clientId);
+
+			if (!isPlainObject(input.attributes)) {
+				throw new Error("attributes must be an object.");
+			}
+
+			const keys = Object.keys(input.attributes);
+			if (!keys.length) {
+				throw new Error("attributes must contain at least one key.");
+			}
+
+			const attributes = normalizeAttributes(block.name, input.attributes);
+
+			await actions.updateBlockAttributes(input.clientId, attributes);
+
+			const updated = requireBlock(store, input.clientId);
+			return {
+				clientId: input.clientId,
+				name: updated.name,
+				attributes: updated.attributes ?? {},
+				updatedAttributes: keys,
+			};
+		},
+	});
+	abilityNames.push("editor/update-block");
 
 	return abilityNames;
 }

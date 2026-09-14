@@ -66,6 +66,7 @@ export const EDITOR_TOOLS = new Set([
 	"editor_can-insert-block",
 	"editor_move-block",
 	"editor_remove-block",
+	"editor_update-block",
 ]);
 
 /**
