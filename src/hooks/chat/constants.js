@@ -54,6 +54,16 @@ export const EDITOR_TOOLS = new Set([
 	"blu-list-abilities",
 	"blu-get-ability-schema",
 	"blu-call-ability",
+	// Local (in-browser, zero-network) editor abilities — see
+	// src/services/localToolRegistry.js and docs/local-abilities.md. Without
+	// these here, getToolsForIntent() strips them out for every intent except
+	// create_content/site_management, so the model never sees them for the
+	// ordinary edit_page/conversational passes these abilities are meant for.
+	"editor_get-editor-tree",
+	"editor_find-editor-blocks",
+	"editor_get-block-location",
+	"editor_get-editor-selection",
+	"editor_can-insert-block",
 ]);
 
 /**
