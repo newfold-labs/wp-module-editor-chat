@@ -8,6 +8,7 @@ import { useCallback, useEffect, useRef, useState } from "@wordpress/element";
 import OpenAI from "openai";
 
 import { mcpToolsToOpenAI } from "./conversationUtils";
+import { listLocalTools, mergeLocalAndMcpTools } from "../../services/localToolRegistry";
 import logger from "../../utils/logger";
 
 // Module-level MCP client (created once at import time)
@@ -84,7 +85,8 @@ const useSessionConfig = () => {
 				await mcpClient.connect();
 				await mcpClient.initialize();
 				const availableTools = await mcpClient.listTools();
-				setOpenaiTools(mcpToolsToOpenAI(availableTools));
+				const localTools = await listLocalTools();
+				setOpenaiTools(mcpToolsToOpenAI(mergeLocalAndMcpTools(localTools, availableTools)));
 				setMcpConnectionStatus("connected");
 			} catch (err) {
 				console.error("Failed to initialize MCP:", err);

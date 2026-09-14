@@ -24,6 +24,7 @@ import { resolveAlt } from "../utils/imageAlt";
 import { snapshotBlocks } from "../utils/editorContext";
 import { safeParseJSON } from "../utils/jsonUtils";
 import { callAbility, mcpResultIsError } from "./callAbility";
+import { isLocalToolName, runLocalTool } from "./localToolRegistry";
 import { handleContentCreation, CREATE_ABILITIES } from "./contentNavigation";
 import { findHeaderRefNavigationBlock, hydrateAllRefNavigationBlocks } from "./navigationEditor";
 import {
@@ -502,19 +503,46 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 	let globalStylesUndoData = null;
 	let hasBlockEdits = false;
 
-	// Separate client-side (blu-*) and server-side tools
+	// Separate local (editor_*), client-side (blu-*), and server-side tools.
+	// Local tools are this session's WebMCP-registered abilities (see
+	// src/services/localToolRegistry.js) — resolved with zero network cost
+	// when the client-side Abilities API is available; every other tool name
+	// keeps going through the existing client/server split unchanged.
+	const localToolCallList = [];
 	const clientToolCalls = [];
 	const serverToolCalls = [];
 	for (const tc of toolCalls) {
 		const name = tc.name || "";
-		if (name.startsWith("blu-")) {
+		if (isLocalToolName(name)) {
+			localToolCallList.push(tc);
+		} else if (name.startsWith("blu-")) {
 			clientToolCalls.push(tc);
 		} else {
 			serverToolCalls.push(tc);
 		}
 	}
 
-	// Execute server-side tools via MCP
+	// Execute local editor abilities (source: 'local') — no MCP round trip.
+	for (const tc of localToolCallList) {
+		if (ctx.abortSignal?.aborted) {
+			toolResults.push(cancelledResult(tc));
+			continue;
+		}
+
+		const args =
+			typeof tc.arguments === "string" ? safeParseJSON(tc.arguments).value : tc.arguments || {};
+		const { isError, text } = await runLocalTool(tc.name, args || {});
+		logger.log(`[ToolExecutor:REST] Executed local ability ${tc.name} (source: local)`);
+		toolResults.push({
+			tool_call_id: tc.id,
+			content: text,
+			isError,
+		});
+		completedToolsList.push({ ...tc, isError, source: "local" });
+		ctx.setExecutedTools((prev) => [...prev, { ...tc, isError, source: "local" }]);
+	}
+
+	// Execute server-side tools via MCP (source: 'mcp')
 	for (const tc of serverToolCalls) {
 		if (ctx.abortSignal?.aborted) {
 			toolResults.push(cancelledResult(tc));
@@ -530,18 +558,18 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 				content,
 				isError: false,
 			});
-			completedToolsList.push({ ...tc, isError: false });
-			ctx.setExecutedTools((prev) => [...prev, { ...tc, isError: false }]);
+			completedToolsList.push({ ...tc, isError: false, source: "mcp" });
+			ctx.setExecutedTools((prev) => [...prev, { ...tc, isError: false, source: "mcp" }]);
 		} catch (err) {
 			toolResults.push({
 				tool_call_id: tc.id,
 				content: JSON.stringify({ error: err.message }),
 				isError: true,
 			});
-			completedToolsList.push({ ...tc, isError: true, errorMessage: err.message });
+			completedToolsList.push({ ...tc, isError: true, errorMessage: err.message, source: "mcp" });
 			ctx.setExecutedTools((prev) => [
 				...prev,
-				{ ...tc, isError: true, errorMessage: err.message },
+				{ ...tc, isError: true, errorMessage: err.message, source: "mcp" },
 			]);
 		}
 	}

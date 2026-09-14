@@ -12,6 +12,7 @@ updated: 2025-03-18
 | [overview.md](overview.md) | What the module does and who maintains it. |
 | [getting-started.md](getting-started.md) | Prerequisites, install, and lint. |
 | [integration.md](integration.md) | How the module registers and how hosts use it. |
+| [local-abilities.md](local-abilities.md) | The local (in-browser) abilities layer and its hooks. |
 | [development.md](development.md) | Lint and workflow. |
 | [release.md](release.md) | Release process: use the Newfold Prepare Release workflow. |
 | [changelog.md](changelog.md) | Notable changes by release. |
