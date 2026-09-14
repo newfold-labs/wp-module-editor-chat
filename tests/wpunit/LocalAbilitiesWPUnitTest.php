@@ -41,7 +41,12 @@ class LocalAbilitiesWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	 */
 	public function test_get_enabled_ability_names_default() {
 		$this->assertSame(
-			array( 'editor/get-editor-tree', 'editor/find-editor-blocks', 'editor/get-block-location' ),
+			array(
+				'editor/get-editor-tree',
+				'editor/find-editor-blocks',
+				'editor/get-block-location',
+				'editor/get-editor-selection',
+			),
 			LocalAbilities::get_enabled_ability_names()
 		);
 	}
@@ -128,7 +133,12 @@ class LocalAbilitiesWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 
 		$this->assertArrayHasKey( 'abilityNames', $result );
 		$this->assertSame(
-			array( 'editor/get-editor-tree', 'editor/find-editor-blocks', 'editor/get-block-location' ),
+			array(
+				'editor/get-editor-tree',
+				'editor/find-editor-blocks',
+				'editor/get-block-location',
+				'editor/get-editor-selection',
+			),
 			$result['abilityNames']
 		);
 	}

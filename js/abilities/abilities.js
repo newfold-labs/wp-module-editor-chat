@@ -484,5 +484,60 @@ export function registerEditorAbilities() {
 	});
 	abilityNames.push("editor/get-block-location");
 
+	ensureAbility({
+		name: "editor/get-editor-selection",
+		label: "Get Editor Selection",
+		description: "Returns the current block and rich-text selection in the editor.",
+		category: "block-editor",
+		input_schema: {
+			type: "object",
+			properties: {},
+			additionalProperties: false,
+		},
+		output_schema: {
+			type: "object",
+			properties: {
+				selectedBlockClientId: { type: ["string", "null"] },
+				selectedBlockClientIds: { type: "array" },
+				selectionStart: { type: ["object", "null"] },
+				selectionEnd: { type: ["object", "null"] },
+				selectedBlock: { type: ["object", "null"] },
+			},
+			required: [
+				"selectedBlockClientId",
+				"selectedBlockClientIds",
+				"selectionStart",
+				"selectionEnd",
+			],
+		},
+		meta: {
+			annotations: {
+				readonly: true,
+				destructive: false,
+				idempotent: true,
+			},
+		},
+		callback: async () => {
+			assertEditorReady();
+			const { select } = getData();
+			const store = select(BLOCK_EDITOR_STORE);
+			const selectedBlockClientId = store.getSelectedBlockClientId() || null;
+			const selectedBlockClientIds = store.getSelectedBlockClientIds() || [];
+			const selectionStart = store.getSelectionStart() || null;
+			const selectionEnd = store.getSelectionEnd() || null;
+			// The selection can reference a block that is already gone.
+			const selectedBlock = selectedBlockClientId ? store.getBlock(selectedBlockClientId) : null;
+
+			return {
+				selectedBlockClientId,
+				selectedBlockClientIds,
+				selectionStart,
+				selectionEnd,
+				selectedBlock: selectedBlock ? serializeBlock(store, selectedBlock) : null,
+			};
+		},
+	});
+	abilityNames.push("editor/get-editor-selection");
+
 	return abilityNames;
 }

@@ -111,6 +111,7 @@ final class LocalAbilities {
 				'editor/get-editor-tree',
 				'editor/find-editor-blocks',
 				'editor/get-block-location',
+				'editor/get-editor-selection',
 			)
 		);
 	}
