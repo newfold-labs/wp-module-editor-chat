@@ -819,5 +819,74 @@ export function registerEditorAbilities() {
 	});
 	abilityNames.push("editor/move-block");
 
+	ensureAbility({
+		name: "editor/remove-block",
+		label: "Remove Block",
+		description: "Removes a block, and everything nested inside it, from the editor.",
+		category: "block-editor",
+		input_schema: {
+			type: "object",
+			properties: {
+				clientId: {
+					type: "string",
+					description: "Client ID of the block to remove.",
+				},
+			},
+			required: ["clientId"],
+			additionalProperties: false,
+		},
+		output_schema: {
+			type: "object",
+			properties: {
+				clientId: { type: "string" },
+				name: { type: "string" },
+				rootClientId: { type: ["string", "null"] },
+				index: { type: "integer" },
+				removedInnerBlockCount: { type: "integer" },
+			},
+			required: ["clientId", "name", "index"],
+		},
+		meta: {
+			annotations: {
+				readonly: false,
+				destructive: true,
+				idempotent: true,
+			},
+		},
+		callback: async (input = {}) => {
+			assertEditorReady();
+			const { select, dispatch } = getData();
+			const store = select(BLOCK_EDITOR_STORE);
+			const actions = dispatch(BLOCK_EDITOR_STORE);
+
+			const block = requireBlock(store, input.clientId);
+			assertNotSpecialEntityBlock(store, input.clientId);
+
+			const rootClientId = store.getBlockRootClientId(input.clientId) || null;
+			const index = store.getBlockIndex(input.clientId);
+
+			if (store.canRemoveBlock?.(input.clientId) === false) {
+				throw new Error(`Block "${block.name}" cannot be removed. It or its parent may be locked.`);
+			}
+
+			// Leave the selection alone: the agent is editing the document,
+			// not moving a caret through it.
+			await actions.removeBlock(input.clientId, false);
+
+			if (store.getBlock(input.clientId)) {
+				throw new Error("The editor did not remove this block. It or its parent may be locked.");
+			}
+
+			return {
+				clientId: input.clientId,
+				name: block.name,
+				rootClientId,
+				index,
+				removedInnerBlockCount: (block.innerBlocks || []).length,
+			};
+		},
+	});
+	abilityNames.push("editor/remove-block");
+
 	return abilityNames;
 }

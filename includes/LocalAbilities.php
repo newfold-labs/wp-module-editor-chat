@@ -132,6 +132,7 @@ final class LocalAbilities {
 				'editor/get-editor-selection',
 				'editor/can-insert-block',
 				'editor/move-block',
+				'editor/remove-block',
 			)
 		);
 	}
