@@ -40,17 +40,20 @@ code (dispatcher, logs, merged tool list) tells a local ability apart from a `bl
 | Hook | Purpose |
 | --- | --- |
 | `nfd_editor_chat_local_abilities_enabled` | Filter, boolean, default `true`. Return `false` to disable the entire local layer (e.g. for a support investigation) — the module falls back to 100% MCP. |
-| `nfd_editor_chat_local_ability_names` | Filter, array, default `['editor/get-editor-tree']`. Narrows or extends which registered `editor/*` abilities are bridged to WebMCP (and therefore visible to the model) this request. |
+| `nfd_editor_chat_local_ability_names` | Filter, array, default `['editor/get-editor-tree', 'editor/find-editor-blocks', 'editor/get-block-location', 'editor/get-editor-selection', 'editor/can-insert-block']`. Narrows or extends which registered `editor/*` abilities are bridged to WebMCP (and therefore visible to the model) this request. |
 
 ## Verification
 
 1. Console on a post editor screen: `window.nfdEditorAbilities` lists the enabled ability names
    and reports whether WebMCP is supported.
-2. `await document.modelContext.getTools()` includes `editor_get-editor-tree`.
-3. A chat prompt that only needs the block tree (e.g. "how many blocks are in this post?")
+2. `await document.modelContext.getTools()` includes `editor_get-editor-tree`,
+   `editor_find-editor-blocks`, `editor_get-block-location`, `editor_get-editor-selection`, and
+   `editor_can-insert-block`.
+3. A chat prompt that only needs the open document (e.g. "how many blocks are in this post?",
+   "find the block that says X", "what's currently selected?", "can I insert an image here?")
    resolves without a `/blu/mcp` request in the Network tab, and
-   `[ToolExecutor:REST] Executed local ability editor_get-editor-tree (source: local)` appears
-   in the console.
+   `[ToolExecutor:REST] Executed local ability editor_<name> (source: local)` appears in the
+   console for the ability that ran.
 4. On a WordPress install without the client-side Abilities API (or with
    `nfd_editor_chat_local_abilities_enabled` filtered to `false`), the chat behaves exactly as
    it does today — confirms the fail-soft fallback.
