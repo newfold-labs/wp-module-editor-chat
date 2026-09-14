@@ -553,6 +553,7 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 		try {
 			const mcpResult = await ctx.mcpClient.callTool(mcpName, tc.arguments || {});
 			const content = typeof mcpResult === "string" ? mcpResult : JSON.stringify(mcpResult);
+			logger.log(`[ToolExecutor:REST] Executed server ability ${mcpName} (source: mcp)`);
 			toolResults.push({
 				tool_call_id: tc.id,
 				content,
@@ -561,6 +562,9 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 			completedToolsList.push({ ...tc, isError: false, source: "mcp" });
 			ctx.setExecutedTools((prev) => [...prev, { ...tc, isError: false, source: "mcp" }]);
 		} catch (err) {
+			logger.log(
+				`[ToolExecutor:REST] Server ability ${mcpName} failed (source: mcp): ${err.message}`
+			);
 			toolResults.push({
 				tool_call_id: tc.id,
 				content: JSON.stringify({ error: err.message }),
