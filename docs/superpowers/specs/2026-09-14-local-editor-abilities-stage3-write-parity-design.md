@@ -78,9 +78,65 @@ and needs no changes. This design touches:
 
 Before any of the 3 abilities mutates anything, it calls a new shared helper,
 `assertNotSpecialEntityBlock(store, clientId)`, added to `js/abilities/abilities.js` alongside the
-existing helpers:
+existing helpers. **This cannot call `blockActions.js`'s existing `findAncestorRefNavigation`
+(`src/services/navigationEditor.js`) or `findAncestorTemplatePart`
+(`src/services/templatePartEditor.js`) directly** — those live in the webpack-bundled chat entry
+(`src/`), while `js/abilities/abilities.js` is a hand-written script module loaded natively by the
+browser via `wp_register_script_module`, a separate module graph with no shared import path
+between them (the same constraint Stage 1's design documented for why `localToolRegistry.js`
+cannot share code with `webmcp-bridge.js` — see `docs/local-abilities.md`). The underlying checks
+those two functions make are simple ancestor-name walks, so this design reimplements the same
+logic self-contained, using only `wp.data` selectors already available in this file:
 
 ```js
+/**
+ * @param {Object} [block]
+ * @return {boolean}
+ */
+function isTemplatePartBlock(block) {
+	return block?.name === "core/template-part";
+}
+
+/**
+ * A linked navigation block (core/navigation with a ref to a wp_navigation entity) —
+ * mirrors src/services/navigationEditor.js's isRefNavigation(), reimplemented here
+ * because that file is not reachable from this script module (see above).
+ *
+ * @param {Object} [block]
+ * @return {boolean}
+ */
+function isRefNavigationBlock(block) {
+	return block?.name === "core/navigation" && Boolean(block.attributes?.ref);
+}
+
+/**
+ * @param {Object} store Block editor store selectors.
+ * @param {string} clientId
+ * @return {?string} "template part" or "navigation menu" if an ancestor is one, else null.
+ */
+function findSpecialAncestorKind(store, clientId) {
+	let currentId = store.getBlockRootClientId(clientId);
+	while (currentId) {
+		const block = store.getBlock(currentId);
+		if (isTemplatePartBlock(block)) {
+			return "template part";
+		}
+		if (isRefNavigationBlock(block)) {
+			return "navigation menu";
+		}
+		currentId = store.getBlockRootClientId(currentId);
+	}
+	return null;
+}
+
+/**
+ * Reject a mutation on a block this design's abilities don't yet handle:
+ * the site logo, a navigation-menu block (or something inside one), or a
+ * template-part block (or something inside one). See "Non-goals".
+ *
+ * @param {Object} store Block editor store selectors.
+ * @param {string} clientId
+ */
 function assertNotSpecialEntityBlock(store, clientId) {
 	const block = store.getBlock(clientId);
 	if (block?.name === "core/site-logo") {
@@ -88,28 +144,32 @@ function assertNotSpecialEntityBlock(store, clientId) {
 			"core/site-logo is managed separately and is not supported by this ability yet."
 		);
 	}
-	if (findAncestorRefNavigation(clientId)) {
+	if (isTemplatePartBlock(block)) {
 		throw new Error(
-			"This block is part of a navigation menu, which this ability does not support yet."
+			"This block is a template part, which this ability does not support yet."
 		);
 	}
-	if (findAncestorTemplatePart(clientId)) {
+	if (isRefNavigationBlock(block)) {
 		throw new Error(
-			"This block is part of a template part, which this ability does not support yet."
+			"This block is a navigation menu, which this ability does not support yet."
+		);
+	}
+	const ancestorKind = findSpecialAncestorKind(store, clientId);
+	if (ancestorKind) {
+		throw new Error(
+			`This block is part of a ${ancestorKind}, which this ability does not support yet.`
 		);
 	}
 }
 ```
 
-`findAncestorRefNavigation` (`src/services/navigationEditor.js`) and `findAncestorTemplatePart`
-(`src/services/templatePartEditor.js`) already exist and are exactly what `blockActions.js` itself
-uses to decide when to special-case a mutation — reused here as-is, not reimplemented.
 `assertNotSpecialEntityBlock` is called with the block's own `clientId` at the very top of each
 callback, right after `requireBlock`; `editor/move-block` additionally calls it a second time on
-the destination `rootClientId` when one is given (a block cannot be moved from a normal parent
-into a locked nav/template-part parent either). This throws — per the design's existing error
-convention, a thrown local-ability error surfaces to the model as a tool error and never silently
-falls back to MCP. The `blu-*` legacy tool remains in the model's tool list for exactly this case.
+the destination `rootClientId` when one is given and non-empty (a block cannot be moved from a
+normal parent into a locked nav/template-part parent either). This throws — per the design's
+existing error convention, a thrown local-ability error surfaces to the model as a tool error and
+never silently falls back to MCP. The `blu-*` legacy tool remains in the model's tool list for
+exactly this case.
 
 ## Components
 
