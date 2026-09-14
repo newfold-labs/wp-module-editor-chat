@@ -42,6 +42,23 @@ class LocalAbilitiesWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	}
 
 	/**
+	 * Skip a test that exercises enqueue_local_abilities() past the screen
+	 * gate on a WordPress version older than 7.0: the version guard would
+	 * return early before whatever this test means to check, making the
+	 * assertion pass without exercising it. The local test WordPress
+	 * checkout in this repo is older than 7.0, so this fires there today.
+	 *
+	 * @return void
+	 */
+	private function skip_unless_wp_supports_abilities() {
+		global $wp_version;
+
+		if ( version_compare( $wp_version, '7.0', '<' ) ) {
+			$this->markTestSkipped( 'Requires WordPress 7.0+ (client-side Abilities API).' );
+		}
+	}
+
+	/**
 	 * Constructor registers the enqueue_block_editor_assets hook.
 	 *
 	 * @return void
@@ -116,6 +133,7 @@ class LocalAbilitiesWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 		if ( ! function_exists( 'wp_enqueue_script_module' ) ) {
 			$this->markTestSkipped( 'This WordPress version has no script modules support.' );
 		}
+		$this->skip_unless_wp_supports_abilities();
 
 		add_filter( 'nfd_editor_chat_local_abilities_enabled', '__return_false' );
 		$this->set_up_chat_screen();
@@ -136,6 +154,7 @@ class LocalAbilitiesWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 		if ( ! function_exists( 'wp_enqueue_script_module' ) ) {
 			$this->markTestSkipped( 'This WordPress version has no script modules support.' );
 		}
+		$this->skip_unless_wp_supports_abilities();
 
 		$this->set_up_chat_screen();
 

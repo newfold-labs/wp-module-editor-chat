@@ -29,7 +29,7 @@ final class LocalAbilities {
 	 * @return void
 	 */
 	public static function enqueue_local_abilities() {
-		global $pagenow;
+		global $pagenow, $wp_version;
 
 		// Load only where the chat itself loads, not on every block editor
 		// screen (e.g. a Contributor's post edit, or the widgets editor).
@@ -45,7 +45,9 @@ final class LocalAbilities {
 		// but the @wordpress/abilities script module this layer depends on
 		// requires 7.0+ — the function_exists() check above is not enough
 		// on its own to guard against an unresolvable import on 6.5-6.9.
-		if ( \version_compare( \get_bloginfo( 'version' ), '7.0', '<' ) ) {
+		// Reads the raw core global rather than get_bloginfo( 'version' ),
+		// which passes through the filterable 'bloginfo' hook.
+		if ( \version_compare( $wp_version, '7.0', '<' ) ) {
 			return;
 		}
 
