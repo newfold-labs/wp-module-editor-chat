@@ -242,6 +242,77 @@ function requireBlock(store, clientId, label = "clientId") {
 }
 
 /**
+ * @param {Object} [block]
+ * @return {boolean} Whether the block is a template part.
+ */
+function isTemplatePartBlock(block) {
+	return block?.name === "core/template-part";
+}
+
+/**
+ * A linked navigation block (core/navigation with a ref to a wp_navigation
+ * entity) — mirrors src/services/navigationEditor.js's isRefNavigation(),
+ * reimplemented here because that file is not reachable from this script
+ * module (see this plan's Global Constraints).
+ *
+ * @param {Object} [block]
+ * @return {boolean} Whether the block is a linked navigation block.
+ */
+function isRefNavigationBlock(block) {
+	return block?.name === "core/navigation" && Boolean(block.attributes?.ref);
+}
+
+/**
+ * @param {Object} store    Block editor store selectors.
+ * @param {string} clientId
+ * @return {?string} "template part" or "navigation menu" if an ancestor is one, else null.
+ */
+function findSpecialAncestorKind(store, clientId) {
+	let currentId = store.getBlockRootClientId(clientId);
+	while (currentId) {
+		const block = store.getBlock(currentId);
+		if (isTemplatePartBlock(block)) {
+			return "template part";
+		}
+		if (isRefNavigationBlock(block)) {
+			return "navigation menu";
+		}
+		currentId = store.getBlockRootClientId(currentId);
+	}
+	return null;
+}
+
+/**
+ * Reject a mutation on a block this design's write abilities don't yet
+ * handle: the site logo, a navigation-menu block (or something inside
+ * one), or a template-part block (or something inside one). The legacy
+ * blu-* tool remains registered and available for these cases.
+ *
+ * @param {Object} store    Block editor store selectors.
+ * @param {string} clientId
+ */
+function assertNotSpecialEntityBlock(store, clientId) {
+	const block = store.getBlock(clientId);
+	if (block?.name === "core/site-logo") {
+		throw new Error(
+			"core/site-logo is managed separately and is not supported by this ability yet."
+		);
+	}
+	if (isTemplatePartBlock(block)) {
+		throw new Error("This block is a template part, which this ability does not support yet.");
+	}
+	if (isRefNavigationBlock(block)) {
+		throw new Error("This block is a navigation menu, which this ability does not support yet.");
+	}
+	const ancestorKind = findSpecialAncestorKind(store, clientId);
+	if (ancestorKind) {
+		throw new Error(
+			`This block is part of a ${ancestorKind}, which this ability does not support yet.`
+		);
+	}
+}
+
+/**
  * @param {string} slug
  * @param {Object} args
  */
@@ -593,6 +664,160 @@ export function registerEditorAbilities() {
 		},
 	});
 	abilityNames.push("editor/can-insert-block");
+
+	ensureAbility({
+		name: "editor/move-block",
+		label: "Move Block",
+		description: "Moves an existing block to a new position, optionally into a different parent.",
+		category: "block-editor",
+		input_schema: {
+			type: "object",
+			properties: {
+				clientId: {
+					type: "string",
+					description: "Client ID of the block to move.",
+				},
+				afterClientId: {
+					type: "string",
+					description:
+						"Move immediately after this block. Its parent becomes the destination parent.",
+				},
+				beforeClientId: {
+					type: "string",
+					description:
+						"Move immediately before this block. Its parent becomes the destination parent.",
+				},
+				rootClientId: {
+					type: "string",
+					description: "Destination parent client ID. Omit to move within the document root.",
+				},
+				index: {
+					type: "integer",
+					description:
+						"Destination index within the parent, counted after the move. Ignored when afterClientId or beforeClientId is set. Defaults to last.",
+				},
+			},
+			required: ["clientId"],
+			additionalProperties: false,
+		},
+		output_schema: {
+			type: "object",
+			properties: {
+				clientId: { type: "string" },
+				name: { type: "string" },
+				rootClientId: { type: ["string", "null"] },
+				index: { type: "integer" },
+				previousRootClientId: { type: ["string", "null"] },
+				previousIndex: { type: "integer" },
+			},
+			required: ["clientId", "name", "index"],
+		},
+		meta: {
+			annotations: {
+				readonly: false,
+				destructive: false,
+				idempotent: true,
+			},
+		},
+		callback: async (input = {}) => {
+			assertEditorReady();
+			const { select, dispatch } = getData();
+			const store = select(BLOCK_EDITOR_STORE);
+			const actions = dispatch(BLOCK_EDITOR_STORE);
+
+			const block = requireBlock(store, input.clientId);
+			assertNotSpecialEntityBlock(store, input.clientId);
+
+			if (input.afterClientId && input.beforeClientId) {
+				throw new Error("Provide only one of afterClientId or beforeClientId.");
+			}
+			if (input.index !== undefined && !Number.isInteger(input.index)) {
+				throw new Error("index must be an integer.");
+			}
+			if (input.index !== undefined && input.index < 0) {
+				throw new Error("index must be zero or greater.");
+			}
+
+			const fromRootClientId = store.getBlockRootClientId(input.clientId) || "";
+			const fromIndex = store.getBlockIndex(input.clientId);
+
+			const sibling = input.afterClientId || input.beforeClientId;
+			let toRootClientId;
+			let index;
+
+			if (sibling) {
+				const label = input.afterClientId ? "afterClientId" : "beforeClientId";
+				if (sibling === input.clientId) {
+					throw new Error(`${label} must be a different block than clientId.`);
+				}
+				requireBlock(store, sibling, label);
+
+				toRootClientId = store.getBlockRootClientId(sibling) || "";
+				if (input.rootClientId && input.rootClientId !== toRootClientId) {
+					throw new Error(`${label} is not a child of the provided rootClientId.`);
+				}
+
+				const siblingIndex = store.getBlockIndex(sibling);
+				index = input.afterClientId ? siblingIndex + 1 : siblingIndex;
+
+				// Within one parent the block vacates its slot first, so
+				// siblings below it shift up by one.
+				if (toRootClientId === fromRootClientId && siblingIndex > fromIndex) {
+					index -= 1;
+				}
+			} else {
+				toRootClientId = input.rootClientId || "";
+				if (toRootClientId) {
+					requireBlock(store, toRootClientId, "rootClientId");
+				}
+
+				const order = store.getBlockOrder(toRootClientId) || [];
+				const lastIndex = toRootClientId === fromRootClientId ? order.length - 1 : order.length;
+				index = input.index === undefined ? lastIndex : Math.min(input.index, lastIndex);
+			}
+
+			if (toRootClientId) {
+				assertNotSpecialEntityBlock(store, toRootClientId);
+			}
+
+			if (toRootClientId === input.clientId) {
+				throw new Error("A block cannot be moved into itself.");
+			}
+			if (
+				toRootClientId &&
+				(store.getBlockParents(toRootClientId) || []).includes(input.clientId)
+			) {
+				throw new Error("A block cannot be moved into one of its own descendants.");
+			}
+
+			if (
+				toRootClientId !== fromRootClientId &&
+				!store.canInsertBlockType(block.name, toRootClientId || undefined)
+			) {
+				throw new Error(`Block "${block.name}" cannot be moved into the requested parent.`);
+			}
+
+			await actions.moveBlocksToPosition([input.clientId], fromRootClientId, toRootClientId, index);
+
+			const newRootClientId = store.getBlockRootClientId(input.clientId) || "";
+			const newIndex = store.getBlockIndex(input.clientId);
+
+			// The store declines locked moves silently; report that as a failure.
+			if (newRootClientId !== toRootClientId || newIndex !== index) {
+				throw new Error("The editor did not move this block. It or its parent may be locked.");
+			}
+
+			return {
+				clientId: input.clientId,
+				name: block.name,
+				rootClientId: newRootClientId || null,
+				index: newIndex,
+				previousRootClientId: fromRootClientId || null,
+				previousIndex: fromIndex,
+			};
+		},
+	});
+	abilityNames.push("editor/move-block");
 
 	return abilityNames;
 }

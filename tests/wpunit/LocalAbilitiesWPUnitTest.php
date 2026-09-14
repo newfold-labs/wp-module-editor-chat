@@ -84,6 +84,7 @@ class LocalAbilitiesWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 				'editor/get-block-location',
 				'editor/get-editor-selection',
 				'editor/can-insert-block',
+				'editor/move-block',
 			),
 			LocalAbilities::get_enabled_ability_names()
 		);
@@ -209,6 +210,7 @@ class LocalAbilitiesWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 				'editor/get-block-location',
 				'editor/get-editor-selection',
 				'editor/can-insert-block',
+				'editor/move-block',
 			),
 			$result['abilityNames']
 		);
