@@ -2,7 +2,7 @@
 name: wp-module-editor-chat
 title: Local editor abilities
 description: How the local (in-browser) abilities layer works, and its hooks.
-updated: 2026-09-11
+updated: 2026-09-14
 ---
 
 # Local editor abilities
