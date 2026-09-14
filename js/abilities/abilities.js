@@ -539,5 +539,60 @@ export function registerEditorAbilities() {
 	});
 	abilityNames.push("editor/get-editor-selection");
 
+	ensureAbility({
+		name: "editor/can-insert-block",
+		label: "Can Insert Block",
+		description: "Checks whether a block type can be inserted at a given location in the editor.",
+		category: "block-editor",
+		input_schema: {
+			type: "object",
+			properties: {
+				name: {
+					type: "string",
+					description: "Block name to check (e.g. core/image).",
+				},
+				rootClientId: {
+					type: "string",
+					description: "Optional parent client ID. Omit to check at the document root.",
+				},
+			},
+			required: ["name"],
+			additionalProperties: false,
+		},
+		output_schema: {
+			type: "object",
+			properties: {
+				canInsert: { type: "boolean" },
+				name: { type: "string" },
+				rootClientId: { type: ["string", "null"] },
+			},
+			required: ["canInsert", "name"],
+		},
+		meta: {
+			annotations: {
+				readonly: true,
+				destructive: false,
+				idempotent: true,
+			},
+		},
+		callback: async ({ name, rootClientId } = {}) => {
+			assertEditorReady();
+			const { select } = getData();
+			const store = select(BLOCK_EDITOR_STORE);
+
+			if (rootClientId) {
+				requireBlock(store, rootClientId, "rootClientId");
+			}
+
+			const canInsert = store.canInsertBlockType(name, rootClientId || undefined);
+			return {
+				canInsert: !!canInsert,
+				name,
+				rootClientId: rootClientId || null,
+			};
+		},
+	});
+	abilityNames.push("editor/can-insert-block");
+
 	return abilityNames;
 }
