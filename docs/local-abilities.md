@@ -40,20 +40,25 @@ code (dispatcher, logs, merged tool list) tells a local ability apart from a `bl
 | Hook | Purpose |
 | --- | --- |
 | `nfd_editor_chat_local_abilities_enabled` | Filter, boolean, default `true`. Return `false` to disable the entire local layer (e.g. for a support investigation) — the module falls back to 100% MCP. |
-| `nfd_editor_chat_local_ability_names` | Filter, array, default `['editor/get-editor-tree', 'editor/find-editor-blocks', 'editor/get-block-location', 'editor/get-editor-selection', 'editor/can-insert-block']`. Narrows or extends which registered `editor/*` abilities are bridged to WebMCP (and therefore visible to the model) this request. |
+| `nfd_editor_chat_local_ability_names` | Filter, array, default `['editor/get-editor-tree', 'editor/find-editor-blocks', 'editor/get-block-location', 'editor/get-editor-selection', 'editor/can-insert-block', 'editor/move-block', 'editor/remove-block', 'editor/update-block']`. Narrows or extends which registered `editor/*` abilities are bridged to WebMCP (and therefore visible to the model) this request. |
 
 ## Verification
 
 1. Console on a post editor screen: `window.nfdEditorAbilities` lists the enabled ability names
    and reports whether WebMCP is supported.
 2. `await document.modelContext.getTools()` includes `editor_get-editor-tree`,
-   `editor_find-editor-blocks`, `editor_get-block-location`, `editor_get-editor-selection`, and
-   `editor_can-insert-block`.
-3. A chat prompt that only needs the open document (e.g. "how many blocks are in this post?",
-   "find the block that says X", "what's currently selected?", "can I insert an image here?")
-   resolves without a `/blu/mcp` request in the Network tab, and
-   `[ToolExecutor:REST] Executed local ability editor_<name> (source: local)` appears in the
-   console for the ability that ran.
-4. On a WordPress install without the client-side Abilities API (or with
+   `editor_find-editor-blocks`, `editor_get-block-location`, `editor_get-editor-selection`,
+   `editor_can-insert-block`, `editor_move-block`, `editor_remove-block`, and
+   `editor_update-block`.
+3. A chat prompt that only needs the open document, or asks for a plain move/delete/attribute
+   change on an ordinary block (e.g. "how many blocks are in this post?", "move this block after
+   the heading", "delete this paragraph", "make this heading bold"), resolves without a `/blu/mcp`
+   request in the Network tab, and `[ToolExecutor:REST] Executed local ability editor_<name>
+   (source: local)` appears in the console for the ability that ran.
+4. The same kind of request against a block inside the site's navigation menu, inside a template
+   part (header/footer), or against `core/site-logo`, still works — it goes through the legacy
+   `blu-*` tool instead, since `editor_move-block`/`editor_remove-block`/`editor_update-block`
+   reject those cases and neither hides nor replaces the legacy tool.
+5. On a WordPress install without the client-side Abilities API (or with
    `nfd_editor_chat_local_abilities_enabled` filtered to `false`), the chat behaves exactly as
    it does today — confirms the fail-soft fallback.
