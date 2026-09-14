@@ -110,6 +110,7 @@ final class LocalAbilities {
 			array(
 				'editor/get-editor-tree',
 				'editor/find-editor-blocks',
+				'editor/get-block-location',
 			)
 		);
 	}

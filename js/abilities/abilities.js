@@ -418,5 +418,71 @@ export function registerEditorAbilities() {
 	});
 	abilityNames.push("editor/find-editor-blocks");
 
+	ensureAbility({
+		name: "editor/get-block-location",
+		label: "Get Block Location",
+		description: "Returns the hierarchical location of a block (parents, root, and index).",
+		category: "block-editor",
+		input_schema: {
+			type: "object",
+			properties: {
+				clientId: {
+					type: "string",
+					description: "Client ID of the block to locate.",
+				},
+			},
+			required: ["clientId"],
+			additionalProperties: false,
+		},
+		output_schema: {
+			type: "object",
+			properties: {
+				clientId: { type: "string" },
+				name: { type: "string" },
+				rootClientId: { type: ["string", "null"] },
+				index: { type: "integer" },
+				parentClientIds: { type: "array" },
+				path: { type: "array" },
+			},
+			required: ["clientId", "index", "parentClientIds", "path"],
+		},
+		meta: {
+			annotations: {
+				readonly: true,
+				destructive: false,
+				idempotent: true,
+			},
+		},
+		callback: async ({ clientId } = {}) => {
+			assertEditorReady();
+			const { select } = getData();
+			const store = select(BLOCK_EDITOR_STORE);
+			const block = requireBlock(store, clientId);
+
+			const parentClientIds = store.getBlockParents(clientId) || [];
+			const rootClientId = store.getBlockRootClientId(clientId);
+			const index = store.getBlockIndex(clientId);
+
+			const path = [...parentClientIds, clientId].map((id) => {
+				const node = store.getBlock(id);
+				return {
+					clientId: id,
+					name: node?.name ?? null,
+					index: store.getBlockIndex(id),
+				};
+			});
+
+			return {
+				clientId,
+				name: block.name,
+				rootClientId: rootClientId || null,
+				index,
+				parentClientIds,
+				path,
+			};
+		},
+	});
+	abilityNames.push("editor/get-block-location");
+
 	return abilityNames;
 }
