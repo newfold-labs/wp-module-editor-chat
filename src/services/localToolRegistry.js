@@ -131,6 +131,28 @@ export async function runLocalTool(name, args = {}) {
 }
 
 /**
+ * Subscribe to the local editor tools changing (e.g. js/abilities/'s WebMCP
+ * bridge finishes registering after this page's initial tool list was
+ * already read, a real race since that bridge is async — see
+ * js/abilities/webmcp-bridge.js waitForModelContext()). The polyfill and
+ * native WebMCP both dispatch a "toolchange" event on modelContext whenever
+ * registerTool()/unregisterTool() runs.
+ *
+ * @param {() => void} callback Called (with no arguments) whenever the set of
+ *                              registered tools changes.
+ * @return {(() => void)|null} Unsubscribe function, or null when this page has
+ *                              no modelContext event target to listen on.
+ */
+export function onLocalToolsChanged(callback) {
+	const modelContext = getModelContext();
+	if (typeof modelContext?.addEventListener !== "function") {
+		return null;
+	}
+	modelContext.addEventListener("toolchange", callback);
+	return () => modelContext.removeEventListener("toolchange", callback);
+}
+
+/**
  * Merge local editor abilities with the MCP tool list for this session,
  * ready for mcpToolsToOpenAI(). No MCP ability is ever removed server-side —
  * only kept out of *this request's* tool list, and only when explicitly

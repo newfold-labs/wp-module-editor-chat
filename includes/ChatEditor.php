@@ -220,10 +220,13 @@ final class ChatEditor {
 	/**
 	 * Whether the current request is the Site Editor with an allowed referrer.
 	 *
+	 * Also used by LocalAbilities::enqueue_local_abilities() so the local
+	 * editor-abilities layer only loads where this chat itself loads.
+	 *
 	 * @param string $pagenow Current admin page.
 	 * @return bool
 	 */
-	private static function is_site_editor_chat_screen( $pagenow ) {
+	public static function is_site_editor_chat_screen( $pagenow ) {
 		if ( 'site-editor.php' !== $pagenow ) {
 			return false;
 		}
@@ -235,10 +238,13 @@ final class ChatEditor {
 	/**
 	 * Whether the current request is a block post editor screen (post.php / post-new.php).
 	 *
+	 * Also used by LocalAbilities::enqueue_local_abilities() so the local
+	 * editor-abilities layer only loads where this chat itself loads.
+	 *
 	 * @param string $pagenow Current admin page.
 	 * @return bool
 	 */
-	private static function is_post_editor_chat_screen( $pagenow ) {
+	public static function is_post_editor_chat_screen( $pagenow ) {
 		if ( ! \in_array( $pagenow, array( 'post.php', 'post-new.php' ), true ) ) {
 			return false;
 		}

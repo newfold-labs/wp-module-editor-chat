@@ -8,7 +8,11 @@ import { useCallback, useEffect, useRef, useState } from "@wordpress/element";
 import OpenAI from "openai";
 
 import { mcpToolsToOpenAI } from "./conversationUtils";
-import { listLocalTools, mergeLocalAndMcpTools } from "../../services/localToolRegistry";
+import {
+	listLocalTools,
+	mergeLocalAndMcpTools,
+	onLocalToolsChanged,
+} from "../../services/localToolRegistry";
 import logger from "../../utils/logger";
 
 // Module-level MCP client (created once at import time)
@@ -36,6 +40,10 @@ const useSessionConfig = () => {
 	const abortControllerRef = useRef(null);
 	const hasInitializedRef = useRef(false);
 	const refreshTimerRef = useRef(null);
+	// Last-known MCP tool list, so a late local-tool registration (see the
+	// toolchange subscription below) can recompute openaiTools without a
+	// redundant mcpClient.listTools() round trip.
+	const mcpToolsRef = useRef([]);
 
 	// ── Initialization: config fetch + MCP ──
 
@@ -79,27 +87,60 @@ const useSessionConfig = () => {
 			}
 		})();
 
-		const mcpPromise = (async () => {
+		// Local tools are read independently of MCP's health: they need no
+		// network, so an MCP outage (or a slow connect) must never keep a
+		// purely local question (e.g. "how many blocks are in this post?")
+		// from reaching the model. Kept outside the MCP try/catch below on
+		// purpose — see docs/local-abilities.md.
+		const localToolsPromise = (async () => {
+			try {
+				return await listLocalTools();
+			} catch (err) {
+				console.error("Failed to list local editor tools:", err);
+				return [];
+			}
+		})();
+
+		const mcpToolsPromise = (async () => {
 			try {
 				setMcpConnectionStatus("connecting");
 				await mcpClient.connect();
 				await mcpClient.initialize();
 				const availableTools = await mcpClient.listTools();
-				const localTools = await listLocalTools();
-				setOpenaiTools(mcpToolsToOpenAI(mergeLocalAndMcpTools(localTools, availableTools)));
+				mcpToolsRef.current = availableTools;
 				setMcpConnectionStatus("connected");
+				return availableTools;
 			} catch (err) {
 				console.error("Failed to initialize MCP:", err);
 				setMcpConnectionStatus("disconnected");
+				return [];
 			}
 		})();
 
-		await Promise.all([configPromise, mcpPromise]);
+		const toolsPromise = (async () => {
+			const [localTools, availableTools] = await Promise.all([localToolsPromise, mcpToolsPromise]);
+			setOpenaiTools(mcpToolsToOpenAI(mergeLocalAndMcpTools(localTools, availableTools)));
+		})();
+
+		await Promise.all([configPromise, toolsPromise]);
 	}, []);
 
 	useEffect(() => {
 		initialize();
 	}, [initialize]);
+
+	// The local-abilities WebMCP bridge registers asynchronously (see
+	// js/abilities/webmcp-bridge.js waitForModelContext()) and can finish
+	// after the tool list above was already read once. Recompute openaiTools
+	// whenever the set of local tools changes, reusing the last-known MCP
+	// tool list rather than reconnecting to MCP again.
+	useEffect(() => {
+		const unsubscribe = onLocalToolsChanged(async () => {
+			const localTools = await listLocalTools();
+			setOpenaiTools(mcpToolsToOpenAI(mergeLocalAndMcpTools(localTools, mcpToolsRef.current)));
+		});
+		return () => unsubscribe?.();
+	}, []);
 
 	// ── Session token refresh ──
 	// Self-rescheduling: after each successful refresh, scheduleRefresh is

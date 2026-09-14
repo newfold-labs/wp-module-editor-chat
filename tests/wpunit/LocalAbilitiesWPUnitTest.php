@@ -15,10 +15,30 @@ class LocalAbilitiesWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	 * @return void
 	 */
 	public function tearDown(): void {
+		global $pagenow;
+
 		remove_all_filters( 'nfd_editor_chat_local_abilities_enabled' );
 		remove_all_filters( 'nfd_editor_chat_local_ability_names' );
 		remove_all_filters( 'script_module_data_@newfold-labs/editor-chat-local-abilities' );
+		unset( $_GET['referrer'] );
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$pagenow = null;
 		parent::tearDown();
+	}
+
+	/**
+	 * Set $pagenow and the referrer param so ChatEditor::is_site_editor_chat_screen()
+	 * passes, the same minimal context LocalAbilities::enqueue_local_abilities()
+	 * requires before it looks at anything else. Mirrors
+	 * ChatEditorWPUnitTest::test_enqueue_site_editor_assets_proceeds_with_valid_conditions().
+	 *
+	 * @return void
+	 */
+	private function set_up_chat_screen() {
+		global $pagenow;
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$pagenow          = 'site-editor.php';
+		$_GET['referrer'] = 'nfd-editor-chat';
 	}
 
 	/**
@@ -78,6 +98,8 @@ class LocalAbilitiesWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 			$this->markTestSkipped( 'This WordPress version supports script modules; cannot test the fallback branch.' );
 		}
 
+		$this->set_up_chat_screen();
+
 		LocalAbilities::enqueue_local_abilities();
 
 		$this->assertFalse(
@@ -96,6 +118,7 @@ class LocalAbilitiesWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 		}
 
 		add_filter( 'nfd_editor_chat_local_abilities_enabled', '__return_false' );
+		$this->set_up_chat_screen();
 
 		LocalAbilities::enqueue_local_abilities();
 
@@ -114,6 +137,8 @@ class LocalAbilitiesWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 			$this->markTestSkipped( 'This WordPress version has no script modules support.' );
 		}
 
+		$this->set_up_chat_screen();
+
 		LocalAbilities::enqueue_local_abilities();
 
 		$this->assertIsInt(
@@ -121,6 +146,31 @@ class LocalAbilitiesWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 				'script_module_data_@newfold-labs/editor-chat-local-abilities',
 				array( LocalAbilities::class, 'filter_local_abilities_script_module_data' )
 			)
+		);
+	}
+
+	/**
+	 * Does nothing on a block editor screen that isn't the chat's own
+	 * (e.g. a plain post edit with no `?referrer=nfd-editor-chat`, or a
+	 * screen not covered by ChatEditor::is_site_editor_chat_screen() /
+	 * is_post_editor_chat_screen() at all) — this class must not enqueue on
+	 * every block editor load, only where the chat that consumes it loads.
+	 *
+	 * @return void
+	 */
+	public function test_enqueue_returns_early_when_not_a_chat_screen() {
+		if ( ! function_exists( 'wp_enqueue_script_module' ) ) {
+			$this->markTestSkipped( 'This WordPress version has no script modules support.' );
+		}
+
+		global $pagenow;
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$pagenow = 'edit.php';
+
+		LocalAbilities::enqueue_local_abilities();
+
+		$this->assertFalse(
+			has_filter( 'script_module_data_@newfold-labs/editor-chat-local-abilities' )
 		);
 	}
 

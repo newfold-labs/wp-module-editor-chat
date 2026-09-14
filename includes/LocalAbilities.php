@@ -29,7 +29,23 @@ final class LocalAbilities {
 	 * @return void
 	 */
 	public static function enqueue_local_abilities() {
+		global $pagenow;
+
+		// Load only where the chat itself loads, not on every block editor
+		// screen (e.g. a Contributor's post edit, or the widgets editor).
+		if ( ! ChatEditor::is_site_editor_chat_screen( $pagenow ) && ! ChatEditor::is_post_editor_chat_screen( $pagenow ) ) {
+			return;
+		}
+
 		if ( ! \function_exists( 'wp_enqueue_script_module' ) ) {
+			return;
+		}
+
+		// wp_enqueue_script_module() itself has existed since WordPress 6.5,
+		// but the @wordpress/abilities script module this layer depends on
+		// requires 7.0+ — the function_exists() check above is not enough
+		// on its own to guard against an unresolvable import on 6.5-6.9.
+		if ( \version_compare( \get_bloginfo( 'version' ), '7.0', '<' ) ) {
 			return;
 		}
 
