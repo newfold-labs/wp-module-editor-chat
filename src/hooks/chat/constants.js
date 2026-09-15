@@ -75,6 +75,12 @@ export const EDITOR_TOOLS = new Set([
  * doesn't change state and isn't an AI mistake, so the retry tracker must
  * skip them. Missing entries here cause the sticky retryLimitHit flag to
  * trip on legitimate exploration and poison the rest of the conversation.
+ *
+ * For `editor_*` tools this list doubles as the write/read split
+ * toolDispatcher.js's `isLocalWriteTool()` uses to set `hasChanges` and
+ * capture the pre-mutation undo snapshot — a local ability missing from
+ * here is treated as a write (a spurious snapshot/undo entry, not a
+ * missed one). Add every new read-only `editor_*` ability here too.
  */
 export const READ_ONLY_TOOLS = new Set([
 	// Block / page reads

@@ -59,13 +59,6 @@ import logger from "../utils/logger";
 // Re-export so external callers (e.g. useEditorChatREST) keep working.
 export { resetGeneratedImageCache };
 
-// TEMP DEBUG — always logs (bypasses the debug-flag gate) so we can confirm
-// the browser actually loaded this build of the bundle. Remove once verified.
-// eslint-disable-next-line no-console
-console.log(
-	"[nfd-editor-chat] toolDispatcher.js build check: local-abilities-stage2-fix-2025-09-14"
-);
-
 /**
  * Create or replace the single tool_execution message for the current turn.
  * Caller passes the COMPLETE list of tools; any existing message is replaced
@@ -331,6 +324,19 @@ function toolCallUsesBlockMutation(tc) {
 }
 
 /**
+ * Whether a local (editor_*) tool name mutates the document. Every local
+ * tool not in READ_ONLY_TOOLS (src/hooks/chat/constants.js) is a write —
+ * kept as one predicate so the snapshot check and the hasChanges flag
+ * below can never drift apart.
+ *
+ * @param {string} name
+ * @return {boolean} Whether the tool mutates the document.
+ */
+function isLocalWriteTool(name) {
+	return !READ_ONLY_TOOLS.has(name || "");
+}
+
+/**
  * Parse MCP ability responses that only authorize client-side block execution.
  *
  * @param {Object} mcpResult
@@ -537,7 +543,7 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 	// same "before" snapshot for the composite undo built at the end of this
 	// function, so this check covers both instead of only clientToolCalls.
 	const hasBlockTools =
-		localToolCallList.some((tc) => !READ_ONLY_TOOLS.has(tc.name || "")) ||
+		localToolCallList.some((tc) => isLocalWriteTool(tc.name)) ||
 		clientToolCalls.some((tc) => toolCallUsesBlockMutation(tc));
 	if (hasBlockTools && !ctx.blockSnapshotRef.current) {
 		const { select: wpSelect } = wp.data;
@@ -562,16 +568,15 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 		// the chat loop would nudge the model to redo work that already
 		// succeeded (a repeat editor_remove-block then throws "Block not
 		// found", reporting a successful delete back to the user as failed).
-		const isLocalWrite = !READ_ONLY_TOOLS.has(tc.name || "");
-		const hasChanges = !isError && isLocalWrite;
-		if (hasChanges) {
+		const localWriteApplied = !isError && isLocalWriteTool(tc.name);
+		if (localWriteApplied) {
 			hasBlockEdits = true;
 		}
 		toolResults.push({
 			tool_call_id: tc.id,
 			content: text,
 			isError,
-			hasChanges,
+			hasChanges: localWriteApplied,
 		});
 		completedToolsList.push({ ...tc, isError, source: "local" });
 		ctx.setExecutedTools((prev) => [...prev, { ...tc, isError, source: "local" }]);
