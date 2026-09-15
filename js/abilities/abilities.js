@@ -1189,7 +1189,7 @@ export function registerEditorAbilities() {
 			// here explicitly so a locked block fails the way its move/remove
 			// siblings do, rather than silently "succeeding" with no real effect.
 			if (store.canEditBlock?.(input.clientId) === false) {
-				throw new Error(`Block "${block.name}" cannot be edited. It or its parent may be locked.`);
+				throw new Error(`Block "${block.name}" cannot be edited. It may be locked for editing.`);
 			}
 
 			const normalized = normalizeAttributes(block.name, input.attributes);
