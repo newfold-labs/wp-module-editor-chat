@@ -475,11 +475,21 @@ function normalizeAttributes(blockName, attributes) {
 
 /**
  * Recursively merge new attribute values into existing ones. A null/undefined
- * value in source deletes that key rather than overwriting it. Mirrors
- * src/utils/deepMerge.js's deepMergeAttrs(), reimplemented here because that
- * file is not reachable from this script module (a separate module graph
- * from the webpack-bundled src/ tree — see the special-entity guard above
- * for the same constraint).
+ * value in source clears that key rather than overwriting it. Mirrors
+ * src/utils/deepMerge.js's deepMergeAttrs() (reimplemented here because that
+ * file is not reachable from this script module — a separate module graph
+ * from the webpack-bundled src/ tree, see the special-entity guard above for
+ * the same constraint), with one deliberate divergence: a cleared key is set
+ * to `undefined` rather than deleted from the result object. Gutenberg's own
+ * updateBlockAttributes reducer only looks at keys actually present in the
+ * dispatched object (wp-includes/js/dist/block-editor.js, the
+ * UPDATE_BLOCK_ATTRIBUTES case of the `attributes` reducer) — a key that is
+ * simply absent is left completely untouched, so deepMergeAttrs's literal
+ * `delete` would silently fail to clear a top-level attribute like
+ * textColor/backgroundColor once dispatched (nested clears, e.g. inside
+ * `style`, are unaffected either way, since the containing top-level key is
+ * always present). `undefined` is present-but-falsy in the dispatched
+ * object, which the reducer does detect as a change.
  *
  * @param {Object} target
  * @param {Object} source
@@ -489,7 +499,7 @@ function deepMergeAttributes(target, source) {
 	const result = { ...target };
 	for (const key of Object.keys(source)) {
 		if (source[key] === null || source[key] === undefined) {
-			delete result[key];
+			result[key] = undefined;
 		} else if (
 			typeof source[key] === "object" &&
 			!Array.isArray(source[key]) &&
@@ -510,10 +520,11 @@ function deepMergeAttributes(target, source) {
  * custom style equivalent (style.color.text/background) as mutually
  * exclusive — the preset wins when both are present. Mirrors the same rule
  * src/services/toolHandlers/updateBlockAttrs.js already applies (the legacy
- * blu-update-block-attrs path this ability parallels), so setting one
- * through this ability clears the conflicting other, matching what the
- * WordPress color picker UI itself does, instead of silently doing nothing
- * because the untouched preset still wins.
+ * blu-update-block-attrs path this ability parallels; reimplemented here,
+ * not imported, for the same module-graph reason as deepMergeAttributes
+ * above), so setting one through this ability clears the conflicting other,
+ * matching what the WordPress color picker UI itself does, instead of
+ * silently doing nothing because the untouched preset still wins.
  *
  * @param {Object} currentAttributes Block's attributes before this update.
  * @param {Object} newAttributes     Attributes requested for this update.
@@ -1172,6 +1183,15 @@ export function registerEditorAbilities() {
 				throw new Error("attributes must contain at least one key.");
 			}
 
+			// Unlike moveBlocksToPosition/removeBlock, updateBlockAttributes has no
+			// built-in lock check — it applies unconditionally at the reducer
+			// level. Editing is locked per-block via attributes.lock.edit, checked
+			// here explicitly so a locked block fails the way its move/remove
+			// siblings do, rather than silently "succeeding" with no real effect.
+			if (store.canEditBlock?.(input.clientId) === false) {
+				throw new Error(`Block "${block.name}" cannot be edited. It or its parent may be locked.`);
+			}
+
 			const normalized = normalizeAttributes(block.name, input.attributes);
 			const currentAttributes = block.attributes ?? {};
 			const adjusted = clearConflictingColorAttributes(currentAttributes, normalized);
@@ -1179,15 +1199,17 @@ export function registerEditorAbilities() {
 
 			await actions.updateBlockAttributes(input.clientId, merged);
 
+			// Belt-and-braces: updateBlockAttributes has no lock gate of its own
+			// (see above), so this mainly catches an unexpected store refusal
+			// rather than the common locked-block case, which canEditBlock
+			// already rejected before dispatching.
 			const updated = requireBlock(store, input.clientId);
 			const updatedAttributes = updated.attributes ?? {};
 			const notApplied = keys.filter(
 				(key) => JSON.stringify(updatedAttributes[key]) !== JSON.stringify(merged[key])
 			);
 			if (notApplied.length) {
-				throw new Error(
-					`The editor did not update attribute(s): ${notApplied.join(", ")}. The block or its parent may be locked.`
-				);
+				throw new Error(`The editor did not apply attribute(s): ${notApplied.join(", ")}.`);
 			}
 
 			return {
