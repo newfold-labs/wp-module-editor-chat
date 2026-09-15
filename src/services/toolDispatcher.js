@@ -25,6 +25,7 @@ import { snapshotBlocks } from "../utils/editorContext";
 import { safeParseJSON } from "../utils/jsonUtils";
 import { callAbility, mcpResultIsError } from "./callAbility";
 import { isLocalToolName, runLocalTool } from "./localToolRegistry";
+import { READ_ONLY_TOOLS } from "../hooks/chat/constants";
 import { handleContentCreation, CREATE_ABILITIES } from "./contentNavigation";
 import { findHeaderRefNavigationBlock, hydrateAllRefNavigationBlocks } from "./navigationEditor";
 import {
@@ -57,6 +58,13 @@ import logger from "../utils/logger";
 
 // Re-export so external callers (e.g. useEditorChatREST) keep working.
 export { resetGeneratedImageCache };
+
+// TEMP DEBUG — always logs (bypasses the debug-flag gate) so we can confirm
+// the browser actually loaded this build of the bundle. Remove once verified.
+// eslint-disable-next-line no-console
+console.log(
+	"[nfd-editor-chat] toolDispatcher.js build check: local-abilities-stage2-fix-2025-09-14"
+);
 
 /**
  * Create or replace the single tool_execution message for the current turn.
@@ -522,6 +530,21 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 		}
 	}
 
+	// Capture block snapshot before any mutation this turn. Local write
+	// abilities (editor_move-block, editor_remove-block, editor_update-block —
+	// every editor_* tool not in READ_ONLY_TOOLS, see src/hooks/chat/constants.js)
+	// mutate the document exactly like their blu-* counterparts and need the
+	// same "before" snapshot for the composite undo built at the end of this
+	// function, so this check covers both instead of only clientToolCalls.
+	const hasBlockTools =
+		localToolCallList.some((tc) => !READ_ONLY_TOOLS.has(tc.name || "")) ||
+		clientToolCalls.some((tc) => toolCallUsesBlockMutation(tc));
+	if (hasBlockTools && !ctx.blockSnapshotRef.current) {
+		const { select: wpSelect } = wp.data;
+		const allBlocks = wpSelect("core/block-editor").getBlocks();
+		ctx.blockSnapshotRef.current = snapshotBlocks(allBlocks);
+	}
+
 	// Execute local editor abilities (source: 'local') — no MCP round trip.
 	for (const tc of localToolCallList) {
 		if (ctx.abortSignal?.aborted) {
@@ -533,10 +556,22 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 			typeof tc.arguments === "string" ? safeParseJSON(tc.arguments).value : tc.arguments || {};
 		const { isError, text } = await runLocalTool(tc.name, args || {});
 		logger.log(`[ToolExecutor:REST] Executed local ability ${tc.name} (source: local)`);
+		// Every editor_* tool not in READ_ONLY_TOOLS mutates the document. Without
+		// hasChanges/hasBlockEdits set here, a successful local write looked
+		// identical to a read to the rest of this function: no undo entry, and
+		// the chat loop would nudge the model to redo work that already
+		// succeeded (a repeat editor_remove-block then throws "Block not
+		// found", reporting a successful delete back to the user as failed).
+		const isLocalWrite = !READ_ONLY_TOOLS.has(tc.name || "");
+		const hasChanges = !isError && isLocalWrite;
+		if (hasChanges) {
+			hasBlockEdits = true;
+		}
 		toolResults.push({
 			tool_call_id: tc.id,
 			content: text,
 			isError,
+			hasChanges,
 		});
 		completedToolsList.push({ ...tc, isError, source: "local" });
 		ctx.setExecutedTools((prev) => [...prev, { ...tc, isError, source: "local" }]);
@@ -578,401 +613,405 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 		}
 	}
 
-	if (clientToolCalls.length === 0) {
-		return toolResults;
-	}
-
-	// Capture block snapshot before any tool execution for atomic undo
-	const hasBlockTools = clientToolCalls.some((tc) => toolCallUsesBlockMutation(tc));
-	if (hasBlockTools && !ctx.blockSnapshotRef.current) {
-		const { select: wpSelect } = wp.data;
-		const allBlocks = wpSelect("core/block-editor").getBlocks();
-		ctx.blockSnapshotRef.current = snapshotBlocks(allBlocks);
-	}
-
-	await ctx.wait(300);
-	ctx.setStatus(CHAT_STATUS.TOOL_CALL);
-	ctx.setActiveToolCall({
-		id: "preparing",
-		name: "preparing",
-		index: 0,
-		total: clientToolCalls.length,
-	});
-	// Unwrap the gateway envelope BEFORE anything reads the name. Nearly every
-	// ability arrives as blu-call-ability, so the raw name would label the whole
-	// actions list "Blu Call Ability" and hide discovery calls from the
-	// internal-tool filter, which matches on ability names.
-	const resolvedCalls = clientToolCalls.map((tc) =>
-		resolveClientToolCall(
-			tc.name || "",
-			typeof tc.arguments === "string" ? safeParseJSON(tc.arguments).value : tc.arguments || {}
-		)
-	);
-
-	ctx.setPendingTools(
-		clientToolCalls.map((tc, idx) => ({
-			...tc,
-			id: tc.id || `tool-${idx}`,
-			name: resolvedCalls[idx].toolName,
-		}))
-	);
-
-	// Execute client-side tools sequentially
-	for (let i = 0; i < clientToolCalls.length; i++) {
-		if (ctx.abortSignal?.aborted) {
-			const remaining = clientToolCalls.slice(i);
-			logger.log(`[ToolExecutor:REST] Stopped — cancelling ${remaining.length} pending tool(s)`);
-			toolResults.push(...remaining.map(cancelledResult));
-			break;
-		}
-
-		const toolIndex = i + 1;
-		const totalTools = clientToolCalls.length;
-
-		let { toolName, args } = resolvedCalls[i];
-		const rawToolName = clientToolCalls[i].name;
-		const toolCall = { ...clientToolCalls[i], name: toolName };
-
-		ctx.setPendingTools((prev) => prev.filter((_, idx) => idx !== 0));
+	// Client-side (blu-*) tools have their own execution loop below; a turn
+	// with none (e.g. local-only reads or writes) skips straight to the
+	// undo/bookkeeping tail, which must still run for local writes.
+	if (clientToolCalls.length > 0) {
+		await ctx.wait(300);
+		ctx.setStatus(CHAT_STATUS.TOOL_CALL);
 		ctx.setActiveToolCall({
-			id: toolCall.id || `tool-${i}`,
-			name: toolName,
-			arguments: args,
-			index: toolIndex,
-			total: totalTools,
+			id: "preparing",
+			name: "preparing",
+			index: 0,
+			total: clientToolCalls.length,
 		});
+		// Unwrap the gateway envelope BEFORE anything reads the name. Nearly every
+		// ability arrives as blu-call-ability, so the raw name would label the whole
+		// actions list "Blu Call Ability" and hide discovery calls from the
+		// internal-tool filter, which matches on ability names.
+		const resolvedCalls = clientToolCalls.map((tc) =>
+			resolveClientToolCall(
+				tc.name || "",
+				typeof tc.arguments === "string" ? safeParseJSON(tc.arguments).value : tc.arguments || {}
+			)
+		);
 
-		await new Promise((r) => requestAnimationFrame(r));
+		ctx.setPendingTools(
+			clientToolCalls.map((tc, idx) => ({
+				...tc,
+				id: tc.id || `tool-${idx}`,
+				name: resolvedCalls[idx].toolName,
+			}))
+		);
 
-		try {
-			logger.log(
-				`[ToolExecutor:REST] Executing ${toolIndex}/${totalTools}: ${toolName}`,
-				toolCall.arguments
-			);
-			if (toolName !== rawToolName) {
-				logger.log(`[ToolExecutor:REST] Resolved tool: ${toolName}`, args);
+		// Execute client-side tools sequentially
+		for (let i = 0; i < clientToolCalls.length; i++) {
+			if (ctx.abortSignal?.aborted) {
+				const remaining = clientToolCalls.slice(i);
+				logger.log(`[ToolExecutor:REST] Stopped — cancelling ${remaining.length} pending tool(s)`);
+				toolResults.push(...remaining.map(cancelledResult));
+				break;
 			}
 
-			// Normalize alt param names
-			if (!args.client_id && args.clientId) {
-				args.client_id = args.clientId;
-			}
-			if (toolName === "blu-delete-block") {
-				if (!args.label && typeof args.item_label === "string") {
-					args.label = args.item_label;
-				}
-				if (!args.label && typeof args.menu_item_label === "string") {
-					args.label = args.menu_item_label;
-				}
-				// Nav menu client_ids go stale after every entity edit — never mix with label.
-				if (args.label) {
-					delete args.client_id;
-					delete args.clientId;
-				}
-			}
-			// The model commonly sends `instruction` (singular) even though the
-			// ability schema is `instructions` — accept both.
-			if (!args.instructions && args.instruction) {
-				args.instructions = args.instruction;
-			}
-			if (
-				(toolName === "blu-edit-block" ||
-					toolName === "blu-add-section" ||
-					toolName === "blu-insert-inner-block") &&
-				!args.block_content
-			) {
-				const alt = args.content || args.markup || args.html || args.block_markup;
-				if (alt) {
-					args.block_content = alt;
-				}
-			}
+			const toolIndex = i + 1;
+			const totalTools = clientToolCalls.length;
 
-			if (toolName === "blu-insert-inner-block") {
-				await resolveInsertInnerBlockArgs(args);
-			}
+			let { toolName, args } = resolvedCalls[i];
+			const rawToolName = clientToolCalls[i].name;
+			const toolCall = { ...clientToolCalls[i], name: toolName };
 
-			// edit-block without client_id → treat as add-section
-			if (toolName === "blu-edit-block" && !args.client_id && args.block_content) {
-				toolName = "blu-add-section";
-			}
+			ctx.setPendingTools((prev) => prev.filter((_, idx) => idx !== 0));
+			ctx.setActiveToolCall({
+				id: toolCall.id || `tool-${i}`,
+				name: toolName,
+				arguments: args,
+				index: toolIndex,
+				total: totalTools,
+			});
 
-			let result;
+			await new Promise((r) => requestAnimationFrame(r));
 
-			// Dispatch to tool handlers
-			if (
-				toolName === "blu-update-global-styles" &&
-				(args.settings || args.palette || args.styles)
-			) {
-				// Normalize: AI commonly sends { palette: [...] } instead of { settings: { color: { palette: { theme: [...] } } } }
-				if (!args.settings && args.palette) {
-					args.settings = { color: { palette: { theme: args.palette } } };
+			try {
+				logger.log(
+					`[ToolExecutor:REST] Executing ${toolIndex}/${totalTools}: ${toolName}`,
+					toolCall.arguments
+				);
+				if (toolName !== rawToolName) {
+					logger.log(`[ToolExecutor:REST] Resolved tool: ${toolName}`, args);
 				}
-				const gsResult = await handleUpdateGlobalStyles(toolCall, args, ctx);
-				result = gsResult.toolResult;
-				if (gsResult.globalStylesUndoData) {
-					globalStylesUndoData = gsResult.globalStylesUndoData;
+
+				// Normalize alt param names
+				if (!args.client_id && args.clientId) {
+					args.client_id = args.clientId;
 				}
-			} else if (
-				toolName === "blu-get-global-styles" ||
-				toolName === "blu-get-active-global-styles"
-			) {
-				result = await handleGetGlobalStyles(toolCall, ctx);
-			} else if (toolName === "blu-edit-block" && args.client_id && args.block_content) {
-				result = await handleEditBlock(toolCall, args, ctx);
-				if (!result.isError && result.hasChanges) {
-					hasBlockEdits = true;
-				}
-			} else if (toolName === "blu-add-section" && args.block_content) {
-				result = await handleAddSection(toolCall, args, ctx);
-				if (!result.isError && result.hasChanges) {
-					hasBlockEdits = true;
-				}
-			} else if (toolName === "blu-delete-block" && (args.client_id || args.label)) {
-				result = await handleDeleteBlock(toolCall, args, ctx);
-				if (!result.isError && result.hasChanges) {
-					hasBlockEdits = true;
-				}
-			} else if (toolName === "blu-duplicate-block" && (args.client_id || args.kind)) {
-				result = await handleDuplicate(toolCall, args, ctx);
-				if (!result.isError && result.hasChanges) {
-					hasBlockEdits = true;
-				}
-			} else if (
-				toolName === "blu-insert-inner-block" &&
-				args.parent_client_id &&
-				args.block_content
-			) {
-				result = await handleInsertInnerBlock(toolCall, args, ctx);
-				if (!result.isError && result.hasChanges) {
-					hasBlockEdits = true;
-				}
-			} else if (
-				toolName === "blu-move-block" &&
-				args.client_id &&
-				((args.target_client_id && args.position) || args.as_child_of)
-			) {
-				result = await handleMoveBlock(toolCall, args, ctx);
-				if (!result.isError && result.hasChanges) {
-					hasBlockEdits = true;
-				}
-			} else if (toolName === "blu-get-block-markup" && args.client_id) {
-				result = await handleGetBlockMarkup(toolCall, args, ctx);
-			} else if (toolName === "blu-highlight-block" && args.client_id) {
-				result = await handleHighlightBlock(toolCall, args, ctx);
-			} else if (toolName === "blu-update-block-attrs" && args.client_id) {
-				if (!args.attributes) {
-					// Preserve handler-level params that aren't block attributes
-					const { client_id: clientId, image_prompt: imagePrompt, ...rest } = args;
-					if (Object.keys(rest).length > 0) {
-						args = { client_id: clientId, attributes: rest };
-					} else {
-						args = { client_id: clientId, attributes: {} };
+				if (toolName === "blu-delete-block") {
+					if (!args.label && typeof args.item_label === "string") {
+						args.label = args.item_label;
 					}
-					if (imagePrompt) {
-						args.image_prompt = imagePrompt;
+					if (!args.label && typeof args.menu_item_label === "string") {
+						args.label = args.menu_item_label;
+					}
+					// Nav menu client_ids go stale after every entity edit — never mix with label.
+					if (args.label) {
+						delete args.client_id;
+						delete args.clientId;
 					}
 				}
-				if (args.attributes || args.image_prompt) {
-					result = await handleUpdateBlockAttrs(toolCall, args, ctx);
+				// The model commonly sends `instruction` (singular) even though the
+				// ability schema is `instructions` — accept both.
+				if (!args.instructions && args.instruction) {
+					args.instructions = args.instruction;
+				}
+				if (
+					(toolName === "blu-edit-block" ||
+						toolName === "blu-add-section" ||
+						toolName === "blu-insert-inner-block") &&
+					!args.block_content
+				) {
+					const alt = args.content || args.markup || args.html || args.block_markup;
+					if (alt) {
+						args.block_content = alt;
+					}
+				}
+
+				if (toolName === "blu-insert-inner-block") {
+					await resolveInsertInnerBlockArgs(args);
+				}
+
+				// edit-block without client_id → treat as add-section
+				if (toolName === "blu-edit-block" && !args.client_id && args.block_content) {
+					toolName = "blu-add-section";
+				}
+
+				let result;
+
+				// Dispatch to tool handlers
+				if (
+					toolName === "blu-update-global-styles" &&
+					(args.settings || args.palette || args.styles)
+				) {
+					// Normalize: AI commonly sends { palette: [...] } instead of { settings: { color: { palette: { theme: [...] } } } }
+					if (!args.settings && args.palette) {
+						args.settings = { color: { palette: { theme: args.palette } } };
+					}
+					const gsResult = await handleUpdateGlobalStyles(toolCall, args, ctx);
+					result = gsResult.toolResult;
+					if (gsResult.globalStylesUndoData) {
+						globalStylesUndoData = gsResult.globalStylesUndoData;
+					}
+				} else if (
+					toolName === "blu-get-global-styles" ||
+					toolName === "blu-get-active-global-styles"
+				) {
+					result = await handleGetGlobalStyles(toolCall, ctx);
+				} else if (toolName === "blu-edit-block" && args.client_id && args.block_content) {
+					result = await handleEditBlock(toolCall, args, ctx);
 					if (!result.isError && result.hasChanges) {
 						hasBlockEdits = true;
 					}
-				}
-			} else if (toolName === "blu-edit-image") {
-				if (args.prompt && args.source_url) {
-					result = await handleEditImage(toolCall, args, ctx);
-				} else {
-					result = {
-						id: toolCall.id,
-						result: [
-							{
-								type: "text",
-								text: JSON.stringify({
-									error:
-										"Missing required parameters: prompt and source_url. Use blu-edit-image to modify an existing image URL.",
-								}),
-							},
-						],
-						isError: true,
-					};
-				}
-			} else if (toolName === "blu-generate-image" && args.prompt) {
-				// If the targeted block already has an image, redirect to blu-edit-image
-				// so we modify the existing photo rather than discarding it and
-				// generating a brand-new one. Resolve the block from (in priority order):
-				// the explicit client_id arg, the active image-edit target recorded when
-				// the request was sent, then the live selection. The active target is the
-				// reliable signal — the chat sidebar steals canvas selection, so
-				// getSelectedBlock() is often null by the time tools dispatch.
-				const targetClientId = args.client_id || getActiveImageEditTarget() || null;
-				const targetBlock = targetClientId
-					? wp.data.select("core/block-editor").getBlock(targetClientId)
-					: wp.data.select("core/block-editor").getSelectedBlock();
-				const sourceUrl =
-					targetBlock && IMAGE_BLOCKS.has(targetBlock.name) ? getBlockImageUrl(targetBlock) : null;
+				} else if (toolName === "blu-add-section" && args.block_content) {
+					result = await handleAddSection(toolCall, args, ctx);
+					if (!result.isError && result.hasChanges) {
+						hasBlockEdits = true;
+					}
+				} else if (toolName === "blu-delete-block" && (args.client_id || args.label)) {
+					result = await handleDeleteBlock(toolCall, args, ctx);
+					if (!result.isError && result.hasChanges) {
+						hasBlockEdits = true;
+					}
+				} else if (toolName === "blu-duplicate-block" && (args.client_id || args.kind)) {
+					result = await handleDuplicate(toolCall, args, ctx);
+					if (!result.isError && result.hasChanges) {
+						hasBlockEdits = true;
+					}
+				} else if (
+					toolName === "blu-insert-inner-block" &&
+					args.parent_client_id &&
+					args.block_content
+				) {
+					result = await handleInsertInnerBlock(toolCall, args, ctx);
+					if (!result.isError && result.hasChanges) {
+						hasBlockEdits = true;
+					}
+				} else if (
+					toolName === "blu-move-block" &&
+					args.client_id &&
+					((args.target_client_id && args.position) || args.as_child_of)
+				) {
+					result = await handleMoveBlock(toolCall, args, ctx);
+					if (!result.isError && result.hasChanges) {
+						hasBlockEdits = true;
+					}
+				} else if (toolName === "blu-get-block-markup" && args.client_id) {
+					result = await handleGetBlockMarkup(toolCall, args, ctx);
+				} else if (toolName === "blu-highlight-block" && args.client_id) {
+					result = await handleHighlightBlock(toolCall, args, ctx);
+				} else if (toolName === "blu-update-block-attrs" && args.client_id) {
+					if (!args.attributes) {
+						// Preserve handler-level params that aren't block attributes
+						const { client_id: clientId, image_prompt: imagePrompt, ...rest } = args;
+						if (Object.keys(rest).length > 0) {
+							args = { client_id: clientId, attributes: rest };
+						} else {
+							args = { client_id: clientId, attributes: {} };
+						}
+						if (imagePrompt) {
+							args.image_prompt = imagePrompt;
+						}
+					}
+					if (args.attributes || args.image_prompt) {
+						result = await handleUpdateBlockAttrs(toolCall, args, ctx);
+						if (!result.isError && result.hasChanges) {
+							hasBlockEdits = true;
+						}
+					}
+				} else if (toolName === "blu-edit-image") {
+					if (args.prompt && args.source_url) {
+						result = await handleEditImage(toolCall, args, ctx);
+					} else {
+						result = {
+							id: toolCall.id,
+							result: [
+								{
+									type: "text",
+									text: JSON.stringify({
+										error:
+											"Missing required parameters: prompt and source_url. Use blu-edit-image to modify an existing image URL.",
+									}),
+								},
+							],
+							isError: true,
+						};
+					}
+				} else if (toolName === "blu-generate-image" && args.prompt) {
+					// If the targeted block already has an image, redirect to blu-edit-image
+					// so we modify the existing photo rather than discarding it and
+					// generating a brand-new one. Resolve the block from (in priority order):
+					// the explicit client_id arg, the active image-edit target recorded when
+					// the request was sent, then the live selection. The active target is the
+					// reliable signal — the chat sidebar steals canvas selection, so
+					// getSelectedBlock() is often null by the time tools dispatch.
+					const targetClientId = args.client_id || getActiveImageEditTarget() || null;
+					const targetBlock = targetClientId
+						? wp.data.select("core/block-editor").getBlock(targetClientId)
+						: wp.data.select("core/block-editor").getSelectedBlock();
+					const sourceUrl =
+						targetBlock && IMAGE_BLOCKS.has(targetBlock.name)
+							? getBlockImageUrl(targetBlock)
+							: null;
 
-				const progressLabel = sourceUrl
-					? __("Editing image…", "wp-module-editor-chat")
-					: __("Generating image…", "wp-module-editor-chat");
-				await ctx.updateProgress(progressLabel, 500);
-				try {
-					const mcpResult = await callImageAbility(ctx.mcpClient, {
-						prompt: args.prompt,
-						sourceUrl,
-					});
-					const url = parseImageAbilityUrl(mcpResult);
-					if (url) {
-						const alt = resolveAlt(args.alt, args.prompt);
-						appendGeneratedImageUrl(url, alt);
-						if (targetBlock && IMAGE_BLOCKS.has(targetBlock.name)) {
-							applyImageToBlock(targetBlock.clientId, url, alt);
-						}
-					}
-					result = {
-						id: toolCall.id,
-						result: [
-							{
-								type: "text",
-								text: JSON.stringify(
-									url
-										? {
-												success: true,
-												message: sourceUrl ? "Image edited." : "Image generated.",
-												url,
-											}
-										: { success: false, error: "No image URL returned." }
-								),
-							},
-						],
-						isError: mcpResult.isError || !url,
-					};
-				} catch (err) {
-					result = {
-						id: toolCall.id,
-						result: [{ type: "text", text: JSON.stringify({ error: err.message }) }],
-						isError: true,
-					};
-				}
-			} else if (toolName === "blu-edit-image" && args.prompt && args.source_url) {
-				await ctx.updateProgress(__("Editing image…", "wp-module-editor-chat"), 500);
-				try {
-					const mcpResult = await callAbility(ctx.mcpClient, "blu-edit-image", args);
-					result = {
-						id: toolCall.id,
-						result: mcpResult.content,
-						isError: mcpResult.isError || false,
-					};
-					// Track edited image URL so subsequent block updates can reference it
-					if (!result.isError && mcpResult.content?.[0]?.text) {
-						try {
-							const parsed = JSON.parse(mcpResult.content[0].text);
-							const url = parsed?.message?.url || parsed?.url;
-							if (url) {
-								appendGeneratedImageUrl(url);
+					const progressLabel = sourceUrl
+						? __("Editing image…", "wp-module-editor-chat")
+						: __("Generating image…", "wp-module-editor-chat");
+					await ctx.updateProgress(progressLabel, 500);
+					try {
+						const mcpResult = await callImageAbility(ctx.mcpClient, {
+							prompt: args.prompt,
+							sourceUrl,
+						});
+						const url = parseImageAbilityUrl(mcpResult);
+						if (url) {
+							const alt = resolveAlt(args.alt, args.prompt);
+							appendGeneratedImageUrl(url, alt);
+							if (targetBlock && IMAGE_BLOCKS.has(targetBlock.name)) {
+								applyImageToBlock(targetBlock.clientId, url, alt);
 							}
-						} catch {
-							/* non-critical */
+						}
+						result = {
+							id: toolCall.id,
+							result: [
+								{
+									type: "text",
+									text: JSON.stringify(
+										url
+											? {
+													success: true,
+													message: sourceUrl ? "Image edited." : "Image generated.",
+													url,
+												}
+											: { success: false, error: "No image URL returned." }
+									),
+								},
+							],
+							isError: mcpResult.isError || !url,
+						};
+					} catch (err) {
+						result = {
+							id: toolCall.id,
+							result: [{ type: "text", text: JSON.stringify({ error: err.message }) }],
+							isError: true,
+						};
+					}
+				} else if (toolName === "blu-edit-image" && args.prompt && args.source_url) {
+					await ctx.updateProgress(__("Editing image…", "wp-module-editor-chat"), 500);
+					try {
+						const mcpResult = await callAbility(ctx.mcpClient, "blu-edit-image", args);
+						result = {
+							id: toolCall.id,
+							result: mcpResult.content,
+							isError: mcpResult.isError || false,
+						};
+						// Track edited image URL so subsequent block updates can reference it
+						if (!result.isError && mcpResult.content?.[0]?.text) {
+							try {
+								const parsed = JSON.parse(mcpResult.content[0].text);
+								const url = parsed?.message?.url || parsed?.url;
+								if (url) {
+									appendGeneratedImageUrl(url);
+								}
+							} catch {
+								/* non-critical */
+							}
+						}
+					} catch (err) {
+						result = {
+							id: toolCall.id,
+							result: [{ type: "text", text: JSON.stringify({ error: err.message }) }],
+							isError: true,
+						};
+					}
+				} else if (toolName === "blu-regenerate-logo") {
+					if (!args.prompt) {
+						result = {
+							id: toolCall.id,
+							result: [
+								{
+									type: "text",
+									text: JSON.stringify({
+										error:
+											"Missing required parameter: prompt. Describe the logo to generate (brand name, style, colors).",
+									}),
+								},
+							],
+							isError: true,
+						};
+					} else {
+						result = await handleRegenerateLogo(toolCall, args, ctx);
+					}
+				} else if (toolName === "blu-edit-logo") {
+					if (!args.prompt) {
+						result = {
+							id: toolCall.id,
+							result: [
+								{
+									type: "text",
+									text: JSON.stringify({
+										error:
+											"Missing required parameter: prompt. Describe how to edit the existing logo (colors, text, layout, etc.).",
+									}),
+								},
+							],
+							isError: true,
+						};
+					} else {
+						result = await handleEditLogo(toolCall, args, ctx);
+						if (!result.isError) {
+							hasBlockEdits = true;
 						}
 					}
-				} catch (err) {
-					result = {
-						id: toolCall.id,
-						result: [{ type: "text", text: JSON.stringify({ error: err.message }) }],
-						isError: true,
-					};
-				}
-			} else if (toolName === "blu-regenerate-logo") {
-				if (!args.prompt) {
-					result = {
-						id: toolCall.id,
-						result: [
-							{
-								type: "text",
-								text: JSON.stringify({
-									error:
-										"Missing required parameter: prompt. Describe the logo to generate (brand name, style, colors).",
-								}),
-							},
-						],
-						isError: true,
-					};
-				} else {
-					result = await handleRegenerateLogo(toolCall, args, ctx);
-				}
-			} else if (toolName === "blu-edit-logo") {
-				if (!args.prompt) {
-					result = {
-						id: toolCall.id,
-						result: [
-							{
-								type: "text",
-								text: JSON.stringify({
-									error:
-										"Missing required parameter: prompt. Describe how to edit the existing logo (colors, text, layout, etc.).",
-								}),
-							},
-						],
-						isError: true,
-					};
-				} else {
-					result = await handleEditLogo(toolCall, args, ctx);
+				} else if (toolName === "blu-set-logo-from-image" && args.source_url) {
+					result = await handleSetLogoFromImage(toolCall, args, ctx);
 					if (!result.isError) {
 						hasBlockEdits = true;
 					}
-				}
-			} else if (toolName === "blu-set-logo-from-image" && args.source_url) {
-				result = await handleSetLogoFromImage(toolCall, args, ctx);
-				if (!result.isError) {
-					hasBlockEdits = true;
-				}
-			} else {
-				if (toolName === "blu-add-page") {
-					args.meta = {
-						nfd_onboarding_generated: "1",
-						...(args.meta || {}),
-					};
-				}
+				} else {
+					if (toolName === "blu-add-page") {
+						args.meta = {
+							nfd_onboarding_generated: "1",
+							...(args.meta || {}),
+						};
+					}
 
-				// Validate Gutenberg markup before entity create/update hits WordPress REST.
-				let contentValidationFailed = false;
-				if (abilityUsesBlockContent(toolName)) {
-					const hasContent =
-						args.content || args.block_content || args.markup || args.html || args.block_markup;
-					if (hasContent) {
-						await ctx.updateProgress(__("Validating block markup…", "wp-module-editor-chat"), 300);
-						const contentCheck = validateEntityContentArgs(toolName, args);
-						if (!contentCheck.ok) {
-							contentValidationFailed = true;
-							result = {
-								id: toolCall.id,
-								result: [
-									{
-										type: "text",
-										text: JSON.stringify({
-											success: false,
-											error: contentCheck.error,
-										}),
-									},
-								],
-								isError: true,
-							};
+					// Validate Gutenberg markup before entity create/update hits WordPress REST.
+					let contentValidationFailed = false;
+					if (abilityUsesBlockContent(toolName)) {
+						const hasContent =
+							args.content || args.block_content || args.markup || args.html || args.block_markup;
+						if (hasContent) {
+							await ctx.updateProgress(
+								__("Validating block markup…", "wp-module-editor-chat"),
+								300
+							);
+							const contentCheck = validateEntityContentArgs(toolName, args);
+							if (!contentCheck.ok) {
+								contentValidationFailed = true;
+								result = {
+									id: toolCall.id,
+									result: [
+										{
+											type: "text",
+											text: JSON.stringify({
+												success: false,
+												error: contentCheck.error,
+											}),
+										},
+									],
+									isError: true,
+								};
+							}
 						}
 					}
-				}
 
-				if (!contentValidationFailed) {
-					// Server-side MCP tool — forward to MCP server for execution
-					logger.log(`[ToolExecutor:REST] Forwarding to MCP: ${toolName}`, args);
-					try {
-						const mcpResult = await callAbility(ctx.mcpClient, toolName, args);
-						const mcpFailed = mcpResultIsError(mcpResult);
-						const stub = !mcpFailed ? parseMcpClientActionStub(mcpResult) : null;
-						if (stub) {
-							const stubResult = await executeClientActionFromStub(stub, args, toolCall, ctx);
-							if (stubResult) {
-								result = stubResult;
-								if (!stubResult.isError && stubResult.hasChanges) {
-									hasBlockEdits = true;
+					if (!contentValidationFailed) {
+						// Server-side MCP tool — forward to MCP server for execution
+						logger.log(`[ToolExecutor:REST] Forwarding to MCP: ${toolName}`, args);
+						try {
+							const mcpResult = await callAbility(ctx.mcpClient, toolName, args);
+							const mcpFailed = mcpResultIsError(mcpResult);
+							const stub = !mcpFailed ? parseMcpClientActionStub(mcpResult) : null;
+							if (stub) {
+								const stubResult = await executeClientActionFromStub(stub, args, toolCall, ctx);
+								if (stubResult) {
+									result = stubResult;
+									if (!stubResult.isError && stubResult.hasChanges) {
+										hasBlockEdits = true;
+									}
+								} else {
+									result = {
+										id: toolCall.id,
+										result: mcpResult.content,
+										isError: mcpFailed,
+									};
 								}
 							} else {
 								result = {
@@ -981,100 +1020,94 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 									isError: mcpFailed,
 								};
 							}
-						} else {
+						} catch (mcpErr) {
 							result = {
 								id: toolCall.id,
-								result: mcpResult.content,
-								isError: mcpFailed,
+								result: [
+									{ type: "text", text: JSON.stringify({ success: false, error: mcpErr.message }) },
+								],
+								isError: true,
 							};
 						}
-					} catch (mcpErr) {
-						result = {
-							id: toolCall.id,
-							result: [
-								{ type: "text", text: JSON.stringify({ success: false, error: mcpErr.message }) },
-							],
-							isError: true,
-						};
 					}
 				}
-			}
 
-			// Build tool result for conversation
-			const isError = result?.isError ?? false;
-			let creationMeta = null;
-			let content;
-			if (isError) {
-				content =
-					result.error || result.result?.[0]?.text || __("Tool failed", "wp-module-editor-chat");
-			} else if (READ_TOOLS.has(toolName) && result?.result?.[0]?.text) {
-				content = result.result[0].text;
-			} else if (CREATE_ABILITIES.has(toolName) && result?.result?.[0]?.text) {
-				creationMeta = await handleContentCreation(toolName, result, ctx);
-				if (creationMeta) {
-					content = JSON.stringify({
-						success: true,
-						created: creationMeta,
-					});
-				} else {
+				// Build tool result for conversation
+				const isError = result?.isError ?? false;
+				let creationMeta = null;
+				let content;
+				if (isError) {
+					content =
+						result.error || result.result?.[0]?.text || __("Tool failed", "wp-module-editor-chat");
+				} else if (READ_TOOLS.has(toolName) && result?.result?.[0]?.text) {
 					content = result.result[0].text;
-				}
-			} else if (
-				result?.result?.[0]?.text &&
-				(isMcpDataTool(toolName) ||
-					(!result?.hasChanges && !isClientActionStubText(result.result[0].text)))
-			) {
-				content = result.result[0].text;
-			} else {
-				// Extract human-readable .message from handler's JSON result
-				const msg = (() => {
-					try {
-						return JSON.parse(result?.result?.[0]?.text)?.message;
-					} catch {
-						return null;
+				} else if (CREATE_ABILITIES.has(toolName) && result?.result?.[0]?.text) {
+					creationMeta = await handleContentCreation(toolName, result, ctx);
+					if (creationMeta) {
+						content = JSON.stringify({
+							success: true,
+							created: creationMeta,
+						});
+					} else {
+						content = result.result[0].text;
 					}
-				})();
-				content = result?.hasChanges
-					? msg || __("Applied successfully", "wp-module-editor-chat")
-					: __("No changes needed", "wp-module-editor-chat");
+				} else if (
+					result?.result?.[0]?.text &&
+					(isMcpDataTool(toolName) ||
+						(!result?.hasChanges && !isClientActionStubText(result.result[0].text)))
+				) {
+					content = result.result[0].text;
+				} else {
+					// Extract human-readable .message from handler's JSON result
+					const msg = (() => {
+						try {
+							return JSON.parse(result?.result?.[0]?.text)?.message;
+						} catch {
+							return null;
+						}
+					})();
+					content = result?.hasChanges
+						? msg || __("Applied successfully", "wp-module-editor-chat")
+						: __("No changes needed", "wp-module-editor-chat");
+				}
+
+				// Log every client tool's outcome (with the failure reason) so the full
+				// sequence is visible when debug logging is enabled. Many "failures" are
+				// benign — the model retries with a different tool/target and still
+				// completes the action (e.g. "Block not found" from a stale client_id).
+				logger.log(
+					`[ToolExecutor:REST] ${isError ? "✗ FAILED" : "✓ ok"}: ${toolName} →`,
+					content,
+					isError ? toolCall.arguments : ""
+				);
+
+				toolResults.push({
+					tool_call_id: toolCall.id,
+					content,
+					isError,
+					hasChanges: result?.hasChanges || false,
+					isContentCreation: !!creationMeta,
+					creationMeta,
+				});
+				completedToolsList.push({ ...toolCall, isError });
+				ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError }]);
+			} catch (err) {
+				console.error(`[ToolExecutor:REST] Error executing ${toolCall.name}:`, err);
+				await ctx.updateProgress(
+					__("Action failed:", "wp-module-editor-chat") + " " + err.message,
+					1000
+				);
+				toolResults.push({
+					tool_call_id: toolCall.id,
+					content: JSON.stringify({ error: err.message }),
+					isError: true,
+				});
+				completedToolsList.push({ ...toolCall, isError: true, errorMessage: err.message });
+				ctx.setExecutedTools((prev) => [
+					...prev,
+					{ ...toolCall, isError: true, errorMessage: err.message },
+				]);
 			}
-
-			// Log every client tool's outcome (with the failure reason) so the full
-			// sequence is visible when debug logging is enabled. Many "failures" are
-			// benign — the model retries with a different tool/target and still
-			// completes the action (e.g. "Block not found" from a stale client_id).
-			logger.log(
-				`[ToolExecutor:REST] ${isError ? "✗ FAILED" : "✓ ok"}: ${toolName} →`,
-				content,
-				isError ? toolCall.arguments : ""
-			);
-
-			toolResults.push({
-				tool_call_id: toolCall.id,
-				content,
-				isError,
-				hasChanges: result?.hasChanges || false,
-				isContentCreation: !!creationMeta,
-				creationMeta,
-			});
-			completedToolsList.push({ ...toolCall, isError });
-			ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError }]);
-		} catch (err) {
-			console.error(`[ToolExecutor:REST] Error executing ${toolCall.name}:`, err);
-			await ctx.updateProgress(
-				__("Action failed:", "wp-module-editor-chat") + " " + err.message,
-				1000
-			);
-			toolResults.push({
-				tool_call_id: toolCall.id,
-				content: JSON.stringify({ error: err.message }),
-				isError: true,
-			});
-			completedToolsList.push({ ...toolCall, isError: true, errorMessage: err.message });
-			ctx.setExecutedTools((prev) => [
-				...prev,
-				{ ...toolCall, isError: true, errorMessage: err.message },
-			]);
 		}
 	}
 
