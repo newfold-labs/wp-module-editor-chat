@@ -613,9 +613,18 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 		}
 	}
 
+	// A turn with no client-side (blu-*) calls and no local write either (a
+	// pure read, local or MCP) has nothing for the undo/bookkeeping tail
+	// below to do — same early exit as before this fix, just no longer
+	// keyed on clientToolCalls alone, since a local write now also needs
+	// that tail to run.
+	if (clientToolCalls.length === 0 && !hasBlockEdits) {
+		return toolResults;
+	}
+
 	// Client-side (blu-*) tools have their own execution loop below; a turn
-	// with none (e.g. local-only reads or writes) skips straight to the
-	// undo/bookkeeping tail, which must still run for local writes.
+	// whose only mutation was a local write skips straight to the
+	// undo/bookkeeping tail.
 	if (clientToolCalls.length > 0) {
 		await ctx.wait(300);
 		ctx.setStatus(CHAT_STATUS.TOOL_CALL);
