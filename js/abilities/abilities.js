@@ -288,26 +288,34 @@ function findSpecialAncestorKind(store, clientId) {
  * one), or a template-part block (or something inside one). The legacy
  * blu-* tool remains registered and available for these cases.
  *
- * @param {Object} store    Block editor store selectors.
+ * @param {Object} store          Block editor store selectors.
  * @param {string} clientId
+ * @param {string} legacyToolName The blu-* WebMCP tool name that still
+ *                                handles this case, named in the thrown
+ *                                error so the model has a route out
+ *                                instead of retrying this same call.
  */
-function assertNotSpecialEntityBlock(store, clientId) {
+function assertNotSpecialEntityBlock(store, clientId, legacyToolName) {
 	const block = store.getBlock(clientId);
 	if (block?.name === "core/site-logo") {
 		throw new Error(
-			"core/site-logo is managed separately and is not supported by this ability yet."
+			`core/site-logo is managed separately and is not supported by this ability yet. Use ${legacyToolName} for this block instead.`
 		);
 	}
 	if (isTemplatePartBlock(block)) {
-		throw new Error("This block is a template part, which this ability does not support yet.");
+		throw new Error(
+			`This block is a template part, which this ability does not support yet. Use ${legacyToolName} for this block instead.`
+		);
 	}
 	if (isRefNavigationBlock(block)) {
-		throw new Error("This block is a navigation menu, which this ability does not support yet.");
+		throw new Error(
+			`This block is a navigation menu, which this ability does not support yet. Use ${legacyToolName} for this block instead.`
+		);
 	}
 	const ancestorKind = findSpecialAncestorKind(store, clientId);
 	if (ancestorKind) {
 		throw new Error(
-			`This block is part of a ${ancestorKind}, which this ability does not support yet.`
+			`This block is part of a ${ancestorKind}, which this ability does not support yet. Use ${legacyToolName} for this block instead.`
 		);
 	}
 }
@@ -463,6 +471,72 @@ function normalizeAttributes(blockName, attributes) {
 		normalized[key] = normalizeAttributeValue(attributes[key], supported[key], key);
 	}
 	return normalized;
+}
+
+/**
+ * Recursively merge new attribute values into existing ones. A null/undefined
+ * value in source deletes that key rather than overwriting it. Mirrors
+ * src/utils/deepMerge.js's deepMergeAttrs(), reimplemented here because that
+ * file is not reachable from this script module (a separate module graph
+ * from the webpack-bundled src/ tree — see the special-entity guard above
+ * for the same constraint).
+ *
+ * @param {Object} target
+ * @param {Object} source
+ * @return {Object} The merged attributes.
+ */
+function deepMergeAttributes(target, source) {
+	const result = { ...target };
+	for (const key of Object.keys(source)) {
+		if (source[key] === null || source[key] === undefined) {
+			delete result[key];
+		} else if (
+			typeof source[key] === "object" &&
+			!Array.isArray(source[key]) &&
+			typeof result[key] === "object" &&
+			result[key] !== null &&
+			!Array.isArray(result[key])
+		) {
+			result[key] = deepMergeAttributes(result[key], source[key]);
+		} else {
+			result[key] = source[key];
+		}
+	}
+	return result;
+}
+
+/**
+ * WordPress treats a color preset slug (textColor/backgroundColor) and its
+ * custom style equivalent (style.color.text/background) as mutually
+ * exclusive — the preset wins when both are present. Mirrors the same rule
+ * src/services/toolHandlers/updateBlockAttrs.js already applies (the legacy
+ * blu-update-block-attrs path this ability parallels), so setting one
+ * through this ability clears the conflicting other, matching what the
+ * WordPress color picker UI itself does, instead of silently doing nothing
+ * because the untouched preset still wins.
+ *
+ * @param {Object} currentAttributes Block's attributes before this update.
+ * @param {Object} newAttributes     Attributes requested for this update.
+ * @return {Object} newAttributes, with conflicting sibling values cleared.
+ */
+function clearConflictingColorAttributes(currentAttributes, newAttributes) {
+	const adjusted = { ...newAttributes };
+	const customText = adjusted.style?.color?.text;
+	const customBg = adjusted.style?.color?.background;
+
+	if (customText && currentAttributes.textColor && !("textColor" in adjusted)) {
+		adjusted.textColor = null;
+	}
+	if (customBg && currentAttributes.backgroundColor && !("backgroundColor" in adjusted)) {
+		adjusted.backgroundColor = null;
+	}
+	if (adjusted.textColor && currentAttributes.style?.color?.text) {
+		adjusted.style = { ...adjusted.style, color: { ...adjusted.style?.color, text: null } };
+	}
+	if (adjusted.backgroundColor && currentAttributes.style?.color?.background) {
+		adjusted.style = { ...adjusted.style, color: { ...adjusted.style?.color, background: null } };
+	}
+	return adjusted;
 }
 
 /**
@@ -879,7 +953,7 @@ export function registerEditorAbilities() {
 			const actions = dispatch(BLOCK_EDITOR_STORE);
 
 			const block = requireBlock(store, input.clientId);
-			assertNotSpecialEntityBlock(store, input.clientId);
+			assertNotSpecialEntityBlock(store, input.clientId, "blu-move-block");
 
 			if (input.afterClientId && input.beforeClientId) {
 				throw new Error("Provide only one of afterClientId or beforeClientId.");
@@ -930,7 +1004,7 @@ export function registerEditorAbilities() {
 			}
 
 			if (toRootClientId) {
-				assertNotSpecialEntityBlock(store, toRootClientId);
+				assertNotSpecialEntityBlock(store, toRootClientId, "blu-move-block");
 			}
 
 			if (toRootClientId === input.clientId) {
@@ -1013,7 +1087,7 @@ export function registerEditorAbilities() {
 			const actions = dispatch(BLOCK_EDITOR_STORE);
 
 			const block = requireBlock(store, input.clientId);
-			assertNotSpecialEntityBlock(store, input.clientId);
+			assertNotSpecialEntityBlock(store, input.clientId, "blu-delete-block");
 
 			const rootClientId = store.getBlockRootClientId(input.clientId) || null;
 			const index = store.getBlockIndex(input.clientId);
@@ -1087,7 +1161,7 @@ export function registerEditorAbilities() {
 			const actions = dispatch(BLOCK_EDITOR_STORE);
 
 			const block = requireBlock(store, input.clientId);
-			assertNotSpecialEntityBlock(store, input.clientId);
+			assertNotSpecialEntityBlock(store, input.clientId, "blu-update-block-attrs");
 
 			if (!isPlainObject(input.attributes)) {
 				throw new Error("attributes must be an object.");
@@ -1098,15 +1172,28 @@ export function registerEditorAbilities() {
 				throw new Error("attributes must contain at least one key.");
 			}
 
-			const attributes = normalizeAttributes(block.name, input.attributes);
+			const normalized = normalizeAttributes(block.name, input.attributes);
+			const currentAttributes = block.attributes ?? {};
+			const adjusted = clearConflictingColorAttributes(currentAttributes, normalized);
+			const merged = deepMergeAttributes(currentAttributes, adjusted);
 
-			await actions.updateBlockAttributes(input.clientId, attributes);
+			await actions.updateBlockAttributes(input.clientId, merged);
 
 			const updated = requireBlock(store, input.clientId);
+			const updatedAttributes = updated.attributes ?? {};
+			const notApplied = keys.filter(
+				(key) => JSON.stringify(updatedAttributes[key]) !== JSON.stringify(merged[key])
+			);
+			if (notApplied.length) {
+				throw new Error(
+					`The editor did not update attribute(s): ${notApplied.join(", ")}. The block or its parent may be locked.`
+				);
+			}
+
 			return {
 				clientId: input.clientId,
 				name: updated.name,
-				attributes: updated.attributes ?? {},
+				attributes: updatedAttributes,
 				updatedAttributes: keys,
 			};
 		},
