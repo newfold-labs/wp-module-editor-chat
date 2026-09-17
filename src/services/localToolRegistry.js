@@ -75,7 +75,15 @@ export async function listLocalTools() {
 
 	try {
 		const tools = await modelContext.getTools();
-		return (tools || []).filter((tool) => isLocalToolName(tool?.name));
+		// The WebMCP polyfill's getTools() JSON.stringifies inputSchema before
+		// returning it (see js/vendor/webmcp-polyfill/webmcp-polyfill.js,
+		// getToolInfos()) — parse it back into an object, or mcpToolsToOpenAI()
+		// forwards the raw string as `parameters`, which OpenAI rejects with
+		// "Invalid type for 'tools[N].function.parameters': expected an object,
+		// but got a string instead."
+		return (tools || [])
+			.filter((tool) => isLocalToolName(tool?.name))
+			.map((tool) => ({ ...tool, inputSchema: parseMaybeJson(tool.inputSchema) }));
 	} catch (error) {
 		console.warn("[nfd-editor-chat] Could not list local editor tools:", error);
 		return [];
