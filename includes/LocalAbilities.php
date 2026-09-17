@@ -134,6 +134,18 @@ final class LocalAbilities {
 				'editor/move-block',
 				'editor/remove-block',
 				'editor/update-block',
+				'editor/get-block-types',
+				'editor/get-block-type',
+				'editor/get-patterns',
+				'editor/get-pattern',
+				'editor/get-pattern-categories',
+				'editor/insert-block',
+				'editor/insert-pattern',
+				'editor/create-pattern',
+				'editor/transform-block',
+				'editor/select-block',
+				'editor/undo',
+				'editor/redo',
 			)
 		);
 	}

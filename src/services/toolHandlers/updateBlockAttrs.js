@@ -3,7 +3,11 @@ import { __ } from "@wordpress/i18n";
 import { deepMergeAttrs as deepMerge } from "../../utils/deepMerge";
 import { appendGeneratedImageUrl } from "../imageCache";
 import { resolveAlt } from "../../utils/imageAlt";
-import { hasImagePlaceholder } from "../../utils/imagePlaceholders";
+import {
+	hasImagePlaceholder,
+	hasImagePlaceholderDeep,
+	substituteImagePlaceholdersInValue,
+} from "../../utils/imagePlaceholders";
 import { callImageAbility, getBlockImageUrl, parseImageAbilityUrl } from "../imageAbility";
 import { IMAGE_BLOCKS, LOGO_BLOCK } from "../blockToolbar/blockAI";
 import {
@@ -84,29 +88,37 @@ export async function handleUpdateBlockAttrs(toolCall, args, ctx) {
 			};
 		}
 
-		// `url` is sometimes filled with an `__IMG_N__` placeholder — a markup
-		// convention that has no meaning on an attribute patch, and would set the
-		// block's image src to the literal token. Drop it so image_prompt can
-		// generate below, and refuse when there is no prompt to generate from.
+		// A placeholder can appear anywhere in the attribute tree — the top-level
+		// `url` on an image/cover block, but just as often nested CSS on a plain
+		// container (e.g. `style.backgroundImage: "url(__IMG_1__)"`). It's a
+		// markup convention with no meaning on an attribute patch until
+		// image_prompt resolves it below, so check the whole tree, not just `url`.
+		const attributesHadPlaceholder = hasImagePlaceholderDeep(args.attributes);
+
+		// A top-level `url` placeholder specifically would set the block's own
+		// image src to the literal token if left in place — drop it so
+		// image_prompt can fill it in below (fresh, alongside any other
+		// placeholder in the tree).
 		if (hasImagePlaceholder(args.attributes.url)) {
 			delete args.attributes.url;
-			if (!args.image_prompt) {
-				return {
-					id: toolCall.id,
-					result: [
-						{
-							type: "text",
-							text: JSON.stringify({
-								success: false,
-								error:
-									"`url` was an image placeholder, which this tool cannot resolve — nothing was changed. " +
-									"Call blu/update-block-attrs again with image_prompt describing the image you want, and no url.",
-							}),
-						},
-					],
-					isError: true,
-				};
-			}
+		}
+
+		if (attributesHadPlaceholder && !args.image_prompt) {
+			return {
+				id: toolCall.id,
+				result: [
+					{
+						type: "text",
+						text: JSON.stringify({
+							success: false,
+							error:
+								"attributes contained an image placeholder, which this tool cannot resolve on its own — nothing was changed. " +
+								"Call blu/update-block-attrs again with image_prompt describing the image you want.",
+						}),
+					},
+				],
+				isError: true,
+			};
 		}
 
 		// ── Generate or edit image from prompt if provided ──
@@ -128,7 +140,15 @@ export async function handleUpdateBlockAttrs(toolCall, args, ctx) {
 				});
 				const url = parseImageAbilityUrl(mcpResult);
 				if (url) {
-					args.attributes.url = url;
+					// A placeholder elsewhere in the tree (style.backgroundImage and
+					// the like) needs substitution in place; the plain case — no
+					// placeholder anywhere, just an image/cover block's own `url` —
+					// keeps the original direct assignment.
+					if (hasImagePlaceholderDeep(args.attributes)) {
+						args.attributes = substituteImagePlaceholdersInValue(args.attributes, url);
+					} else {
+						args.attributes.url = url;
+					}
 					// Keep alt in step with the new image — deepMerge would otherwise
 					// carry the old one through and leave it describing the old photo.
 					const alt = resolveAlt(args.attributes.alt || imgOpts.alt, imgOpts.prompt);

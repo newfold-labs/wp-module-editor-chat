@@ -4,12 +4,10 @@
  * These run in the browser against the live block editor stores and are
  * discoverable via @wordpress/abilities (and WebMCP via webmcp-bridge.js).
  *
- * This covers Rollout Stage 1 (editor/get-editor-tree) and Stage 2's
- * block-tree read family (editor/find-editor-blocks, editor/get-block-location,
- * editor/get-editor-selection, editor/can-insert-block) — see
- * docs/superpowers/specs/2026-09-11-local-editor-abilities-design.md and
- * docs/superpowers/specs/2026-09-14-local-editor-abilities-stage2-block-tree-reads-design.md.
- * Block types and patterns are added the same way in later plans.
+ * This covers the contributor-day editor/* surface: block-tree reads,
+ * block-type and pattern introspection, and the local write abilities
+ * (insert/move/update/remove/transform/select/undo/redo/patterns). See
+ * docs/local-abilities.md and docs/superpowers/specs/2026-09-11-local-editor-abilities-design.md.
  */
 
 import {
@@ -20,6 +18,16 @@ import {
 } from "@wordpress/abilities";
 
 const BLOCK_EDITOR_STORE = "core/block-editor";
+const BLOCKS_STORE = "core/blocks";
+const EDITOR_STORE = "core/editor";
+const CORE_STORE = "core";
+
+const PATTERN_POST_TYPE = "wp_block";
+const PATTERN_TAXONOMY = "wp_pattern_category";
+const PATTERN_BLOCK_NAME = "core/block";
+// Core names user patterns after the block that references them, so a name
+// from these abilities is the same name the editor uses internally.
+const USER_PATTERN_PREFIX = "core/block/";
 
 /**
  * @return {{ select: Function, dispatch: Function }} The WordPress data store's select and dispatch.
@@ -32,6 +40,20 @@ function getData() {
 		);
 	}
 	return data;
+}
+
+/**
+ * Patterns arrive over REST, so they have to be awaited rather than read: a
+ * plain select returns nothing until the resolver has finished.
+ *
+ * @return {Function} WordPress data resolveSelect.
+ */
+function getResolveSelect() {
+	const { resolveSelect } = getData();
+	if (typeof resolveSelect !== "function") {
+		throw new Error("WordPress data resolvers are not available, so patterns cannot be loaded.");
+	}
+	return resolveSelect;
 }
 
 /**
@@ -329,6 +351,725 @@ function getBlocksApi() {
 		throw new Error("WordPress blocks API is not available.");
 	}
 	return blocks;
+}
+
+/**
+ * Look up a registered block type, listing nothing useful if it is missing.
+ *
+ * @param {string} name
+ * @return {Object} The registered block type.
+ */
+function requireBlockType(name) {
+	const { getBlockType } = getBlocksApi();
+	if (typeof name !== "string" || !name) {
+		throw new Error("name must be a block name (e.g. core/paragraph).");
+	}
+	const blockType = getBlockType(name);
+	if (!blockType) {
+		throw new Error(
+			`Block type is not registered: ${name}. Use editor/get-block-types to list what this site has.`
+		);
+	}
+	return blockType;
+}
+
+/**
+ * Describe a block type without its attribute schema, for list results.
+ *
+ * @param {Object} blockType
+ * @return {Object} A compact block-type summary.
+ */
+function summarizeBlockType(blockType) {
+	const summary = {
+		name: blockType.name,
+		title: blockType.title ?? blockType.name,
+		category: blockType.category ?? null,
+		description: blockType.description ?? "",
+	};
+
+	// Only report the constraints that exist, so an empty field is never read
+	// as "nothing is allowed here".
+	if (Array.isArray(blockType.parent)) {
+		summary.parent = blockType.parent;
+	}
+	if (Array.isArray(blockType.ancestor)) {
+		summary.ancestor = blockType.ancestor;
+	}
+	if (Array.isArray(blockType.allowedBlocks)) {
+		summary.allowedBlocks = blockType.allowedBlocks;
+	}
+
+	return summary;
+}
+
+/**
+ * Style variations for a block type, with the class name that applies them.
+ *
+ * @param {string} name
+ * @param {Object} blockType
+ * @return {Object[]} Style summaries.
+ */
+function getBlockTypeStyles(name, blockType) {
+	const { select } = getData();
+	const registered = select(BLOCKS_STORE)?.getBlockStyles?.(name) ?? blockType.styles ?? [];
+
+	return registered.map((style) => ({
+		name: style.name,
+		label: style.label ?? style.name,
+		isDefault: !!style.isDefault,
+		className: `is-style-${style.name}`,
+	}));
+}
+
+/**
+ * Variations for a block type, reduced to what an insert call would need.
+ *
+ * @param {string} name
+ * @return {Object[]} Variation summaries.
+ */
+function getBlockTypeVariations(name) {
+	const { getBlockVariations } = getBlocksApi();
+	if (typeof getBlockVariations !== "function") {
+		return [];
+	}
+
+	return (getBlockVariations(name) || []).map((variation) => ({
+		name: variation.name,
+		title: variation.title ?? variation.name,
+		description: variation.description ?? "",
+		isDefault: !!variation.isDefault,
+		attributes: variation.attributes ?? {},
+		innerBlocks: variation.innerBlocks ?? [],
+	}));
+}
+
+/**
+ * Reject nesting the editor would refuse anyway, before anything is inserted.
+ *
+ * @param {string} parentName
+ * @param {string} childName
+ * @param {string} path
+ */
+function assertNestingAllowed(parentName, childName, path) {
+	const { getBlockType } = getBlocksApi();
+
+	const allowedParents = getBlockType(childName)?.parent;
+	if (Array.isArray(allowedParents) && !allowedParents.includes(parentName)) {
+		throw new Error(
+			`${path}: "${childName}" can only be nested inside ${allowedParents.join(", ")}.`
+		);
+	}
+
+	const allowedChildren = getBlockType(parentName)?.allowedBlocks;
+	if (Array.isArray(allowedChildren) && !allowedChildren.includes(childName)) {
+		throw new Error(`${path}: "${parentName}" only accepts ${allowedChildren.join(", ")}.`);
+	}
+}
+
+/**
+ * Build a block and its descendants from a plain { name, attributes,
+ * innerBlocks } spec.
+ *
+ * @param {Object}  spec
+ * @param {string}  [path]       Field path prefix, used in error messages.
+ * @param {?string} [parentName] Block name this spec is nested in.
+ * @return {Object} A block created via wp.blocks.createBlock.
+ */
+function buildBlock(spec, path = "", parentName = null) {
+	const { createBlock, getBlockType } = getBlocksApi();
+	const field = (key) => (path ? `${path}.${key}` : key);
+
+	if (!isPlainObject(spec)) {
+		throw new Error(`${path || "block"} must be an object with a block name.`);
+	}
+	if (typeof spec.name !== "string" || !spec.name) {
+		throw new Error(`${field("name")} must be a block name.`);
+	}
+	if (!getBlockType(spec.name)) {
+		throw new Error(`Block type is not registered: ${spec.name}`);
+	}
+	if (parentName) {
+		assertNestingAllowed(parentName, spec.name, path);
+	}
+
+	const children = spec.innerBlocks ?? [];
+	if (!Array.isArray(children)) {
+		throw new Error(`${field("innerBlocks")} must be an array of blocks.`);
+	}
+
+	return createBlock(
+		spec.name,
+		normalizeAttributes(spec.name, spec.attributes ?? {}),
+		children.map((child, index) =>
+			buildBlock(child, `${field("innerBlocks")}[${index}]`, spec.name)
+		)
+	);
+}
+
+/**
+ * The block list a new top-level block belongs in.
+ *
+ * In the Site Editor the document root is the template, whose block list is
+ * locked, and the page body lives inside a core/post-content wrapper. An
+ * insert at the literal root is refused there, so fall back to that wrapper —
+ * the same resolution src/utils/blockUtils.js getEffectiveRootBlocks() does
+ * for the legacy path, reimplemented here because that file is not reachable
+ * from this script module (see docs/local-abilities.md).
+ *
+ * Only applied when the literal root refuses the block: on a template (where
+ * a root insert is legitimate) and in the post editor (no core/post-content
+ * block at all) the requested location is left exactly as asked.
+ *
+ * @param {Object}  store        Block editor store selectors.
+ * @param {string}  name         Block name to insert.
+ * @param {?string} rootClientId Destination parent as requested, empty for the root.
+ * @return {string} The destination parent to insert into.
+ */
+function resolveInsertRootClientId(store, name, rootClientId) {
+	if (rootClientId || store.canInsertBlockType(name, undefined)) {
+		return rootClientId || "";
+	}
+
+	// getBlocksByName reaches a post-content wrapper nested inside the
+	// template's own groups; the top-level scan is the fallback for editors
+	// that predate that selector.
+	const postContentIds = store.getBlocksByName
+		? store.getBlocksByName("core/post-content")
+		: (store.getBlocks() || [])
+				.filter((block) => block.name === "core/post-content")
+				.map((block) => block.clientId);
+
+	const destination = (postContentIds || []).find((clientId) =>
+		store.canInsertBlockType(name, clientId)
+	);
+	if (destination) {
+		return destination;
+	}
+
+	return "";
+}
+
+/**
+ * Ensure a block type is allowed at a location, with an actionable reason when
+ * it is not.
+ *
+ * @param {Object}  store          Block editor store selectors.
+ * @param {string}  name           Block name to insert.
+ * @param {?string} rootClientId   Destination parent, empty for the root.
+ * @param {string}  legacyToolName The blu-* tool that still handles this case,
+ *                                 named in the thrown error so the model has a
+ *                                 route out instead of retrying this same call.
+ */
+function assertCanInsert(store, name, rootClientId, legacyToolName) {
+	if (store.canInsertBlockType(name, rootClientId || undefined)) {
+		return;
+	}
+
+	// A container that is still empty renders a placeholder instead of an
+	// inner block list, and the editor refuses every child until that list
+	// exists. Point at the way out instead of just saying no.
+	const parent = rootClientId ? store.getBlock(rootClientId) : null;
+	if (
+		parent &&
+		!(parent.innerBlocks || []).length &&
+		store.getBlockListSettings?.(rootClientId) === undefined
+	) {
+		throw new Error(
+			`Block type "${name}" cannot be inserted into "${parent.name}" because that block is empty and is showing its placeholder, so it accepts no children yet. Insert a new "${parent.name}" with its children in a single call using innerBlocks, then remove the empty one.`
+		);
+	}
+
+	throw new Error(
+		`Block type "${name}" cannot be inserted at the requested location. Use ${legacyToolName} for this instead.`
+	);
+}
+
+/**
+ * Reject inserts/transforms whose destination is a navigation menu, template
+ * part, or (when the destination is the block itself) the site logo.
+ *
+ * @param {Object} store          Block editor store selectors.
+ * @param {string} rootClientId   Destination parent, empty for the document root.
+ * @param {string} legacyToolName The blu-* tool that still handles this case.
+ */
+function assertInsertDestination(store, rootClientId, legacyToolName) {
+	if (rootClientId) {
+		assertNotSpecialEntityBlock(store, rootClientId, legacyToolName);
+	}
+}
+
+/**
+ * Ensure a set of blocks is one unbroken run of siblings, which is what
+ * replacing them with a single block requires.
+ *
+ * @param {Object}   store     Block editor store selectors.
+ * @param {string[]} clientIds
+ * @return {{ rootClientId: string, index: number, clientIds: string[] }} Sibling range.
+ */
+function requireSiblingRange(store, clientIds) {
+	const rootClientId = store.getBlockRootClientId(clientIds[0]) || "";
+
+	const positions = clientIds.map((clientId) => {
+		if ((store.getBlockRootClientId(clientId) || "") !== rootClientId) {
+			throw new Error("Every clientId must have the same parent to be replaced by one block.");
+		}
+		return { clientId, index: store.getBlockIndex(clientId) };
+	});
+
+	positions.sort((a, b) => a.index - b.index);
+
+	const contiguous = positions.every(
+		(position, offset) => offset === 0 || position.index === positions[offset - 1].index + 1
+	);
+	if (!contiguous) {
+		throw new Error(
+			"The blocks to replace must sit next to each other, with nothing else between them."
+		);
+	}
+
+	return {
+		rootClientId,
+		index: positions[0].index,
+		clientIds: positions.map((position) => position.clientId),
+	};
+}
+
+/**
+ * @return {{ parse: Function, serialize: Function }} The WordPress block markup API.
+ */
+function getBlockMarkupApi() {
+	const blocks = getBlocksApi();
+	if (typeof blocks.parse !== "function" || typeof blocks.serialize !== "function") {
+		throw new Error(
+			"WordPress block markup API is not available, so patterns cannot be read or written."
+		);
+	}
+	return blocks;
+}
+
+/**
+ * Parse pattern markup into blocks that are not yet in the document.
+ *
+ * @param {Object} pattern
+ * @return {Object[]} Parsed blocks.
+ */
+function parsePatternContent(pattern) {
+	const { parse } = getBlockMarkupApi();
+	const blocks =
+		parse(pattern.content ?? "", {
+			__unstableSkipMigrationLogs: true,
+		}) || [];
+	return blocks.filter((block) => block?.name);
+}
+
+/**
+ * @param {Object[]} blocks
+ * @return {number} Blocks at every level, not just the top one.
+ */
+function countPatternBlocks(blocks) {
+	return blocks.reduce(
+		(total, block) => total + 1 + countPatternBlocks(block.innerBlocks || []),
+		0
+	);
+}
+
+/**
+ * Serialize a parsed pattern block in the shape editor/insert-block accepts.
+ *
+ * Client IDs are deliberately left out: these blocks are not in the document,
+ * so reporting an ID would invite an edit call that cannot resolve it.
+ *
+ * @param {Object} block
+ * @param {number} [maxDepth]
+ * @param {number} [depth]
+ * @return {Object} A { name, attributes, innerBlocks } tree.
+ */
+function serializePatternBlock(block, maxDepth = Infinity, depth = 0) {
+	const innerBlocks = block.innerBlocks || [];
+	const node = {
+		name: block.name,
+		attributes: block.attributes ?? {},
+	};
+
+	if (depth >= maxDepth) {
+		node.innerBlocks = [];
+		node.truncatedInnerBlockCount = innerBlocks.length;
+		return node;
+	}
+
+	node.innerBlocks = innerBlocks.map((innerBlock) =>
+		serializePatternBlock(innerBlock, maxDepth, depth + 1)
+	);
+	return node;
+}
+
+/**
+ * Patterns registered by core, the theme, and plugins, read over REST.
+ *
+ * @return {Promise<Object[]>} Registered patterns.
+ */
+async function loadRegisteredPatterns() {
+	const core = getResolveSelect()(CORE_STORE);
+	if (typeof core?.getBlockPatterns !== "function") {
+		return [];
+	}
+	return (await core.getBlockPatterns()) || [];
+}
+
+/**
+ * User patterns, which are wp_block posts.
+ *
+ * Raw content needs the edit context, and an account without access to it gets
+ * nothing back. That is reported as "no user patterns" rather than an error, so
+ * the registered ones stay usable.
+ *
+ * @return {Promise<Object[]>} User pattern records.
+ */
+async function loadUserPatternRecords() {
+	const core = getResolveSelect()(CORE_STORE);
+	if (typeof core?.getEntityRecords !== "function") {
+		return [];
+	}
+	try {
+		return (
+			(await core.getEntityRecords("postType", PATTERN_POST_TYPE, {
+				per_page: -1,
+				context: "edit",
+			})) || []
+		);
+	} catch {
+		return [];
+	}
+}
+
+/**
+ * wp_pattern_category terms, which is where user pattern categories live.
+ *
+ * @return {Promise<Object[]>} Pattern category terms.
+ */
+async function loadPatternCategoryTerms() {
+	const core = getResolveSelect()(CORE_STORE);
+	if (typeof core?.getEntityRecords !== "function") {
+		return [];
+	}
+	try {
+		return (
+			(await core.getEntityRecords("taxonomy", PATTERN_TAXONOMY, {
+				per_page: -1,
+				hide_empty: false,
+			})) || []
+		);
+	} catch {
+		return [];
+	}
+}
+
+/**
+ * @param {Object} pattern Registered pattern, as returned by REST.
+ * @return {Object} Normalized pattern.
+ */
+function normalizeRegisteredPattern(pattern) {
+	return {
+		name: pattern.name,
+		title: pattern.title ?? pattern.name,
+		description: pattern.description ?? "",
+		source: pattern.source ?? null,
+		isUserPattern: false,
+		id: null,
+		syncStatus: null,
+		categories: pattern.categories ?? [],
+		blockTypes: pattern.blockTypes ?? [],
+		inserter: pattern.inserter !== false,
+		content: pattern.content ?? "",
+	};
+}
+
+/**
+ * @param {Object}             record            A wp_block post.
+ * @param {Map<number,string>} categorySlugsById
+ * @return {Object} Normalized user pattern.
+ */
+function normalizeUserPattern(record, categorySlugsById) {
+	const syncStatus = record.wp_pattern_sync_status ?? record.meta?.wp_pattern_sync_status ?? "";
+
+	return {
+		name: `${USER_PATTERN_PREFIX}${record.id}`,
+		title: record.title?.raw ?? record.title?.rendered ?? "",
+		description: "",
+		source: "user",
+		isUserPattern: true,
+		id: record.id,
+		// Core stores an empty sync status for a fully synced pattern and only
+		// writes the meta for unsynced ones.
+		syncStatus: syncStatus === "unsynced" ? "unsynced" : "synced",
+		categories: (record.wp_pattern_category ?? []).map(
+			(termId) => categorySlugsById.get(termId) ?? String(termId)
+		),
+		blockTypes: [],
+		inserter: true,
+		content: record.content?.raw ?? record.content?.rendered ?? "",
+	};
+}
+
+/**
+ * Every pattern this editor can use, from both sources, in one shape.
+ *
+ * @return {Promise<Object[]>} All available patterns.
+ */
+async function loadPatterns() {
+	const [registered, records, terms] = await Promise.all([
+		loadRegisteredPatterns(),
+		loadUserPatternRecords(),
+		loadPatternCategoryTerms(),
+	]);
+
+	const categorySlugsById = new Map(terms.map((term) => [term.id, term.slug]));
+
+	return [
+		...records.map((record) => normalizeUserPattern(record, categorySlugsById)),
+		...registered.map(normalizeRegisteredPattern),
+	];
+}
+
+// Parsing is the expensive part of listing patterns, and a block theme can
+// ship dozens, so the shape of each one is kept until its markup changes.
+const patternStructureCache = new Map();
+
+/**
+ * @param {Object} pattern
+ * @return {{ blockCount: number, rootBlockNames: string[] }} Pattern structure.
+ */
+function getPatternStructure(pattern) {
+	const cached = patternStructureCache.get(pattern.name);
+	if (cached && cached.content === pattern.content) {
+		return cached.structure;
+	}
+
+	const blocks = parsePatternContent(pattern);
+	const structure = {
+		blockCount: countPatternBlocks(blocks),
+		rootBlockNames: blocks.map((block) => block.name),
+	};
+	patternStructureCache.set(pattern.name, {
+		content: pattern.content,
+		structure,
+	});
+	return structure;
+}
+
+/**
+ * Describe a pattern without its markup, for list results.
+ *
+ * @param {Object} pattern
+ * @return {Object} A compact pattern summary.
+ */
+function summarizePattern(pattern) {
+	const { blockCount, rootBlockNames } = getPatternStructure(pattern);
+	const summary = {
+		name: pattern.name,
+		title: pattern.title,
+		description: pattern.description,
+		source: pattern.source,
+		isUserPattern: pattern.isUserPattern,
+		syncStatus: pattern.syncStatus,
+		categories: pattern.categories,
+		blockCount,
+		rootBlockNames,
+	};
+
+	if (pattern.blockTypes.length) {
+		summary.blockTypes = pattern.blockTypes;
+	}
+
+	return summary;
+}
+
+/**
+ * @param {string} name
+ * @return {Promise<Object>} The matching pattern.
+ */
+async function requirePattern(name) {
+	if (typeof name !== "string" || !name) {
+		throw new Error("name must be a pattern name from editor/get-patterns.");
+	}
+
+	const patterns = await loadPatterns();
+	const pattern = patterns.find((candidate) => candidate.name === name);
+	if (!pattern) {
+		throw new Error(
+			`Pattern not found: ${name}. Use editor/get-patterns to list what this site has.`
+		);
+	}
+	return pattern;
+}
+
+/**
+ * Pattern categories from both sources, keyed by slug. A category only has a
+ * term id once something has been filed under it.
+ *
+ * @return {Promise<Object[]>} Pattern categories.
+ */
+async function listPatternCategories() {
+	const core = getResolveSelect()(CORE_STORE);
+	const [registered, terms] = await Promise.all([
+		typeof core?.getBlockPatternCategories === "function" ? core.getBlockPatternCategories() : [],
+		loadPatternCategoryTerms(),
+	]);
+
+	const bySlug = new Map();
+	for (const category of registered || []) {
+		bySlug.set(category.name, {
+			name: category.name,
+			label: category.label ?? category.name,
+			description: category.description ?? "",
+			id: null,
+			registered: true,
+		});
+	}
+	for (const term of terms) {
+		const existing = bySlug.get(term.slug);
+		bySlug.set(term.slug, {
+			name: term.slug,
+			label: term.name ?? existing?.label ?? term.slug,
+			description: term.description ?? existing?.description ?? "",
+			id: term.id,
+			registered: existing?.registered ?? false,
+		});
+	}
+
+	return [...bySlug.values()].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/**
+ * Turn category names into the term ids wp_pattern_category stores, creating
+ * the term when it does not exist yet. The editor does the same: a category a
+ * theme declared has no term until a pattern is filed under it.
+ *
+ * @param {string[]} [names]
+ * @return {Promise<{ ids: number[], slugs: string[], created: string[] }>} Resolved categories.
+ */
+async function resolvePatternCategoryIds(names) {
+	if (!names?.length) {
+		return { ids: [], slugs: [], created: [] };
+	}
+
+	const { dispatch } = getData();
+	const categories = await listPatternCategories();
+	const ids = [];
+	const slugs = [];
+	const created = [];
+
+	for (const requested of names) {
+		if (typeof requested !== "string" || !requested) {
+			throw new Error("categories must be a list of pattern category names.");
+		}
+
+		const needle = requested.toLowerCase();
+		const match = categories.find(
+			(category) =>
+				category.name.toLowerCase() === needle || category.label.toLowerCase() === needle
+		);
+
+		if (match?.id) {
+			ids.push(match.id);
+			slugs.push(match.name);
+			continue;
+		}
+
+		const term = await dispatch(CORE_STORE).saveEntityRecord(
+			"taxonomy",
+			PATTERN_TAXONOMY,
+			{ name: match?.label ?? requested, slug: match?.name },
+			{ throwOnError: true }
+		);
+		if (!term?.id) {
+			throw new Error(`Could not create the pattern category "${requested}".`);
+		}
+
+		ids.push(term.id);
+		slugs.push(term.slug ?? requested);
+		created.push(term.slug ?? requested);
+	}
+
+	return { ids, slugs, created };
+}
+
+/**
+ * Refuse a save the REST API would refuse anyway, with a readable reason.
+ */
+async function assertCanCreatePatterns() {
+	const core = getResolveSelect()(CORE_STORE);
+	if (typeof core?.canUser !== "function") {
+		return;
+	}
+
+	let allowed;
+	try {
+		allowed = await core.canUser("create", {
+			kind: "postType",
+			name: PATTERN_POST_TYPE,
+		});
+	} catch {
+		// A check that cannot run is not a refusal; let the save report it.
+		return;
+	}
+
+	if (allowed === false) {
+		throw new Error("This account is not allowed to create patterns on this site.");
+	}
+}
+
+/**
+ * Whether the editor has an undo or redo step available.
+ *
+ * The `core` entity store owns the history that the editor's undo acts on, and
+ * its selectors are not deprecated, so it is asked first.
+ *
+ * @param {"undo"|"redo"} direction
+ * @return {boolean|null} Null when this screen exposes no history selectors.
+ */
+function hasHistoryStep(direction) {
+	const { select } = getData();
+
+	const core = select(CORE_STORE);
+	const coreSelector = direction === "undo" ? core?.hasUndo : core?.hasRedo;
+	if (typeof coreSelector === "function") {
+		return !!coreSelector();
+	}
+
+	const editor = select(EDITOR_STORE);
+	const editorSelector = direction === "undo" ? editor?.hasEditorUndo : editor?.hasEditorRedo;
+	if (typeof editorSelector === "function") {
+		return !!editorSelector();
+	}
+
+	return null;
+}
+
+/**
+ * Step the editor history, preferring the editor store so post-specific state
+ * is restored along with the document.
+ *
+ * @param {"undo"|"redo"} direction
+ */
+async function stepHistory(direction) {
+	const { dispatch } = getData();
+
+	const editorAction = dispatch(EDITOR_STORE)?.[direction];
+	if (typeof editorAction === "function") {
+		await editorAction();
+		return;
+	}
+
+	const coreAction = dispatch(CORE_STORE)?.[direction];
+	if (typeof coreAction === "function") {
+		await coreAction();
+		return;
+	}
+
+	throw new Error(
+		`Editor history is not available on this screen, so ${direction} cannot run here.`
+	);
 }
 
 /**
@@ -1221,6 +1962,1225 @@ export function registerEditorAbilities() {
 		},
 	});
 	abilityNames.push("editor/update-block");
+
+	ensureAbility({
+		name: "editor/get-block-types",
+		label: "Get Block Types",
+		description:
+			"Lists the block types registered on this site, including blocks added by the theme and plugins. Use this to discover what can be inserted before calling editor/insert-block.",
+		category: "block-editor",
+		input_schema: {
+			type: "object",
+			properties: {
+				search: {
+					type: "string",
+					description:
+						"Text to match against the block name, title, and keywords, case-insensitively.",
+				},
+				category: {
+					type: "string",
+					description: "Block category slug to match (e.g. text, media, design).",
+				},
+				rootClientId: {
+					type: "string",
+					description:
+						"Only list block types that can be inserted inside this block. Implies insertableOnly.",
+				},
+				insertableOnly: {
+					type: "boolean",
+					description:
+						"Only list block types the editor would allow at the requested location, defaulting to the document root.",
+				},
+				includeHidden: {
+					type: "boolean",
+					description:
+						"Include block types hidden from the inserter, which are usually managed by another block.",
+				},
+			},
+			additionalProperties: false,
+		},
+		output_schema: {
+			type: "object",
+			properties: {
+				blockTypes: {
+					type: "array",
+					description: "Matching block types, without their attribute schemas.",
+				},
+				count: { type: "integer" },
+				totalCount: {
+					type: "integer",
+					description: "Block types registered before filtering.",
+				},
+			},
+			required: ["blockTypes", "count", "totalCount"],
+		},
+		meta: {
+			annotations: {
+				readonly: true,
+				destructive: false,
+				idempotent: true,
+			},
+		},
+		callback: async (input = {}) => {
+			assertEditorReady();
+			const { select } = getData();
+			const store = select(BLOCK_EDITOR_STORE);
+			const { getBlockTypes, getCategories } = getBlocksApi();
+
+			if (typeof getBlockTypes !== "function") {
+				throw new Error("Block type registry is not available.");
+			}
+
+			if (input.rootClientId) {
+				requireBlock(store, input.rootClientId, "rootClientId");
+			}
+
+			const categories = getCategories?.() || [];
+			if (
+				input.category &&
+				categories.length &&
+				!categories.some((category) => category.slug === input.category)
+			) {
+				throw new Error(
+					`No block category "${input.category}". Registered categories: ${categories
+						.map((category) => category.slug)
+						.join(", ")}.`
+				);
+			}
+
+			const all = getBlockTypes();
+			const needle = input.search?.toLowerCase();
+			const filterInsertable = input.insertableOnly || !!input.rootClientId;
+
+			const matches = all
+				.filter((blockType) => {
+					if (!input.includeHidden && blockType.supports?.inserter === false) {
+						return false;
+					}
+					if (input.category && blockType.category !== input.category) {
+						return false;
+					}
+					if (needle) {
+						const haystack = [blockType.name, blockType.title, ...(blockType.keywords || [])]
+							.join(" ")
+							.toLowerCase();
+						if (!haystack.includes(needle)) {
+							return false;
+						}
+					}
+					if (
+						filterInsertable &&
+						!store.canInsertBlockType(blockType.name, input.rootClientId || undefined)
+					) {
+						return false;
+					}
+					return true;
+				})
+				.map(summarizeBlockType)
+				.sort((a, b) => a.name.localeCompare(b.name));
+
+			return {
+				blockTypes: matches,
+				count: matches.length,
+				totalCount: all.length,
+			};
+		},
+	});
+	abilityNames.push("editor/get-block-types");
+
+	ensureAbility({
+		name: "editor/get-block-type",
+		label: "Get Block Type",
+		description:
+			"Returns the full definition of one block type: its attribute schema, nesting rules, supports, style variations, and block variations. Read this before setting attributes on an unfamiliar block.",
+		category: "block-editor",
+		input_schema: {
+			type: "object",
+			properties: {
+				name: {
+					type: "string",
+					description: "Block name to describe (e.g. core/table).",
+				},
+			},
+			required: ["name"],
+			additionalProperties: false,
+		},
+		output_schema: {
+			type: "object",
+			properties: {
+				name: { type: "string" },
+				title: { type: "string" },
+				category: { type: ["string", "null"] },
+				description: { type: "string" },
+				keywords: { type: "array" },
+				attributes: {
+					type: "object",
+					description: "Attribute schema keyed by attribute name, as declared by the block type.",
+				},
+				supports: { type: "object" },
+				parent: { type: ["array", "null"] },
+				ancestor: { type: ["array", "null"] },
+				allowedBlocks: { type: ["array", "null"] },
+				styles: { type: "array" },
+				variations: { type: "array" },
+			},
+			required: ["name", "title", "attributes"],
+		},
+		meta: {
+			annotations: {
+				readonly: true,
+				destructive: false,
+				idempotent: true,
+			},
+		},
+		callback: async ({ name } = {}) => {
+			assertEditorReady();
+			const blockType = requireBlockType(name);
+
+			return {
+				name: blockType.name,
+				title: blockType.title ?? blockType.name,
+				category: blockType.category ?? null,
+				description: blockType.description ?? "",
+				keywords: blockType.keywords ?? [],
+				attributes: blockType.attributes ?? {},
+				supports: blockType.supports ?? {},
+				parent: blockType.parent ?? null,
+				ancestor: blockType.ancestor ?? null,
+				allowedBlocks: blockType.allowedBlocks ?? null,
+				styles: getBlockTypeStyles(name, blockType),
+				variations: getBlockTypeVariations(name),
+			};
+		},
+	});
+	abilityNames.push("editor/get-block-type");
+
+	ensureAbility({
+		name: "editor/get-patterns",
+		label: "Get Patterns",
+		description:
+			"Lists the block patterns available in this editor, from the theme, plugins, core, and the patterns saved on this site. Use this to find a ready-made layout before building one block by block.",
+		category: "block-editor",
+		input_schema: {
+			type: "object",
+			properties: {
+				search: {
+					type: "string",
+					description:
+						"Text to match against the pattern title, name, description, and categories, case-insensitively.",
+				},
+				category: {
+					type: "string",
+					description:
+						"Pattern category slug to match (e.g. header, gallery). Use editor/get-pattern-categories to list them.",
+				},
+				blockTypes: {
+					type: "array",
+					description:
+						"Only list patterns that declare one of these block types as their intended context.",
+					items: { type: "string" },
+				},
+				source: {
+					type: "string",
+					description:
+						"Only list patterns from this source: user for patterns saved on this site, otherwise the registered source such as theme, plugin, core, or pattern-directory.",
+				},
+				syncStatus: {
+					type: "string",
+					enum: ["synced", "unsynced"],
+					description: "Only list patterns saved on this site with this sync status.",
+				},
+				rootClientId: {
+					type: "string",
+					description:
+						"Only list patterns whose top-level blocks can all be inserted inside this block.",
+				},
+				includeHidden: {
+					type: "boolean",
+					description: "Include patterns their author hid from the inserter.",
+				},
+			},
+			additionalProperties: false,
+		},
+		output_schema: {
+			type: "object",
+			properties: {
+				patterns: {
+					type: "array",
+					description: "Matching patterns, without their block markup.",
+				},
+				count: { type: "integer" },
+				totalCount: {
+					type: "integer",
+					description: "Patterns available before filtering.",
+				},
+			},
+			required: ["patterns", "count", "totalCount"],
+		},
+		meta: {
+			annotations: {
+				readonly: true,
+				destructive: false,
+				idempotent: true,
+			},
+		},
+		callback: async (input = {}) => {
+			assertEditorReady();
+			const { select } = getData();
+			const store = select(BLOCK_EDITOR_STORE);
+
+			if (input.rootClientId) {
+				requireBlock(store, input.rootClientId, "rootClientId");
+			}
+			if (input.blockTypes && !Array.isArray(input.blockTypes)) {
+				throw new Error("blockTypes must be an array of block names.");
+			}
+
+			const all = await loadPatterns();
+			const needle = input.search?.toLowerCase();
+
+			const matches = all
+				.filter((pattern) => {
+					if (!input.includeHidden && !pattern.inserter) {
+						return false;
+					}
+					if (
+						input.source &&
+						pattern.source !== input.source &&
+						!pattern.source?.startsWith(`${input.source}/`)
+					) {
+						return false;
+					}
+					if (input.syncStatus && pattern.syncStatus !== input.syncStatus) {
+						return false;
+					}
+					if (input.category && !pattern.categories.includes(input.category)) {
+						return false;
+					}
+					if (
+						input.blockTypes?.length &&
+						!input.blockTypes.some((blockType) => pattern.blockTypes.includes(blockType))
+					) {
+						return false;
+					}
+					if (needle) {
+						const haystack = [
+							pattern.name,
+							pattern.title,
+							pattern.description,
+							...pattern.categories,
+						]
+							.join(" ")
+							.toLowerCase();
+						if (!haystack.includes(needle)) {
+							return false;
+						}
+					}
+					if (input.rootClientId) {
+						const { rootBlockNames } = getPatternStructure(pattern);
+						const fits =
+							rootBlockNames.length &&
+							rootBlockNames.every((blockName) =>
+								store.canInsertBlockType(blockName, input.rootClientId)
+							);
+						if (!fits) {
+							return false;
+						}
+					}
+					return true;
+				})
+				.map(summarizePattern)
+				.sort((a, b) => a.title.localeCompare(b.title));
+
+			return {
+				patterns: matches,
+				count: matches.length,
+				totalCount: all.length,
+			};
+		},
+	});
+	abilityNames.push("editor/get-patterns");
+
+	ensureAbility({
+		name: "editor/get-pattern",
+		label: "Get Pattern",
+		description:
+			"Returns one pattern in full, as the block tree it would insert. Read this to see what a pattern contains, or to copy its structure into editor/insert-block.",
+		category: "block-editor",
+		input_schema: {
+			type: "object",
+			properties: {
+				name: {
+					type: "string",
+					description:
+						"Pattern name from editor/get-patterns (e.g. twentytwentyfive/hero, core/block/12).",
+				},
+				maxDepth: {
+					type: "integer",
+					minimum: 0,
+					description: "Levels of nested blocks to include. Omit for the whole tree.",
+				},
+				includeContent: {
+					type: "boolean",
+					description: "Also return the raw block markup, which is what gets saved.",
+				},
+			},
+			required: ["name"],
+			additionalProperties: false,
+		},
+		output_schema: {
+			type: "object",
+			properties: {
+				name: { type: "string" },
+				title: { type: "string" },
+				description: { type: "string" },
+				source: { type: ["string", "null"] },
+				isUserPattern: { type: "boolean" },
+				id: { type: ["integer", "null"] },
+				syncStatus: { type: ["string", "null"] },
+				categories: { type: "array" },
+				blockTypes: { type: "array" },
+				blockCount: { type: "integer" },
+				blocks: {
+					type: "array",
+					description:
+						"Parsed blocks as { name, attributes, innerBlocks }, without client IDs: nothing here is in the document yet.",
+				},
+				content: { type: "string" },
+			},
+			required: ["name", "title", "blocks", "blockCount"],
+		},
+		meta: {
+			annotations: {
+				readonly: true,
+				destructive: false,
+				idempotent: true,
+			},
+		},
+		callback: async (input = {}) => {
+			assertEditorReady();
+
+			if (input.maxDepth !== undefined && !(input.maxDepth >= 0)) {
+				throw new Error("maxDepth must be zero or greater.");
+			}
+
+			const pattern = await requirePattern(input.name);
+			const blocks = parsePatternContent(pattern);
+			const depthLimit = input.maxDepth === undefined ? Infinity : input.maxDepth;
+
+			const result = {
+				name: pattern.name,
+				title: pattern.title,
+				description: pattern.description,
+				source: pattern.source,
+				isUserPattern: pattern.isUserPattern,
+				id: pattern.id,
+				syncStatus: pattern.syncStatus,
+				categories: pattern.categories,
+				blockTypes: pattern.blockTypes,
+				blockCount: countPatternBlocks(blocks),
+				blocks: blocks.map((block) => serializePatternBlock(block, depthLimit)),
+			};
+
+			if (input.includeContent) {
+				result.content = pattern.content;
+			}
+
+			return result;
+		},
+	});
+	abilityNames.push("editor/get-pattern");
+
+	ensureAbility({
+		name: "editor/get-pattern-categories",
+		label: "Get Pattern Categories",
+		description:
+			"Lists the pattern categories on this site, both the ones registered by core and the theme and the ones patterns are filed under. Use this before filtering editor/get-patterns or filing a new pattern.",
+		category: "block-editor",
+		input_schema: {
+			type: "object",
+			properties: {},
+			additionalProperties: false,
+		},
+		output_schema: {
+			type: "object",
+			properties: {
+				categories: {
+					type: "array",
+					description:
+						"Categories as { name, label, description, id, registered }. A null id means no pattern has been filed under it yet.",
+				},
+				count: { type: "integer" },
+			},
+			required: ["categories", "count"],
+		},
+		meta: {
+			annotations: {
+				readonly: true,
+				destructive: false,
+				idempotent: true,
+			},
+		},
+		callback: async () => {
+			assertEditorReady();
+			const categories = await listPatternCategories();
+			return { categories, count: categories.length };
+		},
+	});
+	abilityNames.push("editor/get-pattern-categories");
+
+	ensureAbility({
+		name: "editor/insert-block",
+		label: "Insert Block",
+		description:
+			"Inserts a block, with any nested blocks, into the editor. Optionally place it inside a parent or after another block.",
+		category: "block-editor",
+		input_schema: {
+			type: "object",
+			properties: {
+				name: {
+					type: "string",
+					description: "Block name to insert (e.g. core/paragraph).",
+				},
+				attributes: {
+					type: "object",
+					description: "Optional block attributes.",
+				},
+				innerBlocks: {
+					type: "array",
+					description:
+						"Optional nested blocks, inserted with the parent in one step. Build container blocks this way: an empty core/columns (or similar) shows a layout placeholder and accepts no children until it has inner blocks, so a two-column layout must be inserted as core/columns containing two core/column blocks.",
+					items: {
+						type: "object",
+						properties: {
+							name: {
+								type: "string",
+								description: "Block name to nest (e.g. core/column).",
+							},
+							attributes: {
+								type: "object",
+								description: "Optional block attributes.",
+							},
+							innerBlocks: {
+								type: "array",
+								description: "Blocks nested one level deeper, in the same shape.",
+								items: { type: "object" },
+							},
+						},
+						required: ["name"],
+					},
+				},
+				rootClientId: {
+					type: "string",
+					description: "Optional parent client ID. Omit to insert at the document root.",
+				},
+				index: {
+					type: "integer",
+					description: "Optional index within the parent (or root). Defaults to append.",
+				},
+				afterClientId: {
+					type: "string",
+					description: "Insert immediately after this block (overrides index when set).",
+				},
+			},
+			required: ["name"],
+			additionalProperties: false,
+		},
+		output_schema: {
+			type: "object",
+			properties: {
+				clientId: { type: "string" },
+				name: { type: "string" },
+				rootClientId: { type: ["string", "null"] },
+				index: { type: "integer" },
+				innerBlockCount: { type: "integer" },
+			},
+			required: ["clientId", "name", "index"],
+		},
+		meta: {
+			annotations: {
+				readonly: false,
+				destructive: false,
+				idempotent: false,
+			},
+		},
+		callback: async (input = {}) => {
+			assertEditorReady();
+			const { select, dispatch } = getData();
+			const store = select(BLOCK_EDITOR_STORE);
+			const actions = dispatch(BLOCK_EDITOR_STORE);
+
+			// Checked up front so an unknown name is reported as such, rather
+			// than as a block the editor refuses to place.
+			if (!getBlocksApi().getBlockType(input.name)) {
+				throw new Error(`Block type is not registered: ${input.name}`);
+			}
+
+			let index = input.index;
+			if (index !== undefined && !Number.isInteger(index)) {
+				throw new Error("index must be an integer.");
+			}
+			if (index !== undefined && index < 0) {
+				throw new Error("index must be zero or greater.");
+			}
+
+			if (input.rootClientId) {
+				requireBlock(store, input.rootClientId, "rootClientId");
+			}
+
+			let effectiveRootClientId = input.rootClientId || "";
+
+			if (input.afterClientId) {
+				requireBlock(store, input.afterClientId, "afterClientId");
+
+				const afterRoot = store.getBlockRootClientId(input.afterClientId) || "";
+				if (input.rootClientId && input.rootClientId !== afterRoot) {
+					throw new Error("afterClientId is not a child of the provided rootClientId.");
+				}
+
+				effectiveRootClientId = afterRoot;
+				index = store.getBlockIndex(input.afterClientId) + 1;
+			}
+
+			effectiveRootClientId = resolveInsertRootClientId(store, input.name, effectiveRootClientId);
+
+			assertInsertDestination(store, effectiveRootClientId, "blu-add-section");
+			assertCanInsert(store, input.name, effectiveRootClientId, "blu-add-section");
+
+			const block = buildBlock({
+				name: input.name,
+				attributes: input.attributes,
+				innerBlocks: input.innerBlocks,
+			});
+
+			await actions.insertBlock(block, index, effectiveRootClientId || undefined);
+
+			// The store drops disallowed insertions silently; report that as a
+			// failure rather than returning a client ID that is not in the tree.
+			if (!store.getBlock(block.clientId)) {
+				throw new Error("The editor did not insert this block. Its destination may be locked.");
+			}
+
+			return {
+				clientId: block.clientId,
+				name: block.name,
+				rootClientId: store.getBlockRootClientId(block.clientId) || null,
+				index: store.getBlockIndex(block.clientId),
+				innerBlockCount: block.innerBlocks.length,
+			};
+		},
+	});
+	abilityNames.push("editor/insert-block");
+
+	ensureAbility({
+		name: "editor/insert-pattern",
+		label: "Insert Pattern",
+		description:
+			"Inserts a pattern into the editor at a chosen location. Returns the client ID of every block it inserted, so the content can then be edited with editor/update-block.",
+		category: "block-editor",
+		input_schema: {
+			type: "object",
+			properties: {
+				name: {
+					type: "string",
+					description: "Pattern name from editor/get-patterns.",
+				},
+				rootClientId: {
+					type: "string",
+					description: "Optional parent client ID. Omit to insert at the document root.",
+				},
+				index: {
+					type: "integer",
+					description: "Optional index within the parent (or root). Defaults to append.",
+				},
+				afterClientId: {
+					type: "string",
+					description: "Insert immediately after this block (overrides index when set).",
+				},
+				asReference: {
+					type: "boolean",
+					description:
+						"For a pattern saved on this site, insert a single core/block that references it instead of copying its blocks in. Defaults to true for synced patterns, which is how the editor inserts them.",
+				},
+			},
+			required: ["name"],
+			additionalProperties: false,
+		},
+		output_schema: {
+			type: "object",
+			properties: {
+				name: { type: "string" },
+				title: { type: "string" },
+				asReference: { type: "boolean" },
+				blocks: {
+					type: "array",
+					description: "The inserted top-level blocks, in order.",
+				},
+				count: { type: "integer" },
+				rootClientId: { type: ["string", "null"] },
+				index: { type: "integer" },
+			},
+			required: ["name", "blocks", "count"],
+		},
+		meta: {
+			annotations: {
+				readonly: false,
+				destructive: false,
+				idempotent: false,
+			},
+		},
+		callback: async (input = {}) => {
+			assertEditorReady();
+			const { select, dispatch } = getData();
+			const store = select(BLOCK_EDITOR_STORE);
+			const actions = dispatch(BLOCK_EDITOR_STORE);
+
+			const pattern = await requirePattern(input.name);
+
+			let index = input.index;
+			if (index !== undefined && !Number.isInteger(index)) {
+				throw new Error("index must be an integer.");
+			}
+			if (index !== undefined && index < 0) {
+				throw new Error("index must be zero or greater.");
+			}
+
+			if (input.rootClientId) {
+				requireBlock(store, input.rootClientId, "rootClientId");
+			}
+
+			let effectiveRootClientId = input.rootClientId || "";
+
+			if (input.afterClientId) {
+				requireBlock(store, input.afterClientId, "afterClientId");
+
+				const afterRoot = store.getBlockRootClientId(input.afterClientId) || "";
+				if (input.rootClientId && input.rootClientId !== afterRoot) {
+					throw new Error("afterClientId is not a child of the provided rootClientId.");
+				}
+
+				effectiveRootClientId = afterRoot;
+				index = store.getBlockIndex(input.afterClientId) + 1;
+			}
+
+			assertInsertDestination(store, effectiveRootClientId, "blu-add-section");
+
+			const asReference = input.asReference ?? pattern.syncStatus === "synced";
+			if (asReference && !pattern.isUserPattern) {
+				throw new Error(
+					`Pattern "${pattern.name}" is registered by ${
+						pattern.source ?? "this site"
+					} rather than saved on it, so it has nothing to reference. Insert it without asReference.`
+				);
+			}
+
+			let blocks;
+			if (asReference) {
+				requireBlockType(PATTERN_BLOCK_NAME);
+				blocks = [
+					getBlocksApi().createBlock(PATTERN_BLOCK_NAME, {
+						ref: pattern.id,
+					}),
+				];
+			} else {
+				blocks = parsePatternContent(pattern);
+				if (!blocks.length) {
+					throw new Error(`Pattern "${pattern.name}" contains no blocks.`);
+				}
+			}
+
+			effectiveRootClientId = resolveInsertRootClientId(
+				store,
+				blocks[0].name,
+				effectiveRootClientId
+			);
+
+			for (const block of blocks) {
+				assertCanInsert(store, block.name, effectiveRootClientId, "blu-add-section");
+			}
+
+			await actions.insertBlocks(blocks, index, effectiveRootClientId || undefined);
+
+			const inserted = blocks.filter((block) => store.getBlock(block.clientId));
+			if (inserted.length !== blocks.length) {
+				throw new Error("The editor did not insert this pattern. Its destination may be locked.");
+			}
+
+			return {
+				name: pattern.name,
+				title: pattern.title,
+				asReference,
+				blocks: inserted.map((block) => summarizeBlock(store, store.getBlock(block.clientId))),
+				count: inserted.length,
+				rootClientId: store.getBlockRootClientId(inserted[0].clientId) || null,
+				index: store.getBlockIndex(inserted[0].clientId),
+			};
+		},
+	});
+	abilityNames.push("editor/insert-pattern");
+
+	ensureAbility({
+		name: "editor/create-pattern",
+		label: "Create Pattern",
+		description:
+			"Saves blocks as a reusable pattern on this site, either blocks already in the document or a block structure supplied directly. Synced patterns stay linked everywhere they are used; unsynced ones are copied on insert.",
+		category: "block-editor",
+		input_schema: {
+			type: "object",
+			properties: {
+				title: {
+					type: "string",
+					description: "Name the pattern is saved and listed under.",
+				},
+				clientIds: {
+					type: "array",
+					description:
+						"Client IDs of blocks already in the document to save, in the order they should appear in the pattern.",
+					items: { type: "string" },
+				},
+				blocks: {
+					type: "array",
+					description:
+						"Blocks to save, as { name, attributes, innerBlocks }, the same shape editor/insert-block accepts. Use this instead of clientIds to save a pattern that is not in the document.",
+					items: {
+						type: "object",
+						properties: {
+							name: { type: "string" },
+							attributes: { type: "object" },
+							innerBlocks: {
+								type: "array",
+								description: "Blocks nested one level deeper, in the same shape.",
+								items: { type: "object" },
+							},
+						},
+						required: ["name"],
+					},
+				},
+				syncStatus: {
+					type: "string",
+					enum: ["synced", "unsynced"],
+					description:
+						"synced keeps every instance in step with the saved pattern; unsynced inserts an independent copy. Defaults to unsynced.",
+				},
+				categories: {
+					type: "array",
+					description:
+						"Category names to file the pattern under. A category with no term yet gets one created, the same as the editor does.",
+					items: { type: "string" },
+				},
+				replaceSource: {
+					type: "boolean",
+					description:
+						"Replace the blocks named in clientIds with a reference to the new pattern. Synced patterns only, and the blocks must be neighbours.",
+				},
+			},
+			required: ["title"],
+			additionalProperties: false,
+		},
+		output_schema: {
+			type: "object",
+			properties: {
+				id: { type: "integer" },
+				name: {
+					type: "string",
+					description: "Pattern name to pass to editor/insert-pattern.",
+				},
+				title: { type: "string" },
+				syncStatus: { type: "string" },
+				categories: { type: "array" },
+				createdCategories: {
+					type: "array",
+					description: "Categories that did not exist until now.",
+				},
+				blockCount: { type: "integer" },
+				replacedClientIds: { type: ["array", "null"] },
+				clientId: {
+					type: ["string", "null"],
+					description: "Client ID of the reference block, when the source blocks were replaced.",
+				},
+			},
+			required: ["id", "name", "title", "syncStatus", "blockCount"],
+		},
+		meta: {
+			annotations: {
+				readonly: false,
+				destructive: false,
+				idempotent: false,
+			},
+		},
+		callback: async (input = {}) => {
+			assertEditorReady();
+			const { select, dispatch } = getData();
+			const store = select(BLOCK_EDITOR_STORE);
+			const actions = dispatch(BLOCK_EDITOR_STORE);
+			const { serialize } = getBlockMarkupApi();
+
+			if (typeof input.title !== "string" || !input.title.trim()) {
+				throw new Error("title must be a name for the pattern.");
+			}
+
+			const hasClientIds = !!input.clientIds?.length;
+			const hasBlocks = !!input.blocks?.length;
+			if (hasClientIds === hasBlocks) {
+				throw new Error(
+					"Pass either clientIds, to save blocks already in the document, or blocks, to save a structure directly."
+				);
+			}
+
+			const syncStatus = input.syncStatus ?? "unsynced";
+			if (!["synced", "unsynced"].includes(syncStatus)) {
+				throw new Error("syncStatus must be either synced or unsynced.");
+			}
+
+			let sourceBlocks;
+			let siblingRange = null;
+			if (hasClientIds) {
+				sourceBlocks = input.clientIds.map((clientId) =>
+					requireBlock(store, clientId, "clientIds")
+				);
+				if (input.replaceSource) {
+					if (syncStatus !== "synced") {
+						throw new Error(
+							"replaceSource only applies to a synced pattern, since an unsynced one leaves the original blocks unchanged."
+						);
+					}
+					for (const clientId of input.clientIds) {
+						assertNotSpecialEntityBlock(store, clientId, "blu-edit-block");
+					}
+					siblingRange = requireSiblingRange(store, input.clientIds);
+					assertInsertDestination(store, siblingRange.rootClientId, "blu-edit-block");
+				}
+			} else {
+				if (input.replaceSource) {
+					throw new Error(
+						"replaceSource needs clientIds, since there are no blocks in the document to replace."
+					);
+				}
+				sourceBlocks = input.blocks.map((spec, position) =>
+					buildBlock(spec, `blocks[${position}]`)
+				);
+			}
+
+			await assertCanCreatePatterns();
+
+			const { ids, slugs, created } = await resolvePatternCategoryIds(input.categories);
+
+			const record = await dispatch(CORE_STORE).saveEntityRecord(
+				"postType",
+				PATTERN_POST_TYPE,
+				{
+					title: input.title,
+					content: serialize(sourceBlocks),
+					status: "publish",
+					// Core writes the sync status only for unsynced patterns;
+					// no meta at all is what marks one as fully synced.
+					meta: syncStatus === "unsynced" ? { wp_pattern_sync_status: "unsynced" } : undefined,
+					wp_pattern_category: ids,
+				},
+				{ throwOnError: true }
+			);
+
+			if (!record?.id) {
+				throw new Error("WordPress did not save this pattern.");
+			}
+
+			const result = {
+				id: record.id,
+				name: `${USER_PATTERN_PREFIX}${record.id}`,
+				title: input.title,
+				syncStatus,
+				categories: slugs,
+				createdCategories: created,
+				blockCount: countPatternBlocks(sourceBlocks),
+				replacedClientIds: null,
+				clientId: null,
+			};
+
+			if (siblingRange) {
+				requireBlockType(PATTERN_BLOCK_NAME);
+				assertCanInsert(store, PATTERN_BLOCK_NAME, siblingRange.rootClientId, "blu-edit-block");
+
+				const reference = getBlocksApi().createBlock(PATTERN_BLOCK_NAME, { ref: record.id });
+				await actions.replaceBlocks(siblingRange.clientIds, [reference]);
+
+				if (!store.getBlock(reference.clientId)) {
+					throw new Error(
+						`The pattern was saved as ${result.name}, but the editor did not replace the original blocks with it.`
+					);
+				}
+
+				result.replacedClientIds = siblingRange.clientIds;
+				result.clientId = reference.clientId;
+			}
+
+			return result;
+		},
+	});
+	abilityNames.push("editor/create-pattern");
+
+	ensureAbility({
+		name: "editor/transform-block",
+		label: "Transform Block",
+		description:
+			"Converts a block to another block type in place, keeping its content (for example a paragraph to a heading). A transform can produce more than one block.",
+		category: "block-editor",
+		input_schema: {
+			type: "object",
+			properties: {
+				clientId: {
+					type: "string",
+					description: "Client ID of the block to transform.",
+				},
+				name: {
+					type: "string",
+					description: "Block name to transform into (e.g. core/heading).",
+				},
+			},
+			required: ["clientId", "name"],
+			additionalProperties: false,
+		},
+		output_schema: {
+			type: "object",
+			properties: {
+				previousClientId: { type: "string" },
+				previousName: { type: "string" },
+				name: { type: "string" },
+				blocks: {
+					type: "array",
+					description: "Blocks the transform produced, in order.",
+				},
+				count: { type: "integer" },
+				rootClientId: { type: ["string", "null"] },
+				index: { type: "integer" },
+			},
+			required: ["previousClientId", "previousName", "name", "blocks"],
+		},
+		meta: {
+			annotations: {
+				readonly: false,
+				destructive: true,
+				idempotent: false,
+			},
+		},
+		callback: async (input = {}) => {
+			assertEditorReady();
+			const { select, dispatch } = getData();
+			const store = select(BLOCK_EDITOR_STORE);
+			const actions = dispatch(BLOCK_EDITOR_STORE);
+			const { switchToBlockType, getPossibleBlockTransformations } = getBlocksApi();
+
+			if (typeof switchToBlockType !== "function") {
+				throw new Error("Block transforms are not available.");
+			}
+
+			const block = requireBlock(store, input.clientId);
+			assertNotSpecialEntityBlock(store, input.clientId, "blu-edit-block");
+			requireBlockType(input.name);
+
+			if (block.name === input.name) {
+				throw new Error(`Block ${input.clientId} is already "${input.name}".`);
+			}
+
+			// Listing the valid targets turns a refused transform into one the
+			// agent can retry, since transforms are declared per block type.
+			const possible = (getPossibleBlockTransformations?.([block]) || []).map(
+				(blockType) => blockType.name
+			);
+			if (possible.length && !possible.includes(input.name)) {
+				throw new Error(
+					`"${block.name}" cannot be transformed into "${input.name}". Available transforms: ${possible.join(
+						", "
+					)}.`
+				);
+			}
+
+			const rootClientId = store.getBlockRootClientId(input.clientId) || "";
+			const index = store.getBlockIndex(input.clientId);
+
+			const transformed = switchToBlockType(block, input.name);
+			if (!transformed || !transformed.length) {
+				throw new Error(`"${block.name}" cannot be transformed into "${input.name}".`);
+			}
+
+			assertInsertDestination(store, rootClientId, "blu-edit-block");
+
+			// The result has to be allowed where the original block sits, or
+			// the store drops the replacement without saying why.
+			for (const created of transformed) {
+				assertCanInsert(store, created.name, rootClientId, "blu-edit-block");
+			}
+
+			await actions.replaceBlocks(input.clientId, transformed);
+
+			if (store.getBlock(input.clientId)) {
+				throw new Error("The editor did not transform this block. It or its parent may be locked.");
+			}
+
+			return {
+				previousClientId: input.clientId,
+				previousName: block.name,
+				name: input.name,
+				blocks: transformed.map((created) =>
+					summarizeBlock(store, store.getBlock(created.clientId) ?? created)
+				),
+				count: transformed.length,
+				rootClientId: rootClientId || null,
+				index,
+			};
+		},
+	});
+	abilityNames.push("editor/transform-block");
+
+	ensureAbility({
+		name: "editor/select-block",
+		label: "Select Block",
+		description:
+			"Selects a block in the editor, scrolling it into view for the person watching. Changes the selection only, never the document.",
+		category: "block-editor",
+		input_schema: {
+			type: "object",
+			properties: {
+				clientId: {
+					type: "string",
+					description: "Client ID of the block to select.",
+				},
+			},
+			required: ["clientId"],
+			additionalProperties: false,
+		},
+		output_schema: {
+			type: "object",
+			properties: {
+				clientId: { type: "string" },
+				name: { type: "string" },
+				rootClientId: { type: ["string", "null"] },
+				index: { type: "integer" },
+				previousClientId: { type: ["string", "null"] },
+			},
+			required: ["clientId", "name"],
+		},
+		meta: {
+			annotations: {
+				readonly: false,
+				destructive: false,
+				idempotent: true,
+			},
+		},
+		callback: async ({ clientId } = {}) => {
+			assertEditorReady();
+			const { select, dispatch } = getData();
+			const store = select(BLOCK_EDITOR_STORE);
+			const actions = dispatch(BLOCK_EDITOR_STORE);
+
+			const block = requireBlock(store, clientId);
+			const previousClientId = store.getSelectedBlockClientId() || null;
+
+			await actions.selectBlock(clientId);
+
+			if (store.getSelectedBlockClientId() !== clientId) {
+				throw new Error(`The editor did not select block ${clientId}.`);
+			}
+
+			return {
+				clientId,
+				name: block.name,
+				rootClientId: store.getBlockRootClientId(clientId) || null,
+				index: store.getBlockIndex(clientId),
+				previousClientId,
+			};
+		},
+	});
+	abilityNames.push("editor/select-block");
+
+	ensureAbility({
+		name: "editor/undo",
+		label: "Undo",
+		description:
+			"Undoes the last change to the document, the same as the editor undo button. Each editing ability creates its own undo step.",
+		category: "block-editor",
+		input_schema: {
+			type: "object",
+			properties: {},
+			additionalProperties: false,
+		},
+		output_schema: {
+			type: "object",
+			properties: {
+				undone: { type: "boolean" },
+				hasUndo: { type: ["boolean", "null"] },
+				hasRedo: { type: ["boolean", "null"] },
+			},
+			required: ["undone"],
+		},
+		meta: {
+			annotations: {
+				readonly: false,
+				destructive: true,
+				idempotent: false,
+			},
+		},
+		callback: async () => {
+			assertEditorReady();
+
+			if (hasHistoryStep("undo") === false) {
+				throw new Error("There is nothing to undo.");
+			}
+
+			await stepHistory("undo");
+
+			return {
+				undone: true,
+				hasUndo: hasHistoryStep("undo"),
+				hasRedo: hasHistoryStep("redo"),
+			};
+		},
+	});
+	abilityNames.push("editor/undo");
+
+	ensureAbility({
+		name: "editor/redo",
+		label: "Redo",
+		description:
+			"Redoes the last undone change to the document, the same as the editor redo button.",
+		category: "block-editor",
+		input_schema: {
+			type: "object",
+			properties: {},
+			additionalProperties: false,
+		},
+		output_schema: {
+			type: "object",
+			properties: {
+				redone: { type: "boolean" },
+				hasUndo: { type: ["boolean", "null"] },
+				hasRedo: { type: ["boolean", "null"] },
+			},
+			required: ["redone"],
+		},
+		meta: {
+			annotations: {
+				readonly: false,
+				destructive: true,
+				idempotent: false,
+			},
+		},
+		callback: async () => {
+			assertEditorReady();
+
+			if (hasHistoryStep("redo") === false) {
+				throw new Error("There is nothing to redo.");
+			}
+
+			await stepHistory("redo");
+
+			return {
+				redone: true,
+				hasUndo: hasHistoryStep("undo"),
+				hasRedo: hasHistoryStep("redo"),
+			};
+		},
+	});
+	abilityNames.push("editor/redo");
 
 	return abilityNames;
 }

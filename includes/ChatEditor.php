@@ -107,6 +107,18 @@ final class ChatEditor {
 
 		$worker_url = \untrailingslashit( $worker_url );
 
+		// The PHP process (server-to-server handshake, below) and the browser
+		// (chat/completions, classify-intent) don't always share a network
+		// path to the Worker — e.g. in Lando, the browser reaches a local
+		// Worker via localhost, but the WordPress container needs
+		// host.lando.internal instead. NFD_EDITOR_CHAT_WORKER_HANDSHAKE_URL
+		// lets the handshake use a different address than the one returned
+		// to the browser; it defaults to $worker_url so production (single
+		// public URL, reachable from both) is unaffected.
+		$handshake_url = defined( 'NFD_EDITOR_CHAT_WORKER_HANDSHAKE_URL' )
+			? \untrailingslashit( \NFD_EDITOR_CHAT_WORKER_HANDSHAKE_URL )
+			: $worker_url;
+
 		// Get Hiive auth token for server-to-server handshake
 		$hiive_token = '';
 		if ( class_exists( '\NewfoldLabs\WP\Module\Data\HiiveConnection' ) ) {
@@ -123,7 +135,7 @@ final class ChatEditor {
 
 		// Server-to-server handshake with Worker
 		$handshake_response = \wp_remote_post(
-			$worker_url . '/handshake',
+			$handshake_url . '/handshake',
 			array(
 				'headers' => array(
 					'X-Hiive-Token' => $hiive_token,

@@ -67,6 +67,18 @@ export const EDITOR_TOOLS = new Set([
 	"editor_move-block",
 	"editor_remove-block",
 	"editor_update-block",
+	"editor_get-block-types",
+	"editor_get-block-type",
+	"editor_get-patterns",
+	"editor_get-pattern",
+	"editor_get-pattern-categories",
+	"editor_insert-block",
+	"editor_insert-pattern",
+	"editor_create-pattern",
+	"editor_transform-block",
+	"editor_select-block",
+	"editor_undo",
+	"editor_redo",
 ]);
 
 /**
@@ -106,14 +118,21 @@ export const READ_ONLY_TOOLS = new Set([
 	"blu-get-site-info",
 	"blu-get-general-settings",
 	"blu-get-current-user",
-	// Local (in-browser) editor abilities — all read-only (readonly: true in
-	// their meta.annotations, see js/abilities/abilities.js). Without these
-	// here, calling one more than once in a conversation (e.g. checking the
-	// selection again after the user clicks a different block) would trip
-	// the retry-limit tracker as if it were a stuck mistake.
+	// Local (in-browser) editor abilities that do not mutate the document.
+	// Without these here, calling one more than once in a conversation (e.g.
+	// checking the selection again after the user clicks a different block)
+	// would trip the retry-limit tracker as if it were a stuck mistake.
 	"editor_get-editor-tree",
 	"editor_find-editor-blocks",
 	"editor_get-block-location",
 	"editor_get-editor-selection",
 	"editor_can-insert-block",
+	"editor_get-block-types",
+	"editor_get-block-type",
+	"editor_get-patterns",
+	"editor_get-pattern",
+	"editor_get-pattern-categories",
+	// Selection only — does not mutate the document. Missing this would make
+	// isLocalWriteTool() capture a spurious undo snapshot on every select.
+	"editor_select-block",
 ]);
