@@ -18,6 +18,18 @@
 
 const LOCAL_TOOL_PREFIX = "editor_";
 
+const LOCAL_TO_MCP_TOOL = Object.freeze({
+	"editor_edit-block": "blu-edit-block",
+	"editor_move-block": "blu-move-block",
+	"editor_remove-block": "blu-delete-block",
+	"editor_update-block": "blu-update-block-attrs",
+});
+const LOCAL_ACTION_TO_MCP_TOOL = Object.freeze({
+	edit_block: "blu-edit-block",
+	update_block_attrs: "blu-update-block-attrs",
+});
+const ALLOWED_FALLBACK_TOOLS = new Set(Object.values(LOCAL_TO_MCP_TOOL));
+
 /**
  * Get the WebMCP context from document or navigator.
  *
@@ -99,7 +111,7 @@ export async function listLocalTools() {
  *
  * @param {string} name Tool name, e.g. "editor_get-editor-tree".
  * @param {Object} args Arguments for the tool.
- * @return {Promise<{isError: boolean, text: string}>} Tool execution result.
+ * @return {Promise<{isError: boolean, text: string, structuredContent?: Object}>} Tool execution result.
  */
 export async function runLocalTool(name, args = {}) {
 	const modelContext = getModelContext();
@@ -132,7 +144,14 @@ export async function runLocalTool(name, args = {}) {
 			.map((block) => block.text)
 			.join("\n");
 
-		return { isError, text: text || JSON.stringify(parsed) };
+		return {
+			isError,
+			text: text || JSON.stringify(parsed),
+			structuredContent:
+				parsed?.structuredContent && typeof parsed.structuredContent === "object"
+					? parsed.structuredContent
+					: undefined,
+		};
 	} catch (error) {
 		return { isError: true, text: JSON.stringify({ error: String(error?.message || error) }) };
 	}
@@ -161,26 +180,85 @@ export function onLocalToolsChanged(callback) {
 }
 
 /**
+ * MCP tools made redundant by local tools that are registered right now.
+ *
+ * @param {Array<{name: string}>} localTools Local WebMCP tools.
+ * @return {string[]} MCP tool names to omit from this chat session.
+ */
+export function getSupersededMcpToolNames(localTools) {
+	return (localTools || [])
+		.map((tool) => LOCAL_TO_MCP_TOOL[tool?.name])
+		.filter((name) => typeof name === "string");
+}
+
+/**
+ * Validate a local action or fallback descriptor before the dispatcher uses it.
+ *
+ * @param {{isError: boolean, structuredContent?: Object}} result Local tool result.
+ * @return {{type: string, toolName: string, arguments: Object}|null} Delegation descriptor.
+ */
+export function getLocalToolDelegation(result) {
+	const structured = result?.structuredContent;
+	if (!structured || typeof structured !== "object") {
+		return null;
+	}
+
+	if (
+		result.isError === false &&
+		structured.clientId &&
+		Array.isArray(structured.updatedAttributes) &&
+		structured.updatedAttributes.length === 0
+	) {
+		return {
+			type: "no-op",
+			toolName: "local-no-op",
+			arguments: {},
+		};
+	}
+
+	if (
+		result.isError === true &&
+		ALLOWED_FALLBACK_TOOLS.has(structured.fallbackTool) &&
+		structured.fallbackArguments &&
+		typeof structured.fallbackArguments === "object" &&
+		!Array.isArray(structured.fallbackArguments)
+	) {
+		return {
+			type: "fallback",
+			toolName: structured.fallbackTool,
+			arguments: structured.fallbackArguments,
+		};
+	}
+
+	if (
+		result.isError === false &&
+		LOCAL_ACTION_TO_MCP_TOOL[structured.action] &&
+		structured.arguments &&
+		typeof structured.arguments === "object" &&
+		!Array.isArray(structured.arguments)
+	) {
+		return {
+			type: "action",
+			toolName: LOCAL_ACTION_TO_MCP_TOOL[structured.action],
+			arguments: structured.arguments,
+		};
+	}
+
+	return null;
+}
+
+/**
  * Merge local editor abilities with the MCP tool list for this session,
  * ready for mcpToolsToOpenAI(). No MCP ability is ever removed server-side —
- * only kept out of *this request's* tool list, and only when explicitly
- * declared superseded, so the model is steered onto the fast path without
- * ever losing the MCP fallback on a session where the local one is absent.
+ * only kept out of *this request's* tool list when its mapped local
+ * equivalent is currently registered.
  *
- * @param {Array<Object>} localTools           From listLocalTools().
- * @param {Array<Object>} mcpTools             From mcpClient.listTools().
- * @param {string[]}      [supersededMcpNames] MCP tool names to omit this
- *                                             session because a local ability
- *                                             already covers the same
- *                                             operation. Empty until a
- *                                             specific editor/* ability is
- *                                             confirmed to replace a named
- *                                             MCP ability (see
- *                                             docs/local-abilities.md).
+ * @param {Array<Object>} localTools From listLocalTools().
+ * @param {Array<Object>} mcpTools   From mcpClient.listTools().
  * @return {Array<Object>} Merged list of local and MCP tools.
  */
-export function mergeLocalAndMcpTools(localTools, mcpTools, supersededMcpNames = []) {
-	const superseded = new Set(supersededMcpNames);
+export function mergeLocalAndMcpTools(localTools, mcpTools) {
+	const superseded = new Set(getSupersededMcpToolNames(localTools));
 	const filteredMcpTools = (mcpTools || []).filter((tool) => !superseded.has(tool?.name));
 	return [...(localTools || []), ...filteredMcpTools];
 }

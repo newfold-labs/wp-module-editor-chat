@@ -310,36 +310,76 @@ function findSpecialAncestorKind(store, clientId) {
  * one), or a template-part block (or something inside one). The legacy
  * blu-* tool remains registered and available for these cases.
  *
- * @param {Object} store          Block editor store selectors.
- * @param {string} clientId
- * @param {string} legacyToolName The blu-* WebMCP tool name that still
- *                                handles this case, named in the thrown
- *                                error so the model has a route out
- *                                instead of retrying this same call.
+ * @param {Object}  store             Block editor store selectors.
+ * @param {string}  clientId          Target block client ID.
+ * @param {string}  legacyToolName    The blu-* tool that still handles this case.
+ * @param {?Object} fallbackArguments Legacy arguments when automatic fallback is safe.
  */
-function assertNotSpecialEntityBlock(store, clientId, legacyToolName) {
+function assertNotSpecialEntityBlock(store, clientId, legacyToolName, fallbackArguments = null) {
+	const createError = (message) => {
+		const error = new Error(message);
+		if (fallbackArguments) {
+			error.fallbackTool = legacyToolName;
+			error.fallbackArguments = fallbackArguments;
+		}
+		return error;
+	};
 	const block = store.getBlock(clientId);
 	if (block?.name === "core/site-logo") {
-		throw new Error(
+		throw createError(
 			`core/site-logo is managed separately and is not supported by this ability yet. Use ${legacyToolName} for this block instead.`
 		);
 	}
 	if (isTemplatePartBlock(block)) {
-		throw new Error(
+		throw createError(
 			`This block is a template part, which this ability does not support yet. Use ${legacyToolName} for this block instead.`
 		);
 	}
 	if (isRefNavigationBlock(block)) {
-		throw new Error(
+		throw createError(
 			`This block is a navigation menu, which this ability does not support yet. Use ${legacyToolName} for this block instead.`
 		);
 	}
 	const ancestorKind = findSpecialAncestorKind(store, clientId);
 	if (ancestorKind) {
-		throw new Error(
+		throw createError(
 			`This block is part of a ${ancestorKind}, which this ability does not support yet. Use ${legacyToolName} for this block instead.`
 		);
 	}
+}
+
+/**
+ * Translate editor/move-block input into the existing blu-move-block handler shape.
+ *
+ * @param {Object} store Block editor selectors.
+ * @param {Object} input Local ability input.
+ * @return {?Object} Legacy move arguments, or null when no lossless translation exists.
+ */
+function getMoveFallbackArguments(store, input) {
+	const base = { client_id: input.clientId };
+	if (input.afterClientId) {
+		return { ...base, target_client_id: input.afterClientId, position: "after" };
+	}
+	if (input.beforeClientId) {
+		return { ...base, target_client_id: input.beforeClientId, position: "before" };
+	}
+
+	const rootClientId = input.rootClientId || "";
+	const order = (store.getBlockOrder(rootClientId) || []).filter(
+		(clientId) => clientId !== input.clientId
+	);
+	const index = input.index === undefined ? order.length : Math.min(input.index, order.length);
+	if (index < order.length) {
+		return { ...base, target_client_id: order[index], position: "before" };
+	}
+	if (order.length > 0) {
+		return { ...base, target_client_id: order[order.length - 1], position: "after" };
+	}
+	if (rootClientId) {
+		return { ...base, as_child_of: rootClientId };
+	}
+
+	return null;
 }
 
 /**
@@ -1081,6 +1121,23 @@ function isPlainObject(value) {
 }
 
 /**
+ * @param {*} value A JSON-safe attribute value tree.
+ * @return {boolean} Whether an unresolved image placeholder appears at any depth.
+ */
+function hasImagePlaceholderDeep(value) {
+	if (typeof value === "string") {
+		return /__(?:IMG|IMAGE)_?\d*__/i.test(value);
+	}
+	if (Array.isArray(value)) {
+		return value.some((item) => hasImagePlaceholderDeep(item));
+	}
+	if (isPlainObject(value)) {
+		return Object.values(value).some((item) => hasImagePlaceholderDeep(item));
+	}
+	return false;
+}
+
+/**
  * @param {unknown} value
  * @return {string} A description of the value's type.
  */
@@ -1645,6 +1702,147 @@ export function registerEditorAbilities() {
 	abilityNames.push("editor/can-insert-block");
 
 	ensureAbility({
+		name: "editor/edit-block",
+		label: "Edit Block Content",
+		description:
+			"LAST RESORT: replaces an existing block with complete WordPress block markup. Prefer editor/update-block for attributes, editor/insert-block for new content, and editor/move-block or editor/remove-block for structure. Use this only for content or structural rewrites, preserving all existing text, URLs, images, and inner blocks the user did not ask to change.",
+		category: "block-editor",
+		input_schema: {
+			type: "object",
+			properties: {
+				clientId: {
+					type: "string",
+					description: "Client ID of the block to edit.",
+				},
+				blockContent: {
+					type: "string",
+					description:
+						"Complete WordPress block markup, including block comments and every inner block that must be preserved.",
+				},
+				imagePrompts: {
+					type: "array",
+					description: "Image-generation inputs for __IMG_N__ placeholders.",
+					items: {
+						oneOf: [
+							{ type: "string" },
+							{
+								type: "object",
+								properties: {
+									prompt: { type: "string" },
+									alt: { type: "string" },
+									orientation: { type: "string" },
+									width: { type: "integer" },
+									height: { type: "integer" },
+								},
+								required: ["prompt"],
+							},
+						],
+					},
+				},
+				image_prompts: {
+					type: "array",
+					description:
+						"Compatibility alias for imagePrompts when repairing a legacy-handler error.",
+					items: {
+						oneOf: [
+							{ type: "string" },
+							{
+								type: "object",
+								properties: {
+									prompt: { type: "string" },
+									alt: { type: "string" },
+									orientation: { type: "string" },
+									width: { type: "integer" },
+									height: { type: "integer" },
+								},
+								required: ["prompt"],
+							},
+						],
+					},
+				},
+				imagePrompt: {
+					oneOf: [
+						{ type: "string" },
+						{
+							type: "object",
+							properties: {
+								prompt: { type: "string" },
+								alt: { type: "string" },
+								orientation: { type: "string" },
+								width: { type: "integer" },
+								height: { type: "integer" },
+							},
+							required: ["prompt"],
+						},
+					],
+					description: "Single-image compatibility alias; prefer imagePrompts.",
+				},
+				image_prompt: {
+					oneOf: [{ type: "string" }, { type: "object" }],
+					description: "Legacy single-image compatibility alias; prefer imagePrompts.",
+				},
+				imageUrls: {
+					type: "array",
+					description: "Resolved image URLs for __IMG_N__ placeholders.",
+					items: { type: "string" },
+				},
+			},
+			required: ["clientId", "blockContent"],
+			additionalProperties: false,
+		},
+		output_schema: {
+			type: "object",
+			properties: {
+				action: { type: "string" },
+				arguments: { type: "object" },
+			},
+			required: ["action", "arguments"],
+		},
+		meta: {
+			annotations: {
+				readonly: false,
+				destructive: true,
+				idempotent: false,
+			},
+		},
+		callback: async (input = {}) => {
+			if (typeof input.clientId !== "string" || !input.clientId.trim()) {
+				throw new Error("clientId must be a non-empty string.");
+			}
+			if (typeof input.blockContent !== "string" || !input.blockContent.trim()) {
+				throw new Error("blockContent must be non-empty WordPress block markup.");
+			}
+			if (input.imagePrompts !== undefined && !Array.isArray(input.imagePrompts)) {
+				throw new Error("imagePrompts must be an array.");
+			}
+			if (input.image_prompts !== undefined && !Array.isArray(input.image_prompts)) {
+				throw new Error("image_prompts must be an array.");
+			}
+			if (input.imageUrls !== undefined && !Array.isArray(input.imageUrls)) {
+				throw new Error("imageUrls must be an array.");
+			}
+			const pluralPrompts = input.imagePrompts ?? input.image_prompts;
+			const singularPrompt = input.imagePrompt ?? input.image_prompt;
+			const imagePrompts =
+				pluralPrompts ??
+				(singularPrompt === undefined
+					? undefined
+					: [typeof singularPrompt === "string" ? { prompt: singularPrompt } : singularPrompt]);
+
+			return {
+				action: "edit_block",
+				arguments: {
+					client_id: input.clientId,
+					block_content: input.blockContent,
+					...(imagePrompts ? { image_prompts: imagePrompts } : {}),
+					...(input.imageUrls ? { image_urls: input.imageUrls } : {}),
+				},
+			};
+		},
+	});
+	abilityNames.push("editor/edit-block");
+
+	ensureAbility({
 		name: "editor/move-block",
 		label: "Move Block",
 		description: "Moves an existing block to a new position, optionally into a different parent.",
@@ -1705,7 +1903,6 @@ export function registerEditorAbilities() {
 			const actions = dispatch(BLOCK_EDITOR_STORE);
 
 			const block = requireBlock(store, input.clientId);
-			assertNotSpecialEntityBlock(store, input.clientId, "blu-move-block");
 
 			if (input.afterClientId && input.beforeClientId) {
 				throw new Error("Provide only one of afterClientId or beforeClientId.");
@@ -1716,6 +1913,8 @@ export function registerEditorAbilities() {
 			if (input.index !== undefined && input.index < 0) {
 				throw new Error("index must be zero or greater.");
 			}
+
+			const fallbackArguments = getMoveFallbackArguments(store, input);
 
 			const fromRootClientId = store.getBlockRootClientId(input.clientId) || "";
 			const fromIndex = store.getBlockIndex(input.clientId);
@@ -1755,10 +1954,6 @@ export function registerEditorAbilities() {
 				index = input.index === undefined ? lastIndex : Math.min(input.index, lastIndex);
 			}
 
-			if (toRootClientId) {
-				assertNotSpecialEntityBlock(store, toRootClientId, "blu-move-block");
-			}
-
 			if (toRootClientId === input.clientId) {
 				throw new Error("A block cannot be moved into itself.");
 			}
@@ -1774,6 +1969,11 @@ export function registerEditorAbilities() {
 				!store.canInsertBlockType(block.name, toRootClientId || undefined)
 			) {
 				throw new Error(`Block "${block.name}" cannot be moved into the requested parent.`);
+			}
+
+			assertNotSpecialEntityBlock(store, input.clientId, "blu-move-block", fallbackArguments);
+			if (toRootClientId) {
+				assertNotSpecialEntityBlock(store, toRootClientId, "blu-move-block", fallbackArguments);
 			}
 
 			await actions.moveBlocksToPosition([input.clientId], fromRootClientId, toRootClientId, index);
@@ -1839,7 +2039,9 @@ export function registerEditorAbilities() {
 			const actions = dispatch(BLOCK_EDITOR_STORE);
 
 			const block = requireBlock(store, input.clientId);
-			assertNotSpecialEntityBlock(store, input.clientId, "blu-delete-block");
+			assertNotSpecialEntityBlock(store, input.clientId, "blu-delete-block", {
+				client_id: input.clientId,
+			});
 
 			const rootClientId = store.getBlockRootClientId(input.clientId) || null;
 			const index = store.getBlockIndex(input.clientId);
@@ -1871,7 +2073,7 @@ export function registerEditorAbilities() {
 		name: "editor/update-block",
 		label: "Update Block",
 		description:
-			"Updates attributes on an existing block. Supplied attributes are merged into the current ones, and each value must match the shape the block type declares.",
+			"Updates attributes on an existing block. For replacing one existing image, pass imagePrompt and omit image markup; the browser generates and applies it through the shared image handler.",
 		category: "block-editor",
 		input_schema: {
 			type: "object",
@@ -1885,8 +2087,17 @@ export function registerEditorAbilities() {
 					description:
 						"Attributes to merge into the block. Omitted attributes keep their current values.",
 				},
+				imagePrompt: {
+					oneOf: [{ type: "string" }, { type: "object" }],
+					description:
+						"Generate or edit one image and apply it to this existing image/cover block. Use this instead of edit-block markup when replacing an image.",
+				},
+				image_prompt: {
+					oneOf: [{ type: "string" }, { type: "object" }],
+					description: "Compatibility alias for imagePrompt.",
+				},
 			},
-			required: ["clientId", "attributes"],
+			required: ["clientId"],
 			additionalProperties: false,
 		},
 		output_schema: {
@@ -1896,8 +2107,13 @@ export function registerEditorAbilities() {
 				name: { type: "string" },
 				attributes: { type: "object" },
 				updatedAttributes: { type: "array" },
+				action: { type: "string" },
+				arguments: { type: "object" },
 			},
-			required: ["clientId", "name", "attributes"],
+			anyOf: [
+				{ required: ["clientId", "name", "attributes"] },
+				{ required: ["action", "arguments"] },
+			],
 		},
 		meta: {
 			annotations: {
@@ -1908,21 +2124,61 @@ export function registerEditorAbilities() {
 		},
 		callback: async (input = {}) => {
 			assertEditorReady();
-			const { select, dispatch } = getData();
-			const store = select(BLOCK_EDITOR_STORE);
-			const actions = dispatch(BLOCK_EDITOR_STORE);
 
-			const block = requireBlock(store, input.clientId);
-			assertNotSpecialEntityBlock(store, input.clientId, "blu-update-block-attrs");
-
+			input.attributes = input.attributes ?? {};
 			if (!isPlainObject(input.attributes)) {
 				throw new Error("attributes must be an object.");
 			}
 
 			const keys = Object.keys(input.attributes);
-			if (!keys.length) {
-				throw new Error("attributes must contain at least one key.");
+			const imagePrompt = input.imagePrompt ?? input.image_prompt;
+			if (!keys.length && imagePrompt === undefined) {
+				const block = requireBlock(getData().select(BLOCK_EDITOR_STORE), input.clientId);
+				return {
+					clientId: input.clientId,
+					name: block.name,
+					attributes: block.attributes ?? {},
+					updatedAttributes: [],
+				};
 			}
+			if (
+				imagePrompt !== undefined &&
+				!(
+					typeof imagePrompt === "string" ||
+					(isPlainObject(imagePrompt) && typeof imagePrompt.prompt === "string")
+				)
+			) {
+				throw new Error("imagePrompt must be a string or an object with a prompt string.");
+			}
+
+			if (imagePrompt !== undefined) {
+				return {
+					action: "update_block_attrs",
+					arguments: {
+						client_id: input.clientId,
+						attributes: input.attributes,
+						image_prompt: imagePrompt,
+					},
+				};
+			}
+
+			if (hasImagePlaceholderDeep(input.attributes)) {
+				return {
+					action: "update_block_attrs",
+					arguments: {
+						client_id: input.clientId,
+						attributes: input.attributes,
+					},
+				};
+			}
+
+			const store = getData().select(BLOCK_EDITOR_STORE);
+			assertNotSpecialEntityBlock(store, input.clientId, "blu-update-block-attrs", {
+				client_id: input.clientId,
+				attributes: input.attributes,
+			});
+
+			const block = requireBlock(store, input.clientId);
 
 			// Unlike moveBlocksToPosition/removeBlock, updateBlockAttributes has no
 			// built-in lock check — it applies unconditionally at the reducer
@@ -1938,6 +2194,7 @@ export function registerEditorAbilities() {
 			const adjusted = clearConflictingColorAttributes(currentAttributes, normalized);
 			const merged = deepMergeAttributes(currentAttributes, adjusted);
 
+			const actions = getData().dispatch(BLOCK_EDITOR_STORE);
 			await actions.updateBlockAttributes(input.clientId, merged);
 
 			// Belt-and-braces: updateBlockAttributes has no lock gate of its own

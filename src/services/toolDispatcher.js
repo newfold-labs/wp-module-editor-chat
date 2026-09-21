@@ -24,7 +24,7 @@ import { resolveAlt } from "../utils/imageAlt";
 import { snapshotBlocks } from "../utils/editorContext";
 import { safeParseJSON } from "../utils/jsonUtils";
 import { callAbility, mcpResultIsError } from "./callAbility";
-import { isLocalToolName, runLocalTool } from "./localToolRegistry";
+import { getLocalToolDelegation, isLocalToolName, runLocalTool } from "./localToolRegistry";
 import { READ_ONLY_TOOLS } from "../hooks/chat/constants";
 import { handleContentCreation, CREATE_ABILITIES } from "./contentNavigation";
 import { findHeaderRefNavigationBlock, hydrateAllRefNavigationBlocks } from "./navigationEditor";
@@ -495,6 +495,58 @@ function abortAwareClient(mcpClient, abortSignal) {
 }
 
 /**
+ * Execute a validated local action/fallback through the existing client handler.
+ *
+ * @param {Object} delegation Validated delegation.
+ * @param {Object} toolCall   Original local tool call.
+ * @param {Object} ctx        Dispatcher context.
+ * @return {Promise<Object|null>} Existing handler result.
+ */
+async function executeLocalDelegation(delegation, toolCall, ctx) {
+	switch (delegation.toolName) {
+		case "blu-edit-block":
+			return handleEditBlock(toolCall, { ...delegation.arguments }, ctx);
+		case "blu-move-block":
+			return handleMoveBlock(toolCall, { ...delegation.arguments }, ctx);
+		case "blu-delete-block":
+			return handleDeleteBlock(toolCall, { ...delegation.arguments }, ctx);
+		case "blu-update-block-attrs":
+			return handleUpdateBlockAttrs(toolCall, { ...delegation.arguments }, ctx);
+		case "local-no-op":
+			return {
+				isError: false,
+				hasChanges: false,
+				result: [
+					{
+						type: "text",
+						text: JSON.stringify({
+							success: true,
+							message: "No attributes were supplied; no change was needed.",
+						}),
+					},
+				],
+			};
+		default:
+			return null;
+	}
+}
+
+/**
+ * Flatten an existing client handler result into local-tool text.
+ *
+ * @param {Object} result Client handler result.
+ * @return {string} Text returned to the model.
+ */
+function delegatedResultText(result) {
+	const content = Array.isArray(result?.result) ? result.result : [];
+	const text = content
+		.filter((block) => block?.type === "text")
+		.map((block) => block.text)
+		.join("\n");
+	return text || JSON.stringify(result?.result ?? result);
+}
+
+/**
  * Execute tool calls for the function-calling loop.
  *
  * - RETURNS results (for appending to conversation as tool messages)
@@ -560,15 +612,38 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 
 		const args =
 			typeof tc.arguments === "string" ? safeParseJSON(tc.arguments).value : tc.arguments || {};
-		const { isError, text } = await runLocalTool(tc.name, args || {});
-		logger.log(`[ToolExecutor:REST] Executed local ability ${tc.name} (source: local)`);
+		const localResult = await runLocalTool(tc.name, args || {});
+		const delegation = getLocalToolDelegation(localResult);
+		let delegatedResult = null;
+		if (delegation) {
+			try {
+				delegatedResult = await executeLocalDelegation(delegation, tc, ctx);
+			} catch (error) {
+				delegatedResult = {
+					isError: true,
+					result: [
+						{
+							type: "text",
+							text: JSON.stringify({ error: String(error?.message || error) }),
+						},
+					],
+				};
+			}
+		}
+		const isError = delegatedResult ? !!delegatedResult.isError : localResult.isError;
+		const text = delegatedResult ? delegatedResultText(delegatedResult) : localResult.text;
+		const source = delegation?.type === "fallback" ? "local-fallback" : "local";
+		logger.log(`[ToolExecutor:REST] Executed local ability ${tc.name} (source: ${source})`);
 		// Every editor_* tool not in READ_ONLY_TOOLS mutates the document. Without
 		// hasChanges/hasBlockEdits set here, a successful local write looked
 		// identical to a read to the rest of this function: no undo entry, and
 		// the chat loop would nudge the model to redo work that already
 		// succeeded (a repeat editor_remove-block then throws "Block not
 		// found", reporting a successful delete back to the user as failed).
-		const localWriteApplied = !isError && isLocalWriteTool(tc.name);
+		const localWriteApplied =
+			!isError &&
+			isLocalWriteTool(tc.name) &&
+			(!delegatedResult || delegatedResult.hasChanges !== false);
 		if (localWriteApplied) {
 			hasBlockEdits = true;
 		}
@@ -578,8 +653,8 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 			isError,
 			hasChanges: localWriteApplied,
 		});
-		completedToolsList.push({ ...tc, isError, source: "local" });
-		ctx.setExecutedTools((prev) => [...prev, { ...tc, isError, source: "local" }]);
+		completedToolsList.push({ ...tc, isError, source });
+		ctx.setExecutedTools((prev) => [...prev, { ...tc, isError, source }]);
 	}
 
 	// Execute server-side tools via MCP (source: 'mcp')

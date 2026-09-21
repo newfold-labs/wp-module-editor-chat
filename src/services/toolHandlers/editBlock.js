@@ -4,7 +4,14 @@ import { validateBlockMarkup } from "../../utils/blockValidator";
 import { findImagePlaceholders } from "../../utils/imagePlaceholders";
 import { handleRewriteAction } from "../blockActions";
 import { getBlockImageUrl, resolveMarkupImages } from "../imageAbility";
-import { deduplicateImages, getGeneratedImages, unresolvedPlaceholderResult } from "../imageCache";
+import {
+	deduplicateImages,
+	getGeneratedImages,
+	getImplicitLocalImagePrompts,
+	unresolvedPlaceholderResult,
+} from "../imageCache";
+import { getImageReplacementRecovery } from "../imageEditRecovery";
+import { handleUpdateBlockAttrs } from "./updateBlockAttrs";
 
 /**
  * Count all inner blocks recursively.
@@ -20,6 +27,16 @@ function countInnerBlocks(block) {
 }
 
 export async function handleEditBlock(toolCall, args, ctx) {
+	const implicitPrompts = getImplicitLocalImagePrompts(
+		toolCall.name,
+		args.block_content,
+		args,
+		ctx?.userMessage
+	);
+	if (implicitPrompts) {
+		args.image_prompts = implicitPrompts;
+	}
+
 	// If this block already has an image, the first placeholder is almost always
 	// that same image being rewritten — route it through blu-edit-image so we
 	// modify the existing photo instead of generating a brand-new one.
@@ -30,7 +47,15 @@ export async function handleEditBlock(toolCall, args, ctx) {
 	args.block_content = images.markup;
 
 	// Fail rather than write a placeholder through as a broken image.
-	const unresolved = unresolvedPlaceholderResult(toolCall.id, args.block_content, images);
+	const localFieldNames = toolCall.name?.startsWith("editor_")
+		? { promptField: "imagePrompts", contentField: "blockContent" }
+		: undefined;
+	const unresolved = unresolvedPlaceholderResult(
+		toolCall.id,
+		args.block_content,
+		images,
+		localFieldNames
+	);
 	if (unresolved) {
 		console.warn(
 			"[ToolExecutor:REST] edit-block: placeholders left unresolved: edit rejected",
@@ -83,6 +108,10 @@ export async function handleEditBlock(toolCall, args, ctx) {
 
 	const validation = validateBlockMarkup(args.block_content);
 	if (!validation.valid) {
+		const recovery = getImageReplacementRecovery(originalImageBlock, images, getGeneratedImages());
+		if (recovery) {
+			return handleUpdateBlockAttrs(toolCall, recovery, ctx);
+		}
 		return {
 			id: toolCall.id,
 			result: [{ type: "text", text: JSON.stringify({ success: false, error: validation.error }) }],

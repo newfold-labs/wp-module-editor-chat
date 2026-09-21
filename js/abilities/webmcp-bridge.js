@@ -60,11 +60,25 @@ function formatToolResult(result) {
  * @param {unknown} error
  * @return {{ content: Array<{ type: string, text: string }>, isError: true }} The WebMCP tool error result.
  */
-function formatToolError(error) {
-	return {
+export function formatToolError(error) {
+	const formatted = {
 		content: [{ type: "text", text: String(error?.message || error) }],
 		isError: true,
 	};
+
+	if (
+		typeof error?.fallbackTool === "string" &&
+		error.fallbackArguments &&
+		typeof error.fallbackArguments === "object" &&
+		!Array.isArray(error.fallbackArguments)
+	) {
+		formatted.structuredContent = {
+			fallbackTool: error.fallbackTool,
+			fallbackArguments: error.fallbackArguments,
+		};
+	}
+
+	return formatted;
 }
 
 /**

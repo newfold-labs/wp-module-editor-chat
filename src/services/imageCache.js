@@ -1,5 +1,9 @@
 import { setAltForImageSrc } from "../utils/imageAlt";
-import { findImagePlaceholders } from "../utils/imagePlaceholders";
+import {
+	findImagePlaceholders,
+	hasImagePlaceholderDeep,
+	substituteImagePlaceholdersInValue,
+} from "../utils/imagePlaceholders";
 
 /**
  * Image cache for the current user turn.
@@ -56,6 +60,49 @@ export function getGeneratedImages() {
 }
 
 /**
+ * Resolve attribute placeholders with the newest image generated this turn.
+ *
+ * @param {*} value Attribute value tree that may contain __IMG_N__.
+ * @return {{value: *, image: {url: string, alt: string}}|null} Resolution or null.
+ */
+export function resolveLatestGeneratedImagePlaceholders(value) {
+	if (!hasImagePlaceholderDeep(value) || generatedImages.length === 0) {
+		return null;
+	}
+
+	const image = generatedImages[generatedImages.length - 1];
+	return {
+		value: substituteImagePlaceholdersInValue(value, image.url),
+		image,
+	};
+}
+
+/**
+ * Recover a missing prompt for a single-placeholder local edit from the
+ * original user request. Explicit prompt/URL arguments always win.
+ *
+ * @param {string} toolName    Original tool name.
+ * @param {string} markup      Proposed block markup.
+ * @param {Object} args        Normalized legacy-handler arguments.
+ * @param {string} userMessage Original user request.
+ * @return {Array<{prompt: string}>|null} One fallback prompt, or null.
+ */
+export function getImplicitLocalImagePrompts(toolName, markup, args, userMessage) {
+	if (
+		!toolName?.startsWith("editor_") ||
+		args?.image_prompts?.length ||
+		args?.image_urls?.length ||
+		typeof userMessage !== "string" ||
+		!userMessage.trim() ||
+		findImagePlaceholders(markup).length !== 1
+	) {
+		return null;
+	}
+
+	return [{ prompt: userMessage.trim() }];
+}
+
+/**
  * Append a newly generated image to the turn's cache.
  *
  * @param {string} url   Image URL returned by blu-generate-image.
@@ -83,17 +130,21 @@ export function resetGeneratedImageCache() {
  * need three different answers — "generation is unavailable" for a call that
  * simply had no prompt reports an outage that is not happening.
  *
- * @param {string}  toolCallId          The tool call id to answer.
- * @param {string}  markup              Block markup after the image step.
- * @param {Object}  [options]           Options.
- * @param {boolean} [options.attempted] Whether generation ran for these placeholders.
- * @param {number}  [options.generated] How many images generation actually produced.
+ * @param {string}  toolCallId                The tool call id to answer.
+ * @param {string}  markup                    Block markup after the image step.
+ * @param {Object}  [options]                 Options.
+ * @param {boolean} [options.attempted]       Whether generation ran for these placeholders.
+ * @param {number}  [options.generated]       How many images generation actually produced.
+ * @param {Object}  [fieldNames]              Tool-specific argument names used in repair guidance.
+ * @param {string}  [fieldNames.promptField]  Image prompt argument name.
+ * @param {string}  [fieldNames.contentField] Markup argument name.
  * @return {Object|null} An error result, or null when nothing is unresolved.
  */
 export function unresolvedPlaceholderResult(
 	toolCallId,
 	markup,
-	{ attempted = true, generated = 0 } = {}
+	{ attempted = true, generated = 0 } = {},
+	{ promptField = "image_prompts", contentField = "block_content" } = {}
 ) {
 	const leftover = findImagePlaceholders(markup);
 	if (leftover.length === 0) {
@@ -106,8 +157,8 @@ export function unresolvedPlaceholderResult(
 		// No prompt was supplied for these — the call is repairable.
 		error =
 			`No image prompt was supplied for ${list}, so nothing was changed. ` +
-			`Resend this call with one image_prompts entry per placeholder, in the order ` +
-			`they appear in block_content. Never write the placeholder into the page.`;
+			`Resend this call with one ${promptField} entry per placeholder, in the order ` +
+			`they appear in ${contentField}. Never write the placeholder into the page.`;
 	} else if (generated === 0) {
 		// Generation ran and produced nothing — retrying will fail the same way.
 		error =
@@ -118,10 +169,10 @@ export function unresolvedPlaceholderResult(
 		// Images exist; the markup and the prompt list disagree about how many.
 		error =
 			`${generated} image(s) were generated, but ${list} is still unresolved — ` +
-			`block_content and image_prompts do not line up. Nothing was changed. Do NOT ` +
+			`${contentField} and ${promptField} do not line up. Nothing was changed. Do NOT ` +
 			`tell the user image generation failed; it worked. Resend this call with the ` +
 			`placeholders numbered __IMG_1__ upward with no gaps, and exactly one ` +
-			`image_prompts entry for each, in the same order.`;
+			`${promptField} entry for each, in the same order.`;
 	}
 
 	return {

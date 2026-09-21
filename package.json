@@ -22,6 +22,7 @@
 		"post-set-version": "rm -rf ./build",
 		"format": "wp-scripts format ./src",
 		"start": "concurrently \"wp-scripts start ./src/chat-editor.js\"",
+		"test:unit": "wp-scripts test-unit-js --runInBand",
 		"lint:js": "wp-scripts lint-js ./src",
 		"lint:js:fix": "wp-scripts lint-js ./src --fix",
 		"vendor": "bash bin/vendor-webmcp-polyfill.sh"

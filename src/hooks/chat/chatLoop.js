@@ -39,6 +39,8 @@ import {
 } from "../../services/intentClassifier";
 import { restoreAnimatedBlocksInEditor } from "../../utils/editorUtils";
 import { finalizeStreamingMessage, removeStreamingMessage } from "./streamMessageHelpers";
+import { getVerifiedFinalMessage } from "./finalMessageGuard";
+import { countAppliedToolChanges } from "./toolProgress";
 import {
 	MARKUP_PROVIDED_NUDGE,
 	parseAssistantResponse,
@@ -399,14 +401,22 @@ export async function runChatLoop(userMessage, deps) {
 				continue;
 			}
 
-			conversationHistoryRef.current.push({
-				role: "assistant",
-				content,
-			});
 			const finalDisplay = lastCreationOutcome
 				? appendCreationLinkIfNeeded(assistantDisplayMessage, lastCreationOutcome)
 				: assistantDisplayMessage;
-			finalizeStreamingMessage(setMessages, streamMessageId, finalDisplay);
+			const verifiedFinalDisplay = getVerifiedFinalMessage(
+				finalDisplay,
+				lastPassHadErrors,
+				anyMutationThisTurn
+			);
+			conversationHistoryRef.current.push({
+				role: "assistant",
+				content:
+					verifiedFinalDisplay === finalDisplay
+						? content
+						: JSON.stringify({ message: verifiedFinalDisplay }),
+			});
+			finalizeStreamingMessage(setMessages, streamMessageId, verifiedFinalDisplay);
 			endedNaturally = true;
 			break;
 		}
@@ -616,7 +626,8 @@ export async function runChatLoop(userMessage, deps) {
 		// next iteration tells the AI "all changes are applied" and it replies
 		// with a confirmation without ever running the write tool.
 		lastCreationOutcome = results.find((r) => r.creationMeta)?.creationMeta ?? null;
-		toolsJustExecuted = results.some((r) => r.hasChanges === true || r.isContentCreation === true);
+		const appliedToolChanges = countAppliedToolChanges(results);
+		toolsJustExecuted = appliedToolChanges > 0;
 		anyMutationThisTurn = anyMutationThisTurn || toolsJustExecuted;
 		// blu-generate-color-palette returns option(s) to choose from, not a
 		// change already applied — the default brief-confirmation nudges would
@@ -649,7 +660,7 @@ export async function runChatLoop(userMessage, deps) {
 			}
 		}
 		if (toolsJustExecuted) {
-			writeRounds++;
+			writeRounds += appliedToolChanges;
 			restoreAnimatedBlocksInEditor();
 		}
 
@@ -704,8 +715,19 @@ export async function runChatLoop(userMessage, deps) {
 		});
 		const closingDisplay = getAssistantDisplayMessage(closing);
 		if (closingDisplay && closingDisplay.trim()) {
-			conversationHistoryRef.current.push({ role: "assistant", content: closing });
-			finalizeStreamingMessage(setMessages, closingId, closingDisplay);
+			const verifiedClosingDisplay = getVerifiedFinalMessage(
+				closingDisplay,
+				lastPassHadErrors,
+				anyMutationThisTurn
+			);
+			conversationHistoryRef.current.push({
+				role: "assistant",
+				content:
+					verifiedClosingDisplay === closingDisplay
+						? closing
+						: JSON.stringify({ message: verifiedClosingDisplay }),
+			});
+			finalizeStreamingMessage(setMessages, closingId, verifiedClosingDisplay);
 		} else {
 			removeStreamingMessage(setMessages, closingId);
 		}

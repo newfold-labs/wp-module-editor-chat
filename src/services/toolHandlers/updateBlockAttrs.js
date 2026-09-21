@@ -1,7 +1,7 @@
 import { __ } from "@wordpress/i18n";
 
 import { deepMergeAttrs as deepMerge } from "../../utils/deepMerge";
-import { appendGeneratedImageUrl } from "../imageCache";
+import { appendGeneratedImageUrl, resolveLatestGeneratedImagePlaceholders } from "../imageCache";
 import { resolveAlt } from "../../utils/imageAlt";
 import {
 	hasImagePlaceholder,
@@ -95,30 +95,39 @@ export async function handleUpdateBlockAttrs(toolCall, args, ctx) {
 		// image_prompt resolves it below, so check the whole tree, not just `url`.
 		const attributesHadPlaceholder = hasImagePlaceholderDeep(args.attributes);
 
+		// A preceding blu-generate-image call already cached its URL for this
+		// turn. Reuse it instead of generating the same image a second time.
+		if (attributesHadPlaceholder && !args.image_prompt) {
+			const cachedResolution = resolveLatestGeneratedImagePlaceholders(args.attributes);
+			if (!cachedResolution) {
+				return {
+					id: toolCall.id,
+					result: [
+						{
+							type: "text",
+							text: JSON.stringify({
+								success: false,
+								error:
+									"attributes contained an image placeholder, which this tool cannot resolve on its own — nothing was changed. " +
+									"Call blu/update-block-attrs again with image_prompt describing the image you want.",
+							}),
+						},
+					],
+					isError: true,
+				};
+			}
+			args.attributes = cachedResolution.value;
+			if (cachedResolution.image.alt && !args.attributes.alt) {
+				args.attributes.alt = cachedResolution.image.alt;
+			}
+		}
+
 		// A top-level `url` placeholder specifically would set the block's own
 		// image src to the literal token if left in place — drop it so
 		// image_prompt can fill it in below (fresh, alongside any other
 		// placeholder in the tree).
 		if (hasImagePlaceholder(args.attributes.url)) {
 			delete args.attributes.url;
-		}
-
-		if (attributesHadPlaceholder && !args.image_prompt) {
-			return {
-				id: toolCall.id,
-				result: [
-					{
-						type: "text",
-						text: JSON.stringify({
-							success: false,
-							error:
-								"attributes contained an image placeholder, which this tool cannot resolve on its own — nothing was changed. " +
-								"Call blu/update-block-attrs again with image_prompt describing the image you want.",
-						}),
-					},
-				],
-				isError: true,
-			};
 		}
 
 		// ── Generate or edit image from prompt if provided ──
