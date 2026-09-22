@@ -665,7 +665,7 @@ export async function handleMoveAction(clientId, targetClientId, position, asChi
  * @return {Promise<Object>} Result of the addition.
  */
 export async function handleAddAction(clientId, changes, position = "after") {
-	const { getBlocks, getBlock } = select("core/block-editor");
+	const { getBlock } = select("core/block-editor");
 	const { insertBlocks } = dispatch("core/block-editor");
 	const errors = [];
 
@@ -735,12 +735,8 @@ export async function handleAddAction(clientId, changes, position = "after") {
 			if (postContentBlock) {
 				insertBlocks(blockInstances, 0, postContentBlock.clientId);
 			} else {
-				const rootBlocks = getBlocks();
-				if (rootBlocks.length > 0) {
-					insertBlocks(blockInstances, 0, rootBlocks[0].clientId);
-				} else {
-					insertBlocks(blockInstances, 0);
-				}
+				// The third argument is the parent, so leave it unset for the document root.
+				insertBlocks(blockInstances, 0);
 			}
 		} else {
 			const targetBlock = getBlock(clientId);
