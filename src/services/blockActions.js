@@ -13,11 +13,7 @@ import { dispatch, select } from "@wordpress/data";
 
 import logger from "../utils/logger";
 
-import {
-	createBlockFromParsed,
-	findBlockContext,
-	getEffectiveRootBlocks,
-} from "../utils/blockUtils";
+import { createBlockFromParsed, findBlockContext, findPostContentBlock } from "../utils/blockUtils";
 import { resolveTarget } from "./targetResolver";
 import {
 	applyTemplatePartRewrite,
@@ -734,18 +730,14 @@ export async function handleAddAction(clientId, changes, position = "after") {
 				inserter(blocks, path, parsedBlocksList)
 			);
 		} else if (clientId === null) {
-			const effectiveRoot = getEffectiveRootBlocks();
-			if (effectiveRoot.blocks.length > 0) {
-				if (effectiveRoot.parentClientId) {
-					insertBlocks(blockInstances, 0, effectiveRoot.parentClientId);
-				} else {
-					insertBlocks(blockInstances, 0, effectiveRoot.blocks[0].clientId);
-				}
+			// Top of the page body, even when post-content is empty or nested.
+			const postContentBlock = findPostContentBlock();
+			if (postContentBlock) {
+				insertBlocks(blockInstances, 0, postContentBlock.clientId);
 			} else {
 				const rootBlocks = getBlocks();
-				const postContentBlock = rootBlocks.find((b) => b.name === "core/post-content");
-				if (postContentBlock) {
-					insertBlocks(blockInstances, 0, postContentBlock.clientId);
+				if (rootBlocks.length > 0) {
+					insertBlocks(blockInstances, 0, rootBlocks[0].clientId);
 				} else {
 					insertBlocks(blockInstances, 0);
 				}
