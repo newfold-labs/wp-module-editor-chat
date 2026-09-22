@@ -49,16 +49,16 @@ export function findPostContentBlock() {
 /**
  * Get effective root blocks — either post-content inner blocks or actual root blocks.
  *
- * In the Site Editor the visible blocks live inside a core/post-content wrapper.
- * This helper returns whichever set of blocks represents the "page body".
+ * In the Site Editor the visible blocks live inside a core/post-content wrapper,
+ * which may be nested in the template. This helper returns whichever set of
+ * blocks represents the "page body".
  *
  * @return {Object} { blocks: Array, parentClientId: string|null }
  */
 export function getEffectiveRootBlocks() {
 	const { getBlocks } = select("core/block-editor");
-	const rootBlocks = getBlocks();
 
-	const postContentBlock = rootBlocks.find((block) => block.name === "core/post-content");
+	const postContentBlock = findPostContentBlock();
 
 	if (postContentBlock) {
 		const postContentInnerBlocks = getBlocks(postContentBlock.clientId);
@@ -71,7 +71,7 @@ export function getEffectiveRootBlocks() {
 	}
 
 	return {
-		blocks: rootBlocks,
+		blocks: getBlocks(),
 		parentClientId: null,
 	};
 }
