@@ -24,6 +24,29 @@ export function createBlockFromParsed(parsedBlock) {
 }
 
 /**
+ * Find the core/post-content block at any depth, in document order.
+ *
+ * Templates often wrap post-content in a group (e.g. a <main> group), so it
+ * is not always a root block.
+ *
+ * @return {Object|null} The post-content block, or null if there is none.
+ */
+export function findPostContentBlock() {
+	const { getBlocks } = select("core/block-editor");
+	const queue = [...getBlocks()];
+
+	while (queue.length > 0) {
+		const block = queue.shift();
+		if (block.name === "core/post-content") {
+			return block;
+		}
+		queue.unshift(...getBlocks(block.clientId));
+	}
+
+	return null;
+}
+
+/**
  * Get effective root blocks — either post-content inner blocks or actual root blocks.
  *
  * In the Site Editor the visible blocks live inside a core/post-content wrapper.
