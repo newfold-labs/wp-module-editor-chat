@@ -7,6 +7,7 @@ import logger from "../utils/logger";
 export const DEFAULT_INTENT = {
 	task: "edit_page",
 	content_type: null,
+	layout: null,
 	menu_edit: null,
 	steps: [],
 };
@@ -17,7 +18,7 @@ export const DEFAULT_INTENT = {
  * @param {string}      message       User-facing message text
  * @param {Object}      sessionConfig Session config with workerUrl and sessionToken
  * @param {AbortSignal} [signal]      Turn abort signal, so Stop cancels this request
- * @return {Promise<{ task: string, content_type: string|null, menu_edit: Object|null, steps: string[] }>} Classified intent
+ * @return {Promise<{ task: string, content_type: string|null, layout: string|null, menu_edit: Object|null, steps: string[] }>} Classified intent
  */
 export async function classifyUserIntent(message, sessionConfig, signal) {
 	if (!message?.trim()) {
@@ -68,12 +69,14 @@ export async function classifyUserIntent(message, sessionConfig, signal) {
 			"[IntentClassifier] Classified:",
 			data.task,
 			data.content_type,
+			data.layout,
 			data.menu_edit,
 			steps
 		);
 		return {
 			task: data.task,
 			content_type: data.content_type ?? null,
+			layout: normalizeIntentLayout(data.task, data.content_type, data.layout),
 			menu_edit: data.menu_edit ?? null,
 			steps,
 		};
@@ -81,6 +84,27 @@ export async function classifyUserIntent(message, sessionConfig, signal) {
 		logger.warn("[IntentClassifier] Request failed:", err?.message || err);
 		return DEFAULT_INTENT;
 	}
+}
+
+/**
+ * Normalize page layout from the classifier. Pages default to rich.
+ *
+ * @param {string}      task        Classified task.
+ * @param {string|null} contentType Classified content type.
+ * @param {string|null} layout      Raw layout field.
+ * @return {string|null} "rich", "text_only", or null.
+ */
+function normalizeIntentLayout(task, contentType, layout) {
+	if (task !== "create_content") {
+		return null;
+	}
+	if (contentType === "post" || contentType === "cpt" || contentType === "product") {
+		return null;
+	}
+	if (layout === "text_only") {
+		return "text_only";
+	}
+	return "rich";
 }
 
 /**
@@ -99,11 +123,13 @@ export function intentNeedsAllTools(intent) {
  * @param {{ task: string }} intent       Classified intent
  * @param {string}           executeNudge EXECUTE_NUDGE constant
  * @param {string}           jsonFormat   ASSISTANT_JSON_FORMAT constant
+ * @param {string}           createNudge  CREATE_NUDGE constant
  * @return {string} Nudge to send with the first pass
  */
-export function getIntentNudge(intent, executeNudge, jsonFormat) {
+export function getIntentNudge(intent, executeNudge, jsonFormat, createNudge) {
 	switch (intent?.task) {
 		case "create_content":
+			return createNudge || jsonFormat;
 		case "conversational":
 			return jsonFormat;
 		case "site_management":
