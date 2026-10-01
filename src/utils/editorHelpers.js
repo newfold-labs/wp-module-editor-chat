@@ -17,13 +17,36 @@ export const getCurrentPageContent = async () => {
 	return { page_content: postContent, ...templatePartsMap };
 };
 
+/**
+ * Find the core/post-content block at any depth, in document order.
+ *
+ * Templates often wrap post-content in a group (e.g. a <main> group), so it
+ * is not always a root block.
+ *
+ * @return {Object|null} The post-content block, or null if there is none.
+ */
+export const findPostContentBlock = () => {
+	const { getBlocks } = select("core/block-editor");
+	const queue = [...getBlocks()];
+
+	while (queue.length > 0) {
+		const block = queue.shift();
+		if (block.name === "core/post-content") {
+			return block;
+		}
+		queue.unshift(...getBlocks(block.clientId));
+	}
+
+	return null;
+};
+
 // Helpers
 const getPostContent = () => {
 	const blockEditor = select("core/block-editor");
 	const blocks = blockEditor.getBlocks();
 
 	// Find the post-content block
-	const postContentBlock = blocks.find((block) => block.name === "core/post-content");
+	const postContentBlock = findPostContentBlock();
 
 	if (!postContentBlock) {
 		// If there's no post-content block, map all blocks

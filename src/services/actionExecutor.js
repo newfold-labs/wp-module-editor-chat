@@ -13,6 +13,7 @@ import {
 	getTemplatePartEntity,
 	isTemplatePart,
 	fetchTemplatePartContent,
+	findPostContentBlock,
 } from "../utils/editorHelpers";
 
 /**
@@ -698,37 +699,6 @@ class ActionExecutor {
 	}
 
 	/**
-	 * Get effective root blocks (root blocks + first level of post-content blocks)
-	 *
-	 * @return {Object} Object with blocks array and parentClientId (null for root, post-content clientId for post-content)
-	 */
-	getEffectiveRootBlocks() {
-		const { getBlocks } = select("core/block-editor");
-		const rootBlocks = getBlocks();
-
-		// Find the post-content block
-		const postContentBlock = rootBlocks.find((block) => block.name === "core/post-content");
-
-		if (postContentBlock) {
-			// Get inner blocks of post-content
-			const postContentInnerBlocks = getBlocks(postContentBlock.clientId);
-			if (postContentInnerBlocks.length > 0) {
-				// Return post-content inner blocks as effective root
-				return {
-					blocks: postContentInnerBlocks,
-					parentClientId: postContentBlock.clientId,
-				};
-			}
-		}
-
-		// No post-content or it's empty, use actual root blocks
-		return {
-			blocks: rootBlocks,
-			parentClientId: null,
-		};
-	}
-
-	/**
 	 * Find which context a block belongs to (root or post-content)
 	 *
 	 * @param {string} clientId The block's client ID
@@ -749,7 +719,7 @@ class ActionExecutor {
 		}
 
 		// Check if it's inside post-content
-		const postContentBlock = rootBlocks.find((block) => block.name === "core/post-content");
+		const postContentBlock = findPostContentBlock();
 		if (postContentBlock) {
 			const postContentInnerBlocks = getBlocks(postContentBlock.clientId);
 			const innerIndex = postContentInnerBlocks.findIndex((block) => block.clientId === clientId);
@@ -773,7 +743,7 @@ class ActionExecutor {
 	 * @return {Promise<Object>} Result of the addition
 	 */
 	async handleAddAction(clientId, changes) {
-		const { getBlocks, getBlock } = select("core/block-editor");
+		const { getBlock } = select("core/block-editor");
 		const { insertBlocks } = dispatch("core/block-editor");
 		const errors = [];
 
@@ -809,28 +779,13 @@ class ActionExecutor {
 
 		// Determine insertion position
 		if (clientId === null) {
-			// Insert at the top of the page
-			const effectiveRoot = this.getEffectiveRootBlocks();
-			if (effectiveRoot.blocks.length > 0) {
-				// Insert at the beginning of the effective root blocks
-				if (effectiveRoot.parentClientId) {
-					// Insert into post-content
-					insertBlocks(blocksToInsert, 0, effectiveRoot.parentClientId);
-				} else {
-					// Insert at root
-					insertBlocks(blocksToInsert, 0, effectiveRoot.blocks[0].clientId);
-				}
+			// Top of the page body, even when post-content is empty or nested.
+			const postContentBlock = findPostContentBlock();
+			if (postContentBlock) {
+				insertBlocks(blocksToInsert, 0, postContentBlock.clientId);
 			} else {
-				// Page is empty, check if we have post-content block
-				const rootBlocks = getBlocks();
-				const postContentBlock = rootBlocks.find((block) => block.name === "core/post-content");
-				if (postContentBlock) {
-					// Insert into post-content
-					insertBlocks(blocksToInsert, 0, postContentBlock.clientId);
-				} else {
-					// Insert at root
-					insertBlocks(blocksToInsert, 0);
-				}
+				// The third argument is the parent, so leave it unset for the document root.
+				insertBlocks(blocksToInsert, 0);
 			}
 		} else {
 			// Insert after the specified block
