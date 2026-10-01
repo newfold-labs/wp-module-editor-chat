@@ -13,11 +13,7 @@ import { dispatch, select } from "@wordpress/data";
 
 import logger from "../utils/logger";
 
-import {
-	createBlockFromParsed,
-	findBlockContext,
-	getEffectiveRootBlocks,
-} from "../utils/blockUtils";
+import { createBlockFromParsed, findBlockContext, findPostContentBlock } from "../utils/blockUtils";
 import { resolveTarget } from "./targetResolver";
 import {
 	applyTemplatePartRewrite,
@@ -669,7 +665,7 @@ export async function handleMoveAction(clientId, targetClientId, position, asChi
  * @return {Promise<Object>} Result of the addition.
  */
 export async function handleAddAction(clientId, changes, position = "after") {
-	const { getBlocks, getBlock } = select("core/block-editor");
+	const { getBlock } = select("core/block-editor");
 	const { insertBlocks } = dispatch("core/block-editor");
 	const errors = [];
 
@@ -734,21 +730,13 @@ export async function handleAddAction(clientId, changes, position = "after") {
 				inserter(blocks, path, parsedBlocksList)
 			);
 		} else if (clientId === null) {
-			const effectiveRoot = getEffectiveRootBlocks();
-			if (effectiveRoot.blocks.length > 0) {
-				if (effectiveRoot.parentClientId) {
-					insertBlocks(blockInstances, 0, effectiveRoot.parentClientId);
-				} else {
-					insertBlocks(blockInstances, 0, effectiveRoot.blocks[0].clientId);
-				}
+			// Top of the page body, even when post-content is empty or nested.
+			const postContentBlock = findPostContentBlock();
+			if (postContentBlock) {
+				insertBlocks(blockInstances, 0, postContentBlock.clientId);
 			} else {
-				const rootBlocks = getBlocks();
-				const postContentBlock = rootBlocks.find((b) => b.name === "core/post-content");
-				if (postContentBlock) {
-					insertBlocks(blockInstances, 0, postContentBlock.clientId);
-				} else {
-					insertBlocks(blockInstances, 0);
-				}
+				// The third argument is the parent, so leave it unset for the document root.
+				insertBlocks(blockInstances, 0);
 			}
 		} else {
 			const targetBlock = getBlock(clientId);
