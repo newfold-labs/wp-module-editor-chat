@@ -13,6 +13,7 @@ import {
 	getTemplatePartEntity,
 	isTemplatePart,
 	fetchTemplatePartContent,
+	findPostContentBlock,
 } from "../utils/editorHelpers";
 
 /**
@@ -749,7 +750,7 @@ class ActionExecutor {
 		}
 
 		// Check if it's inside post-content
-		const postContentBlock = rootBlocks.find((block) => block.name === "core/post-content");
+		const postContentBlock = findPostContentBlock();
 		if (postContentBlock) {
 			const postContentInnerBlocks = getBlocks(postContentBlock.clientId);
 			const innerIndex = postContentInnerBlocks.findIndex((block) => block.clientId === clientId);
