@@ -774,7 +774,7 @@ class ActionExecutor {
 	 * @return {Promise<Object>} Result of the addition
 	 */
 	async handleAddAction(clientId, changes) {
-		const { getBlocks, getBlock } = select("core/block-editor");
+		const { getBlock } = select("core/block-editor");
 		const { insertBlocks } = dispatch("core/block-editor");
 		const errors = [];
 
@@ -815,8 +815,8 @@ class ActionExecutor {
 			if (postContentBlock) {
 				insertBlocks(blocksToInsert, 0, postContentBlock.clientId);
 			} else {
-				// Insert at root
-				insertBlocks(blocksToInsert, 0, getBlocks()[0]?.clientId);
+				// The third argument is the parent, so leave it unset for the document root.
+				insertBlocks(blocksToInsert, 0);
 			}
 		} else {
 			// Insert after the specified block
