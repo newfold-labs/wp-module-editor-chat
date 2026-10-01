@@ -810,28 +810,13 @@ class ActionExecutor {
 
 		// Determine insertion position
 		if (clientId === null) {
-			// Insert at the top of the page
-			const effectiveRoot = this.getEffectiveRootBlocks();
-			if (effectiveRoot.blocks.length > 0) {
-				// Insert at the beginning of the effective root blocks
-				if (effectiveRoot.parentClientId) {
-					// Insert into post-content
-					insertBlocks(blocksToInsert, 0, effectiveRoot.parentClientId);
-				} else {
-					// Insert at root
-					insertBlocks(blocksToInsert, 0, effectiveRoot.blocks[0].clientId);
-				}
+			// Top of the page body, even when post-content is empty or nested.
+			const postContentBlock = findPostContentBlock();
+			if (postContentBlock) {
+				insertBlocks(blocksToInsert, 0, postContentBlock.clientId);
 			} else {
-				// Page is empty, check if we have post-content block
-				const rootBlocks = getBlocks();
-				const postContentBlock = rootBlocks.find((block) => block.name === "core/post-content");
-				if (postContentBlock) {
-					// Insert into post-content
-					insertBlocks(blocksToInsert, 0, postContentBlock.clientId);
-				} else {
-					// Insert at root
-					insertBlocks(blocksToInsert, 0);
-				}
+				// Insert at root
+				insertBlocks(blocksToInsert, 0, getBlocks()[0]?.clientId);
 			}
 		} else {
 			// Insert after the specified block
