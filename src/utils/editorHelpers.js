@@ -46,7 +46,7 @@ const getPostContent = () => {
 	const blocks = blockEditor.getBlocks();
 
 	// Find the post-content block
-	const postContentBlock = blocks.find((block) => block.name === "core/post-content");
+	const postContentBlock = findPostContentBlock();
 
 	if (!postContentBlock) {
 		// If there's no post-content block, map all blocks
