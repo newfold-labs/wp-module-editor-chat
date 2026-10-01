@@ -699,37 +699,6 @@ class ActionExecutor {
 	}
 
 	/**
-	 * Get effective root blocks (root blocks + first level of post-content blocks)
-	 *
-	 * @return {Object} Object with blocks array and parentClientId (null for root, post-content clientId for post-content)
-	 */
-	getEffectiveRootBlocks() {
-		const { getBlocks } = select("core/block-editor");
-		const rootBlocks = getBlocks();
-
-		// Find the post-content block
-		const postContentBlock = rootBlocks.find((block) => block.name === "core/post-content");
-
-		if (postContentBlock) {
-			// Get inner blocks of post-content
-			const postContentInnerBlocks = getBlocks(postContentBlock.clientId);
-			if (postContentInnerBlocks.length > 0) {
-				// Return post-content inner blocks as effective root
-				return {
-					blocks: postContentInnerBlocks,
-					parentClientId: postContentBlock.clientId,
-				};
-			}
-		}
-
-		// No post-content or it's empty, use actual root blocks
-		return {
-			blocks: rootBlocks,
-			parentClientId: null,
-		};
-	}
-
-	/**
 	 * Find which context a block belongs to (root or post-content)
 	 *
 	 * @param {string} clientId The block's client ID
