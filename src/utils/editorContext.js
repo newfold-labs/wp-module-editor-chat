@@ -162,6 +162,18 @@ For editing tasks where reasonable defaults exist (matching existing design, pla
 
 Complete every change listed in <user_intent> steps — call all the tools needed in this same response. Do not stop after the first one.`;
 
+export const CREATE_NUDGE = `${ASSISTANT_JSON_FORMAT}
+
+For creating new content, EXECUTE in this turn as a draft. Do not ask for confirmation when the content type is clear.
+
+Pages (\`blu-add-page\`) follow <user_intent>.layout:
+- "text_only": simple heading/paragraph markup is OK.
+- "rich" or absent: mix sections — one full-width cover hero; a color-band group (align:full + layout constrained + backgroundColor, children not align:full); a flow group (no backgroundColor, no align:full) with media-text or columns; at least one media-text and one columns. Theme palette slugs from editor_context; __IMG_N__ + image_prompts. Never heading+paragraph-only and never a page of only repeating full-bleed groups/covers.
+
+Posts, CPT, and products need valid block markup only — richness rules apply to pages.
+
+Complete the create call in this response.`;
+
 /**
  * Nudge injected after tools have been executed successfully.
  * Asks the model for a brief confirmation instead of more tool calls.

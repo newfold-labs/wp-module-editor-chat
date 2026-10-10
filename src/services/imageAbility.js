@@ -132,7 +132,7 @@ export async function resolveImagePrompts(prompts, ctx, { limit, sourceUrlForFir
 /**
  * Resolve every `__IMG_N__` placeholder in `markup`, whichever source is available.
  *
- * The write paths (add-section, edit-block, insert-inner-block) all offer the
+ * The write paths (add-section, edit-block, insert-inner-block, add-page) all offer the
  * same three: generate from `image_prompts`, substitute caller-supplied
  * `image_urls`, or reuse images already generated this turn.
  *
