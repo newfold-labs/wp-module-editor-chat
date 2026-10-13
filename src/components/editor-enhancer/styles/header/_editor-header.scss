@@ -39,3 +39,15 @@
 		background: rgba(0, 0, 0, 0.1);
 	}
 }
+
+// The custom header replaces the WP admin bar on the site editor.
+// Core only hides #wpadminbar in distraction-free mode, and this header
+// sits at top: 0 under the bar (z-index 99999). Collapse the bar offset
+// so .edit-site starts at the top of the viewport.
+body.nfd-editor-chat-enabled.site-editor-php {
+	--wp-admin--admin-bar--height: 0px;
+
+	#wpadminbar {
+		display: none;
+	}
+}
