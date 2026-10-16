@@ -434,18 +434,24 @@ final class ChatEditor {
 		return $settings;
 	}
 
+
 	/**
 	 * Get site context data for the AI assistant.
 	 *
 	 * @return array
 	 */
 	private static function get_site_context() {
-		$onboarding = \get_option( 'nfd_module_onboarding_state_input', array() );
+		$site_type  = \get_option( 'nfd_module_onboarding_sitegen_site_type', '' );
+		$prompt     = \get_option( 'nfd_module_onboarding_sitegen_enhanced_prompt', '' );
+		$onboarding = (array) \get_option( 'nfd_module_onboarding_state_input', array() );
+
+		$prompt    = ! empty( $prompt ) ? $prompt : ( $onboarding['prompt'] ?? '' );
+		$site_type = ! empty( $site_type ) ? $site_type : ( $onboarding['siteType'] ?? '' );
 
 		return array(
 			'title'          => \get_bloginfo( 'name' ),
-			'description'    => ! empty( $onboarding['prompt'] ) ? $onboarding['prompt'] : \get_bloginfo( 'description' ),
-			'siteType'       => $onboarding['siteType'] ?? '',
+			'description'    => ! empty( $prompt ) ? $prompt : \get_bloginfo( 'description' ),
+			'siteType'       => $site_type ?? '',
 			'locale'         => \get_locale(),
 			'classification' => \get_option( 'nfd-ai-site-gen-siteclassification', '' ),
 		);
