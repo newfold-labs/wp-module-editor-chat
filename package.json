@@ -32,7 +32,7 @@
 		"autoprefixer": "^10.6.1",
 		"baseline-browser-mapping": "^2.11.28",
 		"concurrently": "^10.0.6",
-		"cssnano": "^9.7.0",
+		"cssnano": "^9.8.0",
 		"esbuild": "^0.28.2",
 		"eslint": "^10.12.0",
 		"eslint-plugin-prettier": "^5.5.7",
