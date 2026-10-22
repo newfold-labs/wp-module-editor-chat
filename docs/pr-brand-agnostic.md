@@ -24,7 +24,7 @@ Editor chat ships inside HostGator, Web.com, and other brand plugins; UI and han
 - [docs/integration.md](integration.md) — Multi-brand behavior and filter.
 - [docs/development.md](development.md) — cross-brand local testing.
 
-## Breaking changes
+## Breaking changes / deprecation
 
-- Removed `BluehostDropdownMenu` export; use `BrandDropdownMenu`.
-- CSS class prefix changed from `nfd-editor-chat__bluehost-menu` to `nfd-editor-chat__brand-menu` (custom CSS overrides must update).
+- Prefer `BrandDropdownMenu`; `BluehostDropdownMenu` remains as a deprecated alias until **2.3.0** (see [changelog.md](changelog.md)).
+- CSS class prefix `nfd-editor-chat__brand-menu` replaces `nfd-editor-chat__bluehost-menu`; legacy selectors ship in built CSS for one release cycle.

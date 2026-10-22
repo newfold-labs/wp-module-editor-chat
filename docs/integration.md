@@ -50,3 +50,15 @@ Host plugins can supply or override portal URLs when a brand is not in the built
 - Sidebar title uses `sprintf( '%s AI Assistant', brand.name )`.
 
 See [development.md](development.md) for local testing across brand plugins.
+
+## Migrating from Bluehost-specific APIs
+
+This release generalizes branding for all Newfold host plugins. Integrators that imported Bluehost-only symbols or targeted Bluehost CSS classes should update before **2.3.0**, when deprecated aliases are removed.
+
+| Before | After |
+|--------|--------|
+| `BluehostDropdownMenu` | `BrandDropdownMenu` (deprecated alias export still available) |
+| `nfd-editor-chat__bluehost-menu` | `nfd-editor-chat__brand-menu` |
+| Hardcoded portal URLs in React | `window.nfdEditorChat.brand` or `nfd_editor_chat_brand_links` |
+
+Full release notes: [changelog.md](changelog.md).
