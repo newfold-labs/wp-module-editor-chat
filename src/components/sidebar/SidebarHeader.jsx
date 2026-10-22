@@ -2,7 +2,7 @@
  * WordPress dependencies
  */
 import { Button } from "@wordpress/components";
-import { __ } from "@wordpress/i18n";
+import { __, sprintf } from "@wordpress/i18n";
 
 /**
  * External dependencies
@@ -19,14 +19,23 @@ import { Plus, Sparkles } from "lucide-react";
  * @param {boolean}  props.isNewChatDisabled Whether the new chat button should be disabled
  * @return {Element} The SidebarHeader component.
  */
+const getBrandName = () => {
+	const name = window?.nfdEditorChat?.brand?.name;
+	return name || __("Host", "wp-module-editor-chat");
+};
+
 const SidebarHeader = ({ onNewChat, isNewChatDisabled = false }) => {
+	const title = sprintf(
+		/* translators: %s: brand display name */
+		__("%s AI Assistant", "wp-module-editor-chat"),
+		getBrandName()
+	);
+
 	return (
 		<div className="nfd-editor-chat-sidebar__header-content">
 			<div className="interface-complementary-area-header__title">
 				<Sparkles width={15} height={15} />
-				<h2>
-					{__("Bluehost AI Assistant", "wp-module-editor-chat")}
-				</h2>
+				<h2>{title}</h2>
 			</div>
 			{onNewChat && (
 				<div className="nfd-editor-chat-sidebar__header-actions">

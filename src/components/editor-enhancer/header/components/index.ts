@@ -1,5 +1,5 @@
 export {default as BlockInserter} from './BlockInserter'
-export { default as BluehostDropdownMenu } from "./BluehostDropdownMenu";
+export { default as BrandDropdownMenu } from "./BrandDropdownMenu";
 export { default as ChatToggle } from "./ChatToggle";
 export { default as DeviceSwitcher } from "./DeviceSwitcher";
 export { default as DocumentOverviewToggle } from "./DocumentOverviewToggle";

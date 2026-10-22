@@ -4,7 +4,7 @@ This file gives AI agents a quick orientation to the repo. For full detail, see 
 
 ## What this project is
 
-- **wp-module-editor-chat** – Site Editor AI Chat. Registers with the Newfold Module Loader. Maintained by Newfold Labs.
+- **wp-module-editor-chat** – Site Editor AI Chat for any Newfold host-brand plugin. Use `Data\BrandConfig` and `window.nfdEditorChat.brand`; never hardcode "Bluehost" in user-facing strings.
 
 - **Stack:** PHP 7.3+. See composer.json for dependencies.
 
