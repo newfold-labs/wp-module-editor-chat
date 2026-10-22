@@ -1,4 +1,4 @@
-export {default as BlockInserter} from './BlockInserter'
+export { default as BlockInserter } from "./BlockInserter";
 export { default as BrandDropdownMenu } from "./BrandDropdownMenu";
 /** @deprecated Use `BrandDropdownMenu`. Removed in 2.3.0. */
 export { default as BluehostDropdownMenu } from "./BrandDropdownMenu";
