@@ -120,12 +120,12 @@ final class BrandConfig {
 		$links = self::get_portal_links();
 
 		return array(
-			'id'          => self::get_brand_id(),
-			'name'        => self::get_brand_name(),
-			'accountUrl'  => $links['accountUrl'] ?? '',
-			'emailUrl'    => $links['emailUrl'] ?? '',
-			'billingUrl'  => $links['billingUrl'] ?? '',
-			'adminUrl'    => \admin_url(),
+			'id'         => self::get_brand_id(),
+			'name'       => self::get_brand_name(),
+			'accountUrl' => \esc_url( $links['accountUrl'] ?? '' ),
+			'emailUrl'   => \esc_url( $links['emailUrl'] ?? '' ),
+			'billingUrl' => \esc_url( $links['billingUrl'] ?? '' ),
+			'adminUrl'   => \admin_url(),
 		);
 	}
 }
