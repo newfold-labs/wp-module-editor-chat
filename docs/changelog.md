@@ -11,7 +11,7 @@ updated: 2026-10-22
 
 ### Added
 
-- `Data\BrandConfig` — resolves brand id, display name, and customer portal URLs from the host plugin container.
+- Brand data centralized in **wp-module-onboarding** (`Brands` registry + `BrandConfig`); editor-chat depends on onboarding instead of a local `BrandConfig` class.
 - `window.nfdEditorChat.brand` — localized payload (`id`, `name`, `accountUrl`, `emailUrl`, `billingUrl`, `adminUrl`) for React UI.
 - Filter `nfd_editor_chat_brand_links` — override portal URLs per brand plugin id (see [integration.md](integration.md)).
 
@@ -19,7 +19,7 @@ updated: 2026-10-22
 
 - Header customer menu and styles are brand-agnostic (`BrandDropdownMenu`, `nfd-editor-chat__brand-menu`).
 - Admin bar and sidebar titles use the host plugin display name instead of hardcoded "Bluehost".
-- Worker handshake `brand_id` uses `BrandConfig::get_brand_id()`.
+- Worker handshake `brand_id` uses `BrandConfig::get_editor_chat_brand_id()` from onboarding.
 
 ### Deprecated (remove in 2.3.0)
 

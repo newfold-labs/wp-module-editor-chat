@@ -21,4 +21,10 @@ if ( ! defined( 'NFD_EDITOR_CHAT_BUILD_URL' ) ) {
 	define( 'NFD_EDITOR_CHAT_BUILD_URL', 'https://example.com/wp-content/plugins/bluehost/vendor/newfold-labs/wp-module-editor-chat/build/' . NFD_EDITOR_CHAT_VERSION );
 }
 
+require_once $module_dir . '/vendor/autoload.php';
+
+if ( ! defined( 'NFD_ONBOARDING_PLUGIN_BRAND' ) ) {
+	define( 'NFD_ONBOARDING_PLUGIN_BRAND', 'bluehost' );
+}
+
 require_once $module_dir . '/bootstrap.php';

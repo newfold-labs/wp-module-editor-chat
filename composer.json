@@ -77,9 +77,18 @@
       "only": [
         "newfold-labs/*"
       ]
+    },
+    "wp-module-onboarding": {
+      "type": "path",
+      "url": "onboarding-dep",
+      "options": {
+        "symlink": true
+      }
     }
   },
-  "require": {},
+  "require": {
+    "newfold-labs/wp-module-onboarding": "^4.0"
+  },
   "require-dev": {
     "johnpbloch/wordpress": "@stable",
     "lucatume/wp-browser": "*",

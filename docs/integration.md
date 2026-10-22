@@ -11,13 +11,15 @@ The module registers with the Newfold Module Loader via `bootstrap.php`. The hos
 
 ## Multi-brand behavior
 
-`includes/Data/BrandConfig.php` resolves:
+Brand data lives in **wp-module-onboarding** (`Brands::get_brands()`). Editor-chat reads it via `NewfoldLabs\WP\Module\Onboarding\Data\BrandConfig`:
 
-- **Brand id** — `container()->plugin()->id` (handshake `brand_id`, same pattern as `wp-module-ai-chat` `BrandHelper`).
-- **Display name** — `container()->plugin()->name` for admin bar and sidebar titles.
-- **Portal links** — default account, email, and billing URLs per known brand plugin id, passed through `nfd_build_url`.
+- **Brand id** — `BrandConfig::get_editor_chat_brand_id()` (handshake `brand_id`; from registry `editorChatBrandId`).
+- **Display name** — `BrandConfig::get_current_brand_name()` for admin bar and sidebar titles.
+- **Portal links** — `accountUrl`, `emailUrl`, and `billingUrl` from the current brand registry entry, passed through `nfd_build_url`.
 
-On enqueue, `ChatEditor` adds `brand` to `window.nfdEditorChat` (id, name, accountUrl, emailUrl, billingUrl, adminUrl). React components must read these values instead of hardcoding "Bluehost".
+On enqueue, `ChatEditor` adds `brand` to `window.nfdEditorChat` via `BrandConfig::get_brand_for_editor_chat_js()`. React components must read these values instead of hardcoding "Bluehost".
+
+**Composer:** `newfold-labs/wp-module-onboarding` is a required dependency. The host plugin must load onboarding (and call `Brands::set_current_brand()`) before editor-chat scripts enqueue.
 
 ### Filter: `nfd_editor_chat_brand_links`
 

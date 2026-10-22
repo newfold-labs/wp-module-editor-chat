@@ -4,7 +4,7 @@ Use this as the GitHub PR body (English).
 
 ## Summary
 
-- Add `Data\BrandConfig` (container-derived brand id/name, portal URLs, `nfd_editor_chat_brand_links` filter).
+- Consume `Onboarding\Data\BrandConfig` and the `Brands` registry (composer dependency on wp-module-onboarding); `nfd_editor_chat_brand_links` filter remains on onboarding.
 - Expose `brand` on `window.nfdEditorChat` for React (header dropdown, sidebar title, admin bar).
 - Rename Bluehost-specific UI (`BrandDropdownMenu`, `BrandIcon`, `__brand-menu` styles).
 
