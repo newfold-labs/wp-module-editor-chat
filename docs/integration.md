@@ -21,8 +21,25 @@ On enqueue, `ChatEditor` adds `brand` to `window.nfdEditorChat` (id, name, accou
 
 ### Filter: `nfd_editor_chat_brand_links`
 
+Expected `$links` keys: `accountUrl`, `emailUrl`, `billingUrl` (absolute HTTPS URLs). Values are passed through `esc_url()` when localized to JavaScript.
+
 ```php
-apply_filters( 'nfd_editor_chat_brand_links', $links, $brand_id );
+add_filter(
+	'nfd_editor_chat_brand_links',
+	function ( $links, $brand_id ) {
+		if ( 'my-brand' !== $brand_id ) {
+			return $links;
+		}
+
+		return array(
+			'accountUrl' => 'https://example.com/my-account',
+			'emailUrl'   => 'https://example.com/email',
+			'billingUrl' => 'https://example.com/billing',
+		);
+	},
+	10,
+	2
+);
 ```
 
 Host plugins can supply or override portal URLs when a brand is not in the built-in map.
