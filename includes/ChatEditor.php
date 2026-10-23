@@ -2,7 +2,7 @@
 
 namespace NewfoldLabs\WP\Module\EditorChat;
 
-use NewfoldLabs\WP\Module\Onboarding\Data\BrandConfig;
+use NewfoldLabs\WP\Module\EditorChat\Data\BrandConfig;
 
 /**
  * ChatEditor main class

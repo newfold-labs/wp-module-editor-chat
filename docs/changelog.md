@@ -11,7 +11,7 @@ updated: 2026-10-22
 
 ### Added
 
-- Brand data centralized in **wp-module-onboarding** (`Brands` registry + `BrandConfig`); editor-chat depends on onboarding instead of a local `BrandConfig` class.
+- Brand registry remains in **wp-module-onboarding**; onboarding sets container key `editor_chat_brand`. Editor-chat reads it via `Data\BrandConfig` without a composer dependency on onboarding.
 - `window.nfdEditorChat.brand` — localized payload (`id`, `name`, `accountUrl`, `emailUrl`, `billingUrl`, `adminUrl`) for React UI.
 - Filter `nfd_editor_chat_brand_links` — override portal URLs per brand plugin id (see [integration.md](integration.md)).
 

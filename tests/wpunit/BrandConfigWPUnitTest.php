@@ -1,11 +1,11 @@
 <?php
 
-use NewfoldLabs\WP\Module\Onboarding\Data\BrandConfig;
+use NewfoldLabs\WP\Module\EditorChat\Data\BrandConfig;
 
 /**
- * Editor-chat consumes onboarding BrandConfig for brand data.
+ * Brand data is read from the module loader container.
  *
- * @coversDefaultClass \NewfoldLabs\WP\Module\Onboarding\Data\BrandConfig
+ * @coversDefaultClass \NewfoldLabs\WP\Module\EditorChat\Data\BrandConfig
  */
 class BrandConfigWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 

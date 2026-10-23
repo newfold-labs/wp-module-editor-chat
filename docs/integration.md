@@ -11,15 +11,21 @@ The module registers with the Newfold Module Loader via `bootstrap.php`. The hos
 
 ## Multi-brand behavior
 
-Brand data lives in **wp-module-onboarding** (`Brands::get_brands()`). Editor-chat reads it via `NewfoldLabs\WP\Module\Onboarding\Data\BrandConfig`:
+Brand registry data is owned by **wp-module-onboarding** (`Brands::get_brands()`). On registration, onboarding populates the module loader container key **`editor_chat_brand`** (array: `id`, `name`, `accountUrl`, `emailUrl`, `billingUrl`, `adminUrl`).
 
-- **Brand id** — `BrandConfig::get_editor_chat_brand_id()` (handshake `brand_id`; from registry `editorChatBrandId`).
-- **Display name** — `BrandConfig::get_current_brand_name()` for admin bar and sidebar titles.
-- **Portal links** — `accountUrl`, `emailUrl`, and `billingUrl` from the current brand registry entry, passed through `nfd_build_url`.
+Editor-chat reads that payload through `NewfoldLabs\WP\Module\EditorChat\Data\BrandConfig` (no composer dependency on onboarding):
 
-On enqueue, `ChatEditor` adds `brand` to `window.nfdEditorChat` via `BrandConfig::get_brand_for_editor_chat_js()`. React components must read these values instead of hardcoding "Bluehost".
+- **Brand id** — `get_editor_chat_brand_id()` (worker handshake).
+- **Display name** — `get_current_brand_name()` (admin bar, sidebar).
+- **Localized script** — `get_brand_for_editor_chat_js()` → `window.nfdEditorChat.brand`.
 
-**Composer:** `newfold-labs/wp-module-onboarding` is a required dependency. The host plugin must load onboarding (and call `Brands::set_current_brand()`) before editor-chat scripts enqueue.
+If the container key is missing, `BrandConfig` falls back to `container()->plugin()` id/name with empty portal URLs.
+
+Host plugins must load onboarding before editor-chat enqueues scripts so `editor_chat_brand` is set.
+
+### Filter: `newfold/container/editor_chat_brand`
+
+Applied in onboarding when building the container value. Host plugins can adjust the full payload before other modules read it.
 
 ### Filter: `nfd_editor_chat_brand_links`
 
