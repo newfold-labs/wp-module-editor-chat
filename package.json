@@ -42,6 +42,8 @@
 		"postcss-import": "^17.0.1",
 		"postcss-safe-important": "^2.0.1",
 		"prettier": "^3.9.10",
+		"stylelint": "^17.14.1",
+		"stylelint-scss": "^7.2.0",
 		"webpack-merge": "^6.0.1"
 	},
 	"dependencies": {

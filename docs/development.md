@@ -8,3 +8,15 @@ updated: 2025-03-18
 # Development
 
 PHP: `composer run lint`, `composer run clean`. When cutting a release, update **docs/changelog.md**.
+
+## Testing on non-Bluehost brand plugins
+
+1. Clone the target brand plugin and symlink `vendor/newfold-labs/wp-module-editor-chat` to your working copy (same as Bluehost local dev).
+2. Open the Site Editor with `referrer=nfd-editor-chat` or use the admin bar **AI Editor** link.
+3. Confirm `window.nfdEditorChat.brand.name` matches the host plugin and portal menu items use the correct URLs (or add values via `nfd_editor_chat_brand_links`).
+
+```bash
+npm install
+npm run build   # updates build/<version>/chat-editor.js
+composer run test
+```
