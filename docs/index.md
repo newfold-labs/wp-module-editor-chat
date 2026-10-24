@@ -2,7 +2,7 @@
 name: wp-module-editor-chat
 title: Documentation index
 description: Table of contents and quick links.
-updated: 2025-03-18
+updated: 2026-10-21
 ---
 
 # wp-module-editor-chat – Documentation index
@@ -12,7 +12,7 @@ updated: 2025-03-18
 | [overview.md](overview.md) | What the module does and who maintains it. |
 | [getting-started.md](getting-started.md) | Prerequisites, install, and lint. |
 | [integration.md](integration.md) | How the module registers and how hosts use it. |
-| [development.md](development.md) | Lint and workflow. |
+| [development.md](development.md) | Lint, wpunit, and Playwright E2E. |
 | [release.md](release.md) | Release process: use the Newfold Prepare Release workflow. |
 | [changelog.md](changelog.md) | Notable changes by release. |
 
