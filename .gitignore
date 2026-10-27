@@ -12,3 +12,4 @@ TODO.txt
 node_modules
 .env.testing
 vendor
+/tests/playwright/.auth/

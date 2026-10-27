@@ -16,6 +16,8 @@ This file gives AI agents a quick orientation to the repo. For full detail, see 
 |---------|----------|
 | Bootstrap | `bootstrap.php` |
 | Includes | `includes/` |
+| E2E tests | `tests/playwright/` (run from brand plugin; see docs/development.md) |
+| wpunit tests | `tests/wpunit/` |
 
 ## Essential commands
 

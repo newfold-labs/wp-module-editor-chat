@@ -1,6 +1,6 @@
 {
 	"name": "wp-module-editor-chat",
-	"version": "2.1.11",
+	"version": "2.1.12",
 	"description": "BLU WordPress Editor Chat Module",
 	"homepage": "https://github.com/newfold-labs/wp-module-editor-chat#readme",
 	"bugs": {
@@ -26,18 +26,18 @@
 		"lint:js:fix": "wp-scripts lint-js ./src --fix"
 	},
 	"devDependencies": {
-		"@wordpress/eslint-plugin": "^27.1.0",
-		"@wordpress/prettier-config": "^4.56.0",
-		"@wordpress/scripts": "^36.1.0",
+		"@wordpress/eslint-plugin": "^28.0.0",
+		"@wordpress/prettier-config": "^5.0.0",
+		"@wordpress/scripts": "^37.0.0",
 		"autoprefixer": "^10.6.1",
-		"baseline-browser-mapping": "^2.11.29",
+		"baseline-browser-mapping": "^2.11.30",
 		"concurrently": "^10.0.6",
 		"cssnano": "^9.9.0",
 		"esbuild": "^0.28.2",
 		"eslint": "^10.13.0",
 		"eslint-plugin-prettier": "^5.5.7",
 		"eslit": "^6.0.0",
-		"postcss": "^8.5.30",
+		"postcss": "^8.5.31",
 		"postcss-cli": "^12.0.0",
 		"postcss-import": "^17.0.1",
 		"postcss-safe-important": "^2.0.1",
@@ -48,10 +48,10 @@
 	},
 	"dependencies": {
 		"@newfold/wp-module-ai-chat": "^1.1.11",
-		"@wordpress/interface": "^10.3.0",
+		"@wordpress/interface": "^11.0.0",
 		"classnames": "^2.5.1",
 		"dompurify": "^3.4.17",
-		"lucide-react": "^1.59.0",
+		"lucide-react": "^1.60.0",
 		"openai": "^4.86.0"
 	},
 	"peerDependencies": {
