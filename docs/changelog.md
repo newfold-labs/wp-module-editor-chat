@@ -7,7 +7,7 @@ updated: 2026-10-22
 
 # Changelog
 
-## 2.1.11 (unreleased)
+## 2.1.12 (unreleased)
 
 ### Added
 
