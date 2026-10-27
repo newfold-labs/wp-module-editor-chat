@@ -54,6 +54,8 @@ final class BrandConfig {
 	}
 
 	/**
+	 * Read brand payload from the module loader container when present.
+	 *
 	 * @return array<string, string>|null
 	 */
 	private static function get_payload_from_container(): ?array {

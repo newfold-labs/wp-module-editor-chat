@@ -17,6 +17,13 @@ class Application {
 	protected $container;
 
 	/**
+	 * Whether ChatEditor has been bootstrapped for this Application instance.
+	 *
+	 * @var bool
+	 */
+	protected $chat_editor_initialized = false;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param Container $container Dependency injection container.
@@ -40,13 +47,11 @@ class Application {
 	 * @return void
 	 */
 	public function initialize_chat_editor() {
-		static $initialized = false;
-
-		if ( $initialized ) {
+		if ( $this->chat_editor_initialized ) {
 			return;
 		}
 
-		$initialized = true;
+		$this->chat_editor_initialized = true;
 		new ChatEditor();
 	}
 }
