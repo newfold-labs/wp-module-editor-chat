@@ -2,7 +2,7 @@
  * Internal dependencies.
  */
 import {
-	BlockInserter, BluehostDropdownMenu,
+	BlockInserter, BrandDropdownMenu,
 	ChatToggle,
 	DocumentOverviewToggle,
 	HeaderDivider,
@@ -15,7 +15,7 @@ import {
 export default function HeaderLeft() {
 	return (
 		<HeaderSection section="left">
-			<BluehostDropdownMenu />
+			<BrandDropdownMenu />
 
 			<HeaderDivider />
 

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ecc6370a622324085a4b73f0deabcc50",
+    "content-hash": "9d356b4a4e8d1ade19b9a6f622e146bf",
     "packages": [],
     "packages-dev": [
         {
@@ -1807,6 +1807,98 @@
                 }
             ],
             "time": "2025-08-01T08:46:24+00:00"
+        },
+        {
+            "name": "newfold-labs/container",
+            "version": "1.2.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/newfold-labs/container.git",
+                "reference": "f7d13b995948ca44b3d4af75c5936099c4a6bc5c"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/newfold-labs/container/zipball/f7d13b995948ca44b3d4af75c5936099c4a6bc5c",
+                "reference": "f7d13b995948ca44b3d4af75c5936099c4a6bc5c",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "NewfoldLabs\\Container\\": "includes"
+                }
+            },
+            "license": [
+                "GPL-2.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "Micah Wood",
+                    "email": "micah@wpscholar.com"
+                }
+            ],
+            "description": "A lightweight, PHP 7.0+ compatible, PSR-11 dependency injection container.",
+            "time": "2026-03-06T22:45:10+00:00"
+        },
+        {
+            "name": "newfold-labs/wp-module-loader",
+            "version": "1.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/newfold-labs/wp-module-loader.git",
+                "reference": "97de22d322f838edc26c1ac3969708a0902ef714"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/newfold-labs/wp-module-loader/zipball/97de22d322f838edc26c1ac3969708a0902ef714",
+                "reference": "97de22d322f838edc26c1ac3969708a0902ef714",
+                "shasum": ""
+            },
+            "require": {
+                "newfold-labs/container": "^1.2",
+                "wp-forge/collection": "^1.0",
+                "wp-forge/fluent": "^1.0",
+                "wp-forge/wp-options": "^1.1"
+            },
+            "require-dev": {
+                "johnpbloch/wordpress": "6.9.1",
+                "lucatume/wp-browser": "*",
+                "phpunit/phpcov": "*"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "NewfoldLabs\\WP\\ModuleLoader\\": "includes"
+                },
+                "files": [
+                    "bootstrap.php",
+                    "includes/functions.php"
+                ]
+            },
+            "scripts": {
+                "test": [
+                    "codecept run wpunit"
+                ],
+                "test-coverage": [
+                    "codecept run wpunit --coverage wpunit.cov",
+                    "phpcov merge --php tests/_output/merged.cov --html tests/_output/html tests/_output;",
+                    "echo \"open tests/_output/html/index.html\" to view the report"
+                ]
+            },
+            "license": [
+                "GPL-2.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "Micah Wood",
+                    "email": "micah@wpscholar.com"
+                }
+            ],
+            "description": "A module that handles registration and management of Newfold modules used within our WordPress plugins.",
+            "time": "2026-02-05T21:09:56+00:00"
         },
         {
             "name": "newfold-labs/wp-php-standards",
@@ -6432,6 +6524,117 @@
                 }
             ],
             "time": "2026-07-27T11:53:23+00:00"
+        },
+        {
+            "name": "wp-forge/collection",
+            "version": "1.0.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/wp-forge/collection.git",
+                "reference": "9bed6ec6a73f0a033276c65e07ced5c894deff71"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/wp-forge/collection/zipball/9bed6ec6a73f0a033276c65e07ced5c894deff71",
+                "reference": "9bed6ec6a73f0a033276c65e07ced5c894deff71",
+                "shasum": ""
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "WP_Forge\\Collection\\": ""
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "GPL-2.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "Micah Wood",
+                    "email": "micah@wpscholar.com"
+                }
+            ],
+            "description": "A PHP utility class for manipulating collections.",
+            "support": {
+                "issues": "https://github.com/wp-forge/collection/issues",
+                "source": "https://github.com/wp-forge/collection/tree/1.0.3"
+            },
+            "time": "2025-12-01T15:57:49+00:00"
+        },
+        {
+            "name": "wp-forge/fluent",
+            "version": "1.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/wp-forge/fluent.git",
+                "reference": "b7d6e54f86bd2bbc229faeefd2772f1f1354ad8c"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/wp-forge/fluent/zipball/b7d6e54f86bd2bbc229faeefd2772f1f1354ad8c",
+                "reference": "b7d6e54f86bd2bbc229faeefd2772f1f1354ad8c",
+                "shasum": ""
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "WP_Forge\\Fluent\\": "includes"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "GPL-2.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "Micah Wood",
+                    "email": "micah@wpscholar.com"
+                }
+            ],
+            "description": "An instance of the Laravel Fluent class for use with WordPress.",
+            "support": {
+                "issues": "https://github.com/wp-forge/fluent/issues",
+                "source": "https://github.com/wp-forge/fluent/tree/1.0.1"
+            },
+            "time": "2022-08-26T17:38:37+00:00"
+        },
+        {
+            "name": "wp-forge/wp-options",
+            "version": "1.1.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/wp-forge/wp-options.git",
+                "reference": "511b1c5e626582dd4c3c1b5602e7a20352dabc1b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/wp-forge/wp-options/zipball/511b1c5e626582dd4c3c1b5602e7a20352dabc1b",
+                "reference": "511b1c5e626582dd4c3c1b5602e7a20352dabc1b",
+                "shasum": ""
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "WP_Forge\\Options\\": "includes"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "GPL-2.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "Micah Wood",
+                    "email": "micah@wpscholar.com"
+                }
+            ],
+            "description": "A WordPress helper class for managing plugin options.",
+            "support": {
+                "issues": "https://github.com/wp-forge/wp-options/issues",
+                "source": "https://github.com/wp-forge/wp-options/tree/1.1.1"
+            },
+            "time": "2024-05-10T14:57:37+00:00"
         }
     ],
     "aliases": [],

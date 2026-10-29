@@ -25,17 +25,28 @@ class ApplicationWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	}
 
 	/**
-	 * Constructor hooks plugins_loaded action.
+	 * Constructor hooks plugins_loaded when it has not run yet.
 	 *
 	 * @return void
 	 */
 	public function test_constructor_hooks_plugins_loaded() {
+		\remove_all_actions( 'rest_api_init' );
+
 		$container = $this->make_container();
 		$app       = new Application( $container );
 
-		$this->assertIsInt(
-			has_action( 'plugins_loaded', array( $app, 'initialize_chat_editor' ) )
-		);
+		if ( \did_action( 'plugins_loaded' ) ) {
+			$this->assertFalse(
+				\has_action( 'plugins_loaded', array( $app, 'initialize_chat_editor' ) )
+			);
+			$this->assertIsInt(
+				\has_action( 'rest_api_init', array( ChatEditor::class, 'register_rest_routes' ) )
+			);
+		} else {
+			$this->assertIsInt(
+				\has_action( 'plugins_loaded', array( $app, 'initialize_chat_editor' ) )
+			);
+		}
 	}
 
 	/**
@@ -44,23 +55,20 @@ class ApplicationWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	 * @return void
 	 */
 	public function test_initialize_chat_editor_creates_chat_editor_for_editor_user() {
+		\remove_all_actions( 'admin_enqueue_scripts' );
+		\remove_all_actions( 'rest_api_init' );
+
 		$user_id = self::factory()->user->create( array( 'role' => 'editor' ) );
-		wp_set_current_user( $user_id );
+		\wp_set_current_user( $user_id );
 
 		$container = $this->make_container();
-		$app       = new Application( $container );
-
-		// Remove any pre-existing hooks so we can detect new registrations.
-		remove_all_actions( 'admin_enqueue_scripts' );
-		remove_all_actions( 'rest_api_init' );
-
-		$app->initialize_chat_editor();
+		new Application( $container );
 
 		$this->assertIsInt(
-			has_action( 'admin_enqueue_scripts', array( ChatEditor::class, 'enqueue_site_editor_assets' ) )
+			\has_action( 'admin_enqueue_scripts', array( ChatEditor::class, 'enqueue_site_editor_assets' ) )
 		);
 		$this->assertIsInt(
-			has_action( 'rest_api_init', array( ChatEditor::class, 'register_rest_routes' ) )
+			\has_action( 'rest_api_init', array( ChatEditor::class, 'register_rest_routes' ) )
 		);
 	}
 
@@ -70,22 +78,20 @@ class ApplicationWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	 * @return void
 	 */
 	public function test_initialize_chat_editor_registers_rest_routes_for_subscriber() {
+		\remove_all_actions( 'admin_enqueue_scripts' );
+		\remove_all_actions( 'rest_api_init' );
+
 		$user_id = self::factory()->user->create( array( 'role' => 'subscriber' ) );
-		wp_set_current_user( $user_id );
+		\wp_set_current_user( $user_id );
 
 		$container = $this->make_container();
-		$app       = new Application( $container );
-
-		remove_all_actions( 'admin_enqueue_scripts' );
-		remove_all_actions( 'rest_api_init' );
-
-		$app->initialize_chat_editor();
+		new Application( $container );
 
 		$this->assertIsInt(
-			has_action( 'rest_api_init', array( ChatEditor::class, 'register_rest_routes' ) )
+			\has_action( 'rest_api_init', array( ChatEditor::class, 'register_rest_routes' ) )
 		);
 		$this->assertFalse(
-			has_action( 'admin_enqueue_scripts', array( ChatEditor::class, 'enqueue_site_editor_assets' ) )
+			\has_action( 'admin_enqueue_scripts', array( ChatEditor::class, 'enqueue_site_editor_assets' ) )
 		);
 	}
 
@@ -95,21 +101,19 @@ class ApplicationWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	 * @return void
 	 */
 	public function test_initialize_chat_editor_registers_rest_routes_when_logged_out() {
-		wp_set_current_user( 0 );
+		\remove_all_actions( 'admin_enqueue_scripts' );
+		\remove_all_actions( 'rest_api_init' );
+
+		\wp_set_current_user( 0 );
 
 		$container = $this->make_container();
-		$app       = new Application( $container );
-
-		remove_all_actions( 'admin_enqueue_scripts' );
-		remove_all_actions( 'rest_api_init' );
-
-		$app->initialize_chat_editor();
+		new Application( $container );
 
 		$this->assertIsInt(
-			has_action( 'rest_api_init', array( ChatEditor::class, 'register_rest_routes' ) )
+			\has_action( 'rest_api_init', array( ChatEditor::class, 'register_rest_routes' ) )
 		);
 		$this->assertFalse(
-			has_action( 'admin_enqueue_scripts', array( ChatEditor::class, 'enqueue_site_editor_assets' ) )
+			\has_action( 'admin_enqueue_scripts', array( ChatEditor::class, 'enqueue_site_editor_assets' ) )
 		);
 	}
 }

@@ -2,14 +2,17 @@
 name: wp-module-editor-chat
 title: Development
 description: Lint and test.
-updated: 2026-10-21
+updated: 2026-10-27
 ---
 
 # Development
 
+When cutting a release, update **docs/changelog.md**.
+
 ## Linting
 
 - **PHP:** `composer run lint`, `composer run clean` (Newfold PHPCS standard).
+- **JavaScript / SCSS:** `npm run lint:js`; stylelint runs via `@wordpress/scripts` in CI on changed SCSS.
 
 ## Testing
 
@@ -45,3 +48,15 @@ Suite **`editor-chat.spec.js`** — tag **`@env-local`**, serial execution, Site
 | `tests/playwright/fixtures/mock-worker-streams.js` | OpenAI-style SSE bodies for tool and closing passes. |
 
 Mocks choose **tool vs summarize** responses from the completion request body (nudge / tools), not from a call counter. The **stop** scenario holds the route until the browser aborts the fetch.
+
+### Multi-brand manual checks
+
+1. Clone the target brand plugin and symlink `vendor/newfold-labs/wp-module-editor-chat` to your working copy (same as Bluehost local dev).
+2. Open the Site Editor with `referrer=nfd-editor-chat` or use the admin bar **AI Editor** link.
+3. Confirm `window.nfdEditorChat.brand.name` matches the host plugin and portal menu items use the correct URLs (onboarding must set `editor_chat_brand` on the container).
+
+```bash
+npm install
+npm run build   # updates build/<version>/chat-editor.js
+composer run test
+```

@@ -548,7 +548,7 @@ export function WordPressIcon(props: SvgProps) {
 	);
 }
 
-export function BluehostIcon(props: SvgProps) {
+export function BrandIcon(props: SvgProps) {
 	return (
 		<svg viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" width="1em" {...props}>
 			<path
