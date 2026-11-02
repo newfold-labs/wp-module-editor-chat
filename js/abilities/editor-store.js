@@ -23,6 +23,23 @@ export function requireEditorStore() {
 }
 
 /**
+ * Resolve a client ID before passing it to selectors that interpret an empty
+ * value as the document root.
+ *
+ * @param {Object} store    Block-editor selectors.
+ * @param {string} clientId Client ID to resolve.
+ * @param {string} label    Input field name for errors.
+ * @return {Object} Resolved block.
+ */
+export function requireBlock(store, clientId, label = "clientId") {
+	const block = typeof clientId === "string" && clientId ? store.getBlock(clientId) : null;
+	if (!block) {
+		throw new Error(`Unknown ${label} "${clientId ?? ""}"`);
+	}
+	return block;
+}
+
+/**
  * Read ordinary or controlled inner blocks.
  *
  * @param {Object} store Block-editor selectors.
@@ -40,6 +57,24 @@ export function getInnerBlocks(store, block) {
 		innerBlocks: block.innerBlocks || [],
 		controlled: false,
 	};
+}
+
+/**
+ * Add a controlled pattern reference to the current traversal path.
+ *
+ * @param {Object}       block       Current block.
+ * @param {Set<unknown>} visitedRefs Controlled refs on the current path.
+ * @return {?Set<unknown>} Child refs, or null when recursion repeats.
+ */
+export function withControlledRef(block, visitedRefs) {
+	const ref = block.attributes?.ref;
+	if (ref === undefined) {
+		return visitedRefs;
+	}
+	if (visitedRefs.has(ref)) {
+		return null;
+	}
+	return new Set(visitedRefs).add(ref);
 }
 
 /**
@@ -70,15 +105,7 @@ export function serializeBlock(
 		node.controlledInnerBlocks = true;
 	}
 
-	let childRefs = visitedRefs;
-	if (controlled && block.attributes?.ref !== undefined) {
-		if (visitedRefs.has(block.attributes.ref)) {
-			childRefs = null;
-		} else {
-			childRefs = new Set(visitedRefs);
-			childRefs.add(block.attributes.ref);
-		}
-	}
+	const childRefs = controlled ? withControlledRef(block, visitedRefs) : visitedRefs;
 
 	if (depth >= maxDepth || childRefs === null) {
 		node.innerBlocks = [];

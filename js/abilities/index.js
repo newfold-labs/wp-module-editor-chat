@@ -70,9 +70,7 @@ export async function initializeEditorAbilities({
 			: ABILITY_NAMES
 	);
 
-	if (allowed.has("blu-editor/get-editor-tree")) {
-		registerBlockTreeAbilities(register);
-	}
+	registerBlockTreeAbilities((definition) => allowed.has(definition.name) && register(definition));
 
 	return getRegisteredEditorAbilityNames().filter((name) => allowed.has(name));
 }

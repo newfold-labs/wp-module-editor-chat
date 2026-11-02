@@ -27,15 +27,22 @@ describe("editor ability registry", () => {
 		);
 	});
 
-	it("registers only the currently implemented ability once", async () => {
-		await expect(initializeEditorAbilities()).resolves.toEqual(["blu-editor/get-editor-tree"]);
+	it("registers exactly the five implemented block-tree abilities once", async () => {
+		const implementedNames = ABILITY_NAMES.slice(0, 5);
+
+		await expect(initializeEditorAbilities()).resolves.toEqual(implementedNames);
 		await initializeEditorAbilities();
 
 		expect(registerAbilityCategory).toHaveBeenCalledTimes(1);
-		expect(registerAbility).toHaveBeenCalledTimes(1);
-		expect(registerAbility.mock.calls[0][0].name).toBe("blu-editor/get-editor-tree");
-		expect(getRegisteredEditorAbilityNames()).toEqual(["blu-editor/get-editor-tree"]);
-		await expect(ready).resolves.toEqual(["blu-editor/get-editor-tree"]);
+		expect(registerAbility).toHaveBeenCalledTimes(5);
+		expect(registerAbility.mock.calls.map(([definition]) => definition.name)).toEqual(
+			implementedNames
+		);
+		expect(
+			registerAbility.mock.calls.every(([definition]) => typeof definition.callback === "function")
+		).toBe(true);
+		expect(getRegisteredEditorAbilityNames()).toEqual(implementedNames);
+		await expect(ready).resolves.toEqual(implementedNames);
 	});
 
 	it("ignores unknown and not-yet-implemented requested names", async () => {
