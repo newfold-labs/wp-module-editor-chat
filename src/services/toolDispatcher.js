@@ -738,9 +738,10 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 
 				if (!result) {
 					const hasChanges =
-						!localResult.isError &&
-						LOCAL_WRITE_TOOLS.has(rawToolName) &&
-						localResult.structuredContent?.changed !== false;
+						localResult.structuredContent?.mutated === true ||
+						(!localResult.isError &&
+							LOCAL_WRITE_TOOLS.has(rawToolName) &&
+							localResult.structuredContent?.changed !== false);
 					const text =
 						localResult.structuredContent !== undefined
 							? JSON.stringify(localResult.structuredContent)

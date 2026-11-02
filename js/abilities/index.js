@@ -1,15 +1,15 @@
 import { registerAbility, registerAbilityCategory } from "@wordpress/abilities";
 
-import { registerBlockCatalogAbilities } from "./block-catalog-abilities";
-import { registerBlockContentAbilities } from "./block-content-abilities";
-import { registerBlockStructureAbilities } from "./block-structure-abilities";
-import { registerBlockTreeAbilities } from "./block-tree-abilities";
-import { ABILITY_NAMES } from "./constants";
-import { registerEditorUiAbilities } from "./editor-ui-abilities";
-import { registerPatternReadAbilities } from "./pattern-read-abilities";
-import { registerPatternWriteAbilities } from "./pattern-write-abilities";
+import { registerBlockCatalogAbilities } from "./block-catalog-abilities.js";
+import { registerBlockContentAbilities } from "./block-content-abilities.js";
+import { registerBlockStructureAbilities } from "./block-structure-abilities.js";
+import { registerBlockTreeAbilities } from "./block-tree-abilities.js";
+import { ABILITY_NAMES } from "./constants.js";
+import { registerEditorUiAbilities } from "./editor-ui-abilities.js";
+import { registerPatternReadAbilities } from "./pattern-read-abilities.js";
+import { registerPatternWriteAbilities } from "./pattern-write-abilities.js";
 
-export { ABILITY_NAMES, READ_ONLY_ABILITY_NAMES, WRITE_ABILITY_NAMES } from "./constants";
+export { ABILITY_NAMES, READ_ONLY_ABILITY_NAMES, WRITE_ABILITY_NAMES } from "./constants.js";
 
 const registeredNames = new Set();
 let categoryRegistered = false;

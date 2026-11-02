@@ -1,8 +1,9 @@
 import { executeAbility, getAbility } from "@wordpress/abilities";
 
-import { getModelContext } from "./webmcp-env";
+import { getModelContext } from "./webmcp-env.js";
 
 const ownedToolsByContext = new WeakMap();
+const inFlightToolsByContext = new WeakMap();
 
 export function toToolName(abilityName) {
 	return abilityName.replaceAll("/", "_");
@@ -56,6 +57,10 @@ export function formatToolError(error) {
 		],
 		isError: true,
 	};
+	if (error?.mutated === true) {
+		formatted.structuredContent = { mutated: true };
+		return formatted;
+	}
 	if (
 		error?.mutated === false &&
 		typeof error.fallbackTool === "string" &&
@@ -127,6 +132,11 @@ export async function bridgeAbilitiesToWebMCP(abilityNames) {
 		owned = new Set();
 		ownedToolsByContext.set(modelContext, owned);
 	}
+	let inFlight = inFlightToolsByContext.get(modelContext);
+	if (!inFlight) {
+		inFlight = new Map();
+		inFlightToolsByContext.set(modelContext, inFlight);
+	}
 
 	const registered = [];
 	const skipped = [];
@@ -135,6 +145,19 @@ export async function bridgeAbilitiesToWebMCP(abilityNames) {
 		const toolName = toToolName(abilityName);
 		if (owned.has(toolName)) {
 			registered.push(abilityName);
+			continue;
+		}
+		if (inFlight.has(toolName)) {
+			try {
+				await inFlight.get(toolName);
+				registered.push(abilityName);
+			} catch (error) {
+				skipped.push(abilityName);
+				errors.push({
+					name: abilityName,
+					message: String(error?.message || error),
+				});
+			}
 			continue;
 		}
 		const ability = getAbility(abilityName);
@@ -166,8 +189,11 @@ export async function bridgeAbilitiesToWebMCP(abilityNames) {
 		}
 
 		try {
-			await modelContext.registerTool(tool);
-			owned.add(toolName);
+			const registration = Promise.resolve(modelContext.registerTool(tool)).then(() => {
+				owned.add(toolName);
+			});
+			inFlight.set(toolName, registration);
+			await registration;
 			registered.push(abilityName);
 		} catch (error) {
 			skipped.push(abilityName);
@@ -175,6 +201,8 @@ export async function bridgeAbilitiesToWebMCP(abilityNames) {
 				name: abilityName,
 				message: String(error?.message || error),
 			});
+		} finally {
+			inFlight.delete(toolName);
 		}
 	}
 	return { supported: true, registered, skipped, errors };

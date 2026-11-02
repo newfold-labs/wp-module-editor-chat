@@ -1,4 +1,4 @@
-import { requireBlock, requireEditorActions, requireEditorStore } from "./editor-store";
+import { requireBlock, requireEditorActions, requireEditorStore } from "./editor-store.js";
 
 const EDITOR_STORE = "core/editor";
 const READ_ONLY_META = {

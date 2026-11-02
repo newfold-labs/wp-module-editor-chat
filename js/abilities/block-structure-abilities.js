@@ -1,5 +1,5 @@
-import { EditorAbilityUnsupportedError } from "./ability-errors";
-import { requireBlock, requireEditorActions, requireEditorStore } from "./editor-store";
+import { EditorAbilityUnsupportedError, markAbilityMutationError } from "./ability-errors.js";
+import { requireBlock, requireEditorActions, requireEditorStore } from "./editor-store.js";
 
 const WRITE_META = (destructive = false, idempotent = false) => ({
 	annotations: { readonly: false, destructive, idempotent },
@@ -274,13 +274,23 @@ async function insertBlock(input = {}) {
 	const order = store.getBlockOrder?.(rootClientId) || [];
 	const requestedIndex = index === undefined ? order.length : Math.min(index, order.length);
 	if (actions.insertBlocks) {
-		await actions.insertBlocks([block], requestedIndex, rootClientId);
+		try {
+			await actions.insertBlocks([block], requestedIndex, rootClientId);
+		} catch (error) {
+			throw markAbilityMutationError(error);
+		}
 	} else {
-		await actions.insertBlock(block, requestedIndex, rootClientId || undefined);
+		try {
+			await actions.insertBlock(block, requestedIndex, rootClientId || undefined);
+		} catch (error) {
+			throw markAbilityMutationError(error);
+		}
 	}
 	const inserted = store.getBlock(block.clientId);
 	if (!inserted) {
-		throw new Error("The editor did not insert this block. Its destination may be locked.");
+		throw markAbilityMutationError(
+			new Error("The editor did not insert this block. Its destination may be locked.")
+		);
 	}
 	const actualRoot = rootOf(store, block.clientId);
 	const actualIndex = indexOf(store, block.clientId, actualRoot);
@@ -367,12 +377,18 @@ async function moveBlock(input = {}) {
 		};
 	}
 	const actions = requireEditorActions();
-	await actions.moveBlocksToPosition([input.clientId], fromRoot, toRoot, toIndex);
+	try {
+		await actions.moveBlocksToPosition([input.clientId], fromRoot, toRoot, toIndex);
+	} catch (error) {
+		throw markAbilityMutationError(error);
+	}
 	const actual = store.getBlock(input.clientId);
 	const actualRoot = actual ? rootOf(store, input.clientId) : "";
 	const actualIndex = actual ? indexOf(store, input.clientId, actualRoot) : -1;
 	if (!actual || actualRoot !== toRoot || actualIndex !== toIndex) {
-		throw new Error("The editor did not move this block. It or its parent may be locked.");
+		throw markAbilityMutationError(
+			new Error("The editor did not move this block. It or its parent may be locked.")
+		);
 	}
 	return {
 		changed: true,
@@ -401,13 +417,19 @@ async function removeBlock(input = {}) {
 	}
 	const rootClientId = rootOf(store, input.clientId);
 	const index = indexOf(store, input.clientId, rootClientId);
-	if (actions.removeBlocks) {
-		await actions.removeBlocks([input.clientId], false);
-	} else {
-		await actions.removeBlock(input.clientId, false);
+	try {
+		if (actions.removeBlocks) {
+			await actions.removeBlocks([input.clientId], false);
+		} else {
+			await actions.removeBlock(input.clientId, false);
+		}
+	} catch (error) {
+		throw markAbilityMutationError(error);
 	}
 	if (store.getBlock(input.clientId)) {
-		throw new Error("The editor did not remove this block. It or its parent may be locked.");
+		throw markAbilityMutationError(
+			new Error("The editor did not remove this block. It or its parent may be locked.")
+		);
 	}
 	return {
 		changed: true,
@@ -425,14 +447,19 @@ async function transformBlock(input = {}) {
 	rejectSpecial(store, input.clientId);
 	getBlockType(input.name);
 	if (block.name === input.name) {
+		const rootClientId = rootOf(store, input.clientId);
+		const index = indexOf(store, input.clientId, rootClientId);
 		return {
 			changed: false,
 			previousClientId: input.clientId,
 			previousName: block.name,
 			name: input.name,
 			clientIds: [input.clientId],
-			rootClientId: rootOf(store, input.clientId),
-			indexes: [indexOf(store, input.clientId)],
+			blocks: [block],
+			count: 1,
+			rootClientId,
+			index,
+			indexes: [index],
 		};
 	}
 	const api = requireBlocksApi();
@@ -460,10 +487,16 @@ async function transformBlock(input = {}) {
 		assertCanInsert(store, name, rootClientId);
 	});
 	const actions = requireEditorActions();
-	await actions.replaceBlocks([input.clientId], transformed);
+	try {
+		await actions.replaceBlocks([input.clientId], transformed);
+	} catch (error) {
+		throw markAbilityMutationError(error);
+	}
 	const actual = transformed.map(({ clientId }) => store.getBlock(clientId));
 	if (store.getBlock(input.clientId) || actual.some((item) => !item)) {
-		throw new Error("The editor did not transform this block. It or its parent may be locked.");
+		throw markAbilityMutationError(
+			new Error("The editor did not transform this block. It or its parent may be locked.")
+		);
 	}
 	const indexes = transformed.map(({ clientId }) => indexOf(store, clientId, rootClientId));
 	return {
@@ -494,10 +527,32 @@ export function registerBlockStructureAbilities(register) {
 		rootClientId: { type: "string" },
 		index: { type: "integer", minimum: 0 },
 	};
-	const base = { category: "blu-editor", output_schema: { type: "object" } };
+	const commonLocation = {
+		changed: { type: "boolean" },
+		clientId: { type: "string" },
+		name: { type: "string" },
+		rootClientId: { type: "string" },
+		index: { type: "integer" },
+	};
+	const outputSchema = (properties) => ({
+		type: "object",
+		properties,
+		required: Object.keys(properties),
+		additionalProperties: false,
+	});
+	const base = { category: "blu-editor" };
 	const definitions = [
 		{
 			...base,
+			output_schema: outputSchema({
+				changed: { type: "boolean" },
+				clientId: { type: "string" },
+				clientIds: { type: "array", items: { type: "string" } },
+				name: { type: "string" },
+				rootClientId: { type: "string" },
+				index: { type: "integer" },
+				innerBlockCount: { type: "integer" },
+			}),
 			name: "blu-editor/insert-block",
 			label: "Insert Block",
 			description: "Inserts a block and optional nested blocks.",
@@ -515,6 +570,11 @@ export function registerBlockStructureAbilities(register) {
 		},
 		{
 			...base,
+			output_schema: outputSchema({
+				...commonLocation,
+				previousRootClientId: { type: "string" },
+				previousIndex: { type: "integer" },
+			}),
 			name: "blu-editor/move-block",
 			label: "Move Block",
 			description: "Moves a block to a validated editor location.",
@@ -534,6 +594,10 @@ export function registerBlockStructureAbilities(register) {
 		},
 		{
 			...base,
+			output_schema: outputSchema({
+				...commonLocation,
+				removedInnerBlockCount: { type: "integer" },
+			}),
 			name: "blu-editor/remove-block",
 			label: "Remove Block",
 			description: "Removes a block and its descendants.",
@@ -548,6 +612,18 @@ export function registerBlockStructureAbilities(register) {
 		},
 		{
 			...base,
+			output_schema: outputSchema({
+				changed: { type: "boolean" },
+				previousClientId: { type: "string" },
+				previousName: { type: "string" },
+				name: { type: "string" },
+				clientIds: { type: "array", items: { type: "string" } },
+				blocks: { type: "array", items: { type: "object" } },
+				count: { type: "integer" },
+				rootClientId: { type: "string" },
+				index: { type: "integer" },
+				indexes: { type: "array", items: { type: "integer" } },
+			}),
 			name: "blu-editor/transform-block",
 			label: "Transform Block",
 			description: "Transforms a block into another registered block type.",

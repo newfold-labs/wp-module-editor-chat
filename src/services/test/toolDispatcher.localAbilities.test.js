@@ -267,6 +267,33 @@ describe("toolDispatcher local abilities", () => {
 		);
 	});
 
+	test("marks partial-mutation errors changed and never falls back", async () => {
+		const localError = {
+			isError: true,
+			text: "Pattern save failed after creating a category.",
+			structuredContent: { mutated: true },
+		};
+		runLocalTool.mockResolvedValue(localError);
+		const ctx = createContext();
+
+		const results = await executeToolCallsForREST(
+			[toolCall("blu-editor_create-pattern", { title: "Partial" })],
+			ctx
+		);
+
+		expect(getLocalToolFallback).toHaveBeenCalledWith(localError);
+		expect(handleEditBlock).not.toHaveBeenCalled();
+		expect(ctx.mcpClient.callTool).not.toHaveBeenCalled();
+		expect(results[0]).toEqual(
+			expect.objectContaining({
+				isError: true,
+				hasChanges: true,
+				source: "local",
+				structuredContent: { mutated: true },
+			})
+		);
+	});
+
 	test("never re-executes a successful local write through fallback or MCP", async () => {
 		runLocalTool.mockResolvedValue({
 			isError: false,

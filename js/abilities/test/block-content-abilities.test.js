@@ -343,8 +343,29 @@ describe("block content abilities", () => {
 			"message",
 			expect.stringMatching(/did not update|refused|locked/i)
 		);
+		expect(error).toHaveProperty("mutated", true);
 		expect(error).not.toHaveProperty("fallbackTool");
 		expect(error).not.toHaveProperty("fallbackArguments");
+	});
+
+	it("marks an update error when the target disappears after dispatch", async () => {
+		dispatch.updateBlockAttributes.mockImplementation((clientId) => {
+			delete blocks[clientId];
+		});
+
+		let error;
+		try {
+			await execute("blu-editor/update-block", {
+				clientId: "paragraph-1",
+				attributes: { content: "Updated" },
+			});
+		} catch (caught) {
+			error = caught;
+		}
+
+		expect(error).toBeInstanceOf(Error);
+		expect(error).toHaveProperty("mutated", true);
+		expect(error).not.toHaveProperty("fallbackTool");
 	});
 
 	it("throws without fallback when the editor silently refuses a replacement", async () => {
@@ -360,6 +381,7 @@ describe("block content abilities", () => {
 		}
 		expect(error).toBeInstanceOf(Error);
 		expect(error).toHaveProperty("message", expect.stringMatching(/did not replace|locked/i));
+		expect(error).toHaveProperty("mutated", true);
 		expect(error).not.toHaveProperty("fallbackTool");
 	});
 
@@ -398,6 +420,7 @@ describe("block content abilities", () => {
 		}
 		expect(error).toBeInstanceOf(Error);
 		expect(error).toHaveProperty("message", expect.stringMatching(/did not replace|incomplete/i));
+		expect(error).toHaveProperty("mutated", true);
 		expect(error).not.toHaveProperty("fallbackTool");
 	});
 });

@@ -65,4 +65,57 @@ describe("editor ability registry", () => {
 			})
 		).resolves.toEqual(["blu-editor/get-editor-tree", "blu-editor/undo"]);
 	});
+
+	it("publishes complete output contracts for all six direct block writes", async () => {
+		await initializeEditorAbilities();
+		const expectedProperties = {
+			"blu-editor/insert-block": [
+				"changed",
+				"clientId",
+				"clientIds",
+				"name",
+				"rootClientId",
+				"index",
+				"innerBlockCount",
+			],
+			"blu-editor/move-block": [
+				"changed",
+				"clientId",
+				"name",
+				"rootClientId",
+				"index",
+				"previousRootClientId",
+				"previousIndex",
+			],
+			"blu-editor/remove-block": [
+				"changed",
+				"clientId",
+				"name",
+				"rootClientId",
+				"index",
+				"removedInnerBlockCount",
+			],
+			"blu-editor/transform-block": [
+				"changed",
+				"previousClientId",
+				"previousName",
+				"name",
+				"clientIds",
+				"blocks",
+				"count",
+				"rootClientId",
+				"index",
+				"indexes",
+			],
+			"blu-editor/edit-block": ["changed", "clientId", "replacementClientId", "name", "attributes"],
+			"blu-editor/update-block": ["changed", "clientId", "name", "attributes", "updatedAttributes"],
+		};
+
+		for (const [name, properties] of Object.entries(expectedProperties)) {
+			const definition = registerAbility.mock.calls.find(([item]) => item.name === name)[0];
+			expect(Object.keys(definition.output_schema.properties)).toEqual(properties);
+			expect(definition.output_schema.required).toEqual(properties);
+			expect(definition.output_schema.additionalProperties).toBe(false);
+		}
+	});
 });

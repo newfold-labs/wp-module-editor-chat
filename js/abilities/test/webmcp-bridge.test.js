@@ -79,6 +79,49 @@ describe("WebMCP ability bridge", () => {
 		);
 	});
 
+	it("deduplicates overlapping registrations of the same owned tool", async () => {
+		let finishRegistration;
+		document.modelContext.registerTool.mockImplementation(
+			() =>
+				new Promise((resolve) => {
+					finishRegistration = resolve;
+				})
+		);
+
+		const bridges = Promise.all([
+			bridgeAbilitiesToWebMCP(["blu-editor/get-editor-tree"]),
+			bridgeAbilitiesToWebMCP(["blu-editor/get-editor-tree"]),
+		]);
+		await Promise.resolve();
+
+		expect(document.modelContext.registerTool).toHaveBeenCalledTimes(1);
+		finishRegistration();
+		await expect(bridges).resolves.toEqual([
+			expect.objectContaining({ registered: ["blu-editor/get-editor-tree"] }),
+			expect.objectContaining({ registered: ["blu-editor/get-editor-tree"] }),
+		]);
+	});
+
+	it("clears failed in-flight registration so a later call can retry", async () => {
+		document.modelContext.registerTool
+			.mockRejectedValueOnce(new Error("Registration failed."))
+			.mockResolvedValueOnce(undefined);
+
+		await expect(
+			Promise.all([
+				bridgeAbilitiesToWebMCP(["blu-editor/get-editor-tree"]),
+				bridgeAbilitiesToWebMCP(["blu-editor/get-editor-tree"]),
+			])
+		).resolves.toEqual([
+			expect.objectContaining({ skipped: ["blu-editor/get-editor-tree"] }),
+			expect.objectContaining({ skipped: ["blu-editor/get-editor-tree"] }),
+		]);
+		await expect(bridgeAbilitiesToWebMCP(["blu-editor/get-editor-tree"])).resolves.toMatchObject({
+			registered: ["blu-editor/get-editor-tree"],
+		});
+		expect(document.modelContext.registerTool).toHaveBeenCalledTimes(2);
+	});
+
 	it("executes through the Abilities API and preserves structured output", async () => {
 		executeAbility.mockResolvedValue({ count: 0, blocks: [] });
 		await bridgeAbilitiesToWebMCP(["blu-editor/get-editor-tree"]);
@@ -107,5 +150,18 @@ describe("WebMCP ability bridge", () => {
 			},
 		});
 		expect(formatToolError(new Error("No fallback."))).not.toHaveProperty("structuredContent");
+	});
+
+	it("preserves mutation metadata without exposing fallback after a partial write", () => {
+		const error = new Error("The write could not be verified.");
+		error.mutated = true;
+		error.fallbackTool = "blu-edit-block";
+		error.fallbackArguments = { clientId: "paragraph-1" };
+
+		expect(formatToolError(error)).toMatchObject({
+			isError: true,
+			structuredContent: { mutated: true },
+		});
+		expect(formatToolError(error).structuredContent).not.toHaveProperty("fallbackTool");
 	});
 });

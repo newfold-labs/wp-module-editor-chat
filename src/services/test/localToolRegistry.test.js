@@ -220,6 +220,16 @@ describe("localToolRegistry", () => {
 			getLocalToolFallback({
 				isError: true,
 				structuredContent: {
+					mutated: true,
+					fallbackTool: "blu-edit-block",
+					fallbackArguments: { clientId: "paragraph-1" },
+				},
+			})
+		).toBeNull();
+		expect(
+			getLocalToolFallback({
+				isError: true,
+				structuredContent: {
 					mutated: false,
 					fallbackTool: "blu-call-ability",
 					fallbackArguments: {},

@@ -115,6 +115,7 @@ describe("pattern write abilities", () => {
 				}
 				return { id: 99, ...record };
 			}),
+			deleteEntityRecord: jest.fn().mockResolvedValue(true),
 		};
 		globalThis.window = {
 			wp: {
@@ -234,6 +235,31 @@ describe("pattern write abilities", () => {
 		expect(editorDispatch.insertBlocks).not.toHaveBeenCalled();
 	});
 
+	it("rejects rerouted or partial pattern insertion as a mutated error", async () => {
+		window.wp.blocks.parse.mockReturnValue([paragraph("parsed-first"), paragraph("parsed-second")]);
+		editorDispatch.insertBlocks.mockImplementation((newBlocks) => {
+			const inserted = newBlocks[0];
+			blocks[inserted.clientId] = inserted;
+			roots[inserted.clientId] = "group";
+			orders.group.push(inserted.clientId);
+		});
+
+		let error;
+		try {
+			await execute("blu-editor/insert-pattern", {
+				name: "theme/callout",
+				rootClientId: "",
+				index: 1,
+			});
+		} catch (caught) {
+			error = caught;
+		}
+
+		expect(error).toBeInstanceOf(Error);
+		expect(error.mutated).toBe(true);
+		expect(error).not.toHaveProperty("fallbackTool");
+	});
+
 	it("creates a pattern from validated client IDs and existing/new categories", async () => {
 		const result = await execute("blu-editor/create-pattern", {
 			title: "Saved pair",
@@ -301,6 +327,91 @@ describe("pattern write abilities", () => {
 			["first", "second"],
 			[expect.objectContaining({ name: "core/block", attributes: { ref: 99 } })]
 		);
+	});
+
+	it("marks category creation followed by pattern-save failure and compensates its records", async () => {
+		coreDispatch.saveEntityRecord.mockImplementation((kind, name, record) => {
+			if (kind === "taxonomy") {
+				return { id: 8, slug: record.slug, name: record.name };
+			}
+			throw new Error("Pattern save failed.");
+		});
+
+		let error;
+		try {
+			await execute("blu-editor/create-pattern", {
+				title: "Fails after category",
+				clientIds: ["first"],
+				categories: ["new-category"],
+			});
+		} catch (caught) {
+			error = caught;
+		}
+
+		expect(error).toBeInstanceOf(Error);
+		expect(error.mutated).toBe(true);
+		expect(error).not.toHaveProperty("fallbackTool");
+		expect(coreDispatch.deleteEntityRecord).toHaveBeenCalledWith(
+			"taxonomy",
+			"wp_pattern_category",
+			8,
+			{ throwOnError: true }
+		);
+	});
+
+	it("marks and compensates a failure while creating multiple categories", async () => {
+		coreDispatch.saveEntityRecord.mockImplementation((kind, name, record) => {
+			if (kind === "taxonomy" && record.slug === "first-new") {
+				return { id: 8, slug: record.slug, name: record.name };
+			}
+			throw new Error("Second category failed.");
+		});
+
+		let error;
+		try {
+			await execute("blu-editor/create-pattern", {
+				title: "Category sequence fails",
+				clientIds: ["first"],
+				categories: ["first-new", "second-new"],
+			});
+		} catch (caught) {
+			error = caught;
+		}
+
+		expect(error).toBeInstanceOf(Error);
+		expect(error.mutated).toBe(true);
+		expect(coreDispatch.deleteEntityRecord).toHaveBeenCalledWith(
+			"taxonomy",
+			"wp_pattern_category",
+			8,
+			{ throwOnError: true }
+		);
+		expect(coreDispatch.saveEntityRecord.mock.calls.some(([kind]) => kind === "postType")).toBe(
+			false
+		);
+	});
+
+	it("marks pattern-save followed by replacement failure and removes the orphan pattern", async () => {
+		editorDispatch.replaceBlocks.mockResolvedValue(undefined);
+
+		let error;
+		try {
+			await execute("blu-editor/create-pattern", {
+				title: "Replacement fails",
+				clientIds: ["first", "second"],
+				replaceSource: true,
+				syncStatus: "synced",
+			});
+		} catch (caught) {
+			error = caught;
+		}
+
+		expect(error).toBeInstanceOf(Error);
+		expect(error.mutated).toBe(true);
+		expect(error).not.toHaveProperty("fallbackTool");
+		expect(coreDispatch.deleteEntityRecord).toHaveBeenCalledWith("postType", "wp_block", 99, {
+			throwOnError: true,
+		});
 	});
 
 	it("rejects non-adjacent replacement and insufficient current-user permissions", async () => {

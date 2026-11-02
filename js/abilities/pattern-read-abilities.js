@@ -1,4 +1,4 @@
-import { requireBlock, requireEditorStore } from "./editor-store";
+import { requireBlock, requireEditorStore } from "./editor-store.js";
 import {
 	countPatternBlocks,
 	getPatternStructure,
@@ -8,7 +8,7 @@ import {
 	requirePattern,
 	serializePatternBlock,
 	summarizePattern,
-} from "./pattern-store";
+} from "./pattern-store.js";
 
 const READ_ONLY_META = {
 	annotations: {

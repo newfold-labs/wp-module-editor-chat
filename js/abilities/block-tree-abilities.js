@@ -4,7 +4,7 @@ import {
 	requireEditorStore,
 	serializeBlock,
 	withControlledRef,
-} from "./editor-store";
+} from "./editor-store.js";
 
 const GET_EDITOR_TREE = "blu-editor/get-editor-tree";
 const FIND_EDITOR_BLOCKS = "blu-editor/find-editor-blocks";

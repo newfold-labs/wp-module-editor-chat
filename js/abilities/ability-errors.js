@@ -14,3 +14,23 @@ export class EditorAbilityUnsupportedError extends Error {
 		}
 	}
 }
+
+/**
+ * Mark an error that occurred after a write was dispatched or persisted.
+ *
+ * @param {unknown}   error         Original error.
+ * @param {unknown[]} cleanupErrors Cleanup failures that must remain visible.
+ * @return {Error} Mutation-aware error for native and bridged consumers.
+ */
+export function markAbilityMutationError(error, cleanupErrors = []) {
+	const marked = error instanceof Error ? error : new Error(String(error));
+	marked.mutated = true;
+	delete marked.fallbackTool;
+	delete marked.fallbackArguments;
+	if (cleanupErrors.length) {
+		marked.message += ` Cleanup failed: ${cleanupErrors
+			.map((cleanupError) => String(cleanupError?.message || cleanupError))
+			.join("; ")}`;
+	}
+	return marked;
+}

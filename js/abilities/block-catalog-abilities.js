@@ -1,4 +1,4 @@
-import { requireBlock, requireEditorStore } from "./editor-store";
+import { requireBlock, requireEditorStore } from "./editor-store.js";
 
 const BLOCKS_STORE = "core/blocks";
 

@@ -1,3 +1,5 @@
+import { markAbilityMutationError } from "./ability-errors.js";
+
 export const CORE_STORE = "core";
 export const PATTERN_POST_TYPE = "wp_block";
 export const PATTERN_TAXONOMY = "wp_pattern_category";
@@ -250,7 +252,7 @@ export async function resolvePatternCategoryIds(names = []) {
 		}
 	}
 	if (!names.length) {
-		return { ids: [], slugs: [], created: [] };
+		return { ids: [], slugs: [], created: [], createdRecords: [] };
 	}
 
 	const categories = await listPatternCategories();
@@ -258,30 +260,49 @@ export async function resolvePatternCategoryIds(names = []) {
 	const ids = [];
 	const slugs = [];
 	const created = [];
-	for (const requested of names) {
-		const needle = requested.toLowerCase();
-		const match = categories.find(
-			(category) =>
-				category.name.toLowerCase() === needle || category.label.toLowerCase() === needle
-		);
-		if (match?.id) {
-			ids.push(match.id);
-			slugs.push(match.name);
-			continue;
+	const createdRecords = [];
+	try {
+		for (const requested of names) {
+			const needle = requested.toLowerCase();
+			const match = categories.find(
+				(category) =>
+					category.name.toLowerCase() === needle || category.label.toLowerCase() === needle
+			);
+			if (match?.id) {
+				ids.push(match.id);
+				slugs.push(match.name);
+				continue;
+			}
+			const slug = match?.name ?? requested;
+			const term = await actions.saveEntityRecord(
+				"taxonomy",
+				PATTERN_TAXONOMY,
+				{ name: match?.label ?? requested, slug },
+				{ throwOnError: true }
+			);
+			if (!term?.id) {
+				throw new Error(`Could not create the pattern category "${requested}".`);
+			}
+			ids.push(term.id);
+			slugs.push(term.slug ?? slug);
+			created.push(term.slug ?? slug);
+			createdRecords.push({ id: term.id, slug: term.slug ?? slug });
 		}
-		const slug = match?.name ?? requested;
-		const term = await actions.saveEntityRecord(
-			"taxonomy",
-			PATTERN_TAXONOMY,
-			{ name: match?.label ?? requested, slug },
-			{ throwOnError: true }
-		);
-		if (!term?.id) {
-			throw new Error(`Could not create the pattern category "${requested}".`);
+	} catch (error) {
+		const cleanupErrors = [];
+		for (const record of createdRecords.reverse()) {
+			try {
+				if (typeof actions.deleteEntityRecord !== "function") {
+					throw new Error(`Could not remove category "${record.slug}".`);
+				}
+				await actions.deleteEntityRecord("taxonomy", PATTERN_TAXONOMY, record.id, {
+					throwOnError: true,
+				});
+			} catch (cleanupError) {
+				cleanupErrors.push(cleanupError);
+			}
 		}
-		ids.push(term.id);
-		slugs.push(term.slug ?? slug);
-		created.push(term.slug ?? slug);
+		throw markAbilityMutationError(error, cleanupErrors);
 	}
-	return { ids, slugs, created };
+	return { ids, slugs, created, createdRecords };
 }

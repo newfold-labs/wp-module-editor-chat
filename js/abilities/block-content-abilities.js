@@ -1,6 +1,6 @@
-import { EditorAbilityUnsupportedError } from "./ability-errors";
-import { deepMergeAttributes, normalizeAttributes } from "./block-attribute-validation";
-import { requireBlock, requireEditorActions, requireEditorStore } from "./editor-store";
+import { EditorAbilityUnsupportedError, markAbilityMutationError } from "./ability-errors.js";
+import { deepMergeAttributes, normalizeAttributes } from "./block-attribute-validation.js";
+import { requireBlock, requireEditorActions, requireEditorStore } from "./editor-store.js";
 
 const WRITE_META = (destructive = false, idempotent = false) => ({
 	annotations: { readonly: false, destructive, idempotent },
@@ -183,13 +183,19 @@ async function editBlock(input = {}) {
 	if (typeof actions.replaceBlock !== "function") {
 		throw new Error("Block replacement is not available.");
 	}
-	await actions.replaceBlock(input.clientId, replacement);
+	try {
+		await actions.replaceBlock(input.clientId, replacement);
+	} catch (error) {
+		throw markAbilityMutationError(error);
+	}
 	const actual = store.getBlock(replacement.clientId);
 	if (
 		!equalBlockState(actual, replacement) ||
 		(replacement.clientId !== input.clientId && store.getBlock(input.clientId))
 	) {
-		throw new Error("The editor did not replace this block. It or its parent may be locked.");
+		throw markAbilityMutationError(
+			new Error("The editor did not replace this block. It or its parent may be locked.")
+		);
 	}
 	return {
 		changed: true,
@@ -229,28 +235,47 @@ async function updateBlock(input = {}) {
 		};
 	}
 	const actions = requireEditorActions();
-	await actions.updateBlockAttributes(input.clientId, merged);
-	const updated = requireBlock(store, input.clientId);
-	const actual = updated.attributes ?? {};
-	const notApplied = Object.keys(merged).filter((key) => !equalJsonValue(actual[key], merged[key]));
-	if (notApplied.length) {
-		throw new Error(`The editor did not update attribute(s): ${notApplied.join(", ")}.`);
+	try {
+		await actions.updateBlockAttributes(input.clientId, merged);
+		const updated = requireBlock(store, input.clientId);
+		const actual = updated.attributes ?? {};
+		const notApplied = Object.keys(merged).filter(
+			(key) => !equalJsonValue(actual[key], merged[key])
+		);
+		if (notApplied.length) {
+			throw new Error(`The editor did not update attribute(s): ${notApplied.join(", ")}.`);
+		}
+		return {
+			changed: true,
+			clientId: input.clientId,
+			name: updated.name,
+			attributes: actual,
+			updatedAttributes: Object.keys(normalized),
+		};
+	} catch (error) {
+		throw markAbilityMutationError(error);
 	}
-	return {
-		changed: true,
-		clientId: input.clientId,
-		name: updated.name,
-		attributes: actual,
-		updatedAttributes: Object.keys(normalized),
-	};
 }
 
 export function registerBlockContentAbilities(register) {
 	const imagePrompt = { oneOf: [{ type: "string" }, { type: "object" }] };
-	const base = { category: "blu-editor", output_schema: { type: "object" } };
+	const outputSchema = (properties) => ({
+		type: "object",
+		properties,
+		required: Object.keys(properties),
+		additionalProperties: false,
+	});
+	const base = { category: "blu-editor" };
 	const definitions = [
 		{
 			...base,
+			output_schema: outputSchema({
+				changed: { type: "boolean" },
+				clientId: { type: "string" },
+				replacementClientId: { type: "string" },
+				name: { type: "string" },
+				attributes: { type: "object" },
+			}),
 			name: "blu-editor/edit-block",
 			label: "Edit Block Content",
 			description: "Replaces one block from complete WordPress block markup.",
@@ -273,6 +298,13 @@ export function registerBlockContentAbilities(register) {
 		},
 		{
 			...base,
+			output_schema: outputSchema({
+				changed: { type: "boolean" },
+				clientId: { type: "string" },
+				name: { type: "string" },
+				attributes: { type: "object" },
+				updatedAttributes: { type: "array", items: { type: "string" } },
+			}),
 			name: "blu-editor/update-block",
 			label: "Update Block",
 			description: "Validates and merges attributes into one live editor block.",

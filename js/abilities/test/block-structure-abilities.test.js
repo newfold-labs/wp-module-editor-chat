@@ -398,6 +398,7 @@ describe("block structure abilities", () => {
 			error = caught;
 		}
 		expect(error).toBeInstanceOf(Error);
+		expect(error).toHaveProperty("mutated", true);
 		expect(error).not.toHaveProperty("fallbackTool");
 		expect(error).not.toHaveProperty("fallbackArguments");
 	});

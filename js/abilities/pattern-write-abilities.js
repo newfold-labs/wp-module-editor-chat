@@ -3,8 +3,9 @@ import {
 	assertSafeBlockMutationTarget,
 	buildBlock,
 	resolveBlockInsertRoot,
-} from "./block-structure-abilities";
-import { requireBlock, requireEditorActions, requireEditorStore } from "./editor-store";
+} from "./block-structure-abilities.js";
+import { markAbilityMutationError } from "./ability-errors.js";
+import { requireBlock, requireEditorActions, requireEditorStore } from "./editor-store.js";
 import {
 	assertCanCreatePatterns,
 	countPatternBlocks,
@@ -14,7 +15,7 @@ import {
 	requirePattern,
 	resolvePatternCategoryIds,
 	USER_PATTERN_PREFIX,
-} from "./pattern-store";
+} from "./pattern-store.js";
 
 const WRITE_META = (destructive = false) => ({
 	annotations: { readonly: false, destructive, idempotent: false },
@@ -61,6 +62,33 @@ function validateDestination(store, blocks, rootClientId) {
 	}
 }
 
+function equalValue(left, right) {
+	if (left === right) {
+		return true;
+	}
+	if (Array.isArray(left) || Array.isArray(right)) {
+		return (
+			Array.isArray(left) &&
+			Array.isArray(right) &&
+			left.length === right.length &&
+			left.every((value, index) => equalValue(value, right[index]))
+		);
+	}
+	if (left && right && typeof left === "object" && typeof right === "object") {
+		const keys = new Set([...Object.keys(left), ...Object.keys(right)]);
+		return [...keys].every((key) => equalValue(left[key], right[key]));
+	}
+	return false;
+}
+
+function equalBlockState(actual, expected) {
+	return (
+		actual?.name === expected?.name &&
+		equalValue(actual?.attributes ?? {}, expected?.attributes ?? {}) &&
+		equalValue(actual?.innerBlocks ?? [], expected?.innerBlocks ?? [])
+	);
+}
+
 async function insertPattern(input = {}) {
 	const store = requireEditorStore();
 	const actions = requireEditorActions();
@@ -93,23 +121,47 @@ async function insertPattern(input = {}) {
 	const order = store.getBlockOrder?.(rootClientId) || [];
 	const insertionIndex = index === undefined ? order.length : Math.min(index, order.length);
 
-	await actions.insertBlocks(blocks, insertionIndex, rootClientId);
-	const inserted = blocks.map(({ clientId }) => store.getBlock(clientId));
-	if (inserted.some((block) => !block)) {
-		throw new Error("The editor did not insert this pattern. Its destination may be locked.");
+	try {
+		await actions.insertBlocks(blocks, insertionIndex, rootClientId);
+		const inserted = blocks.map(({ clientId }) => store.getBlock(clientId));
+		const actualRoots = blocks.map(({ clientId }) => rootOf(store, clientId));
+		const actualIndexes = blocks.map(({ clientId }, blockIndex) =>
+			store.getBlockIndex(clientId, actualRoots[blockIndex])
+		);
+		const actualRoot = actualRoots[0] ?? "";
+		const actualOrder = store.getBlockOrder?.(actualRoot) || [];
+		const insertedIds = blocks.map(({ clientId }) => clientId);
+		const exactLocation =
+			actualRoots.every((candidate) => candidate === actualRoot) &&
+			actualRoot === rootClientId &&
+			actualIndexes.every((candidate, blockIndex) => candidate === insertionIndex + blockIndex) &&
+			equalValue(
+				actualOrder.slice(insertionIndex, insertionIndex + insertedIds.length),
+				insertedIds
+			);
+		if (
+			inserted.some((block) => !block) ||
+			!exactLocation ||
+			inserted.some((block, blockIndex) => !equalBlockState(block, blocks[blockIndex]))
+		) {
+			throw new Error("The editor did not insert the complete pattern at the requested location.");
+		}
+		return {
+			changed: true,
+			patternName: pattern.name,
+			patternId: pattern.id,
+			title: pattern.title,
+			asReference,
+			clientIds: insertedIds,
+			blocks: inserted,
+			count: inserted.length,
+			rootClientId: actualRoot,
+			index: actualIndexes[0],
+			indexes: actualIndexes,
+		};
+	} catch (error) {
+		throw markAbilityMutationError(error);
 	}
-	return {
-		changed: true,
-		patternName: pattern.name,
-		patternId: pattern.id,
-		title: pattern.title,
-		asReference,
-		clientIds: blocks.map(({ clientId }) => clientId),
-		blocks: inserted,
-		count: inserted.length,
-		rootClientId,
-		index: insertionIndex,
-	};
 }
 
 function requireSiblingRange(store, clientIds) {
@@ -192,21 +244,45 @@ async function createPattern(input = {}) {
 		throw new Error("WordPress block serialization is not available.");
 	}
 	await assertCanCreatePatterns();
-	const { ids, slugs, created } = await resolvePatternCategoryIds(input.categories);
-	const record = await requireCoreActions().saveEntityRecord(
-		"postType",
-		PATTERN_POST_TYPE,
-		{
-			title: input.title.trim(),
-			content: serialize(sourceBlocks),
-			status: "publish",
-			meta: syncStatus === "unsynced" ? { wp_pattern_sync_status: "unsynced" } : undefined,
-			wp_pattern_category: ids,
-		},
-		{ throwOnError: true }
-	);
-	if (!record?.id) {
-		throw new Error("WordPress did not save this pattern.");
+	const coreActions = requireCoreActions();
+	const {
+		ids,
+		slugs,
+		created,
+		createdRecords = [],
+	} = await resolvePatternCategoryIds(input.categories);
+	let record;
+	try {
+		record = await coreActions.saveEntityRecord(
+			"postType",
+			PATTERN_POST_TYPE,
+			{
+				title: input.title.trim(),
+				content: serialize(sourceBlocks),
+				status: "publish",
+				meta: syncStatus === "unsynced" ? { wp_pattern_sync_status: "unsynced" } : undefined,
+				wp_pattern_category: ids,
+			},
+			{ throwOnError: true }
+		);
+		if (!record?.id) {
+			throw new Error("WordPress did not save this pattern.");
+		}
+	} catch (error) {
+		const cleanupErrors = [];
+		for (const category of createdRecords) {
+			try {
+				if (typeof coreActions.deleteEntityRecord !== "function") {
+					throw new Error(`Could not remove category "${category.slug}".`);
+				}
+				await coreActions.deleteEntityRecord("taxonomy", "wp_pattern_category", category.id, {
+					throwOnError: true,
+				});
+			} catch (cleanupError) {
+				cleanupErrors.push(cleanupError);
+			}
+		}
+		throw markAbilityMutationError(error, cleanupErrors);
 	}
 
 	const result = {
@@ -226,11 +302,43 @@ async function createPattern(input = {}) {
 			{ name: "core/block", attributes: { ref: record.id } },
 			"reference"
 		);
-		await replacementActions.replaceBlocks(siblingRange.clientIds, [reference]);
-		if (!store.getBlock(reference.clientId)) {
-			throw new Error(
-				`The pattern was saved as ${result.name}, but the editor did not replace the original blocks.`
-			);
+		try {
+			await replacementActions.replaceBlocks(siblingRange.clientIds, [reference]);
+			if (
+				!store.getBlock(reference.clientId) ||
+				rootOf(store, reference.clientId) !== siblingRange.rootClientId ||
+				store.getBlockIndex(reference.clientId, siblingRange.rootClientId) !== siblingRange.index ||
+				siblingRange.clientIds.some((clientId) => store.getBlock(clientId))
+			) {
+				throw new Error(
+					`The pattern was saved as ${result.name}, but the editor did not replace the original blocks.`
+				);
+			}
+		} catch (error) {
+			const cleanupErrors = [];
+			const sourceIntact = siblingRange.clientIds.every((clientId) => store.getBlock(clientId));
+			if (sourceIntact && !store.getBlock(reference.clientId)) {
+				for (const [kind, name, recordId] of [
+					["postType", PATTERN_POST_TYPE, record.id],
+					...createdRecords.map(({ id: categoryId }) => [
+						"taxonomy",
+						"wp_pattern_category",
+						categoryId,
+					]),
+				]) {
+					try {
+						if (typeof coreActions.deleteEntityRecord !== "function") {
+							throw new Error(`Could not remove created ${name} record ${recordId}.`);
+						}
+						await coreActions.deleteEntityRecord(kind, name, recordId, {
+							throwOnError: true,
+						});
+					} catch (cleanupError) {
+						cleanupErrors.push(cleanupError);
+					}
+				}
+			}
+			throw markAbilityMutationError(error, cleanupErrors);
 		}
 		result.replacedClientIds = siblingRange.clientIds;
 		result.clientId = reference.clientId;
