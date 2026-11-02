@@ -88,9 +88,21 @@ function getAnnotations(ability) {
 	if (!annotations) {
 		return undefined;
 	}
-	return {
-		readOnlyHint: Boolean(annotations.readonly ?? annotations.readOnlyHint),
+
+	const mappings = {
+		readOnlyHint: ["readOnlyHint", "readonly"],
+		consequentialHint: ["consequentialHint", "destructive"],
+		untrustedContentHint: ["untrustedContentHint"],
+		debugging: ["debugging"],
 	};
+	const converted = {};
+	for (const [target, sources] of Object.entries(mappings)) {
+		const source = sources.find((name) => Object.hasOwn(annotations, name));
+		if (source) {
+			converted[target] = Boolean(annotations[source]);
+		}
+	}
+	return Object.keys(converted).length ? converted : undefined;
 }
 
 /**

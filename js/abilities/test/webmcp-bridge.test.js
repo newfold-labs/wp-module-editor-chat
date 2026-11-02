@@ -33,7 +33,11 @@ describe("WebMCP ability bridge", () => {
 				},
 			},
 			annotations: {
-				readonly: true,
+				readonly: false,
+				destructive: true,
+				idempotent: true,
+				untrustedContentHint: true,
+				debugging: true,
 			},
 		});
 	});
@@ -63,7 +67,16 @@ describe("WebMCP ability bridge", () => {
 			inputSchema: {
 				type: "object",
 			},
+			annotations: {
+				readOnlyHint: false,
+				consequentialHint: true,
+				untrustedContentHint: true,
+				debugging: true,
+			},
 		});
+		expect(document.modelContext.registerTool.mock.calls[0][0].annotations).not.toHaveProperty(
+			"idempotentHint"
+		);
 	});
 
 	it("executes through the Abilities API and preserves structured output", async () => {

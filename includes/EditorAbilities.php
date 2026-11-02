@@ -44,6 +44,48 @@ class EditorAbilities {
 	);
 
 	/**
+	 * Persistent page-lifetime loader state.
+	 *
+	 * @var bool
+	 */
+	private static $modules_registered = false;
+
+	/**
+	 * Whether native modules have been enqueued.
+	 *
+	 * @var bool
+	 */
+	private static $native_enqueued    = false;
+
+	/**
+	 * Whether the WebMCP polyfill has been registered.
+	 *
+	 * @var bool
+	 */
+	private static $webmcp_registered  = false;
+
+	/**
+	 * Whether WebMCP assets have been enqueued.
+	 *
+	 * @var bool
+	 */
+	private static $webmcp_enqueued    = false;
+
+	/**
+	 * Whether the public module-data filter has been added.
+	 *
+	 * @var bool
+	 */
+	private static $data_filter_added  = false;
+
+	/**
+	 * Ability names exposed through script-module data.
+	 *
+	 * @var string[]
+	 */
+	private static $module_ability_names = array();
+
+	/**
 	 * Hook the opt-in block-editor lifecycle.
 	 */
 	public function __construct() {
@@ -92,10 +134,7 @@ class EditorAbilities {
 			return false;
 		}
 
-		if (
-			! \function_exists( 'wp_register_script_module' ) ||
-			! \function_exists( 'wp_enqueue_script_module' )
-		) {
+		if ( ! static::supports_script_modules() ) {
 			return false;
 		}
 
@@ -114,15 +153,47 @@ class EditorAbilities {
 		);
 		$ability_names = self::normalize_ability_names( $ability_names );
 
-		self::register_modules( $ability_names );
-		\wp_enqueue_script_module( self::PUBLIC_MODULE );
-		\wp_enqueue_script_module( self::BOOTSTRAP_MODULE );
+		if ( ! self::$modules_registered ) {
+			self::$module_ability_names = $ability_names;
+			static::register_modules();
+			self::$modules_registered = true;
+		}
+
+		if ( ! self::$native_enqueued ) {
+			static::enqueue_script_module( self::PUBLIC_MODULE );
+			static::enqueue_script_module( self::BOOTSTRAP_MODULE );
+			self::$native_enqueued = true;
+		}
 
 		if ( $with_webmcp ) {
 			self::enqueue_webmcp();
 		}
 
 		return true;
+	}
+
+	/**
+	 * Whether the required WordPress script-module API is available.
+	 *
+	 * @return bool Support status.
+	 */
+	protected static function supports_script_modules() {
+		return \function_exists( 'wp_register_script_module' ) &&
+			\function_exists( 'wp_enqueue_script_module' );
+	}
+
+	/**
+	 * Reset persistent state for isolated subclasses in tests.
+	 *
+	 * @return void
+	 */
+	protected static function reset_state() {
+		self::$modules_registered    = false;
+		self::$native_enqueued       = false;
+		self::$webmcp_registered     = false;
+		self::$webmcp_enqueued       = false;
+		self::$data_filter_added     = false;
+		self::$module_ability_names  = array();
 	}
 
 	/**
@@ -149,39 +220,38 @@ class EditorAbilities {
 	/**
 	 * Register the native script-module graph.
 	 *
-	 * @param string[] $ability_names Filtered public names.
 	 * @return void
 	 */
-	private static function register_modules( $ability_names ) {
+	private static function register_modules() {
 		$js_url = \defined( 'NFD_EDITOR_CHAT_JS_URL' )
 			? NFD_EDITOR_CHAT_JS_URL
 			: '';
 
-		\wp_register_script_module(
+		static::register_script_module(
 			self::PUBLIC_MODULE,
 			$js_url . 'abilities/index.js',
 			array( '@wordpress/abilities' ),
 			NFD_EDITOR_CHAT_VERSION
 		);
-		\wp_register_script_module(
+		static::register_script_module(
 			self::BOOTSTRAP_MODULE,
 			$js_url . 'abilities/bootstrap.js',
 			array( self::PUBLIC_MODULE ),
 			NFD_EDITOR_CHAT_VERSION
 		);
-		\wp_register_script_module(
+		static::register_script_module(
 			self::WEBMCP_ENV_MODULE,
 			$js_url . 'abilities/webmcp-env.js',
 			array(),
 			NFD_EDITOR_CHAT_VERSION
 		);
-		\wp_register_script_module(
+		static::register_script_module(
 			self::WEBMCP_BRIDGE_MODULE,
 			$js_url . 'abilities/webmcp-bridge.js',
 			array( '@wordpress/abilities', self::WEBMCP_ENV_MODULE ),
 			NFD_EDITOR_CHAT_VERSION
 		);
-		\wp_register_script_module(
+		static::register_script_module(
 			self::WEBMCP_BOOTSTRAP_MODULE,
 			$js_url . 'abilities/webmcp-bootstrap.js',
 			array(
@@ -192,13 +262,10 @@ class EditorAbilities {
 			NFD_EDITOR_CHAT_VERSION
 		);
 
-		\add_filter(
-			'script_module_data_' . self::PUBLIC_MODULE,
-			function ( $data ) use ( $ability_names ) {
-				$data['abilityNames'] = $ability_names;
-				return $data;
-			}
-		);
+		if ( ! self::$data_filter_added ) {
+			static::register_module_data_filter();
+			self::$data_filter_added = true;
+		}
 	}
 
 	/**
@@ -211,14 +278,83 @@ class EditorAbilities {
 			? NFD_EDITOR_CHAT_JS_URL
 			: '';
 
+		if ( ! self::$webmcp_registered ) {
+			static::register_polyfill_script(
+				self::WEBMCP_POLYFILL_HANDLE,
+				$js_url . 'vendor/webmcp-polyfill/webmcp-polyfill.js'
+			);
+			self::$webmcp_registered = true;
+		}
+
+		if ( ! self::$webmcp_enqueued ) {
+			static::enqueue_script( self::WEBMCP_POLYFILL_HANDLE );
+			static::enqueue_script_module( self::WEBMCP_BOOTSTRAP_MODULE );
+			self::$webmcp_enqueued = true;
+		}
+	}
+
+	/**
+	 * Register one script module.
+	 *
+	 * @param string       $id      Module ID.
+	 * @param string       $src     Module URL.
+	 * @param string[]     $deps    Dependencies.
+	 * @param string|false $version Version.
+	 * @return void
+	 */
+	protected static function register_script_module( $id, $src, $deps, $version ) {
+		\wp_register_script_module( $id, $src, $deps, $version );
+	}
+
+	/**
+	 * Enqueue one script module.
+	 *
+	 * @param string $id Module ID.
+	 * @return void
+	 */
+	protected static function enqueue_script_module( $id ) {
+		\wp_enqueue_script_module( $id );
+	}
+
+	/**
+	 * Register the WebMCP polyfill script.
+	 *
+	 * @param string $handle Script handle.
+	 * @param string $src    Script URL.
+	 * @return void
+	 */
+	protected static function register_polyfill_script( $handle, $src ) {
 		\wp_register_script(
-			self::WEBMCP_POLYFILL_HANDLE,
-			$js_url . 'vendor/webmcp-polyfill/webmcp-polyfill.js',
+			$handle,
+			$src,
 			array(),
 			NFD_EDITOR_CHAT_VERSION,
 			false
 		);
-		\wp_enqueue_script( self::WEBMCP_POLYFILL_HANDLE );
-		\wp_enqueue_script_module( self::WEBMCP_BOOTSTRAP_MODULE );
+	}
+
+	/**
+	 * Enqueue one classic script.
+	 *
+	 * @param string $handle Script handle.
+	 * @return void
+	 */
+	protected static function enqueue_script( $handle ) {
+		\wp_enqueue_script( $handle );
+	}
+
+	/**
+	 * Add the public module's data filter once.
+	 *
+	 * @return void
+	 */
+	protected static function register_module_data_filter() {
+		\add_filter(
+			'script_module_data_' . self::PUBLIC_MODULE,
+			function ( $data ) {
+				$data['abilityNames'] = self::$module_ability_names;
+				return $data;
+			}
+		);
 	}
 }
