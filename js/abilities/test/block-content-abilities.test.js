@@ -211,6 +211,21 @@ describe("block content abilities", () => {
 		expect(dispatch.replaceBlock).not.toHaveBeenCalled();
 	});
 
+	it.each(["canRemoveBlocks", "canRemoveBlock"])(
+		"rejects replacement locks reported by %s before dispatch",
+		async (selector) => {
+			selectors[selector] = jest.fn().mockReturnValue(false);
+
+			await expect(
+				execute("blu-editor/edit-block", {
+					clientId: "paragraph-1",
+					blockContent: "<!-- wp:paragraph --><p>No</p><!-- /wp:paragraph -->",
+				})
+			).rejects.toThrow(/locked|cannot be replaced|cannot be removed/i);
+			expect(dispatch.replaceBlock).not.toHaveBeenCalled();
+		}
+	);
+
 	it.each([
 		["core/site-logo", {}],
 		["core/navigation", { ref: 42 }],
@@ -345,6 +360,44 @@ describe("block content abilities", () => {
 		}
 		expect(error).toBeInstanceOf(Error);
 		expect(error).toHaveProperty("message", expect.stringMatching(/did not replace|locked/i));
+		expect(error).not.toHaveProperty("fallbackTool");
+	});
+
+	it("rejects a replacement whose nested block state differs after dispatch", async () => {
+		const replacement = {
+			clientId: "replacement-group",
+			name: "core/group",
+			attributes: { layout: { type: "constrained" } },
+			innerBlocks: [
+				{
+					clientId: "replacement-child",
+					name: "core/paragraph",
+					attributes: { content: "Expected child" },
+					innerBlocks: [],
+				},
+			],
+		};
+		window.wp.blocks.parse.mockReturnValue([replacement]);
+		dispatch.replaceBlock.mockImplementation((clientId) => {
+			delete blocks[clientId];
+			blocks[replacement.clientId] = {
+				...replacement,
+				innerBlocks: [],
+			};
+		});
+
+		let error;
+		try {
+			await execute("blu-editor/edit-block", {
+				clientId: "paragraph-1",
+				blockContent:
+					"<!-- wp:group --><!-- wp:paragraph --><p>Expected child</p><!-- /wp:paragraph --><!-- /wp:group -->",
+			});
+		} catch (caught) {
+			error = caught;
+		}
+		expect(error).toBeInstanceOf(Error);
+		expect(error).toHaveProperty("message", expect.stringMatching(/did not replace|incomplete/i));
 		expect(error).not.toHaveProperty("fallbackTool");
 	});
 });

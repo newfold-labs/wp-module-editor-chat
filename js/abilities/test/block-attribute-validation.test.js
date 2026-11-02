@@ -63,6 +63,44 @@ describe("block attribute validation", () => {
 		);
 	});
 
+	it("does not fill defaults in ordinary partial object patches", () => {
+		paragraphType.attributes.settings = {
+			type: "object",
+			properties: {
+				typography: {
+					type: "object",
+					properties: {
+						fontSize: { type: "string", default: "16px" },
+						fontWeight: { type: "string", default: "400" },
+					},
+				},
+			},
+		};
+		const current = {
+			settings: {
+				typography: {
+					fontSize: "24px",
+					fontWeight: "400",
+				},
+			},
+		};
+		const patch = normalizeAttributes("core/paragraph", {
+			settings: { typography: { fontWeight: "700" } },
+		});
+
+		expect(patch).toEqual({
+			settings: { typography: { fontWeight: "700" } },
+		});
+		expect(deepMergeAttributes(current, patch)).toEqual({
+			settings: {
+				typography: {
+					fontSize: "24px",
+					fontWeight: "700",
+				},
+			},
+		});
+	});
+
 	it("deep merges objects, treats arrays atomically, and removes null keys", () => {
 		expect(
 			deepMergeAttributes(

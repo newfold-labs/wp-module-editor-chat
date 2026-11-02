@@ -60,6 +60,15 @@ function assertEditable(store, block) {
 	}
 }
 
+function assertReplaceable(store, block) {
+	if (
+		store.canRemoveBlocks?.([block.clientId]) === false ||
+		store.canRemoveBlock?.(block.clientId) === false
+	) {
+		throw new Error(`Block "${block.name}" cannot be replaced. It may be locked for removal.`);
+	}
+}
+
 function normalizeImagePrompts(input) {
 	const plural = input.imagePrompts ?? input.image_prompts;
 	const singular = input.imagePrompt ?? input.image_prompt;
@@ -117,6 +126,23 @@ function equalJsonValue(left, right) {
 	return false;
 }
 
+function equalBlockState(actual, expected) {
+	if (
+		!actual ||
+		!expected ||
+		actual.name !== expected.name ||
+		!equalJsonValue(actual.attributes ?? {}, expected.attributes ?? {})
+	) {
+		return false;
+	}
+	const actualInner = actual.innerBlocks ?? [];
+	const expectedInner = expected.innerBlocks ?? [];
+	return (
+		actualInner.length === expectedInner.length &&
+		actualInner.every((block, index) => equalBlockState(block, expectedInner[index]))
+	);
+}
+
 async function editBlock(input = {}) {
 	const store = requireEditorStore();
 	const block = requireBlock(store, input.clientId);
@@ -129,6 +155,7 @@ async function editBlock(input = {}) {
 	const imagePrompts = normalizeImagePrompts(input);
 	const fallback = editFallback(input, imagePrompts);
 	assertEditable(store, block);
+	assertReplaceable(store, block);
 	rejectSpecial(store, input.clientId, fallback);
 	if (
 		imagePrompts !== undefined ||
@@ -159,9 +186,7 @@ async function editBlock(input = {}) {
 	await actions.replaceBlock(input.clientId, replacement);
 	const actual = store.getBlock(replacement.clientId);
 	if (
-		!actual ||
-		actual.name !== replacement.name ||
-		!equalJsonValue(actual.attributes ?? {}, replacement.attributes ?? {}) ||
+		!equalBlockState(actual, replacement) ||
 		(replacement.clientId !== input.clientId && store.getBlock(input.clientId))
 	) {
 		throw new Error("The editor did not replace this block. It or its parent may be locked.");

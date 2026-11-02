@@ -39,7 +39,7 @@ function matchesType(type, value) {
 	);
 }
 
-function normalizeObject(value, properties, path) {
+function normalizeObject(value, properties, path, fillDefaults = false) {
 	if (!isPlainObject(value)) {
 		throw new Error(`${path} must be an object, received ${describeValue(value)}.`);
 	}
@@ -54,22 +54,22 @@ function normalizeObject(value, properties, path) {
 	const result = {};
 	for (const [key, definition] of Object.entries(properties)) {
 		if (value[key] === undefined) {
-			if (definition?.default !== undefined) {
+			if (fillDefaults && definition?.default !== undefined) {
 				result[key] = definition.default;
-			} else if (definition?.type === "object" && definition.properties) {
-				const defaults = normalizeObject({}, definition.properties, `${path}.${key}`);
+			} else if (fillDefaults && definition?.type === "object" && definition.properties) {
+				const defaults = normalizeObject({}, definition.properties, `${path}.${key}`, true);
 				if (Object.keys(defaults).length) {
 					result[key] = defaults;
 				}
 			}
 			continue;
 		}
-		result[key] = normalizeValue(value[key], definition, `${path}.${key}`);
+		result[key] = normalizeValue(value[key], definition, `${path}.${key}`, fillDefaults);
 	}
 	return result;
 }
 
-function normalizeValue(value, definition = {}, path) {
+function normalizeValue(value, definition = {}, path, fillDefaults = false) {
 	// Null is the public clearing sentinel, regardless of the stored value's type.
 	if (value === null) {
 		return null;
@@ -81,10 +81,12 @@ function normalizeValue(value, definition = {}, path) {
 		throw new Error(`${path} must be ${expected}, received ${describeValue(value)}.`);
 	}
 	if (definition.query && Array.isArray(value)) {
-		return value.map((item, index) => normalizeObject(item, definition.query, `${path}[${index}]`));
+		return value.map((item, index) =>
+			normalizeObject(item, definition.query, `${path}[${index}]`, true)
+		);
 	}
 	if (definition.type === "object" && definition.properties) {
-		return normalizeObject(value, definition.properties, path);
+		return normalizeObject(value, definition.properties, path, fillDefaults);
 	}
 	return value;
 }
