@@ -146,6 +146,44 @@ describe("block structure abilities", () => {
 		expect(dispatch.insertBlocks).not.toHaveBeenCalled();
 	});
 
+	it("rejects an anchored root insert instead of retargeting it to post content", async () => {
+		blocks.post = {
+			clientId: "post",
+			name: "core/post-content",
+			attributes: {},
+			innerBlocks: [],
+		};
+		roots.post = "";
+		orders.post = [];
+		selectors.getBlocksByName = jest.fn().mockReturnValue(["post"]);
+		selectors.canInsertBlockType.mockImplementation((_name, root) => root === "post");
+
+		await expect(
+			execute("blu-editor/insert-block", {
+				name: "core/paragraph",
+				afterClientId: "first",
+			})
+		).rejects.toThrow(/afterClientId|requested sibling/i);
+		expect(dispatch.insertBlocks).not.toHaveBeenCalled();
+	});
+
+	it("rejects empty supplied sibling IDs before dispatch", async () => {
+		await expect(
+			execute("blu-editor/insert-block", {
+				name: "core/paragraph",
+				afterClientId: "",
+			})
+		).rejects.toThrow('Unknown afterClientId ""');
+		await expect(
+			execute("blu-editor/move-block", {
+				clientId: "first",
+				beforeClientId: "",
+			})
+		).rejects.toThrow('Unknown beforeClientId ""');
+		expect(dispatch.insertBlocks).not.toHaveBeenCalled();
+		expect(dispatch.moveBlocksToPosition).not.toHaveBeenCalled();
+	});
+
 	it("validates destination roots and nesting before dispatch", async () => {
 		await expect(
 			execute("blu-editor/insert-block", {
@@ -200,6 +238,34 @@ describe("block structure abilities", () => {
 				innerBlocks: [{ name: "core/paragraph" }],
 			})
 		).rejects.toThrow(/does not allow/);
+		expect(dispatch.insertBlocks).not.toHaveBeenCalled();
+	});
+
+	it("validates registered ancestor constraints for nested trees and destinations", async () => {
+		window.wp.data.select.mockImplementation((store) =>
+			store === "core/block-editor"
+				? selectors
+				: {
+						getBlockType: jest.fn((name) => ({
+							name,
+							attributes: {},
+							...(name === "core/paragraph" ? { ancestor: ["core/section"] } : {}),
+						})),
+					}
+		);
+
+		await expect(
+			execute("blu-editor/insert-block", {
+				name: "core/group",
+				innerBlocks: [{ name: "core/paragraph" }],
+			})
+		).rejects.toThrow(/ancestor|core\/section/i);
+		await expect(
+			execute("blu-editor/insert-block", {
+				name: "core/paragraph",
+				rootClientId: "group",
+			})
+		).rejects.toThrow(/ancestor|core\/section/i);
 		expect(dispatch.insertBlocks).not.toHaveBeenCalled();
 	});
 
@@ -283,6 +349,41 @@ describe("block structure abilities", () => {
 			rootClientId: "",
 			indexes: [1, 2],
 		});
+	});
+
+	it("transforms one block into a single replacement", async () => {
+		window.wp.blocks.switchToBlockType.mockReturnValue([
+			{ ...paragraph("replacement"), name: "core/heading" },
+		]);
+
+		await expect(
+			execute("blu-editor/transform-block", {
+				clientId: "first",
+				name: "core/heading",
+			})
+		).resolves.toMatchObject({
+			changed: true,
+			clientIds: ["replacement"],
+			count: 1,
+			rootClientId: "",
+			indexes: [1],
+		});
+		expect(dispatch.replaceBlocks).toHaveBeenCalledWith(
+			["first"],
+			[expect.objectContaining({ clientId: "replacement", name: "core/heading" })]
+		);
+	});
+
+	it("rejects a source-locked transform before replacement", async () => {
+		selectors.canRemoveBlocks.mockReturnValue(false);
+
+		await expect(
+			execute("blu-editor/transform-block", {
+				clientId: "first",
+				name: "core/heading",
+			})
+		).rejects.toThrow(/locked|replace|transform/i);
+		expect(dispatch.replaceBlocks).not.toHaveBeenCalled();
 	});
 
 	it("does not expose fallback metadata after a refused dispatch", async () => {

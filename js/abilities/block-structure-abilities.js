@@ -53,24 +53,33 @@ function validateAttributes(name, attributes, path) {
 	}
 }
 
-function assertNesting(parentName, childName, path) {
+function assertNesting(parentName, childName, ancestorNames, path) {
 	const parent = getBlockType(parentName);
 	const child = getBlockType(childName);
 	if (Array.isArray(child.parent) && !child.parent.includes(parentName)) {
 		throw new Error(`${path}: "${childName}" cannot be nested inside "${parentName}".`);
+	}
+	if (
+		Array.isArray(child.ancestor) &&
+		!child.ancestor.some((name) => ancestorNames.includes(name))
+	) {
+		throw new Error(
+			`${path}: "${childName}" requires an ancestor of ${child.ancestor.join(", ")}.`
+		);
 	}
 	if (Array.isArray(parent.allowedBlocks) && !parent.allowedBlocks.includes(childName)) {
 		throw new Error(`${path}: "${parentName}" does not allow "${childName}".`);
 	}
 }
 
-export function buildBlock(spec, path = "block", parentName = null) {
+export function buildBlock(spec, path = "block", ancestorNames = []) {
 	if (!isPlainObject(spec)) {
 		throw new Error(`${path} must be an object with a block name.`);
 	}
 	getBlockType(spec.name);
+	const parentName = ancestorNames[ancestorNames.length - 1];
 	if (parentName) {
-		assertNesting(parentName, spec.name, path);
+		assertNesting(parentName, spec.name, ancestorNames, path);
 	}
 	const attributes = spec.attributes ?? {};
 	validateAttributes(spec.name, attributes, `${path}.attributes`);
@@ -79,7 +88,7 @@ export function buildBlock(spec, path = "block", parentName = null) {
 		throw new Error(`${path}.innerBlocks must be an array.`);
 	}
 	const innerBlocks = children.map((child, index) =>
-		buildBlock(child, `${path}.innerBlocks[${index}]`, spec.name)
+		buildBlock(child, `${path}.innerBlocks[${index}]`, [...ancestorNames, spec.name])
 	);
 	return requireBlocksApi().createBlock(spec.name, attributes, innerBlocks);
 }
@@ -132,6 +141,30 @@ function assertCanInsert(store, name, rootClientId) {
 	if (!store.canInsertBlockType?.(name, rootClientId || undefined)) {
 		throw new Error(`Block type "${name}" cannot be inserted at the requested location.`);
 	}
+}
+
+function getDestinationAncestorNames(store, rootClientId) {
+	if (!rootClientId) {
+		return [];
+	}
+	return [rootClientId, ...(store.getBlockParents?.(rootClientId) || [])]
+		.map((clientId) => store.getBlock(clientId)?.name)
+		.filter(Boolean);
+}
+
+function assertDestinationNesting(store, name, rootClientId) {
+	if (!rootClientId) {
+		const blockType = getBlockType(name);
+		if (Array.isArray(blockType.parent) && blockType.parent.length) {
+			throw new Error(`"${name}" requires a parent of ${blockType.parent.join(", ")}.`);
+		}
+		if (Array.isArray(blockType.ancestor) && blockType.ancestor.length) {
+			throw new Error(`"${name}" requires an ancestor of ${blockType.ancestor.join(", ")}.`);
+		}
+		return;
+	}
+	const ancestors = getDestinationAncestorNames(store, rootClientId);
+	assertNesting(ancestors[0], name, ancestors, "destination");
 }
 
 function resolveRoot(store, name, requestedRoot) {
@@ -191,9 +224,10 @@ async function insertBlock(input = {}) {
 	if (input.rootClientId) {
 		requireBlock(store, input.rootClientId, "rootClientId");
 	}
+	const hasAfterClientId = Object.prototype.hasOwnProperty.call(input, "afterClientId");
 	let rootClientId = input.rootClientId || "";
 	let index = input.index;
-	if (input.afterClientId) {
+	if (hasAfterClientId) {
 		requireBlock(store, input.afterClientId, "afterClientId");
 		const siblingRoot = rootOf(store, input.afterClientId);
 		if (input.rootClientId && input.rootClientId !== siblingRoot) {
@@ -202,11 +236,19 @@ async function insertBlock(input = {}) {
 		rootClientId = siblingRoot;
 		index = indexOf(store, input.afterClientId, siblingRoot) + 1;
 	}
-	rootClientId = resolveRoot(store, input.name, rootClientId);
+	if (hasAfterClientId && !store.canInsertBlockType?.(input.name, rootClientId || undefined)) {
+		throw new Error(
+			`Block type "${input.name}" cannot be inserted after the requested afterClientId.`
+		);
+	}
+	if (!hasAfterClientId) {
+		rootClientId = resolveRoot(store, input.name, rootClientId);
+	}
 	if (rootClientId) {
 		requireBlock(store, rootClientId, "rootClientId");
 		rejectSpecial(store, rootClientId);
 	}
+	assertDestinationNesting(store, input.name, rootClientId);
 	assertCanInsert(store, input.name, rootClientId);
 	const block = buildBlock({
 		name: input.name,
@@ -241,15 +283,18 @@ async function moveBlock(input = {}) {
 	const store = requireEditorStore();
 	const block = requireBlock(store, input.clientId);
 	validateIndex(input.index);
-	if (input.afterClientId && input.beforeClientId) {
+	const hasAfterClientId = Object.prototype.hasOwnProperty.call(input, "afterClientId");
+	const hasBeforeClientId = Object.prototype.hasOwnProperty.call(input, "beforeClientId");
+	if (hasAfterClientId && hasBeforeClientId) {
 		throw new Error("Provide only one of afterClientId or beforeClientId.");
 	}
 	if (input.rootClientId) {
 		requireBlock(store, input.rootClientId, "rootClientId");
 	}
-	const siblingId = input.afterClientId || input.beforeClientId;
-	if (siblingId) {
-		requireBlock(store, siblingId, input.afterClientId ? "afterClientId" : "beforeClientId");
+	const hasSibling = hasAfterClientId || hasBeforeClientId;
+	const siblingId = hasAfterClientId ? input.afterClientId : input.beforeClientId;
+	if (hasSibling) {
+		requireBlock(store, siblingId, hasAfterClientId ? "afterClientId" : "beforeClientId");
 		if (siblingId === input.clientId) {
 			throw new Error("A sibling reference must be a different block.");
 		}
@@ -258,13 +303,13 @@ async function moveBlock(input = {}) {
 	const fromIndex = indexOf(store, input.clientId, fromRoot);
 	let toRoot = input.rootClientId || "";
 	let toIndex;
-	if (siblingId) {
+	if (hasSibling) {
 		toRoot = rootOf(store, siblingId);
 		if (input.rootClientId && input.rootClientId !== toRoot) {
 			throw new Error("Sibling is not a child of the provided rootClientId.");
 		}
 		const siblingIndex = indexOf(store, siblingId, toRoot);
-		toIndex = siblingIndex + (input.afterClientId ? 1 : 0);
+		toIndex = siblingIndex + (hasAfterClientId ? 1 : 0);
 		if (toRoot === fromRoot && siblingIndex > fromIndex) {
 			toIndex -= 1;
 		}
@@ -279,6 +324,7 @@ async function moveBlock(input = {}) {
 	if (toRoot && (store.getBlockParents?.(toRoot) || []).includes(input.clientId)) {
 		throw new Error("A block cannot be moved into one of its own descendants.");
 	}
+	assertDestinationNesting(store, block.name, toRoot);
 	if (toRoot !== fromRoot) {
 		assertCanInsert(store, block.name, toRoot);
 	}
@@ -387,7 +433,16 @@ async function transformBlock(input = {}) {
 	}
 	const rootClientId = rootOf(store, input.clientId);
 	const previousIndex = indexOf(store, input.clientId, rootClientId);
-	transformed.forEach(({ name }) => assertCanInsert(store, name, rootClientId));
+	if (
+		store.canRemoveBlocks?.([input.clientId]) === false ||
+		store.canRemoveBlock?.(input.clientId) === false
+	) {
+		throw new Error(`Block "${block.name}" cannot be transformed. It or its parent may be locked.`);
+	}
+	transformed.forEach(({ name }) => {
+		assertDestinationNesting(store, name, rootClientId);
+		assertCanInsert(store, name, rootClientId);
+	});
 	const actions = requireEditorActions();
 	await actions.replaceBlocks([input.clientId], transformed);
 	const actual = transformed.map(({ clientId }) => store.getBlock(clientId));
