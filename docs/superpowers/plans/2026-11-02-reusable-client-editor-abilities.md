@@ -364,6 +364,7 @@
 ### Task 4: Structural block write abilities
 
 **Files:**
+- Create: `js/abilities/ability-errors.js`
 - Create: `js/abilities/block-structure-abilities.js`
 - Create: `js/abilities/test/block-structure-abilities.test.js`
 - Modify: `js/abilities/editor-store.js`
@@ -374,7 +375,7 @@
 - Produces: `registerBlockStructureAbilities( register ): string[]`.
 - Produces direct abilities `insert-block`, `move-block`, `remove-block`, and
   `transform-block`.
-- Produces typed `EditorAbilityUnsupportedError` carrying optional
+- Produces `EditorAbilityUnsupportedError` from `ability-errors.js`, carrying optional
   `fallbackTool` and `fallbackArguments`, with `mutated === false`.
 
 - [ ] **Step 1: Write failing structural-write tests**
@@ -568,7 +569,7 @@
 
 - [ ] **Step 7: Run all native ability tests**
 
-  Run: `npm run test:unit -- --runTestsByPath js/abilities/test`
+  Run: `npm run test:unit -- js/abilities/test`
 
   Expected: PASS with all 21 abilities registered.
 
@@ -758,12 +759,15 @@
 
   Add a second scenario with
   `nfd_editor_chat_editor_abilities_enabled` disabled and assert the existing
-  MCP/handler path still completes.
+  MCP/handler path still completes. Install a temporary must-use plugin through
+  the existing `wordpress.wpCli()` helper before that scenario, remove it in
+  `afterEach`, and never edit the host brand plugin to apply the filter.
 
 - [ ] **Step 2: Run the E2E scenario and verify it fails**
 
-  Run from the configured brand plugin as documented in
-  `docs/development.md`.
+  Run from the configured brand plugin:
+
+  `npm run test:playwright -- vendor/newfold-labs/wp-module-editor-chat/tests/playwright/specs/editor-chat.spec.js --grep "local editor abilities"`
 
   Expected: FAIL until built assets and test fixtures expose the local layer.
 
