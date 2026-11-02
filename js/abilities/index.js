@@ -1,7 +1,9 @@
 import { registerAbility, registerAbilityCategory } from "@wordpress/abilities";
 
+import { registerBlockCatalogAbilities } from "./block-catalog-abilities";
 import { registerBlockTreeAbilities } from "./block-tree-abilities";
 import { ABILITY_NAMES } from "./constants";
+import { registerPatternReadAbilities } from "./pattern-read-abilities";
 
 export { ABILITY_NAMES, READ_ONLY_ABILITY_NAMES, WRITE_ABILITY_NAMES } from "./constants";
 
@@ -71,6 +73,12 @@ export async function initializeEditorAbilities({
 	);
 
 	registerBlockTreeAbilities((definition) => allowed.has(definition.name) && register(definition));
+	registerBlockCatalogAbilities(
+		(definition) => allowed.has(definition.name) && register(definition)
+	);
+	registerPatternReadAbilities(
+		(definition) => allowed.has(definition.name) && register(definition)
+	);
 
 	return getRegisteredEditorAbilityNames().filter((name) => allowed.has(name));
 }

@@ -27,14 +27,14 @@ describe("editor ability registry", () => {
 		);
 	});
 
-	it("registers exactly the five implemented block-tree abilities once", async () => {
-		const implementedNames = ABILITY_NAMES.slice(0, 5);
+	it("registers exactly the ten implemented read abilities once", async () => {
+		const implementedNames = ABILITY_NAMES.slice(0, 10);
 
 		await expect(initializeEditorAbilities()).resolves.toEqual(implementedNames);
 		await initializeEditorAbilities();
 
 		expect(registerAbilityCategory).toHaveBeenCalledTimes(1);
-		expect(registerAbility).toHaveBeenCalledTimes(5);
+		expect(registerAbility).toHaveBeenCalledTimes(10);
 		expect(registerAbility.mock.calls.map(([definition]) => definition.name)).toEqual(
 			implementedNames
 		);
