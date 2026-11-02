@@ -267,10 +267,10 @@ describe("toolDispatcher local abilities", () => {
 		);
 	});
 
-	test("marks partial-mutation errors changed and never falls back", async () => {
+	test("preserves partial-mutation error details and never executes again", async () => {
 		const localError = {
 			isError: true,
-			text: "Pattern save failed after creating a category.",
+			text: 'Pattern save failed. Cleanup failed: Could not remove category "hero".',
 			structuredContent: { mutated: true },
 		};
 		runLocalTool.mockResolvedValue(localError);
@@ -282,6 +282,7 @@ describe("toolDispatcher local abilities", () => {
 		);
 
 		expect(getLocalToolFallback).toHaveBeenCalledWith(localError);
+		expect(runLocalTool).toHaveBeenCalledTimes(1);
 		expect(handleEditBlock).not.toHaveBeenCalled();
 		expect(ctx.mcpClient.callTool).not.toHaveBeenCalled();
 		expect(results[0]).toEqual(
@@ -289,9 +290,11 @@ describe("toolDispatcher local abilities", () => {
 				isError: true,
 				hasChanges: true,
 				source: "local",
+				content: expect.stringContaining("Pattern save failed."),
 				structuredContent: { mutated: true },
 			})
 		);
+		expect(results[0].content).toContain('Cleanup failed: Could not remove category "hero".');
 	});
 
 	test("never re-executes a successful local write through fallback or MCP", async () => {

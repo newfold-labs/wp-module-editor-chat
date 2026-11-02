@@ -742,10 +742,10 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 						(!localResult.isError &&
 							LOCAL_WRITE_TOOLS.has(rawToolName) &&
 							localResult.structuredContent?.changed !== false);
-					const text =
-						localResult.structuredContent !== undefined
-							? JSON.stringify(localResult.structuredContent)
-							: localResult.text;
+					let text = localResult.text;
+					if (!localResult.isError && localResult.structuredContent !== undefined) {
+						text = JSON.stringify(localResult.structuredContent);
+					}
 					result = {
 						id: toolCall.id,
 						result: [{ type: "text", text }],
