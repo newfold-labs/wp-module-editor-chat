@@ -1,6 +1,7 @@
 import { registerAbility, registerAbilityCategory } from "@wordpress/abilities";
 
 import { registerBlockCatalogAbilities } from "./block-catalog-abilities";
+import { registerBlockContentAbilities } from "./block-content-abilities";
 import { registerBlockStructureAbilities } from "./block-structure-abilities";
 import { registerBlockTreeAbilities } from "./block-tree-abilities";
 import { ABILITY_NAMES } from "./constants";
@@ -80,9 +81,19 @@ export async function initializeEditorAbilities({
 	registerPatternReadAbilities(
 		(definition) => allowed.has(definition.name) && register(definition)
 	);
-	registerBlockStructureAbilities(
-		(definition) => allowed.has(definition.name) && register(definition)
-	);
+	const blockWriteDefinitions = new Map();
+	const collectBlockWrite = (definition) => {
+		blockWriteDefinitions.set(definition.name, definition);
+		return true;
+	};
+	registerBlockStructureAbilities(collectBlockWrite);
+	registerBlockContentAbilities(collectBlockWrite);
+	for (const name of ABILITY_NAMES) {
+		const definition = blockWriteDefinitions.get(name);
+		if (definition && allowed.has(name)) {
+			register(definition);
+		}
+	}
 
 	return getRegisteredEditorAbilityNames().filter((name) => allowed.has(name));
 }
