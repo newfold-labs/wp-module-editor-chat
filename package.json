@@ -67,6 +67,9 @@
 	},
 	"jest": {
 		"testEnvironment": "node",
+		"testPathIgnorePatterns": [
+			"/tests/playwright/"
+		],
 		"moduleNameMapper": {
 			"^@wordpress/abilities$": "<rootDir>/js/abilities/test/wordpress-abilities-mock.cjs"
 		},

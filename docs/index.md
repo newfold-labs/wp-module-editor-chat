@@ -12,6 +12,7 @@ updated: 2026-11-02
 | [overview.md](overview.md) | What the module does and who maintains it. |
 | [getting-started.md](getting-started.md) | Prerequisites, install, and lint. |
 | [integration.md](integration.md) | How the module registers and how hosts use it. |
+| [editor-abilities.md](editor-abilities.md) | Load and consume the 21 reusable client-side Gutenberg abilities. |
 | [development.md](development.md) | Lint, wpunit, and Playwright E2E. |
 | [release.md](release.md) | Release process: use the Newfold Prepare Release workflow. |
 | [changelog.md](changelog.md) | Notable changes by release. |

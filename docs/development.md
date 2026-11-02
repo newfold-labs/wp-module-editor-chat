@@ -2,7 +2,7 @@
 name: wp-module-editor-chat
 title: Development
 description: Lint and test.
-updated: 2026-10-27
+updated: 2026-11-02
 ---
 
 # Development
@@ -16,6 +16,16 @@ When cutting a release, update **docs/changelog.md**.
 
 ## Testing
 
+### JavaScript unit tests
+
+- **Run all:** `npm run test:unit`.
+- **Run focused:** `npm run test:unit -- --runTestsByPath path/to/test.js`.
+- Jest excludes `tests/playwright/`; Playwright specs run only through the configured brand plugin.
+
+### Vendored browser dependency
+
+Run `npm run vendor` after changing the pinned WebMCP polyfill dependency. This refreshes the checked-in script, license, and version under `js/vendor/webmcp-polyfill/`; do not edit those files by hand.
+
 ### Codeception (wpunit)
 
 - **Run:** `composer run test`, `composer run test-coverage` (requires `.env.testing` from `.env.testing.example`).
@@ -24,6 +34,14 @@ When cutting a release, update **docs/changelog.md**.
 ### Playwright (end-to-end)
 
 Specs live in **`tests/playwright/`** but execute from a **brand plugin** (for example **wp-plugin-bluehost**), the same pattern as **wp-module-onboarding**. The module workflow **`brand-plugin-test-playwright.yml`** runs those specs on pull requests to `main`.
+
+The reusable editor-abilities scenarios require WordPress 7.0 or newer because the client-side Abilities API is unavailable on older versions. From the configured brand plugin, run:
+
+```bash
+npm run test:playwright -- vendor/newfold-labs/wp-module-editor-chat/tests/playwright/specs/editor-chat.spec.js --grep "local editor abilities"
+```
+
+The local scenario waits for the public readiness promise, verifies the WebMCP tool, updates a live paragraph, and proves that operation does not call `/blu/mcp`. The disabled-filter scenario installs a temporary must-use plugin through WP-CLI and verifies the existing handler path; cleanup runs after every scenario.
 
 #### What is covered
 
@@ -41,7 +59,7 @@ Suite **`editor-chat.spec.js`** — tag **`@env-local`**, serial execution, Site
 
 | Path | Role |
 |------|------|
-| `tests/playwright/specs/editor-chat.spec.js` | Five scenarios above. |
+| `tests/playwright/specs/editor-chat.spec.js` | Core chat scenarios plus local-ability and disabled-filter compatibility coverage. |
 | `tests/playwright/helpers/editor-chat-flow.js` | Navigation, selectors, WP-CLI page setup, canvas assertions, save helper. |
 | `tests/playwright/helpers/mock-editor-chat-worker.js` | Routes `nfd-editor-chat/v1/config` and a mock CF Worker (`classify-intent`, `chat/completions`). |
 | `tests/playwright/helpers/index.js` | Re-exports Bluehost Playwright helpers (`auth`, `wordpress`, `newfold`, …). |
@@ -57,6 +75,8 @@ Mocks choose **tool vs summarize** responses from the completion request body (n
 
 ```bash
 npm install
+npm run vendor  # refresh only when the pinned polyfill changes
+npm run test:unit
 npm run build   # updates build/<version>/chat-editor.js
 composer run test
 ```

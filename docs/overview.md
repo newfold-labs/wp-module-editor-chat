@@ -2,7 +2,7 @@
 name: wp-module-editor-chat
 title: Overview
 description: What the module does and who maintains it.
-updated: 2025-03-18
+updated: 2026-11-02
 ---
 
 # Overview
@@ -14,6 +14,7 @@ updated: 2025-03-18
 - **Design editing** — Update page sections, styles, layout, and content in the Site Editor via conversational AI.
 - **Content creation (v1)** — Create new pages, posts, and CPTs as drafts from the chat. Pages open in the Site Editor preview; posts open in the block editor (`post.php`) with the chat sidebar available on the left. Block markup in `content` is validated and normalized client-side (same pipeline as `blu-add-section`) before the MCP create/update call.
 - **MCP integration** — Site management actions use wp-module-mcp abilities via the MCP gateway (`blu-list-abilities`, `blu-get-ability-schema`, `blu-call-ability`).
+- **Reusable editor abilities** — WordPress 7.0+ editor screens can load 21 public `blu-editor/*` abilities for direct access to live Gutenberg state and mutations. Native `@wordpress/abilities` consumers do not depend on Editor Chat or WebMCP; see [editor-abilities.md](editor-abilities.md).
 - **Intent classification** — User messages are classified by the CF Worker (`POST /classify-intent`) before each turn to route between page editing, content creation, and site management — multilingual and synonym-safe. Navigation menu add/remove requests are detected in the same call (`menu_edit`) so completion guards work in any language.
 
 See [changelog.md](changelog.md) for release notes.

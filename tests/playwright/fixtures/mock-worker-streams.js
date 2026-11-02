@@ -13,16 +13,22 @@ export function buildChatCompletionSse( chunks ) {
 }
 
 /**
- * Stream that applies a block attribute patch via blu-update-block-attrs, then a closing reply.
+ * Stream that applies a block attribute patch, then a closing reply.
  *
- * @param {{ clientId: string, newContent: string }} params
+ * @param {{ clientId: string, newContent: string, toolName?: string }} params
  * @return {string} SSE body for the tool-call pass
  */
-export function buildUpdateHeadingAttrsPass( { clientId, newContent } ) {
-	const toolArgs = JSON.stringify( {
-		client_id: clientId,
-		attributes: { content: newContent },
-	} );
+export function buildUpdateHeadingAttrsPass( {
+	clientId,
+	newContent,
+	toolName = 'blu-update-block-attrs',
+} ) {
+	const isLocalAbility = toolName === 'blu-editor_update-block';
+	const toolArgs = JSON.stringify(
+		isLocalAbility
+			? { clientId, attributes: { content: newContent } }
+			: { client_id: clientId, attributes: { content: newContent } }
+	);
 	return buildChatCompletionSse( [
 		{
 			id: 'chatcmpl-mock-plan',
@@ -48,7 +54,7 @@ export function buildUpdateHeadingAttrsPass( { clientId, newContent } ) {
 								id: 'call_mock_update_attrs',
 								type: 'function',
 								function: {
-									name: 'blu-update-block-attrs',
+									name: toolName,
 									arguments: '',
 								},
 							},
