@@ -27,14 +27,23 @@ describe("editor ability registry", () => {
 		);
 	});
 
-	it("registers exactly the ten implemented read abilities once", async () => {
-		const implementedNames = ABILITY_NAMES.slice(0, 10);
+	it("registers exactly the implemented read and structural abilities once", async () => {
+		const implementedNames = ABILITY_NAMES.filter(
+			(name) =>
+				READ_ONLY_ABILITY_NAMES.slice(0, 10).includes(name) ||
+				[
+					"blu-editor/insert-block",
+					"blu-editor/move-block",
+					"blu-editor/remove-block",
+					"blu-editor/transform-block",
+				].includes(name)
+		);
 
 		await expect(initializeEditorAbilities()).resolves.toEqual(implementedNames);
 		await initializeEditorAbilities();
 
 		expect(registerAbilityCategory).toHaveBeenCalledTimes(1);
-		expect(registerAbility).toHaveBeenCalledTimes(10);
+		expect(registerAbility).toHaveBeenCalledTimes(14);
 		expect(registerAbility.mock.calls.map(([definition]) => definition.name)).toEqual(
 			implementedNames
 		);

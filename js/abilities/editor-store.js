@@ -23,6 +23,27 @@ export function requireEditorStore() {
 }
 
 /**
+ * Return the live block-editor actions without touching wp.data at import time.
+ *
+ * @return {Object} Block-editor actions.
+ */
+export function requireEditorActions() {
+	const dispatch = window.wp?.data?.dispatch;
+	if (typeof dispatch !== "function") {
+		throw new Error(
+			"WordPress data store is not available. Open this ability in the block editor."
+		);
+	}
+	const actions = dispatch(BLOCK_EDITOR_STORE);
+	if (!actions) {
+		throw new Error(
+			"Block editor actions are not available. These abilities only work in the block editor."
+		);
+	}
+	return actions;
+}
+
+/**
  * Resolve a client ID before passing it to selectors that interpret an empty
  * value as the document root.
  *
