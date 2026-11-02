@@ -42,9 +42,16 @@ const DISABLE_ABILITIES_MU_PLUGIN = 'nfd-editor-chat-disable-editor-abilities.ph
 
 async function removeDisabledAbilitiesPlugin() {
 	await wordpress.wpCli(
-		`eval 'if ( file_exists( WPMU_PLUGIN_DIR . "/${ DISABLE_ABILITIES_MU_PLUGIN }" ) ) { unlink( WPMU_PLUGIN_DIR . "/${ DISABLE_ABILITIES_MU_PLUGIN }" ); }'`,
-		{ failOnNonZeroExit: false }
+		`eval '$path = WPMU_PLUGIN_DIR . "/${ DISABLE_ABILITIES_MU_PLUGIN }"; if ( file_exists( $path ) && ! unlink( $path ) ) { WP_CLI::error( "Could not remove editor abilities test plugin." ); }'`,
+		{ failOnNonZeroExit: true }
 	);
+	const verification = await wordpress.wpCli(
+		`eval '$path = WPMU_PLUGIN_DIR . "/${ DISABLE_ABILITIES_MU_PLUGIN }"; if ( file_exists( $path ) ) { WP_CLI::error( "Editor abilities test plugin is still installed." ); } echo "absent";'`,
+		{ failOnNonZeroExit: true }
+	);
+	if ( String( verification ).trim() !== 'absent' ) {
+		throw new Error( 'Could not verify editor abilities test plugin cleanup.' );
+	}
 }
 
 async function installDisabledAbilitiesPlugin() {
@@ -191,6 +198,11 @@ test.describe( 'Editor chat (Site Editor)', { tag: '@env-local' }, () => {
 		expect( registeredNames ).toContain( 'blu-editor/get-editor-tree' );
 
 		const webMcpToolNames = await page.evaluate( async () => {
+			const bridgeReady = window.nfdEditorAbilities?.webmcp;
+			if ( ! bridgeReady ) {
+				throw new Error( 'Editor abilities WebMCP bridge did not initialize.' );
+			}
+			await bridgeReady;
 			const tools = await document.modelContext?.getTools?.();
 			return Array.isArray( tools ) ? tools.map( ( tool ) => tool.name ) : [];
 		} );
