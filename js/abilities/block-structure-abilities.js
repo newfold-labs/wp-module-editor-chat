@@ -137,6 +137,10 @@ function rejectSpecial(store, clientId, fallback = null) {
 	}
 }
 
+export function assertSafeBlockMutationTarget(store, clientId) {
+	rejectSpecial(store, clientId);
+}
+
 function assertCanInsert(store, name, rootClientId) {
 	if (!store.canInsertBlockType?.(name, rootClientId || undefined)) {
 		throw new Error(`Block type "${name}" cannot be inserted at the requested location.`);
@@ -167,6 +171,14 @@ function assertDestinationNesting(store, name, rootClientId) {
 	assertNesting(ancestors[0], name, ancestors, "destination");
 }
 
+export function assertBlockCanInsertAtDestination(store, name, rootClientId = "") {
+	if (rootClientId) {
+		rejectSpecial(store, rootClientId);
+	}
+	assertDestinationNesting(store, name, rootClientId);
+	assertCanInsert(store, name, rootClientId);
+}
+
 function resolveRoot(store, name, requestedRoot) {
 	if (requestedRoot || store.canInsertBlockType?.(name, undefined)) {
 		return requestedRoot || "";
@@ -182,6 +194,10 @@ function resolveRoot(store, name, requestedRoot) {
 			return block && store.canInsertBlockType?.(name, id);
 		}) || ""
 	);
+}
+
+export function resolveBlockInsertRoot(store, name, requestedRoot = "") {
+	return resolveRoot(store, name, requestedRoot);
 }
 
 function moveFallback(store, input) {

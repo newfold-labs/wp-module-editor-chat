@@ -27,40 +27,42 @@ describe("editor ability registry", () => {
 		);
 	});
 
-	it("registers exactly the implemented read and block-write abilities once", async () => {
-		const implementedNames = ABILITY_NAMES.filter(
-			(name) =>
-				READ_ONLY_ABILITY_NAMES.slice(0, 10).includes(name) ||
-				[
-					"blu-editor/edit-block",
-					"blu-editor/insert-block",
-					"blu-editor/move-block",
-					"blu-editor/remove-block",
-					"blu-editor/update-block",
-					"blu-editor/transform-block",
-				].includes(name)
-		);
-
-		await expect(initializeEditorAbilities()).resolves.toEqual(implementedNames);
+	it("registers the complete public surface once in contract order", async () => {
+		await expect(initializeEditorAbilities()).resolves.toEqual(ABILITY_NAMES);
 		await initializeEditorAbilities();
 
 		expect(registerAbilityCategory).toHaveBeenCalledTimes(1);
-		expect(registerAbility).toHaveBeenCalledTimes(16);
+		expect(registerAbility).toHaveBeenCalledTimes(21);
 		expect(registerAbility.mock.calls.map(([definition]) => definition.name)).toEqual(
-			implementedNames
+			ABILITY_NAMES
 		);
-		expect(
-			registerAbility.mock.calls.every(([definition]) => typeof definition.callback === "function")
-		).toBe(true);
-		expect(getRegisteredEditorAbilityNames()).toEqual(implementedNames);
-		await expect(ready).resolves.toEqual(implementedNames);
+		for (const [definition] of registerAbility.mock.calls) {
+			expect(definition).toEqual(
+				expect.objectContaining({
+					label: expect.any(String),
+					description: expect.any(String),
+					category: "blu-editor",
+					input_schema: expect.any(Object),
+					output_schema: expect.any(Object),
+					callback: expect.any(Function),
+				})
+			);
+			expect(definition.meta?.annotations).toEqual({
+				readonly: READ_ONLY_ABILITY_NAMES.includes(definition.name),
+				destructive: expect.any(Boolean),
+				idempotent: expect.any(Boolean),
+			});
+		}
+		expect(getRegisteredEditorAbilityNames()).toEqual(ABILITY_NAMES);
+		expect(getRegisteredEditorAbilityNames()).toHaveLength(21);
+		await expect(ready).resolves.toEqual(ABILITY_NAMES);
 	});
 
-	it("ignores unknown and not-yet-implemented requested names", async () => {
+	it("ignores unknown requested names", async () => {
 		await expect(
 			initializeEditorAbilities({
 				abilityNames: ["blu-editor/get-editor-tree", "blu-editor/undo", "other/unknown"],
 			})
-		).resolves.toEqual(["blu-editor/get-editor-tree"]);
+		).resolves.toEqual(["blu-editor/get-editor-tree", "blu-editor/undo"]);
 	});
 });

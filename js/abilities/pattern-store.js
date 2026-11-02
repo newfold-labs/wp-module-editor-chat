@@ -1,7 +1,7 @@
-const CORE_STORE = "core";
-const PATTERN_POST_TYPE = "wp_block";
-const PATTERN_TAXONOMY = "wp_pattern_category";
-const USER_PATTERN_PREFIX = "core/block/";
+export const CORE_STORE = "core";
+export const PATTERN_POST_TYPE = "wp_block";
+export const PATTERN_TAXONOMY = "wp_pattern_category";
+export const USER_PATTERN_PREFIX = "core/block/";
 
 function requireCoreStore() {
 	const data = window.wp?.data;
@@ -14,6 +14,18 @@ function requireCoreStore() {
 		return select(CORE_STORE);
 	}
 	throw new Error("WordPress data store is not available.");
+}
+
+export function requireCoreActions() {
+	const dispatch = window.wp?.data?.dispatch;
+	if (typeof dispatch !== "function") {
+		throw new Error("WordPress data store is not available.");
+	}
+	const actions = dispatch(CORE_STORE);
+	if (!actions) {
+		throw new Error("WordPress core data actions are not available.");
+	}
+	return actions;
 }
 
 export async function loadRegisteredPatterns() {
@@ -207,4 +219,69 @@ export async function listPatternCategories() {
 		});
 	}
 	return [...bySlug.values()].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export async function assertCanCreatePatterns() {
+	const core = requireCoreStore();
+	if (typeof core?.canUser !== "function") {
+		return;
+	}
+	let allowed;
+	try {
+		allowed = await core.canUser("create", {
+			kind: "postType",
+			name: PATTERN_POST_TYPE,
+		});
+	} catch {
+		return;
+	}
+	if (allowed === false) {
+		throw new Error("This account is not allowed to create patterns on this site.");
+	}
+}
+
+export async function resolvePatternCategoryIds(names = []) {
+	if (!Array.isArray(names)) {
+		throw new Error("categories must be a list of pattern category names.");
+	}
+	for (const name of names) {
+		if (typeof name !== "string" || !name.trim()) {
+			throw new Error("categories must be a list of pattern category names.");
+		}
+	}
+	if (!names.length) {
+		return { ids: [], slugs: [], created: [] };
+	}
+
+	const categories = await listPatternCategories();
+	const actions = requireCoreActions();
+	const ids = [];
+	const slugs = [];
+	const created = [];
+	for (const requested of names) {
+		const needle = requested.toLowerCase();
+		const match = categories.find(
+			(category) =>
+				category.name.toLowerCase() === needle || category.label.toLowerCase() === needle
+		);
+		if (match?.id) {
+			ids.push(match.id);
+			slugs.push(match.name);
+			continue;
+		}
+		const slug = match?.name ?? requested;
+		const term = await actions.saveEntityRecord(
+			"taxonomy",
+			PATTERN_TAXONOMY,
+			{ name: match?.label ?? requested, slug },
+			{ throwOnError: true }
+		);
+		if (!term?.id) {
+			throw new Error(`Could not create the pattern category "${requested}".`);
+		}
+		ids.push(term.id);
+		slugs.push(term.slug ?? slug);
+		created.push(term.slug ?? slug);
+	}
+	return { ids, slugs, created };
 }

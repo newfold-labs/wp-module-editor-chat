@@ -5,7 +5,9 @@ import { registerBlockContentAbilities } from "./block-content-abilities";
 import { registerBlockStructureAbilities } from "./block-structure-abilities";
 import { registerBlockTreeAbilities } from "./block-tree-abilities";
 import { ABILITY_NAMES } from "./constants";
+import { registerEditorUiAbilities } from "./editor-ui-abilities";
 import { registerPatternReadAbilities } from "./pattern-read-abilities";
+import { registerPatternWriteAbilities } from "./pattern-write-abilities";
 
 export { ABILITY_NAMES, READ_ONLY_ABILITY_NAMES, WRITE_ABILITY_NAMES } from "./constants";
 
@@ -74,22 +76,20 @@ export async function initializeEditorAbilities({
 			: ABILITY_NAMES
 	);
 
-	registerBlockTreeAbilities((definition) => allowed.has(definition.name) && register(definition));
-	registerBlockCatalogAbilities(
-		(definition) => allowed.has(definition.name) && register(definition)
-	);
-	registerPatternReadAbilities(
-		(definition) => allowed.has(definition.name) && register(definition)
-	);
-	const blockWriteDefinitions = new Map();
-	const collectBlockWrite = (definition) => {
-		blockWriteDefinitions.set(definition.name, definition);
+	const definitions = new Map();
+	const collect = (definition) => {
+		definitions.set(definition.name, definition);
 		return true;
 	};
-	registerBlockStructureAbilities(collectBlockWrite);
-	registerBlockContentAbilities(collectBlockWrite);
+	registerBlockTreeAbilities(collect);
+	registerBlockCatalogAbilities(collect);
+	registerPatternReadAbilities(collect);
+	registerBlockStructureAbilities(collect);
+	registerBlockContentAbilities(collect);
+	registerPatternWriteAbilities(collect);
+	registerEditorUiAbilities(collect);
 	for (const name of ABILITY_NAMES) {
-		const definition = blockWriteDefinitions.get(name);
+		const definition = definitions.get(name);
 		if (definition && allowed.has(name)) {
 			register(definition);
 		}
