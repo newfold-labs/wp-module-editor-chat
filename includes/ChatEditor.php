@@ -187,12 +187,14 @@ final class ChatEditor {
 		global $pagenow;
 
 		if ( self::is_site_editor_chat_screen( $pagenow ) ) {
+			EditorAbilities::enqueue( true );
 			self::register_assets( 'site' );
 			\add_filter( 'admin_body_class', array( __CLASS__, 'add_admin_body_class' ) );
 			return;
 		}
 
 		if ( self::is_post_editor_chat_screen( $pagenow ) ) {
+			EditorAbilities::enqueue( true );
 			self::register_assets( 'post' );
 			\add_filter( 'admin_body_class', array( __CLASS__, 'add_admin_body_class' ) );
 		}
