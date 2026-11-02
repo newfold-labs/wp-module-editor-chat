@@ -357,6 +357,23 @@ describe("pattern write abilities", () => {
 		expect(coreDispatch.saveEntityRecord).not.toHaveBeenCalled();
 	});
 
+	it("rejects an editor dispatcher object without replaceBlocks before core-data writes", async () => {
+		window.wp.data.dispatch.mockImplementation((store) =>
+			store === "core/block-editor" ? { insertBlocks: jest.fn() } : coreDispatch
+		);
+
+		await expect(
+			execute("blu-editor/create-pattern", {
+				title: "Missing replaceBlocks",
+				clientIds: ["first", "second"],
+				categories: ["new-category"],
+				replaceSource: true,
+				syncStatus: "synced",
+			})
+		).rejects.toThrow(/replacement actions|replaceBlocks/i);
+		expect(coreDispatch.saveEntityRecord).not.toHaveBeenCalled();
+	});
+
 	it("checks every replacement source when plural removal validation is unavailable", async () => {
 		delete editor.canRemoveBlocks;
 		editor.canRemoveBlock = jest.fn((clientId) => clientId !== "second");
