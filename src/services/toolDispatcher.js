@@ -585,17 +585,26 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 		return toolResults;
 	}
 
-	// Capture block snapshot before any tool execution for atomic undo
+	await ctx.wait(300);
+	if (ctx.abortSignal?.aborted) {
+		logger.log(
+			`[ToolExecutor:REST] Stopped — cancelling ${browserToolCalls.length} pending tool(s)`
+		);
+		toolResults.push(...browserToolCalls.map(cancelledResult));
+		return toolResults;
+	}
+
+	// Capture the atomic undo snapshot after the cancellable preparation delay,
+	// but before the first browser-side mutation can execute.
 	const hasBlockTools =
 		localToolCalls.some((tc) => LOCAL_WRITE_TOOLS.has(tc.name || "")) ||
 		clientToolCalls.some((tc) => toolCallUsesBlockMutation(tc));
-	if (hasBlockTools && !ctx.abortSignal?.aborted && !ctx.blockSnapshotRef.current) {
+	if (hasBlockTools && !ctx.blockSnapshotRef.current) {
 		const { select: wpSelect } = wp.data;
 		const allBlocks = wpSelect("core/block-editor").getBlocks();
 		ctx.blockSnapshotRef.current = snapshotBlocks(allBlocks);
 	}
 
-	await ctx.wait(300);
 	ctx.setStatus(CHAT_STATUS.TOOL_CALL);
 	ctx.setActiveToolCall({
 		id: "preparing",

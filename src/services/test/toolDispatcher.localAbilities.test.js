@@ -168,6 +168,23 @@ describe("toolDispatcher local abilities", () => {
 		expect(results[0]).toEqual(expect.objectContaining({ isError: true }));
 	});
 
+	test("an abort during the preparation wait neither snapshots nor executes", async () => {
+		const controller = new AbortController();
+		const ctx = createContext({
+			abortSignal: controller.signal,
+			wait: jest.fn().mockImplementation(async () => controller.abort()),
+		});
+
+		const results = await executeToolCallsForREST(
+			[toolCall("blu-editor_update-block", { clientId: "paragraph-1" })],
+			ctx
+		);
+
+		expect(runLocalTool).not.toHaveBeenCalled();
+		expect(snapshotBlocks).not.toHaveBeenCalled();
+		expect(results[0]).toEqual(expect.objectContaining({ isError: true }));
+	});
+
 	test("rechecks abort immediately before invoking a local tool", async () => {
 		const controller = new AbortController();
 		global.requestAnimationFrame = (callback) => {
