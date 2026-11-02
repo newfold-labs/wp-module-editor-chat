@@ -15,6 +15,7 @@
 import { CHAT_STATUS } from "@newfold/wp-module-ai-chat";
 import { __ } from "@wordpress/i18n";
 
+import { LOCAL_WRITE_TOOLS } from "../hooks/chat/constants";
 import {
 	validateEntityContentArgs,
 	abilityUsesBlockContent,
@@ -52,6 +53,7 @@ import {
 	parseImageAbilityUrl,
 } from "./imageAbility";
 import { IMAGE_BLOCKS } from "./blockToolbar/blockAI";
+import { getLocalToolFallback, isLocalToolName, runLocalTool } from "./localToolRegistry";
 import logger from "../utils/logger";
 
 // Re-export so external callers (e.g. useEditorChatREST) keep working.
@@ -414,6 +416,33 @@ async function executeClientActionFromStub(stub, args, toolCall, ctx) {
 	return null;
 }
 
+/**
+ * Execute one allow-listed local fallback through its existing focused handler.
+ *
+ * @param {{name: string, arguments: Object}} fallback         Approved fallback descriptor.
+ * @param {Object}                            originalToolCall Original local tool call.
+ * @param {Object}                            ctx              Shared dispatcher context.
+ * @return {Promise<Object|null>} Focused-handler result, or null when unmatched.
+ */
+async function executeLocalFallback(fallback, originalToolCall, ctx) {
+	const args = fallback.arguments;
+	const toolCall = { ...originalToolCall, name: fallback.name, arguments: args };
+
+	if (fallback.name === "blu-edit-block") {
+		return handleEditBlock(toolCall, args, ctx);
+	}
+	if (fallback.name === "blu-move-block") {
+		return handleMoveBlock(toolCall, args, ctx);
+	}
+	if (fallback.name === "blu-delete-block") {
+		return handleDeleteBlock(toolCall, args, ctx);
+	}
+	if (fallback.name === "blu-update-block-attrs") {
+		return handleUpdateBlockAttrs(toolCall, args, ctx);
+	}
+	return null;
+}
+
 // ─────────────────────────────────────────────────────────────
 // Tool execution (for CF AI Gateway / OpenAI function calling)
 // ─────────────────────────────────────────────────────────────
@@ -502,13 +531,19 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 	let globalStylesUndoData = null;
 	let hasBlockEdits = false;
 
-	// Separate client-side (blu-*) and server-side tools
+	// Partition local WebMCP, existing focused/client, and other MCP tools.
+	const localToolCalls = [];
 	const clientToolCalls = [];
+	const browserToolCalls = [];
 	const serverToolCalls = [];
 	for (const tc of toolCalls) {
 		const name = tc.name || "";
-		if (name.startsWith("blu-")) {
+		if (isLocalToolName(name)) {
+			localToolCalls.push(tc);
+			browserToolCalls.push(tc);
+		} else if (name.startsWith("blu-")) {
 			clientToolCalls.push(tc);
+			browserToolCalls.push(tc);
 		} else {
 			serverToolCalls.push(tc);
 		}
@@ -546,13 +581,15 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 		}
 	}
 
-	if (clientToolCalls.length === 0) {
+	if (browserToolCalls.length === 0) {
 		return toolResults;
 	}
 
 	// Capture block snapshot before any tool execution for atomic undo
-	const hasBlockTools = clientToolCalls.some((tc) => toolCallUsesBlockMutation(tc));
-	if (hasBlockTools && !ctx.blockSnapshotRef.current) {
+	const hasBlockTools =
+		localToolCalls.some((tc) => LOCAL_WRITE_TOOLS.has(tc.name || "")) ||
+		clientToolCalls.some((tc) => toolCallUsesBlockMutation(tc));
+	if (hasBlockTools && !ctx.abortSignal?.aborted && !ctx.blockSnapshotRef.current) {
 		const { select: wpSelect } = wp.data;
 		const allBlocks = wpSelect("core/block-editor").getBlocks();
 		ctx.blockSnapshotRef.current = snapshotBlocks(allBlocks);
@@ -564,13 +601,13 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 		id: "preparing",
 		name: "preparing",
 		index: 0,
-		total: clientToolCalls.length,
+		total: browserToolCalls.length,
 	});
 	// Unwrap the gateway envelope BEFORE anything reads the name. Nearly every
 	// ability arrives as blu-call-ability, so the raw name would label the whole
 	// actions list "Blu Call Ability" and hide discovery calls from the
 	// internal-tool filter, which matches on ability names.
-	const resolvedCalls = clientToolCalls.map((tc) =>
+	const resolvedCalls = browserToolCalls.map((tc) =>
 		resolveClientToolCall(
 			tc.name || "",
 			typeof tc.arguments === "string" ? safeParseJSON(tc.arguments).value : tc.arguments || {}
@@ -578,7 +615,7 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 	);
 
 	ctx.setPendingTools(
-		clientToolCalls.map((tc, idx) => ({
+		browserToolCalls.map((tc, idx) => ({
 			...tc,
 			id: tc.id || `tool-${idx}`,
 			name: resolvedCalls[idx].toolName,
@@ -586,20 +623,21 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 	);
 
 	// Execute client-side tools sequentially
-	for (let i = 0; i < clientToolCalls.length; i++) {
+	for (let i = 0; i < browserToolCalls.length; i++) {
 		if (ctx.abortSignal?.aborted) {
-			const remaining = clientToolCalls.slice(i);
+			const remaining = browserToolCalls.slice(i);
 			logger.log(`[ToolExecutor:REST] Stopped — cancelling ${remaining.length} pending tool(s)`);
 			toolResults.push(...remaining.map(cancelledResult));
 			break;
 		}
 
 		const toolIndex = i + 1;
-		const totalTools = clientToolCalls.length;
+		const totalTools = browserToolCalls.length;
 
 		let { toolName, args } = resolvedCalls[i];
-		const rawToolName = clientToolCalls[i].name;
-		const toolCall = { ...clientToolCalls[i], name: toolName };
+		const rawToolName = browserToolCalls[i].name;
+		const toolCall = { ...browserToolCalls[i], name: toolName };
+		const isLocalCall = isLocalToolName(rawToolName);
 
 		ctx.setPendingTools((prev) => prev.filter((_, idx) => idx !== 0));
 		ctx.setActiveToolCall({
@@ -611,6 +649,12 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 		});
 
 		await new Promise((r) => requestAnimationFrame(r));
+		if (ctx.abortSignal?.aborted) {
+			const remaining = browserToolCalls.slice(i);
+			logger.log(`[ToolExecutor:REST] Stopped — cancelling ${remaining.length} pending tool(s)`);
+			toolResults.push(...remaining.map(cancelledResult));
+			break;
+		}
 
 		try {
 			logger.log(
@@ -622,7 +666,7 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 			}
 
 			// Normalize alt param names
-			if (!args.client_id && args.clientId) {
+			if (!isLocalCall && !args.client_id && args.clientId) {
 				args.client_id = args.clientId;
 			}
 			if (toolName === "blu-delete-block") {
@@ -640,7 +684,7 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 			}
 			// The model commonly sends `instruction` (singular) even though the
 			// ability schema is `instructions` — accept both.
-			if (!args.instructions && args.instruction) {
+			if (!isLocalCall && !args.instructions && args.instruction) {
 				args.instructions = args.instruction;
 			}
 			if (
@@ -665,9 +709,45 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 			}
 
 			let result;
+			let resultSource = null;
+			let localStructuredContent;
 
 			// Dispatch to tool handlers
-			if (
+			if (isLocalCall) {
+				const localResult = await runLocalTool(rawToolName, args);
+				const fallback = localResult.isError ? getLocalToolFallback(localResult) : null;
+				localStructuredContent = localResult.structuredContent;
+				resultSource = "local";
+
+				if (fallback) {
+					const fallbackResult = await executeLocalFallback(fallback, toolCall, ctx);
+					if (fallbackResult) {
+						result = fallbackResult;
+						resultSource = "local-fallback";
+					}
+				}
+
+				if (!result) {
+					const hasChanges =
+						!localResult.isError &&
+						LOCAL_WRITE_TOOLS.has(rawToolName) &&
+						localResult.structuredContent?.changed !== false;
+					const text =
+						localResult.structuredContent !== undefined
+							? JSON.stringify(localResult.structuredContent)
+							: localResult.text;
+					result = {
+						id: toolCall.id,
+						result: [{ type: "text", text }],
+						isError: localResult.isError,
+						hasChanges,
+					};
+				}
+
+				if (!result.isError && result.hasChanges) {
+					hasBlockEdits = true;
+				}
+			} else if (
 				toolName === "blu-update-global-styles" &&
 				(args.settings || args.palette || args.styles)
 			) {
@@ -975,6 +1055,8 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 			if (isError) {
 				content =
 					result.error || result.result?.[0]?.text || __("Tool failed", "wp-module-editor-chat");
+			} else if (resultSource === "local" && localStructuredContent !== undefined) {
+				content = JSON.stringify(localStructuredContent);
 			} else if (READ_TOOLS.has(toolName) && result?.result?.[0]?.text) {
 				content = result.result[0].text;
 			} else if (CREATE_ABILITIES.has(toolName) && result?.result?.[0]?.text) {
@@ -1024,9 +1106,18 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 				hasChanges: result?.hasChanges || false,
 				isContentCreation: !!creationMeta,
 				creationMeta,
+				...(resultSource ? { source: resultSource } : {}),
+				...(localStructuredContent !== undefined
+					? { structuredContent: localStructuredContent }
+					: {}),
 			});
-			completedToolsList.push({ ...toolCall, isError });
-			ctx.setExecutedTools((prev) => [...prev, { ...toolCall, isError }]);
+			const completedTool = {
+				...toolCall,
+				isError,
+				...(resultSource ? { source: resultSource } : {}),
+			};
+			completedToolsList.push(completedTool);
+			ctx.setExecutedTools((prev) => [...prev, completedTool]);
 		} catch (err) {
 			console.error(`[ToolExecutor:REST] Error executing ${toolCall.name}:`, err);
 			await ctx.updateProgress(

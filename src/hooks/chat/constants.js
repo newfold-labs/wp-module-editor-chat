@@ -39,6 +39,27 @@ export const CHAT_STATUS = {
  * are only sent to the model when its reasoning plan indicates they're needed.
  */
 export const EDITOR_TOOLS = new Set([
+	"blu-editor_get-editor-tree",
+	"blu-editor_find-editor-blocks",
+	"blu-editor_get-block-location",
+	"blu-editor_get-editor-selection",
+	"blu-editor_can-insert-block",
+	"blu-editor_get-block-types",
+	"blu-editor_get-block-type",
+	"blu-editor_get-patterns",
+	"blu-editor_get-pattern",
+	"blu-editor_get-pattern-categories",
+	"blu-editor_select-block",
+	"blu-editor_edit-block",
+	"blu-editor_insert-block",
+	"blu-editor_move-block",
+	"blu-editor_remove-block",
+	"blu-editor_update-block",
+	"blu-editor_transform-block",
+	"blu-editor_insert-pattern",
+	"blu-editor_create-pattern",
+	"blu-editor_undo",
+	"blu-editor_redo",
 	"blu-edit-block",
 	"blu-add-section",
 	"blu-delete-block",
@@ -64,6 +85,18 @@ export const EDITOR_TOOLS = new Set([
  * trip on legitimate exploration and poison the rest of the conversation.
  */
 export const READ_ONLY_TOOLS = new Set([
+	// Local editor reads and non-document-mutating selection
+	"blu-editor_get-editor-tree",
+	"blu-editor_find-editor-blocks",
+	"blu-editor_get-block-location",
+	"blu-editor_get-editor-selection",
+	"blu-editor_can-insert-block",
+	"blu-editor_get-block-types",
+	"blu-editor_get-block-type",
+	"blu-editor_get-patterns",
+	"blu-editor_get-pattern",
+	"blu-editor_get-pattern-categories",
+	"blu-editor_select-block",
 	// Block / page reads
 	"blu-get-block-markup",
 	"blu-get-global-styles",
@@ -87,4 +120,23 @@ export const READ_ONLY_TOOLS = new Set([
 	"blu-get-site-info",
 	"blu-get-general-settings",
 	"blu-get-current-user",
+]);
+
+/**
+ * Known local abilities that mutate the document.
+ *
+ * Keep this explicit: an unknown name in the local namespace must not gain
+ * write behavior, snapshots, or mutation retries implicitly.
+ */
+export const LOCAL_WRITE_TOOLS = new Set([
+	"blu-editor_edit-block",
+	"blu-editor_insert-block",
+	"blu-editor_move-block",
+	"blu-editor_remove-block",
+	"blu-editor_update-block",
+	"blu-editor_transform-block",
+	"blu-editor_insert-pattern",
+	"blu-editor_create-pattern",
+	"blu-editor_undo",
+	"blu-editor_redo",
 ]);
