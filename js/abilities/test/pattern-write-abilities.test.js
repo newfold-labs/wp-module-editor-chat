@@ -323,4 +323,55 @@ describe("pattern write abilities", () => {
 		).rejects.toThrow(/permission|allowed/i);
 		expect(coreDispatch.saveEntityRecord).not.toHaveBeenCalled();
 	});
+
+	it.each([
+		["is unavailable", () => delete core.canUser],
+		["throws", () => core.canUser.mockRejectedValue(new Error("Permission lookup failed"))],
+	])("fails closed when pattern creation permission %s", async (_label, configure) => {
+		configure();
+
+		await expect(
+			execute("blu-editor/create-pattern", {
+				title: "Permission unknown",
+				clientIds: ["first"],
+				categories: ["new-category"],
+			})
+		).rejects.toThrow(/permission|confirm|allowed/i);
+		expect(coreDispatch.saveEntityRecord).not.toHaveBeenCalled();
+	});
+
+	it("preflights replacement actions before category or pattern writes", async () => {
+		window.wp.data.dispatch.mockImplementation((store) =>
+			store === "core/block-editor" ? null : coreDispatch
+		);
+
+		await expect(
+			execute("blu-editor/create-pattern", {
+				title: "Missing replacement actions",
+				clientIds: ["first", "second"],
+				categories: ["new-category"],
+				replaceSource: true,
+				syncStatus: "synced",
+			})
+		).rejects.toThrow(/actions|replace/i);
+		expect(coreDispatch.saveEntityRecord).not.toHaveBeenCalled();
+	});
+
+	it("checks every replacement source when plural removal validation is unavailable", async () => {
+		delete editor.canRemoveBlocks;
+		editor.canRemoveBlock = jest.fn((clientId) => clientId !== "second");
+
+		await expect(
+			execute("blu-editor/create-pattern", {
+				title: "Denied second source",
+				clientIds: ["first", "second"],
+				categories: ["new-category"],
+				replaceSource: true,
+				syncStatus: "synced",
+			})
+		).rejects.toThrow(/locked|replace|remove/i);
+		expect(editor.canRemoveBlock).toHaveBeenCalledWith("first");
+		expect(editor.canRemoveBlock).toHaveBeenCalledWith("second");
+		expect(coreDispatch.saveEntityRecord).not.toHaveBeenCalled();
+	});
 });

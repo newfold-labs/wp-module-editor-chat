@@ -224,7 +224,7 @@ export async function listPatternCategories() {
 export async function assertCanCreatePatterns() {
 	const core = requireCoreStore();
 	if (typeof core?.canUser !== "function") {
-		return;
+		throw new Error("Pattern creation permission could not be confirmed on this screen.");
 	}
 	let allowed;
 	try {
@@ -233,9 +233,9 @@ export async function assertCanCreatePatterns() {
 			name: PATTERN_POST_TYPE,
 		});
 	} catch {
-		return;
+		throw new Error("Pattern creation permission could not be confirmed on this screen.");
 	}
-	if (allowed === false) {
+	if (allowed !== true) {
 		throw new Error("This account is not allowed to create patterns on this site.");
 	}
 }

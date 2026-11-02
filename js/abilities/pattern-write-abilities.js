@@ -151,15 +151,25 @@ async function createPattern(input = {}) {
 	const store = requireEditorStore();
 	let sourceBlocks;
 	let siblingRange = null;
+	let replacementActions = null;
 	if (hasClientIds) {
 		sourceBlocks = input.clientIds.map((clientId) => requireBlock(store, clientId, "clientId"));
 		if (input.replaceSource) {
 			input.clientIds.forEach((clientId) => assertSafeBlockMutationTarget(store, clientId));
 			siblingRange = requireSiblingRange(store, input.clientIds);
-			if (
-				store.canRemoveBlocks?.(siblingRange.clientIds) === false ||
-				store.canRemoveBlock?.(siblingRange.clientIds[0]) === false
-			) {
+			replacementActions = requireEditorActions();
+			if (typeof replacementActions.replaceBlocks !== "function") {
+				throw new Error("Block replacement actions are not available on this screen.");
+			}
+			const canRemoveTogether =
+				typeof store.canRemoveBlocks === "function"
+					? store.canRemoveBlocks(siblingRange.clientIds)
+					: null;
+			const canRemoveIndividually =
+				canRemoveTogether === null && typeof store.canRemoveBlock === "function"
+					? siblingRange.clientIds.map((clientId) => store.canRemoveBlock(clientId)).every(Boolean)
+					: null;
+			if (canRemoveTogether !== true && canRemoveIndividually !== true) {
 				throw new Error("The source blocks cannot be replaced. They may be locked.");
 			}
 			const probe = buildBlock({ name: "core/block", attributes: { ref: 0 } }, "reference");
@@ -216,8 +226,7 @@ async function createPattern(input = {}) {
 			{ name: "core/block", attributes: { ref: record.id } },
 			"reference"
 		);
-		const actions = requireEditorActions();
-		await actions.replaceBlocks(siblingRange.clientIds, [reference]);
+		await replacementActions.replaceBlocks(siblingRange.clientIds, [reference]);
 		if (!store.getBlock(reference.clientId)) {
 			throw new Error(
 				`The pattern was saved as ${result.name}, but the editor did not replace the original blocks.`
