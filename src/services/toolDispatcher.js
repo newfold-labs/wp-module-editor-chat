@@ -754,7 +754,9 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 					};
 				}
 
-				if (!result.isError && result.hasChanges) {
+				// A local write that failed after mutating still changed the editor,
+				// so it must stay covered by the atomic undo snapshot.
+				if (result.hasChanges && (!result.isError || resultSource === "local")) {
 					hasBlockEdits = true;
 				}
 			} else if (

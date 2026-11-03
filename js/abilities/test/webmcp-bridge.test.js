@@ -8,7 +8,12 @@ import { executeAbility, getAbility } from "@wordpress/abilities";
 /**
  * Internal dependencies
  */
-import { bridgeAbilitiesToWebMCP, formatToolError, toToolName } from "../webmcp-bridge";
+import {
+	bridgeAbilitiesToWebMCP,
+	formatToolError,
+	toToolName,
+	unbridgeAbilitiesFromWebMCP,
+} from "../webmcp-bridge";
 
 describe("WebMCP ability bridge", () => {
 	beforeEach(() => {
@@ -119,6 +124,20 @@ describe("WebMCP ability bridge", () => {
 		await expect(bridgeAbilitiesToWebMCP(["blu-editor/get-editor-tree"])).resolves.toMatchObject({
 			registered: ["blu-editor/get-editor-tree"],
 		});
+		expect(document.modelContext.registerTool).toHaveBeenCalledTimes(2);
+	});
+
+	it("unregisters only owned tools through their abort signals and allows re-registration", async () => {
+		await bridgeAbilitiesToWebMCP(["blu-editor/get-editor-tree"]);
+		const { signal } = document.modelContext.registerTool.mock.calls[0][1];
+		expect(signal.aborted).toBe(false);
+
+		expect(unbridgeAbilitiesFromWebMCP(["blu-editor/unknown"])).toEqual([]);
+		expect(signal.aborted).toBe(false);
+		expect(unbridgeAbilitiesFromWebMCP()).toEqual(["blu-editor_get-editor-tree"]);
+		expect(signal.aborted).toBe(true);
+
+		await bridgeAbilitiesToWebMCP(["blu-editor/get-editor-tree"]);
 		expect(document.modelContext.registerTool).toHaveBeenCalledTimes(2);
 	});
 

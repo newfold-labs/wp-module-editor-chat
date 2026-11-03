@@ -124,6 +124,10 @@ The public script-module identifier is
 - registers all enabled abilities idempotently;
 - exports the immutable ability-name list;
 - exports a `ready` promise resolving to the names successfully registered;
+  a failing registration is skipped with a console warning and never aborts
+  the remaining abilities or rejects `ready`, and an ability already
+  registered by another copy of the module is reused rather than treated as a
+  failure;
 - exports an idempotent registration function for controlled initialization.
 
 Other plugins should declare this script module as a dependency and then use
@@ -164,7 +168,9 @@ The WebMCP bridge is a separate adapter over the public ability layer. It:
 - converts WordPress ability schemas and annotations to WebMCP tools;
 - executes the underlying ability and preserves structured output and errors;
 - uses the vendored polyfill only when native WebMCP is unavailable;
-- registers and unregisters only tools it owns;
+- registers each tool with an `AbortSignal` and exposes an unregister function
+  that aborts only the tools it registered (WebMCP's unregistration
+  mechanism), leaving other plugins' tools untouched;
 - is safe to initialize more than once.
 
 Direct WordPress consumers do not need to load or call this adapter.
@@ -200,6 +206,9 @@ reports that it made no mutation.
 Local writes participate in the current abort, snapshot, undo, progress,
 `hasChanges`, retry, and final-summary behavior. Read-only local calls receive
 the existing larger result budget and are exempt from mutation retry limits.
+A local write that fails after mutating (`mutated: true`) still counts as a
+block edit, so the atomic undo snapshot covers it; it never produces fallback
+metadata and is never executed a second time.
 
 ### Overlap and fallback
 
@@ -246,10 +255,13 @@ per-session model-facing decision.
 
 - WebMCP name/schema conversion and error propagation.
 - Polyfill/native-context behavior and duplicate registration.
-- Public `ready` behavior and filtered registrations.
+- Public `ready` behavior and filtered registrations, including a failing or
+  already-registered ability not blocking the rest.
+- WebMCP unregistration of owned tools only, and re-registration afterwards.
 - Local/MCP tool merging and asynchronous `toolchange`.
 - Dispatcher routing, fallback allow-list, abort, snapshot, `hasChanges`, and
-  undo behavior.
+  undo behavior, including undo coverage of a write that failed after
+  mutating.
 - Retry and read-only classification for every public ability.
 
 ### PHP tests

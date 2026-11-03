@@ -297,6 +297,25 @@ describe("toolDispatcher local abilities", () => {
 		expect(results[0].content).toContain('Cleanup failed: Could not remove category "hero".');
 	});
 
+	test("keeps the undo snapshot after a local write that failed once mutated", async () => {
+		runLocalTool.mockResolvedValue({
+			isError: true,
+			text: "The editor did not replace this block.",
+			structuredContent: { mutated: true },
+		});
+		const ctx = createContext();
+
+		await executeToolCallsForREST(
+			[toolCall("blu-editor_edit-block", { clientId: "paragraph-1" })],
+			ctx
+		);
+
+		expect(ctx.blockSnapshotRef.current).toEqual(["snapshot"]);
+		const updater = ctx.setMessages.mock.calls[ctx.setMessages.mock.calls.length - 1][0];
+		const messages = updater([]);
+		expect(messages[messages.length - 1].undoData).toEqual({ blocks: ["snapshot"] });
+	});
+
 	test("never re-executes a successful local write through fallback or MCP", async () => {
 		runLocalTool.mockResolvedValue({
 			isError: false,

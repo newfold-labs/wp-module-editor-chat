@@ -18,6 +18,8 @@
 - Typed fallback metadata is emitted only after confirming that no local mutation occurred.
 - Loading requires WordPress 7.0+, a block-editor context, and `Permissions::is_editor()`; unsupported environments fail soft.
 - Registration, enqueueing, WebMCP bridging, and consumer initialization are idempotent.
+- A single failing ability registration never aborts the others or rejects `ready`.
+- A local write that fails after mutating stays covered by the undo snapshot.
 - Existing `blu-*` handlers and `/blu/mcp` behavior remain intact.
 - User-facing copy remains brand-agnostic and uses the `nfd-editor-chat` text domain.
 
@@ -148,7 +150,10 @@
   `ABILITY_NAMES`, invokes implemented family registration functions, and
   resolves `ready` only after registration finishes. Unknown or not-yet-
   implemented allow-list entries are ignored; the return value contains only
-  successfully registered names.
+  successfully registered names. Wrap each registration in `try/catch`: warn
+  and skip on failure, but reuse an ability that `getAbility()` already finds
+  (registered by another copy). Add a test in `registry.test.js` where one
+  `registerAbility` call throws and the remaining abilities still register.
 
 - [ ] **Step 7: Implement the first end-to-end ability**
 
@@ -162,8 +167,12 @@
   Convert WordPress input/output schemas and annotations without
   ability-specific branches. Execute through `executeAbility()`, preserve
   structured output, and attach typed fallback metadata only when present on an
-  error. Track owned tool names so repeated initialization cannot duplicate or
-  unregister another plugin's tools.
+  error. Track owned tools with one `AbortController` each, passed as the
+  `signal` option of `registerTool`, so repeated initialization cannot
+  duplicate tools. Export `unbridgeAbilitiesFromWebMCP( abilityNames? )`, which
+  aborts only owned tools (never another plugin's) and allows later
+  re-registration; expose it as `window.nfdEditorAbilities.unbridge`. Test it
+  in `webmcp-bridge.test.js`.
 
   Keep bridge startup in `webmcp-bootstrap.js`; `bootstrap.js` initializes only
   native WordPress abilities. This ensures
@@ -711,7 +720,10 @@
   snapshot before any `LOCAL_WRITE_TOOLS` call. Execute local calls through
   Task 7, carry `source`, `isError`, `hasChanges`, and structured fallback
   state into the existing result flow, and delegate only an approved fallback
-  to the existing focused handler.
+  to the existing focused handler. Set the block-edit flag for a local result
+  with `hasChanges` even when it is an error (`mutated: true`), so the undo
+  snapshot covers a write that failed after mutating; add a dispatcher test
+  for it.
 
   Keep all current client and server branches behaviorally unchanged; do not
   apply the historical monolithic dispatcher diff.

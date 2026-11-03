@@ -129,7 +129,7 @@ export async function bridgeAbilitiesToWebMCP(abilityNames) {
 
 	let owned = ownedToolsByContext.get(modelContext);
 	if (!owned) {
-		owned = new Set();
+		owned = new Map();
 		ownedToolsByContext.set(modelContext, owned);
 	}
 	let inFlight = inFlightToolsByContext.get(modelContext);
@@ -188,9 +188,13 @@ export async function bridgeAbilitiesToWebMCP(abilityNames) {
 			tool.outputSchema = outputSchema;
 		}
 
+		// The abort signal is the WebMCP unregistration mechanism.
+		const controller = new AbortController();
 		try {
-			const registration = Promise.resolve(modelContext.registerTool(tool)).then(() => {
-				owned.add(toolName);
+			const registration = Promise.resolve(
+				modelContext.registerTool(tool, { signal: controller.signal })
+			).then(() => {
+				owned.set(toolName, controller);
 			});
 			inFlight.set(toolName, registration);
 			await registration;
@@ -206,4 +210,31 @@ export async function bridgeAbilitiesToWebMCP(abilityNames) {
 		}
 	}
 	return { supported: true, registered, skipped, errors };
+}
+
+/**
+ * Unregister tools this bridge registered, leaving foreign tools untouched.
+ *
+ * @param {string[]} [abilityNames] Ability names to remove; defaults to every owned tool.
+ * @return {string[]} Ability-style names whose tools were unregistered.
+ */
+export function unbridgeAbilitiesFromWebMCP(abilityNames) {
+	const modelContext = getModelContext();
+	const owned = modelContext ? ownedToolsByContext.get(modelContext) : null;
+	if (!owned) {
+		return [];
+	}
+
+	const toolNames = Array.isArray(abilityNames) ? abilityNames.map(toToolName) : [...owned.keys()];
+	const removed = [];
+	for (const toolName of toolNames) {
+		const controller = owned.get(toolName);
+		if (!controller) {
+			continue;
+		}
+		controller.abort();
+		owned.delete(toolName);
+		removed.push(toolName);
+	}
+	return removed;
 }

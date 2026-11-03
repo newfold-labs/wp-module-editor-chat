@@ -1,4 +1,4 @@
-/* global describe, expect, it */
+/* global describe, expect, it, jest */
 
 /**
  * External dependencies
@@ -117,5 +117,35 @@ describe("editor ability registry", () => {
 			expect(definition.output_schema.required).toEqual(properties);
 			expect(definition.output_schema.additionalProperties).toBe(false);
 		}
+	});
+
+	it("keeps registering after one ability fails and reuses abilities another copy owns", async () => {
+		const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+		let isolated;
+		jest.isolateModules(() => {
+			const abilities = require("@wordpress/abilities");
+			abilities.registerAbility.mockImplementation((definition) => {
+				if (definition.name === "blu-editor/get-patterns") {
+					throw new Error("Ability already registered.");
+				}
+				if (definition.name === "blu-editor/get-pattern") {
+					throw new Error("Unexpected failure.");
+				}
+			});
+			abilities.getAbility.mockImplementation((name) =>
+				name === "blu-editor/get-patterns" ? { name } : undefined
+			);
+			isolated = require("../index");
+		});
+
+		const names = await isolated.initializeEditorAbilities();
+
+		expect(names).toContain("blu-editor/get-patterns");
+		expect(names).not.toContain("blu-editor/get-pattern");
+		expect(names).toContain("blu-editor/redo");
+		const warned = warn.mock.calls.map(([message]) => message).join("\n");
+		expect(warned).toContain('blu-editor/get-pattern"');
+		expect(warned).not.toContain("blu-editor/get-patterns");
+		warn.mockRestore();
 	});
 });

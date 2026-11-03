@@ -198,7 +198,10 @@ blu-editor/get-editor-tree -> blu-editor_get-editor-tree
 
 The bridge is idempotent, forwards schemas and annotations, executes through
 `@wordpress/abilities`, preserves structured output, and only manages tools it
-owns. Direct native consumers do not need `document.modelContext`.
+owns. Each tool is registered with an `AbortSignal`;
+`window.nfdEditorAbilities.unbridge( abilityNames? )` unregisters the tools the
+bridge registered (all of them by default) without touching other plugins'
+tools. Direct native consumers do not need `document.modelContext`.
 
 ## Unsupported operations and fallback
 

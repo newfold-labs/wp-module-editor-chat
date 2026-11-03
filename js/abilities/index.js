@@ -1,4 +1,4 @@
-import { registerAbility, registerAbilityCategory } from "@wordpress/abilities";
+import { getAbility, registerAbility, registerAbilityCategory } from "@wordpress/abilities";
 
 import { registerBlockCatalogAbilities } from "./block-catalog-abilities.js";
 import { registerBlockContentAbilities } from "./block-content-abilities.js";
@@ -47,7 +47,17 @@ function register(definition) {
 	if (registeredNames.has(definition.name)) {
 		return false;
 	}
-	registerAbility(definition);
+	try {
+		registerAbility(definition);
+	} catch (error) {
+		// Another copy of this module may already own the ability; reuse it.
+		if (getAbility(definition.name)) {
+			registeredNames.add(definition.name);
+		} else {
+			console.warn(`Could not register ability "${definition.name}":`, error);
+		}
+		return false;
+	}
 	registeredNames.add(definition.name);
 	return true;
 }
@@ -63,10 +73,16 @@ export async function initializeEditorAbilities({
 	abilityNames = getConfiguredAbilityNames(),
 } = {}) {
 	if (!categoryRegistered) {
-		registerAbilityCategory("blu-editor", {
-			label: "Editor",
-			description: "Abilities for inspecting and modifying the WordPress block editor.",
-		});
+		try {
+			registerAbilityCategory("blu-editor", {
+				label: "Editor",
+				description: "Abilities for inspecting and modifying the WordPress block editor.",
+			});
+		} catch (error) {
+			// A duplicate category from another copy is harmless; abilities report their own failures.
+
+			console.warn('Could not register ability category "blu-editor":', error);
+		}
 		categoryRegistered = true;
 	}
 
