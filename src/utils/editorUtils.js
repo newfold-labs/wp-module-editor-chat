@@ -88,7 +88,7 @@ export const validateFiles = (files, acceptedTypes, maxNew) => {
 		const maxSize = isImage ? MAX_SIZE.image : MAX_SIZE.document;
 
 		if (file.size > maxSize) {
-			rejected.push({ file, reason: "size" });
+			rejected.push({ file, reason: "size", limitMB: maxSize / (1024 * 1024) });
 			continue;
 		}
 

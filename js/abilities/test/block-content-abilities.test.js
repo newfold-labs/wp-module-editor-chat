@@ -19,12 +19,26 @@ describe("block content abilities", () => {
 	let roots;
 	let selectors;
 	let dispatch;
+	let selectedBlockId;
 
 	beforeAll(async () => {
 		await initializeEditorAbilities();
 	});
 
 	beforeEach(() => {
+		const button = {
+			clientId: "button-1",
+			name: "core/button",
+			attributes: { content: "Buy", backgroundColor: "contrast" },
+			innerBlocks: [],
+		};
+		const secondButton = {
+			clientId: "button-2",
+			name: "core/button",
+			attributes: { content: "Learn", backgroundColor: "contrast" },
+			innerBlocks: [],
+		};
+		selectedBlockId = null;
 		blocks = {
 			"paragraph-1": {
 				clientId: "paragraph-1",
@@ -41,10 +55,25 @@ describe("block content abilities", () => {
 				attributes: { url: "https://example.com/old.jpg", alt: "Old" },
 				innerBlocks: [],
 			},
+			"button-1": button,
+			"button-2": secondButton,
+			"buttons-1": {
+				clientId: "buttons-1",
+				name: "core/buttons",
+				attributes: { layout: { type: "flex" } },
+				innerBlocks: [button, secondButton],
+			},
 		};
-		roots = { "paragraph-1": "", "image-1": "" };
+		roots = {
+			"paragraph-1": "",
+			"image-1": "",
+			"buttons-1": "",
+			"button-1": "buttons-1",
+			"button-2": "buttons-1",
+		};
 		selectors = {
 			getBlock: jest.fn((id) => blocks[id] || null),
+			getSelectedBlockClientId: jest.fn(() => selectedBlockId),
 			getBlockRootClientId: jest.fn((id) => roots[id] || ""),
 			getBlockParents: jest.fn((id) => {
 				const result = [];
@@ -84,6 +113,23 @@ describe("block content abilities", () => {
 					url: { type: "string" },
 					alt: { type: "string" },
 					id: { type: "integer" },
+				},
+			},
+			"core/button": {
+				name: "core/button",
+				attributes: {
+					content: { type: "string" },
+					className: { type: "string" },
+					style: { type: "object" },
+					textColor: { type: "string" },
+					backgroundColor: { type: "string" },
+				},
+			},
+			"core/buttons": {
+				name: "core/buttons",
+				attributes: {
+					layout: { type: "object" },
+					style: { type: "object" },
 				},
 			},
 		};
@@ -191,6 +237,69 @@ describe("block content abilities", () => {
 			})
 		).resolves.toMatchObject({ changed: false, clientId: "paragraph-1" });
 		expect(dispatch.updateBlockAttributes).not.toHaveBeenCalled();
+	});
+
+	it("applies wrapper-targeted color patches to visible button children", async () => {
+		await expect(
+			execute("blu-editor/update-block", {
+				clientId: "buttons-1",
+				attributes: { backgroundColor: "pink" },
+			})
+		).resolves.toMatchObject({
+			changed: true,
+			clientId: "buttons-1",
+			name: "core/buttons",
+		});
+
+		expect(dispatch.updateBlockAttributes).toHaveBeenCalledWith("button-1", {
+			content: "Buy",
+			backgroundColor: undefined,
+			style: { color: { background: "pink" } },
+		});
+		expect(dispatch.updateBlockAttributes).not.toHaveBeenCalledWith("buttons-1", expect.anything());
+	});
+
+	it("limits wrapper-targeted colors to the selected button child", async () => {
+		selectedBlockId = "button-1";
+
+		await execute("blu-editor/update-block", {
+			clientId: "buttons-1",
+			attributes: { backgroundColor: "pink" },
+		});
+
+		expect(dispatch.updateBlockAttributes).toHaveBeenCalledWith(
+			"button-1",
+			expect.objectContaining({
+				style: { color: { background: "pink" } },
+			})
+		);
+		expect(dispatch.updateBlockAttributes).not.toHaveBeenCalledWith("button-2", expect.anything());
+	});
+
+	it("clears empty button presets when custom colors are supplied", async () => {
+		await execute("blu-editor/update-block", {
+			clientId: "button-1",
+			attributes: {
+				backgroundColor: "",
+				textColor: "",
+				className: "is-style-fill",
+				style: {
+					border: {},
+					color: { background: "#E91E8C", text: "#FFFFFF" },
+				},
+			},
+		});
+
+		expect(dispatch.updateBlockAttributes).toHaveBeenCalledWith("button-1", {
+			content: "Buy",
+			className: "is-style-fill",
+			backgroundColor: undefined,
+			textColor: undefined,
+			style: {
+				border: {},
+				color: { background: "#E91E8C", text: "#FFFFFF" },
+			},
+		});
 	});
 
 	it("validates stale IDs and edit locks before dispatch", async () => {

@@ -4,7 +4,7 @@
 import { Button } from "@wordpress/components";
 import { useDispatch } from "@wordpress/data";
 import { useEffect, useRef, useState } from "@wordpress/element";
-import { __ } from "@wordpress/i18n";
+import { __, sprintf } from "@wordpress/i18n";
 
 /**
  * External dependencies
@@ -57,6 +57,7 @@ const getFileTypeLabel = (mimeType) => {
 const ChatInput = ({ onSendMessage, onStopRequest, disabled = false, maxFiles = 5, acceptedTypes = DEFAULT_ACCEPTED_FILE_TYPES }) => {
 	const [message, setMessage] = useState("");
 	const [attachments, setAttachments] = useState([]);
+	const [fileErrors, setFileErrors] = useState([]);
 	const [isDragging, setIsDragging] = useState(false);
 	const textareaRef = useRef(null);
 	const fileInputRef = useRef(null);
@@ -115,6 +116,29 @@ const ChatInput = ({ onSendMessage, onStopRequest, disabled = false, maxFiles = 
 
 	const handleFilesSelected = async (files) => {
 		const { valid, rejected } = validateFiles(files, acceptedTypes, maxFiles - attachments.length);
+
+		setFileErrors(
+			rejected.map(({ file, reason, limitMB }) => {
+				if (reason === "size") {
+					return sprintf(
+						__("%1$s — file too large (maximum %2$d MB)", "wp-module-editor-chat"),
+						file.name,
+						limitMB
+					);
+				}
+				if (reason === "limit") {
+					return sprintf(
+						__("%1$s — attachment limit reached (maximum %2$d files)", "wp-module-editor-chat"),
+						file.name,
+						maxFiles
+					);
+				}
+				return sprintf(
+					__("%s — unsupported file type", "wp-module-editor-chat"),
+					file.name
+				);
+			})
+		);
 
 		if (rejected.length > 0) {
 			const reasons = rejected.map(({ file, reason }) => {
@@ -185,6 +209,7 @@ const ChatInput = ({ onSendMessage, onStopRequest, disabled = false, maxFiles = 
 			onSendMessage(enrichedMessage, message, imageAttachments);
 			setMessage("");
 			setAttachments([]);
+			setFileErrors([]);
 			// Reset textarea height and maintain focus
 			if (textareaRef.current) {
 				textareaRef.current.style.height = "auto";
@@ -243,6 +268,27 @@ const ChatInput = ({ onSendMessage, onStopRequest, disabled = false, maxFiles = 
 		onDragLeave={handleDragLeave}
 		onDrop={handleDrop}
 		>
+			{fileErrors.length > 0 && (
+				<div className="nfd-editor-chat-input__file-errors" role="alert">
+					<div className="nfd-editor-chat-input__file-errors-content">
+						<strong>
+							{__("Some files could not be attached:", "wp-module-editor-chat")}
+						</strong>
+						<ul>
+							{fileErrors.map((fileError) => (
+								<li key={fileError}>{fileError}</li>
+							))}
+						</ul>
+					</div>
+					<button
+						type="button"
+						onClick={() => setFileErrors([])}
+						aria-label={__("Dismiss file errors", "wp-module-editor-chat")}
+					>
+						<X size={14} />
+					</button>
+				</div>
+			)}
 			<div className="nfd-editor-chat-input__container">
 				{attachments.length > 0 && (
 				<div className="nfd-editor-chat-input__top">

@@ -1,5 +1,6 @@
 import { EditorAbilityUnsupportedError, markAbilityMutationError } from "./ability-errors.js";
 import { deepMergeAttributes, normalizeAttributes } from "./block-attribute-validation.js";
+import { normalizeColorAttributeValues } from "./color-attribute-normalization.js";
 import { requireBlock, requireEditorActions, requireEditorStore } from "./editor-store.js";
 
 const WRITE_META = (destructive = false, idempotent = false) => ({
@@ -143,6 +144,30 @@ function equalBlockState(actual, expected) {
 	);
 }
 
+function isColorPatch(attributes) {
+	return Boolean(
+		attributes &&
+		("textColor" in attributes || "backgroundColor" in attributes || attributes.style?.color)
+	);
+}
+
+async function applyAttributePatch(store, actions, block, attributes) {
+	const normalized = normalizeColorAttributeValues(normalizeAttributes(block.name, attributes));
+	const merged = deepMergeAttributes(block.attributes ?? {}, normalized);
+	if (equalJsonValue(block.attributes ?? {}, merged)) {
+		return { changed: false, attributes: block.attributes ?? {}, normalized };
+	}
+
+	await actions.updateBlockAttributes(block.clientId, merged);
+	const updated = requireBlock(store, block.clientId);
+	const actual = updated.attributes ?? {};
+	const notApplied = Object.keys(merged).filter((key) => !equalJsonValue(actual[key], merged[key]));
+	if (notApplied.length) {
+		throw new Error(`The editor did not update attribute(s): ${notApplied.join(", ")}.`);
+	}
+	return { changed: true, attributes: actual, normalized };
+}
+
 async function editBlock(input = {}) {
 	const store = requireEditorStore();
 	const block = requireBlock(store, input.clientId);
@@ -223,34 +248,40 @@ async function updateBlock(input = {}) {
 			fallback
 		);
 	}
-	const normalized = normalizeAttributes(block.name, attributes);
-	const merged = deepMergeAttributes(block.attributes ?? {}, normalized);
-	if (equalJsonValue(block.attributes ?? {}, merged)) {
-		return {
-			changed: false,
-			clientId: input.clientId,
-			name: block.name,
-			attributes: block.attributes ?? {},
-			updatedAttributes: [],
-		};
-	}
 	const actions = requireEditorActions();
 	try {
-		await actions.updateBlockAttributes(input.clientId, merged);
-		const updated = requireBlock(store, input.clientId);
-		const actual = updated.attributes ?? {};
-		const notApplied = Object.keys(merged).filter(
-			(key) => !equalJsonValue(actual[key], merged[key])
-		);
-		if (notApplied.length) {
-			throw new Error(`The editor did not update attribute(s): ${notApplied.join(", ")}.`);
+		// A visible button is the core/button child. Models occasionally target
+		// its core/buttons layout wrapper; fan color patches out to the buttons.
+		if (block.name === "core/buttons" && isColorPatch(attributes)) {
+			const buttonChildren = (block.innerBlocks || []).filter(
+				(child) => child.name === "core/button"
+			);
+			const selectedId = store.getSelectedBlockClientId?.();
+			const selectedButton = buttonChildren.find((child) => child.clientId === selectedId);
+			const buttons = selectedButton ? [selectedButton] : buttonChildren;
+			if (buttons.length) {
+				const applied = [];
+				for (const button of buttons) {
+					applied.push(await applyAttributePatch(store, actions, button, attributes));
+				}
+				const changed = applied.some((result) => result.changed);
+				return {
+					changed,
+					clientId: input.clientId,
+					name: block.name,
+					attributes: requireBlock(store, input.clientId).attributes ?? {},
+					updatedAttributes: changed ? ["innerBlocks"] : [],
+				};
+			}
 		}
+
+		const applied = await applyAttributePatch(store, actions, block, attributes);
 		return {
-			changed: true,
+			changed: applied.changed,
 			clientId: input.clientId,
-			name: updated.name,
-			attributes: actual,
-			updatedAttributes: Object.keys(normalized),
+			name: block.name,
+			attributes: applied.attributes,
+			updatedAttributes: applied.changed ? Object.keys(applied.normalized) : [],
 		};
 	} catch (error) {
 		throw markAbilityMutationError(error);
@@ -307,7 +338,8 @@ export function registerBlockContentAbilities(register) {
 			}),
 			name: "blu-editor/update-block",
 			label: "Update Block",
-			description: "Validates and merges attributes into one live editor block.",
+			description:
+				"Validates and merges attributes into one live editor block. For visible button colors, target the core/button child, not its core/buttons layout wrapper. Custom CSS colors belong in style.color.background/text; backgroundColor/textColor accept palette slugs only.",
 			input_schema: {
 				type: "object",
 				properties: {

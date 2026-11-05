@@ -1,6 +1,7 @@
 /* global afterEach, beforeEach, describe, expect, it, jest */
 
 import { deepMergeAttributes, normalizeAttributes } from "../block-attribute-validation";
+import { normalizeColorAttributeValues } from "../color-attribute-normalization";
 
 const paragraphType = {
 	name: "core/paragraph",
@@ -18,11 +19,22 @@ const paragraphType = {
 describe("block attribute validation", () => {
 	beforeEach(() => {
 		globalThis.window = {
+			CSS: {
+				supports: jest.fn(
+					(_property, value) => value === "pink" || /^#(?:[\da-f]{3}|[\da-f]{6})$/i.test(value)
+				),
+			},
 			wp: {
 				data: {
-					select: jest.fn(() => ({
-						getBlockType: jest.fn((name) => (name === "core/paragraph" ? paragraphType : null)),
-					})),
+					select: jest.fn((store) =>
+						store === "core/block-editor"
+							? { getSettings: jest.fn(() => ({ colors: [] })) }
+							: {
+									getBlockType: jest.fn((name) =>
+										name === "core/paragraph" ? paragraphType : null
+									),
+								}
+					),
 				},
 			},
 		};
@@ -152,6 +164,33 @@ describe("block attribute validation", () => {
 			backgroundColor: undefined,
 			gradient: undefined,
 			style: { color: { background: "#333", gradient: "none" } },
+		});
+	});
+
+	it("moves CSS color literals from preset attributes into custom styles", () => {
+		const patch = normalizeColorAttributeValues(
+			normalizeAttributes("core/paragraph", {
+				backgroundColor: "pink",
+				textColor: "#112233",
+			})
+		);
+
+		expect(patch).toEqual({
+			style: { color: { background: "pink", text: "#112233" } },
+		});
+	});
+
+	it("keeps registered palette slugs in preset attributes", () => {
+		window.wp.data.select.mockImplementation((store) =>
+			store === "core/block-editor"
+				? { getSettings: jest.fn(() => ({ colors: [{ slug: "pink", color: "#ffc0cb" }] })) }
+				: {
+						getBlockType: jest.fn((name) => (name === "core/paragraph" ? paragraphType : null)),
+					}
+		);
+
+		expect(normalizeColorAttributeValues({ backgroundColor: "pink" })).toEqual({
+			backgroundColor: "pink",
 		});
 	});
 

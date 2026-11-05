@@ -57,13 +57,10 @@ function serializeBlockMarkup(blockEditor, clientId) {
 		const innerBlocks = blockEditor.getBlocks(clientId);
 		markup = innerBlocks.map((b) => wpSerialize(b)).join("\n");
 		if (!markup && fullBlock.name === "core/navigation" && fullBlock.attributes?.ref) {
-			const entity = wp.data.select("core").getEntityRecord(
-				"postType",
-				"wp_navigation",
-				fullBlock.attributes.ref
-			);
-			const raw =
-				entity?.content?.raw || entity?.content?.rendered || entity?.content || "";
+			const entity = wp.data
+				.select("core")
+				.getEntityRecord("postType", "wp_navigation", fullBlock.attributes.ref);
+			const raw = entity?.content?.raw || entity?.content?.rendered || entity?.content || "";
 			markup = typeof raw === "string" ? raw : "";
 		}
 	} else {
@@ -203,6 +200,29 @@ Call the tool(s) for the next unfinished item now. If one genuinely cannot be do
 
 When everything is done, reply with JSON only and no tool calls:
 {"message":"One brief sentence covering what was done."}`;
+}
+
+/**
+ * Nudge after a successful write in a planned turn.
+ *
+ * One tool call may complete several semantic steps, so progress cannot be
+ * inferred by counting write rounds. Compare the whole plan with the successful
+ * call and fresh editor state before deciding whether another write is needed.
+ *
+ * @param {string[]} steps Complete requested plan.
+ * @return {string} Nudge string for the next pass.
+ */
+export function buildReviewPlannedStepsNudge(steps) {
+	return `A tool call above succeeded. Review the complete request against its arguments, result, and the current editor_context:
+${steps.map((step) => `- ${step}`).join("\n")}
+
+If every requested change is already applied, respond with JSON only and make no tool calls:
+{"message":"One brief sentence confirming what was done."}
+
+Otherwise call tools only for genuinely unfinished changes. Do not repeat, replace, or reinterpret changes already applied.
+
+Any text output accompanying tool calls MUST be one JSON object:
+{"message":"One short sentence about the next unfinished action"}`;
 }
 
 /**
@@ -393,6 +413,12 @@ export const buildEditorContext = ({ extraClientIds = [] } = {}) => {
 		`\n- Every internal href MUST start with "${siteUrl}/" (e.g. "${siteUrl}/contact"). A link like "/contact" or "https://<domain>/contact" that skips the base path returns a 404.` +
 		"\n- Only link to pages that actually exist. Prefer a page listed in the block tree, the navigation menus above, or one you just created with a create tool (use the URL it returned)." +
 		"\n- If the user asks to link to a page that does not exist yet, either link to an existing relevant page or say so in your message — do not invent a slug.";
+
+	context +=
+		"\n\nButton color guidance (CRITICAL):" +
+		"\n- The visible button is the core/button child. Target its clientId, not the core/buttons layout wrapper." +
+		"\n- For custom colors such as pink or a hex value, use style.color.background and style.color.text." +
+		"\n- backgroundColor and textColor accept existing palette slugs only, never CSS color names or hex values.";
 
 	return context;
 };
