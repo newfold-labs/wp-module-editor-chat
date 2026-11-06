@@ -55,28 +55,28 @@ class EditorAbilities {
 	 *
 	 * @var bool
 	 */
-	private static $native_enqueued    = false;
+	private static $native_enqueued = false;
 
 	/**
 	 * Whether the WebMCP polyfill has been registered.
 	 *
 	 * @var bool
 	 */
-	private static $webmcp_registered  = false;
+	private static $webmcp_registered = false;
 
 	/**
 	 * Whether WebMCP assets have been enqueued.
 	 *
 	 * @var bool
 	 */
-	private static $webmcp_enqueued    = false;
+	private static $webmcp_enqueued = false;
 
 	/**
 	 * Whether the public module-data filter has been added.
 	 *
 	 * @var bool
 	 */
-	private static $data_filter_added  = false;
+	private static $data_filter_added = false;
 
 	/**
 	 * Ability names exposed through script-module data.
@@ -188,12 +188,12 @@ class EditorAbilities {
 	 * @return void
 	 */
 	protected static function reset_state() {
-		self::$modules_registered    = false;
-		self::$native_enqueued       = false;
-		self::$webmcp_registered     = false;
-		self::$webmcp_enqueued       = false;
-		self::$data_filter_added     = false;
-		self::$module_ability_names  = array();
+		self::$modules_registered   = false;
+		self::$native_enqueued      = false;
+		self::$webmcp_registered    = false;
+		self::$webmcp_enqueued      = false;
+		self::$data_filter_added    = false;
+		self::$module_ability_names = array();
 	}
 
 	/**

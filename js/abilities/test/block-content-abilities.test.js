@@ -425,7 +425,7 @@ describe("block content abilities", () => {
 			try {
 				await execute(`blu-editor/${ability}`, {
 					clientId: "paragraph-1",
-					blockContent: "<!-- wp:navigation {\"ref\":42} /-->",
+					blockContent: '<!-- wp:navigation {"ref":42} /-->',
 					attributes: { overlayMenu: "never" },
 				});
 			} catch (caught) {

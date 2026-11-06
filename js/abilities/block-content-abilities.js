@@ -154,6 +154,9 @@ function hasInvalidBlock(block) {
  * Gutenberg shows as "Block contains unexpected or invalid content". When the
  * parser flags any block invalid, rebuild the tree with createBlock() so the
  * HTML is exactly what save() produces. Valid markup is left untouched.
+ *
+ * @param {Object} block Parsed block, with its inner blocks.
+ * @return {Object} The same block when valid, otherwise a rebuilt block tree.
  */
 function rebuildInvalidBlocks(block) {
 	if (!hasInvalidBlock(block)) {

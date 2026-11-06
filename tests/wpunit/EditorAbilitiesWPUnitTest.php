@@ -250,7 +250,7 @@ class EditorAbilitiesWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase 
 
 		$this->assertTrue( TestEditorAbilities::enqueue( true ) );
 		$this->assertTrue( TestEditorAbilities::enqueue( true ) );
-		$queue = \wp_script_modules()->get_queue();
+		$queue        = \wp_script_modules()->get_queue();
 		$queue_counts = array_count_values( $queue );
 
 		$this->assertSame( 1, $queue_counts[ EditorAbilities::PUBLIC_MODULE ] );
