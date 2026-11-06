@@ -23,9 +23,14 @@ updated: 2026-11-06
 - Editor Chat no longer offers `blu-editor_insert-block` to the model. Section and content creation (text plus images) goes through the server `blu-add-section` ability. The ability stays registered for other consumers. A model call to the invented name `blu-editor_add-section` is routed to `blu-add-section`. See [editor-abilities.md](editor-abilities.md#editor-chat-routing).
 - The no-progress guard (`MAX_READ_ONLY_PASSES`) no longer counts gateway discovery passes (`blu-list-abilities`, `blu-get-ability-schema`).
 
+- `blu-editor/transform-block` accepts optional `attributes`, applied to the resulting block atomically.
+
 ### Fixed
 
+- Asking to turn a paragraph into an H6 produced an H2: the transform could not carry a heading level. The model can now pass `attributes: { level: 6 }`.
+
 - `blu-editor/insert-block` rejected string content for `rich-text` attributes (paragraph and heading `content`) inside nested `innerBlocks`. Attribute types declared as arrays are also accepted.
+- `blu-editor/edit-block` could write a block Gutenberg flags as invalid ("Block contains unexpected or invalid content", for example a `core/button` missing `has-background`) because it used the model-written HTML as is. When the parser marks any block invalid, the tree is now rebuilt with `createBlock()` so the HTML matches `save()`, as the legacy `blu-edit-block` handler already did. Valid markup is untouched.
 - Local WebMCP tool errors were reported as success. The WebMCP polyfill resolves `executeTool` with a JSON string, so `isError` and `structuredContent` were lost and a failed write showed "Applied successfully". `runLocalTool` now parses the serialized result.
 - Requests that read an uploaded document (for example a CSV) and then add a section stopped with "No-progress loop" before the write, because gateway discovery consumed the read-only pass budget.
 

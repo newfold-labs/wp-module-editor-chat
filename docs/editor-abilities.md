@@ -119,8 +119,10 @@ results never contain an Editor Chat `action` descriptor.
 - `blu-editor/update-block` — input: `clientId`, optional `attributes`, and
   optional image prompt; validates, deep-merges, dispatches, verifies, and
   returns the resulting attributes and changed keys.
-- `blu-editor/transform-block` — input: `clientId` and destination block
-  `name`; returns the resulting IDs, blocks, and indexes.
+- `blu-editor/transform-block` — input: `clientId`, destination block `name`,
+  and optional `attributes` (validated, applied to the result in the same
+  operation, for example `{ level: 6 }` for `core/heading`, which otherwise
+  defaults to level 2); returns the resulting IDs, blocks, and indexes.
 - `blu-editor/insert-pattern` — input: `name` plus optional `rootClientId`,
   `index`, `afterClientId`, and `asReference`; returns inserted IDs, pattern
   metadata, and location.
@@ -221,6 +223,10 @@ These rules apply to Editor Chat only. Direct native consumers always see all 21
   turn after `MAX_READ_ONLY_PASSES` consecutive read-only passes. Passes made only
   of `blu-list-abilities` or `blu-get-ability-schema` neither count nor reset the
   streak (`nextReadOnlyStreak` in `src/hooks/chat/conversationUtils.js`).
+
+`blu-editor/edit-block` rebuilds the parsed tree with `createBlock()` when the
+parser flags a block invalid, so models only need correct block comment
+attributes and the saved HTML always matches `save()`.
 
 Insert-block validation accepts `rich-text` attributes as strings, so a nested
 `core/heading` or `core/paragraph` with string `content` is valid for any

@@ -163,6 +163,57 @@ describe("block content abilities", () => {
 		delete globalThis.window;
 	});
 
+	it("rebuilds blocks the parser marks invalid so save() output is what lands in the editor", async () => {
+		const invalidButton = {
+			clientId: "parsed-button",
+			name: "core/button",
+			isValid: false,
+			attributes: { text: "Book a class", url: "/book/" },
+			innerBlocks: [],
+		};
+		const invalidButtons = {
+			clientId: "parsed-buttons",
+			name: "core/buttons",
+			isValid: true,
+			attributes: { layout: { type: "flex" } },
+			innerBlocks: [invalidButton],
+		};
+		window.wp.blocks.parse.mockReturnValue([invalidButtons]);
+		window.wp.blocks.createBlock = jest.fn((name, attributes, innerBlocks = []) => ({
+			clientId: `rebuilt-${name}`,
+			name,
+			attributes,
+			innerBlocks,
+			isValid: true,
+		}));
+		const result = await execute("blu-editor/edit-block", {
+			clientId: "paragraph-1",
+			blockContent: "<!-- wp:buttons --><!-- wp:button /--><!-- /wp:buttons -->",
+		});
+		expect(window.wp.blocks.createBlock).toHaveBeenCalledWith(
+			"core/button",
+			invalidButton.attributes,
+			[]
+		);
+		expect(dispatch.replaceBlock).toHaveBeenCalledWith(
+			"paragraph-1",
+			expect.objectContaining({
+				clientId: "rebuilt-core/buttons",
+				innerBlocks: [expect.objectContaining({ clientId: "rebuilt-core/button" })],
+			})
+		);
+		expect(result).toMatchObject({ changed: true, name: "core/buttons" });
+	});
+
+	it("leaves valid parsed blocks untouched", async () => {
+		window.wp.blocks.createBlock = jest.fn();
+		await execute("blu-editor/edit-block", {
+			clientId: "paragraph-1",
+			blockContent: "<!-- wp:paragraph --><p>Updated</p><!-- /wp:paragraph -->",
+		});
+		expect(window.wp.blocks.createBlock).not.toHaveBeenCalled();
+	});
+
 	it("parses complete markup and directly replaces one target block", async () => {
 		const markup = "<!-- wp:paragraph --><p>Updated</p><!-- /wp:paragraph -->";
 		const result = await execute("blu-editor/edit-block", {

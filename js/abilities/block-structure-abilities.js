@@ -1,4 +1,5 @@
 import { EditorAbilityUnsupportedError, markAbilityMutationError } from "./ability-errors.js";
+import { normalizeAttributes } from "./block-attribute-validation.js";
 import { requireBlock, requireEditorActions, requireEditorStore } from "./editor-store.js";
 
 const WRITE_META = (destructive = false, idempotent = false) => ({
@@ -52,9 +53,16 @@ function validateAttributes(name, attributes, path) {
 				((type === "string" || type === "rich-text") && typeof value === "string") ||
 				(type === "null" && value === null) ||
 				// Unknown types must not block valid input.
-				!["array", "object", "integer", "number", "boolean", "string", "rich-text", "null"].includes(
-					type
-				)
+				![
+					"array",
+					"object",
+					"integer",
+					"number",
+					"boolean",
+					"string",
+					"rich-text",
+					"null",
+				].includes(type)
 		);
 		if (!valid) {
 			throw new Error(`${path}.${key} must be ${types.join(" or ")}.`);
@@ -479,9 +487,23 @@ async function transformBlock(input = {}) {
 	if (possible.length && !possible.some(({ name }) => name === input.name)) {
 		throw new Error(`"${block.name}" cannot be transformed into "${input.name}".`);
 	}
-	const transformed = api.switchToBlockType(block, input.name) || [];
+	let transformed = api.switchToBlockType(block, input.name) || [];
 	if (!transformed.length) {
 		throw new Error(`"${block.name}" cannot be transformed into "${input.name}".`);
+	}
+	if (input.attributes !== undefined) {
+		// A transform only carries over what the source block has (a paragraph
+		// becomes an h2); optional attributes let the caller finish it atomically,
+		// e.g. { level: 6 }, instead of a second write.
+		const patch = normalizeAttributes(input.name, input.attributes);
+		if (!transformed.some(({ name }) => name === input.name)) {
+			throw new Error(
+				`The transform did not produce a "${input.name}" block to apply attributes to.`
+			);
+		}
+		transformed = transformed.map((item) =>
+			item.name === input.name ? { ...item, attributes: { ...item.attributes, ...patch } } : item
+		);
 	}
 	const rootClientId = rootOf(store, input.clientId);
 	const previousIndex = indexOf(store, input.clientId, rootClientId);
@@ -635,10 +657,18 @@ export function registerBlockStructureAbilities(register) {
 			}),
 			name: "blu-editor/transform-block",
 			label: "Transform Block",
-			description: "Transforms a block into another registered block type.",
+			description:
+				"Transforms a block into another registered block type. Pass `attributes` for settings the transform cannot infer, such as { level: 6 } for core/heading (it defaults to level 2).",
 			input_schema: {
 				type: "object",
-				properties: { clientId: { type: "string" }, name: { type: "string" } },
+				properties: {
+					clientId: { type: "string" },
+					name: { type: "string" },
+					attributes: {
+						type: "object",
+						description: "Optional attributes applied to the resulting block.",
+					},
+				},
 				required: ["clientId", "name"],
 				additionalProperties: false,
 			},

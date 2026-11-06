@@ -144,6 +144,34 @@ function equalBlockState(actual, expected) {
 	);
 }
 
+function hasInvalidBlock(block) {
+	return block?.isValid === false || (block?.innerBlocks ?? []).some(hasInvalidBlock);
+}
+
+/**
+ * Models write the block comment attributes correctly but often get the inner
+ * HTML slightly wrong (for example a missing `has-background` class), which
+ * Gutenberg shows as "Block contains unexpected or invalid content". When the
+ * parser flags any block invalid, rebuild the tree with createBlock() so the
+ * HTML is exactly what save() produces. Valid markup is left untouched.
+ */
+function rebuildInvalidBlocks(block) {
+	if (!hasInvalidBlock(block)) {
+		return block;
+	}
+	const createBlock = window.wp?.blocks?.createBlock;
+	if (typeof createBlock !== "function") {
+		throw new Error("blockContent produced invalid block markup and could not be rebuilt.");
+	}
+	const rebuild = (source) =>
+		createBlock(source.name, source.attributes ?? {}, (source.innerBlocks ?? []).map(rebuild));
+	try {
+		return rebuild(block);
+	} catch (error) {
+		throw new Error(`blockContent produced invalid block markup: ${error.message}`);
+	}
+}
+
 function isColorPatch(attributes) {
 	return Boolean(
 		attributes &&
@@ -203,7 +231,7 @@ async function editBlock(input = {}) {
 	if (!Array.isArray(parsed) || parsed.length !== 1 || !parsed[0]?.name) {
 		throw new Error("blockContent must parse to exactly one complete WordPress block.");
 	}
-	const replacement = parsed[0];
+	const replacement = rebuildInvalidBlocks(parsed[0]);
 	const actions = requireEditorActions();
 	if (typeof actions.replaceBlock !== "function") {
 		throw new Error("Block replacement is not available.");

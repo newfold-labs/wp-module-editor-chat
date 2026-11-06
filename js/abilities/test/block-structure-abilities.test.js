@@ -408,6 +408,45 @@ describe("block structure abilities", () => {
 		);
 	});
 
+	it("applies validated attributes to the transformed block in the same operation", async () => {
+		window.wp.blocks.getBlockType = jest.fn((name) => ({
+			name,
+			attributes: { content: { type: "rich-text" }, level: { type: "number" } },
+		}));
+		window.wp.blocks.switchToBlockType.mockReturnValue([
+			{
+				...paragraph("replacement"),
+				name: "core/heading",
+				attributes: { content: "First", level: 2 },
+			},
+		]);
+
+		const result = await execute("blu-editor/transform-block", {
+			clientId: "first",
+			name: "core/heading",
+			attributes: { level: 6 },
+		});
+
+		expect(dispatch.replaceBlocks).toHaveBeenCalledWith(
+			["first"],
+			[
+				expect.objectContaining({
+					name: "core/heading",
+					attributes: { content: "First", level: 6 },
+				}),
+			]
+		);
+		expect(result.blocks[0].attributes).toMatchObject({ level: 6 });
+
+		await expect(
+			execute("blu-editor/transform-block", {
+				clientId: "second",
+				name: "core/heading",
+				attributes: { level: "six" },
+			})
+		).rejects.toThrow("level must be number");
+	});
+
 	it("rejects a source-locked transform before replacement", async () => {
 		selectors.canRemoveBlocks.mockReturnValue(false);
 
