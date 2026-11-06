@@ -207,9 +207,12 @@ async function editBlock(input = {}) {
 	}
 	const imagePrompts = normalizeImagePrompts(input);
 	const fallback = editFallback(input, imagePrompts);
+	// Special entities first: a controlled navigation, template part or logo is
+	// edit-locked in the editor, so the generic lock check would mask the typed
+	// fallback to the legacy handler that knows how to edit them.
+	rejectSpecial(store, input.clientId, fallback);
 	assertEditable(store, block);
 	assertReplaceable(store, block);
-	rejectSpecial(store, input.clientId, fallback);
 	if (
 		imagePrompts !== undefined ||
 		input.imageUrls !== undefined ||
@@ -268,8 +271,8 @@ async function updateBlock(input = {}) {
 	}
 	const imagePrompt = input.imagePrompt ?? input.image_prompt;
 	const fallback = updateFallback(input, imagePrompt);
-	assertEditable(store, block);
 	rejectSpecial(store, input.clientId, fallback);
+	assertEditable(store, block);
 	if (imagePrompt !== undefined || hasImagePlaceholder(attributes)) {
 		throw new EditorAbilityUnsupportedError(
 			"Image generation and unresolved image placeholders require the image-aware editor handler.",

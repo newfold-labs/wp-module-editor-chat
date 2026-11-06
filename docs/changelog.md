@@ -27,6 +27,9 @@ updated: 2026-11-06
 
 ### Fixed
 
+- Adding a page to the menu failed. `blu-editor/edit-block` and `blu-editor/update-block` checked the generic edit lock before the special-entity check, so a controlled `core/navigation` (edit-locked in the editor) produced a plain "cannot be edited" error instead of the typed fallback. The special-entity check now runs first.
+- A navigation-link aimed at a `core/navigation` block through the `blu-edit-block` fallback is routed to `blu-insert-inner-block` (which resolves the page and checks it exists) instead of rewriting the whole navigation with one link.
+
 - Asking to turn a paragraph into an H6 produced an H2: the transform could not carry a heading level. The model can now pass `attributes: { level: 6 }`.
 
 - `blu-editor/insert-block` rejected string content for `rich-text` attributes (paragraph and heading `content`) inside nested `innerBlocks`. Attribute types declared as arrays are also accepted.

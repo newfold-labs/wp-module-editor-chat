@@ -429,6 +429,22 @@ async function executeLocalFallback(fallback, originalToolCall, ctx) {
 	const toolCall = { ...originalToolCall, name: fallback.name, arguments: args };
 
 	if (fallback.name === "blu-edit-block") {
+		// "Add a page to the menu" arrives as a navigation-link aimed at the
+		// navigation block. Rewriting the whole navigation with one link would drop
+		// the others, so use the tool built for menu items (resolves the page,
+		// checks it exists, handles controlled navigations).
+		const target = wp.data.select("core/block-editor").getBlock?.(args.client_id);
+		if (
+			target?.name === "core/navigation" &&
+			/^\s*<!--\s+wp:navigation-(?:link|submenu)\b/.test(args.block_content || "")
+		) {
+			const insertCall = { ...toolCall, name: "blu-insert-inner-block" };
+			return handleInsertInnerBlock(
+				insertCall,
+				{ parent_client_id: args.client_id, block_content: args.block_content },
+				ctx
+			);
+		}
 		return handleEditBlock(toolCall, args, ctx);
 	}
 	if (fallback.name === "blu-move-block") {

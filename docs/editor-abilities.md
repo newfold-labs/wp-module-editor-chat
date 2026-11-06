@@ -228,6 +228,12 @@ These rules apply to Editor Chat only. Direct native consumers always see all 21
 parser flags a block invalid, so models only need correct block comment
 attributes and the saved HTML always matches `save()`.
 
+Menu items: special entities (controlled navigation, template parts, site logo)
+are detected before the generic lock check, so `edit-block` and `update-block`
+return the typed fallback. When the fallback is `blu-edit-block` with a
+`navigation-link` or `navigation-submenu` aimed at a `core/navigation` block,
+the dispatcher runs `blu-insert-inner-block` with that block as the parent.
+
 Insert-block validation accepts `rich-text` attributes as strings, so a nested
 `core/heading` or `core/paragraph` with string `content` is valid for any
 consumer that does call `blu-editor/insert-block`.

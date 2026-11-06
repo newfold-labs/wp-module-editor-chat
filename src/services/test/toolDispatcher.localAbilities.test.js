@@ -61,6 +61,7 @@ const { executeToolCallsForREST } = require("../toolDispatcher");
 const { getLocalToolFallback, runLocalTool } = require("../localToolRegistry");
 const { handleEditBlock } = require("../toolHandlers/editBlock");
 const { handleAddSection } = require("../toolHandlers/addSection");
+const { handleInsertInnerBlock } = require("../toolHandlers/insertInnerBlock");
 const { getActiveImageEditTarget } = require("../imageCache");
 const { applyImageToBlock, callImageAbility, parseImageAbilityUrl } = require("../imageAbility");
 
@@ -269,6 +270,41 @@ describe("toolDispatcher local abilities", () => {
 				hasChanges: true,
 				source: "local-fallback",
 			})
+		);
+	});
+
+	test("routes a menu link aimed at a controlled navigation to insert-inner-block, not a block rewrite", async () => {
+		const linkMarkup =
+			'<!-- wp:navigation-link {"label":"Lessons","type":"page","id":1587,"kind":"post-type"} /-->';
+		const fallbackArguments = { client_id: "nav-1", block_content: linkMarkup };
+		runLocalTool.mockResolvedValue({
+			isError: true,
+			text: "Special entity requires legacy handling.",
+			structuredContent: {
+				mutated: false,
+				fallbackTool: "blu-edit-block",
+				fallbackArguments,
+			},
+		});
+		getLocalToolFallback.mockReturnValue({ name: "blu-edit-block", arguments: fallbackArguments });
+		global.wp.data.select = jest.fn(() => ({
+			getBlocks: jest.fn(() => []),
+			getBlock: jest.fn(() => ({ clientId: "nav-1", name: "core/navigation" })),
+		}));
+		handleInsertInnerBlock.mockResolvedValue({
+			result: [{ type: "text", text: JSON.stringify({ message: "Link added." }) }],
+			isError: false,
+			hasChanges: true,
+		});
+		const ctx = createContext();
+
+		await executeToolCallsForREST([toolCall("blu-editor_edit-block", { clientId: "nav-1" })], ctx);
+
+		expect(handleEditBlock).not.toHaveBeenCalled();
+		expect(handleInsertInnerBlock).toHaveBeenCalledWith(
+			expect.objectContaining({ name: "blu-insert-inner-block" }),
+			expect.objectContaining({ parent_client_id: "nav-1", block_content: linkMarkup }),
+			expect.anything()
 		);
 	});
 

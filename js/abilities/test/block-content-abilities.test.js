@@ -410,6 +410,34 @@ describe("block content abilities", () => {
 		expect(dispatch.updateBlockAttributes).not.toHaveBeenCalled();
 	});
 
+	it.each(["edit-block", "update-block"])(
+		"%s on an edit-locked controlled navigation falls back instead of failing as locked",
+		async (ability) => {
+			blocks["paragraph-1"] = {
+				...blocks["paragraph-1"],
+				name: "core/navigation",
+				attributes: { ref: 42 },
+			};
+			selectors.getBlockEditingMode = jest.fn().mockReturnValue("disabled");
+			selectors.canEditBlock = jest.fn().mockReturnValue(false);
+			selectors.canRemoveBlocks.mockReturnValue(false);
+			let error;
+			try {
+				await execute(`blu-editor/${ability}`, {
+					clientId: "paragraph-1",
+					blockContent: "<!-- wp:navigation {\"ref\":42} /-->",
+					attributes: { overlayMenu: "never" },
+				});
+			} catch (caught) {
+				error = caught;
+			}
+			expect(error).toMatchObject({ name: "EditorAbilityUnsupportedError", mutated: false });
+			expect(error.fallbackTool).toBe(
+				ability === "edit-block" ? "blu-edit-block" : "blu-update-block-attrs"
+			);
+		}
+	);
+
 	it.each([
 		["navigation", "core/navigation", { ref: 12 }],
 		["template-part", "core/template-part", { slug: "header" }],
