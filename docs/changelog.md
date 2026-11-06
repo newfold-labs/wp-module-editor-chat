@@ -2,7 +2,7 @@
 name: wp-module-editor-chat
 title: Changelog
 description: Notable changes by release.
-updated: 2026-10-22
+updated: 2026-11-06
 ---
 
 # Changelog
@@ -20,6 +20,14 @@ updated: 2026-10-22
 - Header customer menu and styles are brand-agnostic (`BrandDropdownMenu`, `nfd-editor-chat__brand-menu`).
 - Admin bar and sidebar titles use the host plugin display name instead of hardcoded "Bluehost".
 - Worker handshake `brand_id` uses `BrandConfig::get_editor_chat_brand_id()` from onboarding.
+- Editor Chat no longer offers `blu-editor_insert-block` to the model. Section and content creation (text plus images) goes through the server `blu-add-section` ability. The ability stays registered for other consumers. A model call to the invented name `blu-editor_add-section` is routed to `blu-add-section`. See [editor-abilities.md](editor-abilities.md#editor-chat-routing).
+- The no-progress guard (`MAX_READ_ONLY_PASSES`) no longer counts gateway discovery passes (`blu-list-abilities`, `blu-get-ability-schema`).
+
+### Fixed
+
+- `blu-editor/insert-block` rejected string content for `rich-text` attributes (paragraph and heading `content`) inside nested `innerBlocks`. Attribute types declared as arrays are also accepted.
+- Local WebMCP tool errors were reported as success. The WebMCP polyfill resolves `executeTool` with a JSON string, so `isError` and `structuredContent` were lost and a failed write showed "Applied successfully". `runLocalTool` now parses the serialized result.
+- Requests that read an uploaded document (for example a CSV) and then add a section stopped with "No-progress loop" before the write, because gateway discovery consumed the read-only pass budget.
 
 ### Deprecated (remove in 2.3.0)
 

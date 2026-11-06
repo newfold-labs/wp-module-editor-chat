@@ -11,6 +11,10 @@ export const MAX_SAME_TOOL_RETRIES = 1;
 // MAX_TOOL_ITERATIONS and end with no reply. 4 leaves room for legitimate
 // multi-block exploration while still catching a stuck "keep reading" loop.
 export const MAX_READ_ONLY_PASSES = 4;
+// Gateway discovery is the mandatory prefix of any server ability call
+// (list-abilities -> get-ability-schema -> call). It is not "re-reading", so it
+// must not eat the read-only budget before the model can act.
+export const GATEWAY_DISCOVERY_TOOLS = new Set(["blu-list-abilities", "blu-get-ability-schema"]);
 // Char budget for READ-ONLY tool results in conversation history. Reads (e.g.
 // get-block-markup) return the very data the model reasons over; the default
 // 500-char write-ack truncation cuts a section's markup down to its opening tag,

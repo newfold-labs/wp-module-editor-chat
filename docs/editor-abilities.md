@@ -2,7 +2,7 @@
 name: wp-module-editor-chat
 title: Reusable Editor Abilities
 description: Load and consume the public client-side Gutenberg abilities.
-updated: 2026-11-02
+updated: 2026-11-06
 ---
 
 # Reusable Editor Abilities
@@ -202,6 +202,29 @@ owns. Each tool is registered with an `AbortSignal`;
 `window.nfdEditorAbilities.unbridge( abilityNames? )` unregisters the tools the
 bridge registered (all of them by default) without touching other plugins'
 tools. Direct native consumers do not need `document.modelContext`.
+
+## Editor Chat routing
+
+These rules apply to Editor Chat only. Direct native consumers always see all 21 abilities.
+
+- **Content creation uses the server.** Editor Chat does not offer
+  `blu-editor_insert-block` to the model. Adding a section with text and images
+  goes through the server `blu-add-section` ability, which returns a formatted
+  block. If the model calls the invented name `blu-editor_add-section`, the
+  dispatcher runs `blu-add-section` instead. The hidden tool list is
+  `MODEL_HIDDEN_LOCAL_TOOLS` in `src/services/localToolRegistry.js`; the alias map
+  is `SERVER_OWNED_TOOL_ALIASES` in `src/services/toolDispatcher.js`.
+- **Local results keep their error state.** WebMCP `executeTool` resolves with a
+  JSON string. `runLocalTool` parses it so `isError` and `structuredContent`
+  survive; a rejected write is reported to the model as an error.
+- **Discovery does not use the read-only budget.** The no-progress guard stops a
+  turn after `MAX_READ_ONLY_PASSES` consecutive read-only passes. Passes made only
+  of `blu-list-abilities` or `blu-get-ability-schema` neither count nor reset the
+  streak (`nextReadOnlyStreak` in `src/hooks/chat/conversationUtils.js`).
+
+Insert-block validation accepts `rich-text` attributes as strings, so a nested
+`core/heading` or `core/paragraph` with string `content` is valid for any
+consumer that does call `blu-editor/insert-block`.
 
 ## Unsupported operations and fallback
 

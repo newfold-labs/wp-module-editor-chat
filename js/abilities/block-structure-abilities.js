@@ -40,15 +40,24 @@ function validateAttributes(name, attributes, path) {
 		if (!definition || value === null || !definition.type) {
 			continue;
 		}
-		const valid =
-			(definition.type === "array" && Array.isArray(value)) ||
-			(definition.type === "object" && isPlainObject(value)) ||
-			(definition.type === "integer" && Number.isInteger(value)) ||
-			(definition.type === "number" && typeof value === "number") ||
-			(definition.type === "boolean" && typeof value === "boolean") ||
-			(definition.type === "string" && typeof value === "string");
+		const types = Array.isArray(definition.type) ? definition.type : [definition.type];
+		const valid = types.some(
+			(type) =>
+				(type === "array" && Array.isArray(value)) ||
+				(type === "object" && isPlainObject(value)) ||
+				(type === "integer" && Number.isInteger(value)) ||
+				(type === "number" && typeof value === "number") ||
+				(type === "boolean" && typeof value === "boolean") ||
+				// Rich text attributes (paragraph/heading content, etc.) are HTML strings.
+				((type === "string" || type === "rich-text") && typeof value === "string") ||
+				(type === "null" && value === null) ||
+				// Unknown types must not block valid input.
+				!["array", "object", "integer", "number", "boolean", "string", "rich-text", "null"].includes(
+					type
+				)
+		);
 		if (!valid) {
-			throw new Error(`${path}.${key} must be ${definition.type}.`);
+			throw new Error(`${path}.${key} must be ${types.join(" or ")}.`);
 		}
 	}
 }

@@ -1,4 +1,4 @@
-import { dispatch } from "@wordpress/data";
+import { dispatch, select } from "@wordpress/data";
 import { __ } from "@wordpress/i18n";
 
 import { callAbility } from "./callAbility";
@@ -17,6 +17,7 @@ import logger from "../utils/logger";
  * @param {string} clientId Target block clientId
  * @param {string} url      New image URL
  * @param {string} [alt]    Alt text describing the new image
+ * @return {boolean} Whether the editor contains the generated URL after dispatch.
  */
 export function applyImageToBlock(clientId, url, alt) {
 	dispatch("core/block-editor").updateBlockAttributes(clientId, {
@@ -24,6 +25,7 @@ export function applyImageToBlock(clientId, url, alt) {
 		id: 0,
 		...(alt ? { alt } : {}),
 	});
+	return select("core/block-editor").getBlock(clientId)?.attributes?.url === url;
 }
 
 /**

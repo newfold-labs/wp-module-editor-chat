@@ -136,6 +136,40 @@ describe("block structure abilities", () => {
 		expect(result.clientIds).toHaveLength(1);
 	});
 
+	it("accepts string content for rich-text attributes on nested blocks", async () => {
+		const types = {
+			"core/group": { name: "core/group", attributes: {} },
+			"core/paragraph": {
+				name: "core/paragraph",
+				attributes: { content: { type: "rich-text", source: "rich-text" } },
+			},
+			"core/heading": {
+				name: "core/heading",
+				attributes: { content: { type: "rich-text" }, level: { type: "number" } },
+			},
+		};
+		window.wp.blocks.getBlockType = jest.fn((name) => types[name]);
+		const result = await execute("blu-editor/insert-block", {
+			name: "core/group",
+			innerBlocks: [
+				{
+					name: "core/group",
+					innerBlocks: [
+						{ name: "core/heading", attributes: { content: "Yoga", level: 3 } },
+						{ name: "core/paragraph", attributes: { content: "Weekly class" } },
+					],
+				},
+			],
+		});
+		expect(result).toMatchObject({ changed: true });
+		await expect(
+			execute("blu-editor/insert-block", {
+				name: "core/paragraph",
+				attributes: { content: 42 },
+			})
+		).rejects.toThrow("content must be rich-text");
+	});
+
 	it("validates stale sibling IDs before dispatch", async () => {
 		await expect(
 			execute("blu-editor/insert-block", {

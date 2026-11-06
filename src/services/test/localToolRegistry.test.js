@@ -120,6 +120,40 @@ describe("localToolRegistry", () => {
 		});
 	});
 
+	test("parses the JSON string the WebMCP polyfill resolves with, keeping errors as errors", async () => {
+		const tool = localTool("blu-editor_insert-block");
+		setModelContext({
+			getTools: jest.fn().mockResolvedValue([tool]),
+			executeTool: jest.fn().mockResolvedValue(
+				JSON.stringify({
+					content: [{ type: "text", text: "content must be rich-text." }],
+					isError: true,
+				})
+			),
+		});
+		await expect(runLocalTool(tool.name, {})).resolves.toEqual({
+			isError: true,
+			text: "content must be rich-text.",
+			structuredContent: undefined,
+		});
+
+		const structuredContent = { changed: true, clientIds: ["a"] };
+		setModelContext({
+			getTools: jest.fn().mockResolvedValue([tool]),
+			executeTool: jest.fn().mockResolvedValue(
+				JSON.stringify({
+					content: [{ type: "text", text: "{}" }],
+					isError: false,
+					structuredContent,
+				})
+			),
+		});
+		await expect(runLocalTool(tool.name, {})).resolves.toMatchObject({
+			isError: false,
+			structuredContent,
+		});
+	});
+
 	test("normalizes thrown execution errors", async () => {
 		const tool = localTool("blu-editor_get-editor-tree");
 		setModelContext({
@@ -179,6 +213,18 @@ describe("localToolRegistry", () => {
 				unrelated,
 			])
 		).toEqual([...localTools, ...gatewayTools, unrelated]);
+	});
+
+	test("never offers the local insert-block tool: sections come from the server blu-add-section", () => {
+		const addSection = { name: "blu-add-section" };
+		const merged = mergeLocalAndMcpTools(
+			[localTool("blu-editor_insert-block"), localTool("blu-editor_get-editor-tree")],
+			[addSection]
+		);
+		expect(merged.map((tool) => tool.name)).toEqual([
+			"blu-editor_get-editor-tree",
+			"blu-add-section",
+		]);
 	});
 
 	test("keeps a direct MCP tool when its corresponding local tool is absent", () => {

@@ -277,7 +277,11 @@ export function formatImageEditUserMessage(instruction, clientId) {
 
 	const sourceUrl = getBlockImageUrl(block);
 	if (!sourceUrl) {
-		return instruction;
+		return (
+			`[Image generation request] Selected empty block: ${block.name} (id:${clientId}). ` +
+			`Generate an image and apply it to this exact block. ` +
+			`User instruction: ${instruction}`
+		);
 	}
 
 	return (

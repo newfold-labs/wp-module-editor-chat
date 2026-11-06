@@ -54,12 +54,15 @@ jest.mock("../toolHandlers/regenerateLogo", () => ({ handleRegenerateLogo: jest.
 jest.mock("../toolHandlers/editLogo", () => ({ handleEditLogo: jest.fn() }));
 jest.mock("../toolHandlers/setLogoFromImage", () => ({ handleSetLogoFromImage: jest.fn() }));
 jest.mock("../toolHandlers/editImage", () => ({ handleEditImage: jest.fn() }));
-jest.mock("../blockToolbar/blockAI", () => ({ IMAGE_BLOCKS: new Set() }));
+jest.mock("../blockToolbar/blockAI", () => ({ IMAGE_BLOCKS: new Set(["core/image"]) }));
 
 const { snapshotBlocks } = require("../../utils/editorContext");
 const { executeToolCallsForREST } = require("../toolDispatcher");
 const { getLocalToolFallback, runLocalTool } = require("../localToolRegistry");
 const { handleEditBlock } = require("../toolHandlers/editBlock");
+const { handleAddSection } = require("../toolHandlers/addSection");
+const { getActiveImageEditTarget } = require("../imageCache");
+const { applyImageToBlock, callImageAbility, parseImageAbilityUrl } = require("../imageAbility");
 
 function createContext(overrides = {}) {
 	return {
@@ -126,6 +129,34 @@ describe("toolDispatcher local abilities", () => {
 			}),
 		]);
 		expect(snapshotBlocks).not.toHaveBeenCalled();
+	});
+
+	test("routes a hallucinated blu-editor_add-section to the server add-section handler", async () => {
+		handleAddSection.mockResolvedValue({
+			id: "call-add",
+			result: [{ type: "text", text: JSON.stringify({ message: "Section added." }) }],
+			isError: false,
+			hasChanges: true,
+		});
+		const ctx = createContext();
+
+		await executeToolCallsForREST(
+			[
+				{
+					id: "call-add",
+					name: "blu-editor_add-section",
+					arguments: { block_content: "<!-- wp:group /-->", after_client_id: "a" },
+				},
+			],
+			ctx
+		);
+
+		expect(runLocalTool).not.toHaveBeenCalled();
+		expect(handleAddSection).toHaveBeenCalledWith(
+			expect.objectContaining({ name: "blu-add-section" }),
+			expect.objectContaining({ block_content: "<!-- wp:group /-->" }),
+			expect.anything()
+		);
 	});
 
 	test("snapshots before a local write and marks a successful mutation", async () => {
@@ -333,5 +364,68 @@ describe("toolDispatcher local abilities", () => {
 		expect(getLocalToolFallback).not.toHaveBeenCalled();
 		expect(handleEditBlock).not.toHaveBeenCalled();
 		expect(ctx.mcpClient.callTool).not.toHaveBeenCalled();
+	});
+
+	test("reports a generated image as a mutation only after applying it to the active empty block", async () => {
+		const imageBlock = {
+			clientId: "image-empty",
+			name: "core/image",
+			attributes: {},
+			innerBlocks: [],
+		};
+		global.wp.data.select.mockReturnValue({
+			getBlocks: jest.fn(() => [imageBlock]),
+			getBlock: jest.fn((clientId) => (clientId === imageBlock.clientId ? imageBlock : null)),
+			getSelectedBlock: jest.fn(() => null),
+		});
+		getActiveImageEditTarget.mockReturnValue(imageBlock.clientId);
+		callImageAbility.mockResolvedValue({ isError: false, content: [] });
+		parseImageAbilityUrl.mockReturnValue("https://example.com/generated.jpg");
+		applyImageToBlock.mockReturnValue(true);
+		const ctx = createContext();
+
+		const results = await executeToolCallsForREST(
+			[toolCall("blu-generate-image", { prompt: "An office with employees" })],
+			ctx
+		);
+
+		expect(applyImageToBlock).toHaveBeenCalledWith(
+			imageBlock.clientId,
+			"https://example.com/generated.jpg",
+			"An office with employees"
+		);
+		expect(results[0]).toEqual(
+			expect.objectContaining({
+				isError: false,
+				hasChanges: true,
+				content: expect.stringContaining("applied"),
+			})
+		);
+	});
+
+	test("fails instead of claiming success when the active image block no longer exists", async () => {
+		global.wp.data.select.mockReturnValue({
+			getBlocks: jest.fn(() => []),
+			getBlock: jest.fn(() => null),
+			getSelectedBlock: jest.fn(() => null),
+		});
+		getActiveImageEditTarget.mockReturnValue("stale-image");
+		callImageAbility.mockResolvedValue({ isError: false, content: [] });
+		parseImageAbilityUrl.mockReturnValue("https://example.com/generated.jpg");
+		const ctx = createContext();
+
+		const results = await executeToolCallsForREST(
+			[toolCall("blu-generate-image", { prompt: "An office with employees" })],
+			ctx
+		);
+
+		expect(applyImageToBlock).not.toHaveBeenCalled();
+		expect(results[0]).toEqual(
+			expect.objectContaining({
+				isError: true,
+				hasChanges: false,
+				content: expect.stringContaining("target block"),
+			})
+		);
 	});
 });

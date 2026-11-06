@@ -508,6 +508,10 @@ function abortAwareClient(mcpClient, abortSignal) {
 	return guarded;
 }
 
+const SERVER_OWNED_TOOL_ALIASES = Object.freeze({
+	"blu-editor_add-section": "blu-add-section",
+});
+
 /**
  * Execute tool calls for the function-calling loop.
  *
@@ -536,8 +540,10 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 	const clientToolCalls = [];
 	const browserToolCalls = [];
 	const serverToolCalls = [];
-	for (const tc of toolCalls) {
-		const name = tc.name || "";
+	for (const originalCall of toolCalls) {
+		// The model sometimes invents local names for server-owned operations.
+		const name = SERVER_OWNED_TOOL_ALIASES[originalCall.name] || originalCall.name || "";
+		const tc = name === originalCall.name ? originalCall : { ...originalCall, name };
 		if (isLocalToolName(name)) {
 			localToolCalls.push(tc);
 			browserToolCalls.push(tc);
@@ -881,30 +887,50 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 						sourceUrl,
 					});
 					const url = parseImageAbilityUrl(mcpResult);
+					let appliedToBlock = false;
 					if (url) {
 						const alt = resolveAlt(args.alt, args.prompt);
 						appendGeneratedImageUrl(url, alt);
 						if (targetBlock && IMAGE_BLOCKS.has(targetBlock.name)) {
-							applyImageToBlock(targetBlock.clientId, url, alt);
+							appliedToBlock = applyImageToBlock(targetBlock.clientId, url, alt);
 						}
+					}
+					let targetError = null;
+					if (url && targetClientId && (!targetBlock || !IMAGE_BLOCKS.has(targetBlock.name))) {
+						targetError = "The target block is unavailable or is not an image block.";
+					} else if (url && targetBlock && IMAGE_BLOCKS.has(targetBlock.name) && !appliedToBlock) {
+						targetError = "The generated image could not be applied to the target block.";
+					}
+					let resultPayload;
+					if (!url) {
+						resultPayload = { success: false, error: "No image URL returned." };
+					} else if (targetError) {
+						resultPayload = { success: false, error: targetError, url };
+					} else if (appliedToBlock) {
+						resultPayload = {
+							success: true,
+							message: sourceUrl
+								? "Image edited and applied to the target block."
+								: "Image generated and applied to the target block.",
+							url,
+						};
+					} else {
+						resultPayload = {
+							success: true,
+							message: sourceUrl ? "Image edited." : "Image generated.",
+							url,
+						};
 					}
 					result = {
 						id: toolCall.id,
 						result: [
 							{
 								type: "text",
-								text: JSON.stringify(
-									url
-										? {
-												success: true,
-												message: sourceUrl ? "Image edited." : "Image generated.",
-												url,
-											}
-										: { success: false, error: "No image URL returned." }
-								),
+								text: JSON.stringify(resultPayload),
 							},
 						],
-						isError: mcpResult.isError || !url,
+						isError: mcpResult.isError || !url || Boolean(targetError),
+						hasChanges: appliedToBlock,
 					};
 				} catch (err) {
 					result = {

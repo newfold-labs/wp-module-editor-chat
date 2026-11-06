@@ -7,6 +7,11 @@ const DIRECT_MCP_EQUIVALENTS = Object.freeze({
 	"blu-editor_update-block": "blu-update-block-attrs",
 });
 
+// Local tools the model must never see. Section/content creation (text plus
+// images) belongs to the server `blu-add-section` ability, which returns a fully
+// formatted block; the low-level local insert would bypass it.
+const MODEL_HIDDEN_LOCAL_TOOLS = new Set(["blu-editor_insert-block"]);
+
 const ALLOWED_FALLBACK_TOOLS = new Set(Object.values(DIRECT_MCP_EQUIVALENTS));
 const EMPTY_INPUT_SCHEMA = Object.freeze({ type: "object", properties: {} });
 
@@ -62,6 +67,29 @@ function extractText(result) {
 			.join("\n");
 	}
 	return "";
+}
+
+/**
+ * WebMCP's executeTool resolves with a JSON string (the WebMCP polyfill always
+ * does). Without parsing it, `isError` and `structuredContent` are lost and a
+ * failed tool call is reported to the model as a success.
+ *
+ * @param {unknown} result Raw executeTool result.
+ * @return {unknown} Parsed tool result, or the original value.
+ */
+function parseSerializedResult(result) {
+	if (typeof result !== "string") {
+		return result;
+	}
+	try {
+		const parsed = JSON.parse(result);
+		if (isObject(parsed) && ("content" in parsed || "isError" in parsed)) {
+			return parsed;
+		}
+	} catch {
+		// Plain text result.
+	}
+	return result;
 }
 
 function errorResult(message) {
@@ -128,7 +156,9 @@ export async function runLocalTool(name, args = {}) {
 	}
 
 	try {
-		const result = await modelContext.executeTool(tool, isObject(args) ? args : {});
+		const result = parseSerializedResult(
+			await modelContext.executeTool(tool, isObject(args) ? args : {})
+		);
 		return {
 			isError: Boolean(result?.isError),
 			text: extractText(result),
@@ -176,7 +206,10 @@ export function mergeLocalAndMcpTools(localTools, mcpTools) {
 			.filter(Boolean)
 	);
 
-	return [...safeLocalTools, ...safeMcpTools.filter((tool) => !supersededNames.has(tool?.name))];
+	return [
+		...safeLocalTools.filter((tool) => !MODEL_HIDDEN_LOCAL_TOOLS.has(tool?.name)),
+		...safeMcpTools.filter((tool) => !supersededNames.has(tool?.name)),
+	];
 }
 
 /**

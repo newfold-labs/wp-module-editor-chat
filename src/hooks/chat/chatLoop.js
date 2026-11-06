@@ -19,6 +19,7 @@ import {
 	truncateToolResult,
 	compressConversationHistory,
 	createRetryTracker,
+	nextReadOnlyStreak,
 } from "./conversationUtils";
 import {
 	ASSISTANT_JSON_FORMAT,
@@ -654,11 +655,7 @@ export async function runChatLoop(userMessage, deps) {
 		// no reply. Count consecutive info-only passes (read-only tools, nothing
 		// changed); once it's clearly circling, stop — the post-loop closing pass
 		// turns that into a real answer instead of a wall of repeated reasoning.
-		const infoOnlyPass =
-			unwrappedCalls.length > 0 &&
-			!toolsJustExecuted &&
-			unwrappedCalls.every((tc) => READ_ONLY_TOOLS.has((tc.name || "").replace(/\//g, "-")));
-		readOnlyStreak = infoOnlyPass ? readOnlyStreak + 1 : 0;
+		readOnlyStreak = nextReadOnlyStreak(readOnlyStreak, unwrappedCalls, toolsJustExecuted);
 		if (readOnlyStreak >= MAX_READ_ONLY_PASSES) {
 			console.warn(
 				`[EditorChat] No-progress loop: ${readOnlyStreak} read-only passes with no change — stopping to summarize`
