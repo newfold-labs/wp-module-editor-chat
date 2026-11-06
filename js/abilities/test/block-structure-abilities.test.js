@@ -170,6 +170,39 @@ describe("block structure abilities", () => {
 		).rejects.toThrow("content must be rich-text");
 	});
 
+	it("removing a menu item inside a controlled navigation falls back with its label", async () => {
+		blocks.nav = {
+			clientId: "nav",
+			name: "core/navigation",
+			attributes: { ref: 12 },
+			innerBlocks: [],
+		};
+		blocks.link = {
+			clientId: "link",
+			name: "core/navigation-link",
+			attributes: { label: "Book", type: "page", id: 1554 },
+			innerBlocks: [],
+		};
+		roots.nav = "";
+		roots.link = "nav";
+		orders.nav = ["link"];
+		let error;
+		try {
+			await execute("blu-editor/remove-block", { clientId: "link" });
+		} catch (caught) {
+			error = caught;
+		}
+		expect(error).toMatchObject({
+			name: "EditorAbilityUnsupportedError",
+			mutated: false,
+			fallbackTool: "blu-delete-block",
+			// The legacy handler rejects bare client_ids inside a navigation: ids go
+			// stale after every menu edit, so the item is addressed by its label.
+			fallbackArguments: { client_id: "link", label: "Book" },
+		});
+		expect(dispatch.removeBlocks).not.toHaveBeenCalled();
+	});
+
 	it("validates stale sibling IDs before dispatch", async () => {
 		await expect(
 			execute("blu-editor/insert-block", {

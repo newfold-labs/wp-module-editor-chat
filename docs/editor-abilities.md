@@ -233,6 +233,9 @@ are detected before the generic lock check, so `edit-block` and `update-block`
 return the typed fallback. When the fallback is `blu-edit-block` with a
 `navigation-link` or `navigation-submenu` aimed at a `core/navigation` block,
 the dispatcher runs `blu-insert-inner-block` with that block as the parent.
+Removing a menu item (`core/navigation-link` or `core/navigation-submenu`)
+returns a `blu-delete-block` fallback that includes the item's `label`, because
+the legacy handler does not accept bare client IDs inside a navigation.
 
 Insert-block validation accepts `rich-text` attributes as strings, so a nested
 `core/heading` or `core/paragraph` with string `content` is valid for any

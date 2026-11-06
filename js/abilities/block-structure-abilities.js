@@ -422,9 +422,17 @@ async function removeBlock(input = {}) {
 	const store = requireEditorStore();
 	const actions = requireEditorActions();
 	const block = requireBlock(store, input.clientId);
+	// Menu items are removed by label: the legacy handler rejects a bare
+	// client_id inside a navigation because ids go stale after every menu edit.
+	const menuLabel =
+		(block.name === "core/navigation-link" || block.name === "core/navigation-submenu") &&
+		typeof block.attributes?.label === "string" &&
+		block.attributes.label.trim()
+			? block.attributes.label
+			: null;
 	rejectSpecial(store, input.clientId, {
 		tool: "blu-delete-block",
-		arguments: { client_id: input.clientId },
+		arguments: { client_id: input.clientId, ...(menuLabel ? { label: menuLabel } : {}) },
 	});
 	if (
 		store.canRemoveBlocks?.([input.clientId]) === false ||
