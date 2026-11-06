@@ -22,10 +22,13 @@
 		"post-set-version": "rm -rf ./build",
 		"format": "wp-scripts format ./src",
 		"start": "concurrently \"wp-scripts start ./src/chat-editor.js\"",
-		"lint:js": "wp-scripts lint-js ./src",
-		"lint:js:fix": "wp-scripts lint-js ./src --fix"
+		"test:unit": "wp-scripts test-unit-jest --runInBand",
+		"vendor": "bash bin/vendor-webmcp-polyfill.sh",
+		"lint:js": "wp-scripts lint-js ./src ./js/abilities",
+		"lint:js:fix": "wp-scripts lint-js ./src ./js/abilities --fix"
 	},
 	"devDependencies": {
+		"@mcp-b/webmcp-polyfill": "6.0.3",
 		"@wordpress/eslint-plugin": "^28.0.0",
 		"@wordpress/prettier-config": "^5.0.0",
 		"@wordpress/scripts": "^37.0.0",
@@ -61,5 +64,17 @@
 	},
 	"overrides": {
 		"zod": "^3.25.0"
+	},
+	"jest": {
+		"testEnvironment": "node",
+		"testPathIgnorePatterns": [
+			"/tests/playwright/"
+		],
+		"moduleNameMapper": {
+			"^@wordpress/abilities$": "<rootDir>/js/abilities/test/wordpress-abilities-mock.cjs"
+		},
+		"transform": {
+			"^.+\\.js$": "<rootDir>/js/abilities/test/jest-transform.cjs"
+		}
 	}
 }

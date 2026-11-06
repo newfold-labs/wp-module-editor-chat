@@ -15,6 +15,7 @@ const { wordpress } = requireFromPlugin( helpersEntry );
 const { expect } = requireFromPlugin( '@playwright/test' );
 
 export const ORIGINAL_HEADING = 'Original heading';
+export const ORIGINAL_PARAGRAPH = 'Original paragraph';
 export const SELECTORS = {
 	chatTextarea: 'textarea.nfd-editor-chat-input__textarea',
 	chatSidebar: '.nfd-editor-chat-sidebar',
@@ -64,7 +65,10 @@ export async function createHeadingTestPage() {
 	const content =
 		'<!-- wp:heading {"level":2} --><h2 class="wp-block-heading">' +
 		ORIGINAL_HEADING +
-		'</h2><!-- /wp:heading -->';
+		'</h2><!-- /wp:heading -->' +
+		'<!-- wp:paragraph --><p>' +
+		ORIGINAL_PARAGRAPH +
+		'</p><!-- /wp:paragraph -->';
 	const id = await wordpress.wpCli(
 		`post create --post_type=page --post_status=publish --post_title="Playwright Editor Chat" --post_content='${ content }' --porcelain`,
 		{ failOnNonZeroExit: true }
@@ -95,7 +99,10 @@ export async function resetHeadingTestPageContent( postId ) {
 	const content =
 		'<!-- wp:heading {"level":2} --><h2 class="wp-block-heading">' +
 		ORIGINAL_HEADING +
-		'</h2><!-- /wp:heading -->';
+		'</h2><!-- /wp:heading -->' +
+		'<!-- wp:paragraph --><p>' +
+		ORIGINAL_PARAGRAPH +
+		'</p><!-- /wp:paragraph -->';
 	await wordpress.wpCli(
 		`post update ${ postId } --post_content='${ content }'`,
 		{ failOnNonZeroExit: true }
@@ -222,6 +229,40 @@ export async function getFirstHeadingClientId( page ) {
 
 /**
  * @param {import('@playwright/test').Page} page
+ * @return {Promise<string|null>} First paragraph client ID.
+ */
+export async function getFirstParagraphClientId( page ) {
+	const paragraph = editorCanvasFrame( page ).locator( 'p' ).filter( {
+		hasText: ORIGINAL_PARAGRAPH,
+	} ).first();
+	await paragraph.waitFor( { state: 'visible', timeout: 30_000 } );
+	const fromDom = await paragraph.evaluate( ( el ) => {
+		const node = el.closest( '[data-block]' );
+		return node?.getAttribute( 'data-block' ) || null;
+	} );
+	if ( fromDom ) {
+		return fromDom;
+	}
+	return page.evaluate( () => {
+		const findParagraph = ( blocks ) => {
+			for ( const block of blocks ) {
+				if ( block.name === 'core/paragraph' ) {
+					return block.clientId;
+				}
+				const inner = findParagraph( block.innerBlocks || [] );
+				if ( inner ) {
+					return inner;
+				}
+			}
+			return null;
+		};
+		const blocks = window.wp?.data?.select( 'core/block-editor' )?.getBlocks?.() || [];
+		return findParagraph( blocks );
+	} );
+}
+
+/**
+ * @param {import('@playwright/test').Page} page
  * @param {string} text
  */
 export async function sendChatMessage( page, text ) {
@@ -250,6 +291,16 @@ export async function expectHeadingInCanvas( page, headingText ) {
 		.getByRole( 'heading', { name: headingText } )
 		.or( canvas.getByText( headingText, { exact: true } ) );
 	await expect( match.first() ).toBeVisible( { timeout: 45_000 } );
+}
+
+/**
+ * @param {import('@playwright/test').Page} page
+ * @param {string} text Expected paragraph text.
+ */
+export async function expectParagraphInCanvas( page, text ) {
+	await expect( editorCanvasFrame( page ).getByText( text, { exact: true } ).first() ).toBeVisible( {
+		timeout: 45_000,
+	} );
 }
 
 /**
