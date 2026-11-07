@@ -18,8 +18,10 @@ import { __ } from "@wordpress/i18n";
 import {
 	validateEntityContentArgs,
 	abilityUsesBlockContent,
+	resolveContentField,
 } from "../utils/entityContentValidation";
 import { createAbortError } from "../utils/abortControl";
+import { findImagePlaceholders } from "../utils/imagePlaceholders";
 import { resolveAlt } from "../utils/imageAlt";
 import { snapshotBlocks } from "../utils/editorContext";
 import { safeParseJSON } from "../utils/jsonUtils";
@@ -27,9 +29,19 @@ import { callAbility, mcpResultIsError } from "./callAbility";
 import { handleContentCreation, CREATE_ABILITIES } from "./contentNavigation";
 import { findHeaderRefNavigationBlock, hydrateAllRefNavigationBlocks } from "./navigationEditor";
 import {
+	applyImageToBlock,
+	callImageAbility,
+	getBlockImageUrl,
+	parseImageAbilityUrl,
+	resolveMarkupImages,
+} from "./imageAbility";
+import {
 	appendGeneratedImageUrl,
+	deduplicateImages,
 	getActiveImageEditTarget,
+	getGeneratedImages,
 	resetGeneratedImageCache,
+	unresolvedPlaceholderResult,
 } from "./imageCache";
 import { handleAddSection } from "./toolHandlers/addSection";
 import { handleDeleteBlock } from "./toolHandlers/deleteBlock";
@@ -45,12 +57,6 @@ import { handleEditLogo } from "./toolHandlers/editLogo";
 import { handleSetLogoFromImage } from "./toolHandlers/setLogoFromImage";
 import { handleUpdateBlockAttrs } from "./toolHandlers/updateBlockAttrs";
 import { handleEditImage } from "./toolHandlers/editImage";
-import {
-	applyImageToBlock,
-	callImageAbility,
-	getBlockImageUrl,
-	parseImageAbilityUrl,
-} from "./imageAbility";
 import { IMAGE_BLOCKS } from "./blockToolbar/blockAI";
 import logger from "../utils/logger";
 
@@ -904,26 +910,48 @@ export async function executeToolCallsForREST(toolCalls, rawCtx) {
 				// Validate Gutenberg markup before entity create/update hits WordPress REST.
 				let contentValidationFailed = false;
 				if (abilityUsesBlockContent(toolName)) {
-					const hasContent =
-						args.content || args.block_content || args.markup || args.html || args.block_markup;
+					const hasContent = resolveContentField(args);
 					if (hasContent) {
-						await ctx.updateProgress(__("Validating block markup…", "wp-module-editor-chat"), 300);
-						const contentCheck = validateEntityContentArgs(toolName, args);
-						if (!contentCheck.ok) {
-							contentValidationFailed = true;
-							result = {
-								id: toolCall.id,
-								result: [
-									{
-										type: "text",
-										text: JSON.stringify({
-											success: false,
-											error: contentCheck.error,
-										}),
-									},
-								],
-								isError: true,
-							};
+						if (toolName === "blu-add-page") {
+							const images = await resolveMarkupImages(hasContent, args, ctx);
+							args.content = images.markup;
+							const unresolved = unresolvedPlaceholderResult(toolCall.id, args.content, images);
+							if (unresolved) {
+								console.warn(
+									"[ToolExecutor:REST] add-page: placeholders left unresolved: create rejected",
+									findImagePlaceholders(args.content)
+								);
+								contentValidationFailed = true;
+								result = unresolved;
+							} else if (getGeneratedImages().length > 0) {
+								const dedup = deduplicateImages(args.content, getGeneratedImages());
+								if (dedup.replacements.length > 0) {
+									args.content = dedup.markup;
+								}
+							}
+						}
+						if (!contentValidationFailed) {
+							await ctx.updateProgress(
+								__("Validating block markup…", "wp-module-editor-chat"),
+								300
+							);
+							const contentCheck = validateEntityContentArgs(toolName, args, ctx.intent);
+							if (!contentCheck.ok) {
+								contentValidationFailed = true;
+								result = {
+									id: toolCall.id,
+									result: [
+										{
+											type: "text",
+											text: JSON.stringify({
+												success: false,
+												error: contentCheck.error,
+											}),
+										},
+									],
+									isError: true,
+								};
+							}
 						}
 					}
 				}
