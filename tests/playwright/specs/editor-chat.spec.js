@@ -239,6 +239,10 @@ test.describe( 'Editor chat (Site Editor)', { tag: '@env-local' }, () => {
 		await expectParagraphInCanvas( page, mockState.newParagraphText );
 		await waitForChatTurnIdle( page );
 
-		expect( mockState.requestedToolNames ).toContain( 'blu-update-block-attrs' );
+		// Which legacy tools the server MCP lists depends on the installed
+		// wp-module-mcp version, so assert only that no local ability was offered.
+		expect(
+			mockState.requestedToolNames.filter( ( name ) => name.startsWith( 'blu-editor_' ) )
+		).toEqual( [] );
 	} );
 } );
