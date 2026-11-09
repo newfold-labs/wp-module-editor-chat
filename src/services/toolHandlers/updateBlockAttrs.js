@@ -1,5 +1,6 @@
 import { __ } from "@wordpress/i18n";
 
+import { normalizeColorAttributeValues } from "../../../js/abilities/color-attribute-normalization";
 import { deepMergeAttrs as deepMerge } from "../../utils/deepMerge";
 import { appendGeneratedImageUrl } from "../imageCache";
 import { resolveAlt } from "../../utils/imageAlt";
@@ -61,7 +62,7 @@ export async function handleUpdateBlockAttrs(toolCall, args, ctx) {
 
 	try {
 		// Ensure attributes is always an object so `in` / property access is safe.
-		args.attributes = args.attributes || {};
+		args.attributes = normalizeColorAttributeValues(args.attributes || {});
 
 		// Site logo is an image — CSS color attrs cannot edit it. Force the
 		// model onto blu/edit-logo (works even when only the header is selected).
@@ -82,6 +83,52 @@ export async function handleUpdateBlockAttrs(toolCall, args, ctx) {
 				],
 				isError: true,
 			};
+		}
+
+		// core/buttons is only a layout wrapper; its core/button children own
+		// the visible link colors. Apply color patches to those children when
+		// the wrapper was targeted by mistake.
+		if (block.name === "core/buttons" && isCssColorPatch(args.attributes)) {
+			const buttonChildren = (block.innerBlocks || []).filter(
+				(child) => child.name === "core/button"
+			);
+			const selectedId = wp.data.select("core/block-editor").getSelectedBlockClientId?.();
+			const selectedButton = buttonChildren.find((child) => child.clientId === selectedId);
+			const buttons = selectedButton ? [selectedButton] : buttonChildren;
+			if (buttons.length > 0) {
+				const results = [];
+				for (const button of buttons) {
+					results.push(
+						await handleUpdateBlockAttrs(
+							toolCall,
+							{
+								client_id: button.clientId,
+								attributes: args.attributes,
+								image_prompt: args.image_prompt,
+							},
+							ctx
+						)
+					);
+				}
+				const failed = results.find((result) => result.isError);
+				if (failed) {
+					return failed;
+				}
+				return {
+					id: toolCall.id,
+					result: [
+						{
+							type: "text",
+							text: JSON.stringify({
+								success: true,
+								message: `Updated ${buttons.length} button(s)`,
+							}),
+						},
+					],
+					isError: false,
+					hasChanges: results.some((result) => result.hasChanges),
+				};
+			}
 		}
 
 		// `url` is sometimes filled with an `__IMG_N__` placeholder — a markup

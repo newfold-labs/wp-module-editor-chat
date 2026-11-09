@@ -7,6 +7,7 @@ import {
 	MAX_HISTORY_MESSAGES,
 	MAX_HISTORY_CHARS,
 	READ_ONLY_TOOLS,
+	GATEWAY_DISCOVERY_TOOLS,
 } from "./constants";
 import logger from "../../utils/logger";
 
@@ -367,4 +368,27 @@ export function buildMessageWithAttachments(message, attachments) {
 	}
 
 	return message + context;
+}
+
+/**
+ * Next value of the consecutive info-only pass counter used by the no-progress
+ * guard. Gateway discovery passes neither count nor reset it.
+ *
+ * @param {number}  streak            Current streak.
+ * @param {Array}   calls             Tool calls of this pass.
+ * @param {boolean} toolsJustExecuted Whether a tool changed the editor this pass.
+ * @return {number} Updated streak.
+ */
+export function nextReadOnlyStreak(streak, calls, toolsJustExecuted) {
+	const names = (calls || []).map((tc) => (tc.name || "").replace(/\//g, "-"));
+	if (
+		names.length > 0 &&
+		!toolsJustExecuted &&
+		names.every((n) => GATEWAY_DISCOVERY_TOOLS.has(n))
+	) {
+		return streak;
+	}
+	const infoOnly =
+		names.length > 0 && !toolsJustExecuted && names.every((n) => READ_ONLY_TOOLS.has(n));
+	return infoOnly ? streak + 1 : 0;
 }

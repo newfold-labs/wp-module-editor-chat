@@ -7,20 +7,26 @@ import {
 	buildUpdateHeadingAttrsPass,
 } from '../fixtures/mock-worker-streams.js';
 
-/** @typedef {'edit'|'stop'|'error'} MockScenario */
+/** @typedef {'edit'|'local-editor-abilities'|'disabled-editor-abilities'|'stop'|'error'} MockScenario */
 
 /**
  * @typedef {Object} MockWorkerState
- * @property {MockScenario} scenario
- * @property {string|null} headingClientId
- * @property {string} newHeadingText
+ * @property {MockScenario} scenario Active mocked execution path.
+ * @property {string|null} headingClientId Heading target for existing scenarios.
+ * @property {string|null} paragraphClientId Paragraph target for ability scenarios.
+ * @property {string} newHeadingText Existing-handler replacement text.
+ * @property {string} newParagraphText Ability-scenario replacement text.
+ * @property {string[]} requestedToolNames Tools offered to the mocked worker during the turn (accumulated).
  */
 
 export function createMockWorkerState( overrides = {} ) {
 	return {
 		scenario: 'edit',
 		headingClientId: null,
+		paragraphClientId: null,
 		newHeadingText: 'Updated by AI chat',
+		newParagraphText: 'Updated locally by AI chat',
+		requestedToolNames: [],
 		...overrides,
 	};
 }
@@ -105,6 +111,18 @@ export async function installEditorChatWorkerMocks( page, state ) {
 	} );
 
 	await page.route( `**${ MOCK_WORKER_PATH }/chat/completions`, async ( route ) => {
+		try {
+			const body = JSON.parse( route.request().postData() || '{}' );
+			// Accumulate across the turn: the final summary request carries no
+			// tools, so keeping only the last request would always be empty.
+			const offered = ( body.tools || [] )
+				.map( ( tool ) => tool?.function?.name )
+				.filter( Boolean );
+			state.requestedToolNames = [ ...new Set( [ ...state.requestedToolNames, ...offered ] ) ];
+		} catch {
+			// Keep what was recorded so far.
+		}
+
 		if ( state.scenario === 'error' ) {
 			await route.fulfill( {
 				status: 500,
@@ -124,12 +142,16 @@ export async function installEditorChatWorkerMocks( page, state ) {
 		const kind = getCompletionKindFromRequest( route.request().postData() );
 
 		if ( kind === 'tool' ) {
-			if ( ! state.headingClientId ) {
+			const usesParagraph =
+				state.scenario === 'local-editor-abilities' ||
+				state.scenario === 'disabled-editor-abilities';
+			const clientId = usesParagraph ? state.paragraphClientId : state.headingClientId;
+			if ( ! clientId ) {
 				await route.fulfill( {
 					status: 500,
 					contentType: 'application/json',
 					body: JSON.stringify( {
-						error: { message: 'headingClientId not set for mock tool pass' },
+						error: { message: 'clientId not set for mock tool pass' },
 					} ),
 				} );
 				return;
@@ -138,8 +160,12 @@ export async function installEditorChatWorkerMocks( page, state ) {
 				status: 200,
 				contentType: 'text/event-stream',
 				body: buildUpdateHeadingAttrsPass( {
-					clientId: state.headingClientId,
-					newContent: state.newHeadingText,
+					clientId,
+					newContent: usesParagraph ? state.newParagraphText : state.newHeadingText,
+					toolName:
+						state.scenario === 'local-editor-abilities'
+							? 'blu-editor_update-block'
+							: 'blu-update-block-attrs',
 				} ),
 			} );
 			return;

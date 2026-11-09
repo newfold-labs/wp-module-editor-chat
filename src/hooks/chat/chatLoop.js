@@ -19,6 +19,7 @@ import {
 	truncateToolResult,
 	compressConversationHistory,
 	createRetryTracker,
+	nextReadOnlyStreak,
 } from "./conversationUtils";
 import {
 	ASSISTANT_JSON_FORMAT,
@@ -28,6 +29,7 @@ import {
 	buildCreationSummarizeNudge,
 	buildEditorContext,
 	buildRemainingStepsNudge,
+	buildReviewPlannedStepsNudge,
 } from "../../utils/editorContext";
 import { executeToolCallsForREST } from "../../services/toolDispatcher";
 import { appendCreationLinkIfNeeded } from "../../services/contentNavigation";
@@ -167,11 +169,9 @@ export async function runChatLoop(userMessage, deps) {
 	// Set after a cut-off so the very next pass gets a larger output ceiling.
 	let retryWithHigherCeiling = false;
 	// Steps for a multi-part request, from the intent classifier. Empty, or 2+.
-	// While steps remain the turn keeps going instead of summarizing after the
-	// first tool round and dropping the rest of the request.
+	// After each write the model reviews this full plan against the fresh editor
+	// state, because one tool call may satisfy more than one semantic step.
 	let plannedSteps = [];
-	// Tool rounds that changed something — N steps never need more than N.
-	let writeRounds = 0;
 	// One corrective pass per turn when the model signs off with steps unapplied.
 	let unfinishedNudgeUsed = false;
 	// True once the model has emitted a final tool-free reply for this turn.
@@ -261,8 +261,8 @@ export async function runChatLoop(userMessage, deps) {
 		if (toolsJustExecuted) {
 			if (lastCreationOutcome) {
 				nudge = buildCreationSummarizeNudge(lastCreationOutcome);
-			} else if (writeRounds < plannedSteps.length) {
-				nudge = buildRemainingStepsNudge(plannedSteps.slice(writeRounds));
+			} else if (plannedSteps.length > 0) {
+				nudge = buildReviewPlannedStepsNudge(plannedSteps);
 			} else {
 				nudge = SUMMARIZE_NUDGE;
 			}
@@ -381,21 +381,18 @@ export async function runChatLoop(userMessage, deps) {
 			// Fires on any editing turn that ends with nothing applied, not just
 			// multi-step ones. plannedSteps is empty whenever the classifier fails
 			// or returns no steps, which is exactly when this is most needed.
-			const stepsOutstanding = writeRounds < plannedSteps.length;
 			const nothingApplied = !anyMutationThisTurn && intent?.task !== "conversational";
-			if (!unfinishedNudgeUsed && (stepsOutstanding || nothingApplied)) {
+			if (!unfinishedNudgeUsed && nothingApplied) {
 				unfinishedNudgeUsed = true;
 				conversationHistoryRef.current.push({ role: "assistant", content });
 				removeStreamingMessage(setMessages, streamMessageId);
-				const remaining = stepsOutstanding ? plannedSteps.slice(writeRounds) : [intentMessage];
+				const remaining = plannedSteps.length > 0 ? plannedSteps : [intentMessage];
 				conversationHistoryRef.current.push({
 					role: "system",
 					content: buildRemainingStepsNudge(remaining),
 				});
 				readOnlyStreak = 0;
-				logger.log(
-					`[EditorChat] ${plannedSteps.length - writeRounds} step(s) unapplied — prompting once more`
-				);
+				logger.log(`[EditorChat] ${remaining.length} step(s) unapplied — prompting once more`);
 				continue;
 			}
 
@@ -649,7 +646,6 @@ export async function runChatLoop(userMessage, deps) {
 			}
 		}
 		if (toolsJustExecuted) {
-			writeRounds++;
 			restoreAnimatedBlocksInEditor();
 		}
 
@@ -659,11 +655,7 @@ export async function runChatLoop(userMessage, deps) {
 		// no reply. Count consecutive info-only passes (read-only tools, nothing
 		// changed); once it's clearly circling, stop — the post-loop closing pass
 		// turns that into a real answer instead of a wall of repeated reasoning.
-		const infoOnlyPass =
-			unwrappedCalls.length > 0 &&
-			!toolsJustExecuted &&
-			unwrappedCalls.every((tc) => READ_ONLY_TOOLS.has((tc.name || "").replace(/\//g, "-")));
-		readOnlyStreak = infoOnlyPass ? readOnlyStreak + 1 : 0;
+		readOnlyStreak = nextReadOnlyStreak(readOnlyStreak, unwrappedCalls, toolsJustExecuted);
 		if (readOnlyStreak >= MAX_READ_ONLY_PASSES) {
 			console.warn(
 				`[EditorChat] No-progress loop: ${readOnlyStreak} read-only passes with no change — stopping to summarize`

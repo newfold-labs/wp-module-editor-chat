@@ -6,6 +6,41 @@
 	z-index: 10;
 }
 
+.nfd-editor-chat-input__file-errors {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	margin-bottom: 8px;
+	padding: 10px 12px;
+	background: #fef2f2;
+	border: 1px solid #fecaca;
+	border-radius: 8px;
+	color: var(--nfd-editor-chat-color-error, #d63638);
+	font-size: 12px;
+	line-height: 1.4;
+
+	&-content {
+		flex: 1;
+		min-width: 0;
+	}
+
+	ul {
+		margin: 4px 0 0 16px;
+	}
+
+	button {
+		display: flex;
+		flex-shrink: 0;
+		align-items: center;
+		justify-content: center;
+		padding: 0;
+		border: 0;
+		background: transparent;
+		color: inherit;
+		cursor: pointer;
+	}
+}
+
 .nfd-editor-chat-input__disclaimer {
 	text-align: center;
 	font-size: 12px;

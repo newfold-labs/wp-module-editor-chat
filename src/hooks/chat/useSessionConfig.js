@@ -9,6 +9,11 @@ import OpenAI from "openai";
 
 import { mcpToolsToOpenAI } from "./conversationUtils";
 import logger from "../../utils/logger";
+import {
+	listLocalTools,
+	mergeLocalAndMcpTools,
+	onLocalToolsChanged,
+} from "../../services/localToolRegistry";
 
 // Module-level MCP client (created once at import time)
 export const mcpClient = createMCPClient({ configKey: "nfdEditorChat" });
@@ -35,6 +40,17 @@ const useSessionConfig = () => {
 	const abortControllerRef = useRef(null);
 	const hasInitializedRef = useRef(false);
 	const refreshTimerRef = useRef(null);
+	const mcpToolsRef = useRef([]);
+	const toolRefreshIdRef = useRef(0);
+
+	const publishAvailableTools = useCallback(async () => {
+		const refreshId = ++toolRefreshIdRef.current;
+		const localTools = await listLocalTools();
+		if (refreshId !== toolRefreshIdRef.current) {
+			return;
+		}
+		setOpenaiTools(mcpToolsToOpenAI(mergeLocalAndMcpTools(localTools, mcpToolsRef.current)));
+	}, []);
 
 	// ── Initialization: config fetch + MCP ──
 
@@ -44,7 +60,7 @@ const useSessionConfig = () => {
 		}
 		hasInitializedRef.current = true;
 
-		// Fetch config and MCP tools in parallel
+		// Fetch config, local tools, and MCP tools independently.
 		const configPromise = (async () => {
 			setConfigStatus("loading");
 			try {
@@ -78,26 +94,40 @@ const useSessionConfig = () => {
 			}
 		})();
 
+		const localToolsPromise = publishAvailableTools();
 		const mcpPromise = (async () => {
 			try {
 				setMcpConnectionStatus("connecting");
 				await mcpClient.connect();
 				await mcpClient.initialize();
 				const availableTools = await mcpClient.listTools();
-				setOpenaiTools(mcpToolsToOpenAI(availableTools));
+				mcpToolsRef.current = availableTools;
+				await publishAvailableTools();
 				setMcpConnectionStatus("connected");
 			} catch (err) {
 				console.error("Failed to initialize MCP:", err);
 				setMcpConnectionStatus("disconnected");
+				await publishAvailableTools();
 			}
 		})();
 
-		await Promise.all([configPromise, mcpPromise]);
-	}, []);
+		await Promise.all([configPromise, localToolsPromise, mcpPromise]);
+	}, [publishAvailableTools]);
 
 	useEffect(() => {
 		initialize();
 	}, [initialize]);
+
+	useEffect(() => {
+		const unsubscribe = onLocalToolsChanged(() => {
+			void publishAvailableTools();
+		});
+		return () => {
+			// eslint-disable-next-line react-hooks/exhaustive-deps -- invalidates in-flight async refreshes
+			toolRefreshIdRef.current++;
+			unsubscribe?.();
+		};
+	}, [publishAvailableTools]);
 
 	// ── Session token refresh ──
 	// Self-rescheduling: after each successful refresh, scheduleRefresh is

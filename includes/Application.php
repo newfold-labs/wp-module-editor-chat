@@ -24,6 +24,13 @@ class Application {
 	protected $chat_editor_initialized = false;
 
 	/**
+	 * Shared editor ability loader.
+	 *
+	 * @var EditorAbilities|null
+	 */
+	protected $editor_abilities;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param Container $container Dependency injection container.
@@ -52,6 +59,7 @@ class Application {
 		}
 
 		$this->chat_editor_initialized = true;
+		$this->editor_abilities        = new EditorAbilities();
 		new ChatEditor();
 	}
 }
