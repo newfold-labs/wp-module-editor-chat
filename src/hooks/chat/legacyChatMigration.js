@@ -39,7 +39,9 @@ export async function migrateLegacyChat({
 	}
 
 	const legacy = loadActiveChat();
-	if (legacy.messages.length === 0) {
+	// A chat that already carries a server id was saved by the new code (e.g.
+	// after an earlier failed migration attempt): pushing it again would duplicate it.
+	if (legacy.messages.length === 0 || legacy.conversationId) {
 		storage.setItem(MIGRATION_FLAG, "1");
 		return NOT_MIGRATED;
 	}

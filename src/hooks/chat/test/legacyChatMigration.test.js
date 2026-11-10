@@ -87,6 +87,17 @@ describe("migrateLegacyChat", () => {
 		expect(loadActiveChat().messages).toEqual(messages);
 	});
 
+	it("only sets the flag for a chat that already has a server conversation", async () => {
+		saveActiveChat(messages, history, { conversationId: 12, postId: 7 });
+
+		const result = await migrateLegacyChat({ ...page, api });
+
+		expect(result).toEqual({ migrated: false, conversationId: null });
+		expect(api.createConversation).not.toHaveBeenCalled();
+		expect(localStorage.getItem(MIGRATION_FLAG)).toBe("1");
+		expect(loadActiveChat().conversationId).toBe(12);
+	});
+
 	it("is a no-op the second time", async () => {
 		saveActiveChat(messages, history);
 		await migrateLegacyChat({ ...page, api });
