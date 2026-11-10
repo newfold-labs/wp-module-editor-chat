@@ -119,6 +119,9 @@ const HistoryList = ({ activeConversationId, onOpen, onActiveDeleted, onClose })
  * @param {number}   props.activeConversationId Id of the conversation currently open, if any.
  * @param {Function} props.onOpen               (item) => Promise, resumes a conversation.
  * @param {Function} props.onActiveDeleted      Called after the open conversation was deleted.
+ * @param {string}   [props.toggleClassName]    Class of the toggle button.
+ * @param {Element}  [props.icon]               Icon of the toggle button.
+ * @param {boolean}  [props.showTooltip]        Show the label as a tooltip.
  * @return {Element} The dropdown.
  */
 const ConversationHistoryDropdown = ({
@@ -126,18 +129,22 @@ const ConversationHistoryDropdown = ({
 	activeConversationId = null,
 	onOpen,
 	onActiveDeleted,
+	toggleClassName = "nfd-editor-chat-sidebar__history",
+	icon = <History width={16} height={16} />,
+	showTooltip = false,
 }) => (
 	<Dropdown
 		className="nfd-editor-chat-sidebar__history-wrapper"
-		popoverProps={{ placement: "bottom-end" }}
+		popoverProps={{ placement: "bottom-start" }}
 		renderToggle={({ isOpen, onToggle }) => (
 			<Button
-				icon={<History width={16} height={16} />}
+				icon={icon}
 				label={__("Chat history", "wp-module-editor-chat")}
 				onClick={onToggle}
 				aria-expanded={isOpen}
-				className="nfd-editor-chat-sidebar__history"
+				className={toggleClassName}
 				disabled={disabled}
+				showTooltip={showTooltip}
 			/>
 		)}
 		renderContent={({ onClose }) => (

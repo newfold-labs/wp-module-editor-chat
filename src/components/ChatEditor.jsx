@@ -154,8 +154,22 @@ const ChatEditorContent = () => {
 		[messages]
 	);
 
+	const historyActions = useMemo(
+		() => ({
+			onOpen: openConversation,
+			activeConversationId: conversationId,
+			onActiveDeleted: handleNewChat,
+			isDisabled: isLoading,
+		}),
+		[openConversation, conversationId, handleNewChat, isLoading]
+	);
+
 	return (
-		<EditorChatActionsProvider handleNewChat={handleNewChat} isNewChatDisabled={isNewChatDisabled}>
+		<EditorChatActionsProvider
+			handleNewChat={handleNewChat}
+			isNewChatDisabled={isNewChatDisabled}
+			history={historyActions}
+		>
 			<EditorEnhancer />
 			<PluginSidebarMoreMenuItem
 				scope={SIDEBAR_SCOPE}
@@ -176,10 +190,6 @@ const ChatEditorContent = () => {
 					<SidebarHeader
 						onNewChat={handleNewChat}
 						isNewChatDisabled={isNewChatDisabled}
-						onOpenConversation={openConversation}
-						activeConversationId={conversationId}
-						onActiveConversationDeleted={handleNewChat}
-						isHistoryDisabled={isLoading}
 					/>
 				}
 			>

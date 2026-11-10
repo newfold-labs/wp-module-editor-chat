@@ -8,7 +8,7 @@ updated: 2026-11-10
 # Conversation history
 
 Editor Chat keeps every chat in a custom WordPress table so a user can list,
-reopen and delete past chats from a history dropdown next to "New chat". The
+reopen and delete past chats from a history button in the editor toolbar, just before "New chat". The
 chat that is currently open is also cached in `localStorage`, only so a reload
 or crash does not lose it.
 
