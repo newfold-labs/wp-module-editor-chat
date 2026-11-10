@@ -319,6 +319,36 @@ export const getCurrentPageId = () => {
 };
 
 /**
+ * Get the current page's post type.
+ *
+ * @return {string} Post type slug, or an empty string when unavailable.
+ */
+export const getCurrentPageType = () => {
+	const editor = select("core/editor");
+	return editor.getCurrentPostType() || "";
+};
+
+/**
+ * Get when the current page was last modified, as "YYYY-MM-DD HH:MM:SS".
+ *
+ * @return {string} The timestamp, or an empty string when unavailable.
+ */
+export const getCurrentPageModified = () => {
+	const editor = select("core/editor");
+	const modified = editor.getCurrentPost()?.modified;
+	return typeof modified === "string" ? modified.replace("T", " ") : "";
+};
+
+/**
+ * Whether the page was modified after the chat last saw it.
+ *
+ * @param {string} current Current page-modified timestamp.
+ * @param {string} seen    Timestamp stored when the chat last saw the page.
+ * @return {boolean} True only when both are set and current is later.
+ */
+export const isModifiedNewer = (current, seen) => Boolean(current && seen && current > seen);
+
+/**
  * Get the current page title.
  *
  * @return {string} The page title
