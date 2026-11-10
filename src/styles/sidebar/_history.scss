@@ -52,11 +52,34 @@
 	}
 
 	&__delete.components-button {
+		border-radius: 4px;
+		color: var(--nfd-editor-chat-color-grey-medium, #757575);
 		flex: 0 0 auto;
 		height: 28px;
 		min-width: 28px;
+		opacity: 0;
 		padding: 0;
+		transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease;
 		width: 28px;
+
+		&:hover:not(:disabled),
+		&:focus-visible {
+			background: rgba(204, 24, 24, 0.08);
+			color: #cc1818;
+		}
+	}
+
+	// Revealed on hover / keyboard focus, always shown on touch devices.
+	&__row:hover &__delete.components-button,
+	&__row:focus-within &__delete.components-button,
+	&__row.is-active &__delete.components-button {
+		opacity: 1;
+	}
+
+	@media (hover: none) {
+		&__delete.components-button {
+			opacity: 1;
+		}
 	}
 
 	&__empty,

@@ -8,7 +8,7 @@ import { __ } from "@wordpress/i18n";
 /**
  * External dependencies
  */
-import { History, X } from "lucide-react";
+import { History, Trash2 } from "lucide-react";
 
 /**
  * Internal dependencies
@@ -93,7 +93,7 @@ const HistoryList = ({ activeConversationId, onOpen, onActiveDeleted, onClose })
 						</Button>
 						<Button
 							className="nfd-editor-chat-history__delete"
-							icon={<X width={14} height={14} />}
+							icon={<Trash2 width={15} height={15} strokeWidth={1.5} />}
 							label={__("Delete chat", "wp-module-editor-chat")}
 							onClick={() => handleDelete(item)}
 						/>
