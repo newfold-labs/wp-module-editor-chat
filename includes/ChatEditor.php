@@ -3,6 +3,8 @@
 namespace NewfoldLabs\WP\Module\EditorChat;
 
 use NewfoldLabs\WP\Module\EditorChat\Data\BrandConfig;
+use NewfoldLabs\WP\Module\EditorChat\Database\EditorChatTable;
+use NewfoldLabs\WP\Module\EditorChat\RestApi\ConversationsController;
 
 /**
  * ChatEditor main class
@@ -31,6 +33,7 @@ final class ChatEditor {
 	 */
 	public function __construct() {
 		\add_action( 'init', array( __CLASS__, 'ensure_temp_upload_dir' ), 5 );
+		\add_action( 'init', array( EditorChatTable::class, 'maybe_upgrade' ), 5 );
 		\add_action( 'rest_api_init', array( __CLASS__, 'register_rest_routes' ) );
 		\add_action( 'init', array( __CLASS__, 'load_text_domain' ), 100 );
 		\add_filter( 'load_script_translation_file', array( __CLASS__, 'load_script_translation_file' ), 10, 3 );
@@ -83,6 +86,8 @@ final class ChatEditor {
 				},
 			)
 		);
+
+		ConversationsController::register_routes();
 	}
 
 	/**
@@ -292,6 +297,7 @@ final class ChatEditor {
 				'pagesCount'     => \array_sum( (array) \wp_count_posts( 'page' ) ),
 				'editorType'     => $editor_type,
 				'brand'          => BrandConfig::get_brand_for_editor_chat_js(),
+				'isEditor'       => Permissions::is_editor(),
 			);
 
 			$upgrade_banner_data = self::get_plan_upgrade_banner_data();
