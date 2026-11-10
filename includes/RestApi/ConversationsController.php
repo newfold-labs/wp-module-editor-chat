@@ -23,6 +23,11 @@ final class ConversationsController {
 	const TIMESTAMP_PATTERN = '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/';
 
 	/**
+	 * Default and maximum page size for the list endpoint.
+	 */
+	const LIST_MAX_LIMIT = 20;
+
+	/**
 	 * Maximum title length before truncation.
 	 */
 	const TITLE_MAX_LENGTH = 60;
@@ -41,6 +46,11 @@ final class ConversationsController {
 			self::REST_NAMESPACE,
 			'/conversations',
 			array(
+				array(
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => array( __CLASS__, 'list_conversations' ),
+					'permission_callback' => $permission,
+				),
 				array(
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => array( __CLASS__, 'create_conversation' ),
@@ -143,6 +153,105 @@ final class ConversationsController {
 				: $content;
 		}
 		return '';
+	}
+
+	/**
+	 * Encode an opaque pagination cursor from an (updated_at, id) pair.
+	 *
+	 * @param string $updated_at Row updated_at.
+	 * @param int    $id         Row id.
+	 * @return string
+	 */
+	private static function encode_cursor( $updated_at, $id ) {
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- opaque pagination cursor, not obfuscation.
+		return \base64_encode( $updated_at . '|' . (int) $id );
+	}
+
+	/**
+	 * Decode and validate a pagination cursor.
+	 *
+	 * @param string $cursor Raw cursor param.
+	 * @return array|null array( 'updated_at' => string, 'id' => int ), or null when absent or malformed.
+	 */
+	private static function decode_cursor( $cursor ) {
+		if ( '' === $cursor ) {
+			return null;
+		}
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- opaque pagination cursor, not obfuscation.
+		$decoded = \base64_decode( $cursor, true );
+		if ( false === $decoded ) {
+			return null;
+		}
+		$parts = \explode( '|', $decoded );
+		if ( 2 !== \count( $parts ) || ! \preg_match( self::TIMESTAMP_PATTERN, $parts[0] ) || ! \ctype_digit( $parts[1] ) ) {
+			return null;
+		}
+		return array(
+			'updated_at' => $parts[0],
+			'id'         => (int) $parts[1],
+		);
+	}
+
+	/**
+	 * GET /conversations — cursor-paginated metadata list (no messages).
+	 *
+	 * @param \WP_REST_Request $request The REST request.
+	 * @return \WP_REST_Response
+	 */
+	public static function list_conversations( \WP_REST_Request $request ) {
+		global $wpdb;
+		$table = EditorChatTable::get_table_name();
+
+		$limit = (int) $request->get_param( 'limit' );
+		if ( $limit <= 0 || $limit > self::LIST_MAX_LIMIT ) {
+			$limit = self::LIST_MAX_LIMIT;
+		}
+
+		$cursor = self::decode_cursor( (string) $request->get_param( 'cursor' ) );
+		$select = 'SELECT id, title, post_id, post_type, post_modified_seen_at, updated_at FROM ' . $table;
+		$scope  = 'WHERE user_id = %d AND site_url_hash = %s AND deleted_at IS NULL';
+		$args   = array( \get_current_user_id(), self::get_site_hash() );
+
+		if ( $cursor ) {
+			$scope .= ' AND (updated_at < %s OR (updated_at = %s AND id < %d))';
+			$args[] = $cursor['updated_at'];
+			$args[] = $cursor['updated_at'];
+			$args[] = $cursor['id'];
+		}
+		$args[] = $limit;
+
+		$rows = $wpdb->get_results(
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $select/$scope are fixed strings built above; values go through placeholders.
+			$wpdb->prepare( "{$select} {$scope} ORDER BY updated_at DESC, id DESC LIMIT %d", $args ),
+			ARRAY_A
+		);
+
+		$items = \array_map(
+			function ( $row ) {
+				return array(
+					'id'                    => (int) $row['id'],
+					'title'                 => $row['title'],
+					'post_id'               => (int) $row['post_id'],
+					'post_type'             => $row['post_type'],
+					'post_modified_seen_at' => $row['post_modified_seen_at'],
+					'updated_at'            => $row['updated_at'],
+				);
+			},
+			(array) $rows
+		);
+
+		$next_cursor = null;
+		if ( \count( $items ) === $limit ) {
+			$last        = $items[ $limit - 1 ];
+			$next_cursor = self::encode_cursor( $last['updated_at'], $last['id'] );
+		}
+
+		return \rest_ensure_response(
+			array(
+				'items'       => $items,
+				'next_cursor' => $next_cursor,
+			)
+		);
 	}
 
 	/**

@@ -517,4 +517,126 @@ class ConversationsControllerWPUnitTest extends \lucatume\WPBrowser\TestCase\WPT
 		$this->assertSame( 404, $this->request( 'DELETE', self::BASE . "/{$id}" )->get_status() );
 		$this->assertNull( $this->raw_row( $id )->deleted_at );
 	}
+
+	/**
+	 * List excludes messages, soft-deleted rows and other users' rows.
+	 *
+	 * @return void
+	 */
+	public function test_list_excludes_messages_and_soft_deleted_and_other_users() {
+		$mine = $this->insert_row();
+		$this->insert_row( array( 'user_id' => $this->other_editor_id ) );
+		$this->insert_row( array( 'site_url_hash' => 'deadbeef' ) );
+		$this->insert_row( array( 'deleted_at' => '2026-11-10 12:00:00' ) );
+
+		$data = $this->request( 'GET', self::BASE )->get_data();
+
+		$this->assertCount( 1, $data['items'] );
+		$this->assertSame( $mine, $data['items'][0]['id'] );
+		$this->assertSame(
+			array( 'id', 'title', 'post_id', 'post_type', 'post_modified_seen_at', 'updated_at' ),
+			array_keys( $data['items'][0] )
+		);
+		$this->assertNull( $data['next_cursor'] );
+	}
+
+	/**
+	 * List is ordered newest first.
+	 *
+	 * @return void
+	 */
+	public function test_list_orders_newest_first() {
+		$old = $this->insert_row( array( 'updated_at' => '2026-11-01 10:00:00' ) );
+		$new = $this->insert_row( array( 'updated_at' => '2026-11-09 10:00:00' ) );
+		$mid = $this->insert_row( array( 'updated_at' => '2026-11-05 10:00:00' ) );
+
+		$ids = wp_list_pluck( $this->request( 'GET', self::BASE )->get_data()['items'], 'id' );
+
+		$this->assertSame( array( $new, $mid, $old ), $ids );
+	}
+
+	/**
+	 * Pages never duplicate or skip rows that share an updated_at.
+	 *
+	 * @return void
+	 */
+	public function test_list_paginates_without_gaps_or_duplicates_with_identical_updated_at() {
+		$expected = array();
+		for ( $i = 0; $i < 5; $i++ ) {
+			$expected[] = $this->insert_row( array( 'updated_at' => '2026-11-10 10:00:00' ) );
+		}
+
+		$seen   = array();
+		$cursor = null;
+		for ( $guard = 0; $guard < 10; $guard++ ) {
+			$params = array( 'limit' => 2 );
+			if ( $cursor ) {
+				$params['cursor'] = $cursor;
+			}
+			$data = $this->request( 'GET', self::BASE, $params )->get_data();
+			$seen = array_merge( $seen, wp_list_pluck( $data['items'], 'id' ) );
+			if ( ! $data['next_cursor'] ) {
+				break;
+			}
+			$cursor = $data['next_cursor'];
+		}
+
+		sort( $expected );
+		$sorted_seen = $seen;
+		sort( $sorted_seen );
+		$this->assertSame( $expected, $sorted_seen );
+		$this->assertCount( 5, array_unique( $seen ) );
+	}
+
+	/**
+	 * Limit is capped at 20.
+	 *
+	 * @return void
+	 */
+	public function test_list_limit_is_capped_at_20() {
+		for ( $i = 0; $i < 22; $i++ ) {
+			$this->insert_row();
+		}
+
+		$data = $this->request( 'GET', self::BASE, array( 'limit' => 500 ) )->get_data();
+
+		$this->assertCount( 20, $data['items'] );
+		$this->assertNotNull( $data['next_cursor'] );
+	}
+
+	/**
+	 * Default limit is 20 when none is given.
+	 *
+	 * @return void
+	 */
+	public function test_list_default_limit_is_20() {
+		for ( $i = 0; $i < 21; $i++ ) {
+			$this->insert_row();
+		}
+
+		$this->assertCount( 20, $this->request( 'GET', self::BASE )->get_data()['items'] );
+	}
+
+	/**
+	 * A malformed cursor behaves as no cursor.
+	 *
+	 * @return void
+	 */
+	public function test_list_malformed_cursor_returns_first_page() {
+		$id = $this->insert_row();
+
+		$data = $this->request( 'GET', self::BASE, array( 'cursor' => '%%%not-base64%%%' ) )->get_data();
+
+		$this->assertSame( array( $id ), wp_list_pluck( $data['items'], 'id' ) );
+	}
+
+	/**
+	 * Non-editors cannot list.
+	 *
+	 * @return void
+	 */
+	public function test_list_non_editor_gets_403() {
+		\wp_set_current_user( $this->factory()->user->create( array( 'role' => 'subscriber' ) ) );
+		$this->assertSame( 403, $this->request( 'GET', self::BASE )->get_status() );
+	}
 }
