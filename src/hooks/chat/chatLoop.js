@@ -51,6 +51,7 @@ import {
 	MAX_MARKUP_REQUESTS_PER_TURN,
 } from "./assistantResponse";
 import logger from "../../utils/logger";
+import { consumeResumeNotice } from "./resumeNotice";
 
 /**
  * Stable ids for the two assistant slots in a turn (plan preamble vs final reply).
@@ -107,6 +108,7 @@ export async function runChatLoop(userMessage, deps) {
 		conversationHistoryRef,
 		isFirstMessageRef,
 		pendingIntentRef,
+		needsResumeNoticeRef,
 		setMessages,
 		setStatus,
 		openaiTools,
@@ -124,6 +126,11 @@ export async function runChatLoop(userMessage, deps) {
 		conversationHistoryRef.current = [];
 		isFirstMessageRef.current = false;
 	}
+
+	// First turn after resuming a stored chat: tell the model its earlier tool
+	// results may be stale. Sent with every request of this turn, never persisted.
+	const resumeNotice = consumeResumeNotice(needsResumeNoticeRef);
+	const withResumeNotice = (history) => (resumeNotice ? [...history, resumeNotice] : history);
 
 	// Captured once: every abort check below tests THIS signal, never
 	// abortControllerRef.current, which a later turn replaces.
@@ -279,7 +286,7 @@ export async function runChatLoop(userMessage, deps) {
 
 		const intentBlock = `<user_intent>\n${JSON.stringify(intent)}\n</user_intent>`;
 		const toolMessages = [
-			...conversationHistoryRef.current,
+			...withResumeNotice(conversationHistoryRef.current),
 			{
 				role: "user",
 				content: editorContextMsg.content + "\n\n" + intentBlock + "\n\n" + nudge,
@@ -683,7 +690,7 @@ export async function runChatLoop(userMessage, deps) {
 		const closingId = closingStreamId(ts);
 		const closingContext = buildEditorContext({ extraClientIds });
 		const closingMessages = [
-			...conversationHistoryRef.current,
+			...withResumeNotice(conversationHistoryRef.current),
 			{
 				role: "user",
 				content: `<editor_context>\n${closingContext}\n</editor_context>\n\n${SUMMARIZE_NUDGE}`,
