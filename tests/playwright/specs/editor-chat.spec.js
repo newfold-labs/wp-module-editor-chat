@@ -192,7 +192,7 @@ test.describe( 'Editor chat (Site Editor)', { tag: '@env-local' }, () => {
 	} );
 
 	test( 'local editor abilities update a paragraph without /blu/mcp', async ( { page } ) => {
-		expect( Number( wordpressVersion.split( '.' )[ 0 ] ) ).toBeGreaterThanOrEqual( 7 );
+		test.skip( Number( wordpressVersion.split( '.' )[ 0 ] ) < 7, 'Editor abilities require WordPress 7.0 or newer.' );
 
 		const registeredNames = await page.evaluate( () => window.nfdEditorAbilities?.ready );
 		expect( registeredNames ).toContain( 'blu-editor/get-editor-tree' );
