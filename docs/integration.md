@@ -19,6 +19,10 @@ Editor-chat reads that payload through `NewfoldLabs\WP\Module\EditorChat\Data\Br
 - **Display name** — `get_current_brand_name()` (admin bar, sidebar).
 - **Localized script** — `get_brand_for_editor_chat_js()` → `window.nfdEditorChat.brand`.
 
+## Conversation history
+
+The module also stores chat conversations in its own table and exposes them under `nfd-editor-chat/v1/conversations` (editor-only). `window.nfdEditorChat.isEditor` tells the UI whether to show the history dropdown. See [conversation-history.md](conversation-history.md).
+
 If the container key is missing, `BrandConfig` falls back to `container()->plugin()` id/name with empty portal URLs.
 
 Host plugins must load onboarding before editor-chat enqueues scripts so `editor_chat_brand` is set.
