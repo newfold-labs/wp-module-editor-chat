@@ -10,7 +10,7 @@ jest.mock("../../../services/conversationsApi", () => ({
 	updateConversation: mockUpdate,
 }));
 jest.mock("../../../utils/editorHelpers", () => ({
-	getCurrentPageId: mockPageId,
+	getCurrentStoredPageId: mockPageId,
 	getCurrentPageType: () => "page",
 	getCurrentPageModified: () => "2026-11-10 10:00:00",
 }));
@@ -219,7 +219,7 @@ describe("useConversationSync", () => {
 		expect(mockUpdate).not.toHaveBeenCalled();
 	});
 
-	it("does not adopt an id created before a reset", async () => {
+	it("saves the old chat into the row it created even though a reset happened meanwhile", async () => {
 		let resolveCreate;
 		mockCreate.mockReturnValue(
 			new Promise((resolve) => {
@@ -238,6 +238,121 @@ describe("useConversationSync", () => {
 		});
 
 		expect(hook.result.current.conversationId).toBeNull();
+		expect(mockUpdate).toHaveBeenCalledTimes(1);
+		expect(mockUpdate).toHaveBeenCalledWith(
+			77,
+			expect.objectContaining({ messages: [userMessage] })
+		);
+	});
+
+	it("flushPending saves the pending change immediately and only once", async () => {
+		hook = await mount({ initialConversationId: 5, initialPostId: 7 });
+		await hook.rerender({ messages: [userMessage] });
+		await advance(300);
+
+		await act(async () => hook.result.current.flushPending());
+		expect(mockUpdate).toHaveBeenCalledWith(
+			5,
+			expect.objectContaining({ messages: [userMessage] })
+		);
+
+		await advance(2000);
+		expect(mockUpdate).toHaveBeenCalledTimes(1);
+	});
+
+	it("flushPending does nothing when no save is pending", async () => {
+		hook = await mount({ initialConversationId: 5, initialPostId: 7 });
+
+		await act(async () => hook.result.current.flushPending());
+
 		expect(mockUpdate).not.toHaveBeenCalled();
+	});
+
+	it("resetSync flushes the pending save for the old chat before detaching", async () => {
+		hook = await mount({ initialConversationId: 5, initialPostId: 7 });
+		await hook.rerender({ messages: [userMessage] });
+		await advance(300);
+
+		await act(async () => hook.result.current.resetSync());
+
+		expect(mockUpdate).toHaveBeenCalledWith(
+			5,
+			expect.objectContaining({ messages: [userMessage] })
+		);
+		expect(hook.result.current.conversationId).toBeNull();
+	});
+
+	it("an id switched externally is not replaced by an in-flight create", async () => {
+		let resolveCreate;
+		mockCreate.mockReturnValue(
+			new Promise((resolve) => {
+				resolveCreate = resolve;
+			})
+		);
+		hook = await mount();
+		await hook.rerender({ messages: [userMessage] });
+		await advance(1000);
+
+		await act(async () => hook.result.current.setConversationId(21, 7));
+		await act(async () => {
+			resolveCreate({ id: 77 });
+			for (let i = 0; i < 8; i++) {
+				await Promise.resolve();
+			}
+		});
+
+		expect(hook.result.current.conversationId).toBe(21);
+		expect(mockUpdate).toHaveBeenCalledTimes(1);
+		expect(mockUpdate).toHaveBeenCalledWith(77, expect.any(Object));
+	});
+
+	it("a queued save after an external switch writes to the old row, not the new one", async () => {
+		let resolveFirst;
+		mockUpdate.mockReset();
+		mockUpdate
+			.mockReturnValueOnce(
+				new Promise((resolve) => {
+					resolveFirst = resolve;
+				})
+			)
+			.mockResolvedValue({ id: 5 });
+		hook = await mount({ initialConversationId: 5, initialPostId: 7 });
+		await hook.rerender({ messages: [userMessage] });
+		await advance(1000); // save 1 in flight
+		await hook.rerender({ messages: [userMessage, { id: "a1", role: "assistant", content: "x" }] });
+		await advance(1000); // save 2 queued behind save 1
+
+		await act(async () => hook.result.current.setConversationId(21, 7));
+		await act(async () => {
+			resolveFirst({ id: 5 });
+			for (let i = 0; i < 8; i++) {
+				await Promise.resolve();
+			}
+		});
+
+		expect(mockUpdate.mock.calls.map(([id]) => id)).toEqual([5, 5]);
+		expect(hook.result.current.conversationId).toBe(21);
+	});
+
+	it("a 404 for the old id arriving after a switch does not clear the new id", async () => {
+		let rejectUpdate;
+		mockUpdate.mockReturnValueOnce(
+			new Promise((_, reject) => {
+				rejectUpdate = reject;
+			})
+		);
+		hook = await mount({ initialConversationId: 5, initialPostId: 7 });
+		await hook.rerender({ messages: [userMessage] });
+		await advance(1000);
+
+		await act(async () => hook.result.current.setConversationId(21, 7));
+		await act(async () => {
+			rejectUpdate({ data: { status: 404 } });
+			for (let i = 0; i < 8; i++) {
+				await Promise.resolve();
+			}
+		});
+
+		expect(hook.result.current.conversationId).toBe(21);
 	});
 });

@@ -27,9 +27,10 @@ import { migrateLegacyChat } from "./chat/legacyChatMigration";
 import { loadActiveChat, clearActiveChat } from "./chat/activeChatStorage";
 import { loadEditorEntity } from "../services/contentNavigation";
 import {
-	getCurrentPageId,
 	getCurrentPageModified,
 	getCurrentPageType,
+	getCurrentStoredPageId,
+	toStoredPageId,
 } from "../utils/editorHelpers";
 import { resetGeneratedImageCache } from "../services/toolDispatcher";
 import { setActiveImageEditTarget } from "../services/imageCache";
@@ -136,19 +137,23 @@ const useEditorChatREST = () => {
 	);
 	const handleDeleted = useCallback(() => handleNewChatRef.current(), []);
 	const resume = useConversationResume({
-		getCurrentPostId: getCurrentPageId,
+		getCurrentPostId: getCurrentStoredPageId,
 		getCurrentModified: getCurrentPageModified,
 		onHydrate: handleHydrate,
 		navigate: loadEditorEntity,
 		onDeleted: handleDeleted,
 		sync,
+		isBusy: () => runningTurnRef.current !== null,
 	});
 	const { dismissDrift, resetResume } = resume;
 
 	// ── One-time migration of a pre-existing local chat to the server ──
 	// Gated on the post being loaded: the Site Editor resolves it asynchronously,
 	// and a post id of 0 cannot be bound to a conversation.
-	const migrationPostId = useSelect((select) => select("core/editor").getCurrentPostId(), []);
+	const migrationPostId = useSelect(
+		(select) => toStoredPageId(select("core/editor").getCurrentPostId()),
+		[]
+	);
 	const migrationAttemptedRef = useRef(false);
 	useEffect(() => {
 		if (migrationAttemptedRef.current || !migrationPostId) {

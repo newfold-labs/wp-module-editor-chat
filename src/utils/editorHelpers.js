@@ -319,6 +319,29 @@ export const getCurrentPageId = () => {
 };
 
 /**
+ * Normalise an editor entity id to a storable post id. Templates and template
+ * parts have string ids such as "theme//home" that cannot be bound to a
+ * conversation row, so they map to 0.
+ *
+ * @param {number|string|undefined|null} value Raw id from the editor store.
+ * @return {number} Positive integer post id, or 0 when there is none.
+ */
+export const toStoredPageId = (value) => {
+	if (typeof value === "number") {
+		return Number.isInteger(value) && value > 0 ? value : 0;
+	}
+	return typeof value === "string" && /^[1-9]\d*$/.test(value) ? Number(value) : 0;
+};
+
+/**
+ * Get the open post's id as a storable number (0 for templates or while the
+ * editor has not resolved the post yet).
+ *
+ * @return {number} Positive integer post id, or 0.
+ */
+export const getCurrentStoredPageId = () => toStoredPageId(getCurrentPageId());
+
+/**
  * Get the current page's post type.
  *
  * @return {string} Post type slug, or an empty string when unavailable.

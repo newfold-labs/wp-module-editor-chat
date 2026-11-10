@@ -4,7 +4,13 @@ jest.mock("@wordpress/data", () => ({ select: jest.fn() }));
 jest.mock("@wordpress/blocks", () => ({ serialize: jest.fn(), getBlockTypes: jest.fn(() => []) }));
 
 const { select } = require("@wordpress/data");
-const { getCurrentPageModified, getCurrentPageType, isModifiedNewer } = require("../editorHelpers");
+const {
+	getCurrentPageModified,
+	getCurrentPageType,
+	getCurrentStoredPageId,
+	isModifiedNewer,
+	toStoredPageId,
+} = require("../editorHelpers");
 
 const mockEditor = (editor) => select.mockImplementation(() => editor);
 
@@ -64,6 +70,40 @@ describe("page identity helpers", () => {
 			expect(isModifiedNewer("", "2026-11-10 10:00:00")).toBe(false);
 			expect(isModifiedNewer("2026-11-10 10:00:00", "")).toBe(false);
 			expect(isModifiedNewer(undefined, null)).toBe(false);
+		});
+	});
+
+	describe("toStoredPageId", () => {
+		it("keeps positive integer post ids", () => {
+			expect(toStoredPageId(7)).toBe(7);
+			expect(toStoredPageId("12")).toBe(12);
+		});
+
+		it("returns 0 for template and other non-numeric entity ids", () => {
+			expect(toStoredPageId("theme//home")).toBe(0);
+			expect(toStoredPageId("twentytwentyfive//header")).toBe(0);
+		});
+
+		it("returns 0 for empty, zero and invalid values", () => {
+			expect(toStoredPageId(undefined)).toBe(0);
+			expect(toStoredPageId(null)).toBe(0);
+			expect(toStoredPageId(0)).toBe(0);
+			expect(toStoredPageId(-3)).toBe(0);
+			expect(toStoredPageId("7abc")).toBe(0);
+		});
+	});
+
+	describe("getCurrentStoredPageId", () => {
+		it("returns the numeric id of the open post", () => {
+			mockEditor({ getCurrentPostId: () => 7 });
+
+			expect(getCurrentStoredPageId()).toBe(7);
+		});
+
+		it("returns 0 when a template is open", () => {
+			mockEditor({ getCurrentPostId: () => "theme//home" });
+
+			expect(getCurrentStoredPageId()).toBe(0);
 		});
 	});
 });

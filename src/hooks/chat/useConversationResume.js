@@ -16,7 +16,8 @@ import { getDriftInfo, hydrateConversation, resolveResumeMode } from "./resumeCo
  * @param {Function} deps.onHydrate          ({messages, history, conversation}) => void, applies the chat state.
  * @param {Function} deps.navigate           (postType, postId) => void, opens another page.
  * @param {Function} deps.onDeleted          () => void, called after a conversation was deleted.
- * @param {Object}   deps.sync               The conversation sync controls (setConversationId, setReadOnly, suppressNextSync).
+ * @param {Object}   deps.sync               The conversation sync controls (setConversationId, setReadOnly, suppressNextSync, flushPending).
+ * @param {Function} [deps.isBusy]           () => boolean, true while a turn is running; resuming is refused then.
  * @return {{pageConflict: (Object|null), driftInfo: (Object|null), resumedPostMissing: boolean, openConversation: Function, resolvePageConflict: Function, dismissDrift: Function, resetResume: Function, deleteConversationById: Function}} Resume state and actions.
  */
 const useConversationResume = ({
@@ -26,6 +27,7 @@ const useConversationResume = ({
 	navigate,
 	onDeleted,
 	sync,
+	isBusy = () => false,
 }) => {
 	const [pageConflict, setPageConflict] = useState(null); // { conversation } | null
 	const [driftInfo, setDriftInfo] = useState(null); // { seenAt } | null
@@ -34,6 +36,8 @@ const useConversationResume = ({
 	const applyConversation = useCallback(
 		(conversation, { readOnly }) => {
 			const { messages, history } = hydrateConversation(conversation);
+			// The chat being left must still get its last change saved to its own row.
+			sync.flushPending();
 			// Hydrating messages would otherwise trigger an immediate save that
 			// only reorders the history list.
 			sync.suppressNextSync();
@@ -48,6 +52,9 @@ const useConversationResume = ({
 
 	const openConversation = useCallback(
 		async (item) => {
+			if (isBusy()) {
+				return;
+			}
 			const conversation = await getConversation(item.id);
 			const mode = resolveResumeMode({ conversation, currentPostId: getCurrentPostId() });
 
@@ -57,12 +64,13 @@ const useConversationResume = ({
 			}
 			applyConversation(conversation, { readOnly: mode === "readonly-missing" });
 		},
-		[applyConversation, getCurrentPostId]
+		[applyConversation, getCurrentPostId, isBusy]
 	);
 
 	const resolvePageConflict = useCallback(
 		(action) => {
-			if (!pageConflict) {
+			// Replacing the chat mid-turn would corrupt the running turn.
+			if (!pageConflict || isBusy()) {
 				return;
 			}
 			const { conversation } = pageConflict;
@@ -73,7 +81,7 @@ const useConversationResume = ({
 			}
 			applyConversation(conversation, { readOnly: true });
 		},
-		[pageConflict, applyConversation, navigate]
+		[pageConflict, applyConversation, navigate, isBusy]
 	);
 
 	const dismissDrift = useCallback(() => setDriftInfo(null), []);

@@ -20,6 +20,7 @@ import { X } from "lucide-react";
  * @param {boolean}     props.resumedPostMissing Whether the chat's page was deleted or trashed.
  * @param {Function}    props.onDeleteChat       Deletes the open chat.
  * @param {boolean}     props.readOnly           Whether the chat is read-only.
+ * @param {boolean}     [props.disabled]     Disable the actions while a turn is running.
  * @param {Object|null} props.driftInfo          { seenAt } when the page was edited since the chat.
  * @param {Function}    props.onDismissDrift     Dismisses the drift banner.
  * @return {Element|null} The notices, or null when there is nothing to show.
@@ -32,6 +33,7 @@ const ResumeNotices = ({
 	readOnly,
 	driftInfo,
 	onDismissDrift,
+	disabled = false,
 }) => {
 	if (!pageConflict && !resumedPostMissing && !readOnly && !driftInfo) {
 		return null;
@@ -48,10 +50,10 @@ const ResumeNotices = ({
 						)}
 					</p>
 					<div className="nfd-editor-chat-resume-notice__actions">
-						<Button variant="primary" size="small" onClick={() => onResolveConflict("navigate")}>
+						<Button variant="primary" size="small" disabled={disabled} onClick={() => onResolveConflict("navigate")}>
 							{__("Open that page", "wp-module-editor-chat")}
 						</Button>
-						<Button variant="secondary" size="small" onClick={() => onResolveConflict("continue")}>
+						<Button variant="secondary" size="small" disabled={disabled} onClick={() => onResolveConflict("continue")}>
 							{__("Continue here (read-only)", "wp-module-editor-chat")}
 						</Button>
 					</div>
@@ -67,7 +69,7 @@ const ResumeNotices = ({
 						)}
 					</p>
 					<div className="nfd-editor-chat-resume-notice__actions">
-						<Button variant="secondary" size="small" isDestructive onClick={onDeleteChat}>
+						<Button variant="secondary" size="small" isDestructive disabled={disabled} onClick={onDeleteChat}>
 							{__("Delete chat", "wp-module-editor-chat")}
 						</Button>
 					</div>

@@ -51,7 +51,9 @@ describe("useConversationResume", () => {
 				setConversationId: jest.fn((...args) => calls.push(["setId", ...args])),
 				setReadOnly: jest.fn((value) => calls.push(["readOnly", value])),
 				suppressNextSync: jest.fn(() => calls.push(["suppress"])),
+				flushPending: jest.fn(() => calls.push(["flush"])),
 			},
+			isBusy: jest.fn(() => false),
 		};
 	});
 
@@ -75,7 +77,8 @@ describe("useConversationResume", () => {
 		await open();
 
 		expect(mockGet).toHaveBeenCalledWith(5);
-		expect(calls[0]).toEqual(["suppress"]);
+		expect(calls[0]).toEqual(["flush"]);
+		expect(calls[1]).toEqual(["suppress"]);
 		const hydrate = calls.find(([kind]) => kind === "hydrate")[1];
 		expect(hydrate.history).toEqual([{ role: "user", content: "hi" }]);
 		expect(hydrate.messages[0].timestamp).toBeInstanceOf(Date);
@@ -206,5 +209,28 @@ describe("useConversationResume", () => {
 
 		expect(caught).toEqual(new Error("offline"));
 		expect(deps.onDeleted).not.toHaveBeenCalled();
+	});
+
+	it("ignores a history row while a turn is running", async () => {
+		mockGet.mockResolvedValue(stored());
+		await mount({ isBusy: () => true });
+
+		await open();
+
+		expect(mockGet).not.toHaveBeenCalled();
+		expect(deps.onHydrate).not.toHaveBeenCalled();
+	});
+
+	it("keeps the page prompt and does nothing when answered during a running turn", async () => {
+		mockGet.mockResolvedValue(stored({ post_id: 99 }));
+		let busy = false;
+		await mount({ isBusy: () => busy });
+		await open();
+		busy = true;
+
+		await act(async () => hook.result.current.resolvePageConflict("continue"));
+
+		expect(deps.onHydrate).not.toHaveBeenCalled();
+		expect(hook.result.current.pageConflict).not.toBeNull();
 	});
 });

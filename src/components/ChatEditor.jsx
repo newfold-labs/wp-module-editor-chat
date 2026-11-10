@@ -192,6 +192,7 @@ const ChatEditorContent = () => {
 						readOnly={readOnly}
 						driftInfo={driftInfo}
 						onDismissDrift={dismissDrift}
+						disabled={isLoading}
 					/>
 					{visibleMessages.length === 0 ? (
 						<WelcomeScreen onSendMessage={sendWithBlockFeedback} />
