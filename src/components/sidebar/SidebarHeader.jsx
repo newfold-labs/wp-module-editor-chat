@@ -42,7 +42,8 @@ const SidebarHeader = ({
 	isHistoryDisabled = false,
 }) => {
 	// Non-editors cannot use the conversations API, so never show the dropdown.
-	const showHistory = Boolean(onOpenConversation) && window?.nfdEditorChat?.isEditor === true;
+	// wp_localize_script turns booleans into "1" / "", so test truthiness.
+	const showHistory = Boolean(onOpenConversation) && Boolean(window?.nfdEditorChat?.isEditor);
 
 	const title = sprintf(
 		/* translators: %s: brand display name */

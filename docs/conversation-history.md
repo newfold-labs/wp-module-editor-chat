@@ -48,7 +48,8 @@ a **404**, never a 403, so another user's conversations are never revealed.
 | `DELETE` | `/conversations/{id}` | Soft delete. Returns `{ id, deleted: true }`. |
 
 The localized script exposes `window.nfdEditorChat.isEditor`; the history
-dropdown is not rendered unless it is `true`.
+dropdown is not rendered unless it is truthy (`wp_localize_script` delivers
+`"1"` or `""`, not a boolean).
 
 ## Client behavior
 
