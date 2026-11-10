@@ -11,24 +11,28 @@ import { CHAT_STATUS } from "./constants";
 import { saveActiveChat } from "./activeChatStorage";
 
 /**
- * @param {Object}   deps                           All state and refs needed by the side effects
- * @param {Array}    deps.messages                  Chat messages array
- * @param {Object}   deps.messagesRef               Ref kept in sync with messages
- * @param {Object}   deps.conversationHistoryRef    Ref to the model-visible history (for persistence)
- * @param {string}   deps.status                    Current chat status
- * @param {Array}    deps.executedTools             Executed tools array
- * @param {Object}   deps.executedToolsRef          Ref to executed tools
- * @param {boolean}  deps.isSaving                  Whether a save is in progress
- * @param {boolean}  deps.isSavingPost              WordPress isSavingPost selector
- * @param {Function} deps.setMessages               Messages state setter
- * @param {Function} deps.setExecutedTools          Executed tools state setter
- * @param {Function} deps.setHasGlobalStylesChanges Global styles change flag setter
- * @param {Function} deps.setIsSaving               Saving state setter
+ * @param {Object}      deps                           All state and refs needed by the side effects
+ * @param {Array}       deps.messages                  Chat messages array
+ * @param {Object}      deps.messagesRef               Ref kept in sync with messages
+ * @param {Object}      deps.conversationHistoryRef    Ref to the model-visible history (for persistence)
+ * @param {number|null} [deps.conversationId]          Server conversation id, remembered in the fallback cache
+ * @param {Object}      [deps.conversationPostIdRef]   Ref to the post that conversation is bound to
+ * @param {string}      deps.status                    Current chat status
+ * @param {Array}       deps.executedTools             Executed tools array
+ * @param {Object}      deps.executedToolsRef          Ref to executed tools
+ * @param {boolean}     deps.isSaving                  Whether a save is in progress
+ * @param {boolean}     deps.isSavingPost              WordPress isSavingPost selector
+ * @param {Function}    deps.setMessages               Messages state setter
+ * @param {Function}    deps.setExecutedTools          Executed tools state setter
+ * @param {Function}    deps.setHasGlobalStylesChanges Global styles change flag setter
+ * @param {Function}    deps.setIsSaving               Saving state setter
  */
 const useChatSideEffects = ({
 	messages,
 	messagesRef,
 	conversationHistoryRef,
+	conversationId = null,
+	conversationPostIdRef,
 	status,
 	executedTools,
 	executedToolsRef,
@@ -88,9 +92,12 @@ const useChatSideEffects = ({
 			isInitialMountRef.current = false;
 			return;
 		}
-		saveActiveChat(messages, conversationHistoryRef.current);
-		// eslint-disable-next-line react-hooks/exhaustive-deps -- ref deliberately omitted; see note above
-	}, [messages]);
+		saveActiveChat(messages, conversationHistoryRef.current, {
+			conversationId,
+			postId: conversationPostIdRef?.current,
+		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- refs deliberately omitted; see note above
+	}, [messages, conversationId]);
 };
 
 export default useChatSideEffects;
