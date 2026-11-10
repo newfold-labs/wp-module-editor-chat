@@ -93,7 +93,7 @@ const HistoryList = ({ activeConversationId, onOpen, onActiveDeleted, onClose })
 						</Button>
 						<Button
 							className="nfd-editor-chat-history__delete"
-							icon={<Trash2 width={15} height={15} strokeWidth={1.5} />}
+							icon={<Trash2 width={12} height={12} strokeWidth={1.5} />}
 							label={__("Delete chat", "wp-module-editor-chat")}
 							onClick={() => handleDelete(item)}
 						/>
