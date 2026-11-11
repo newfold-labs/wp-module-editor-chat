@@ -82,6 +82,9 @@ export default function BrandDropdownMenu() {
 							<img
 								src={ menuIconUrl }
 								alt=""
+								width={ 16 }
+								height={ 16 }
+								decoding="async"
 								className="nfd-editor-chat__brand-menu__icon"
 							/>
 						) : (

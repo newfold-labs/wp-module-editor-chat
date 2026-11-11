@@ -11,7 +11,7 @@ The module registers with the Newfold Module Loader via `bootstrap.php`. The hos
 
 ## Multi-brand behavior
 
-Brand registry data is owned by **wp-module-onboarding** (`Brands::get_brands()`). On registration, onboarding populates the module loader container key **`editor_chat_brand`** (array: `id`, `name`, `accountUrl`, `emailUrl`, `billingUrl`, `adminUrl`).
+Brand registry data is owned by **wp-module-onboarding** (`Brands::get_brands()`). On registration, onboarding populates the module loader container key **`editor_chat_brand`** (array: `id`, `name`, `accountUrl`, `emailUrl`, `billingUrl`, `adminUrl`, optional `icons`).
 
 Editor-chat reads that payload through `NewfoldLabs\WP\Module\EditorChat\Data\BrandConfig` (no composer dependency on onboarding):
 
@@ -51,6 +51,32 @@ add_filter(
 ```
 
 Host plugins can supply or override portal URLs when a brand is not in the built-in map.
+
+### Brand icon overrides (`icons.avatar`, `icons.menu`)
+
+The optional `icons` subarray lets a host plugin replace the default Bluehost 9-square mark used in two surfaces:
+
+- `icons.avatar` — welcome screen avatar (`.nfd-editor-chat-welcome__avatar`), rendered via `AILogo`.
+- `icons.menu` — header brand dropdown toggle icon (`.nfd-editor-chat__brand-menu__icon`), rendered via `BrandDropdownMenu`.
+
+Both values are **absolute URLs** to image assets (SVG recommended) served by the host plugin, not raw markup. The React components render them as `<img>` elements with `alt=""` (the brand name is announced by the adjacent label) and explicit `width`/`height` to avoid layout shift. Unset keys fall back to the module's built-in defaults.
+
+```php
+add_filter(
+	'newfold/container/editor_chat_brand',
+	function ( $payload ) {
+		$payload['icons'] = array(
+			'avatar' => plugins_url( 'assets/svg/brand-avatar.svg', MY_PLUGIN_FILE ),
+			'menu'   => plugins_url( 'assets/svg/brand-mark.svg',   MY_PLUGIN_FILE ),
+		);
+		return $payload;
+	}
+);
+```
+
+Recommended dimensions: avatar renders at up to 48×48 (component-controlled `width`/`height`), menu icon renders at 16×16 inside a 26×26 rounded-shadow container (`object-fit: contain`). Square assets with transparent backgrounds look best. SVG is preferred; PNG works but should be 2× the display size for HiDPI.
+
+The field is treated as a trusted first-party URL from the module loader container (not end-user input); downstream `<img src>` cannot execute script regardless of scheme.
 
 ## UI components
 

@@ -34,6 +34,7 @@ const AILogo = ({ width = 24, height = 24 }) => {
 					alt=""
 					width={width}
 					height={height}
+					decoding="async"
 				/>
 			) : (
 				<AiAvatarIcon width={width} height={height} />
