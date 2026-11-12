@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1794336771">
-  <project timestamp="1794336771">
+<coverage generated="1794492762">
+  <project timestamp="1794492762">
     <file name="/home/runner/work/wp-module-editor-chat/wp-module-editor-chat/includes/Application.php">
       <class name="NewfoldLabs\WP\Module\EditorChat\Application" namespace="global">
         <metrics complexity="4" methods="2" coveredmethods="0" conditionals="0" coveredconditionals="0" statements="9" coveredstatements="7" elements="11" coveredelements="7"/>
@@ -400,7 +400,7 @@
     </file>
     <file name="/home/runner/work/wp-module-editor-chat/wp-module-editor-chat/includes/Data/BrandConfig.php">
       <class name="NewfoldLabs\WP\Module\EditorChat\Data\BrandConfig" namespace="global">
-        <metrics complexity="16" methods="5" coveredmethods="1" conditionals="0" coveredconditionals="0" statements="34" coveredstatements="9" elements="39" coveredelements="10"/>
+        <metrics complexity="16" methods="5" coveredmethods="1" conditionals="0" coveredconditionals="0" statements="35" coveredstatements="9" elements="40" coveredelements="10"/>
       </class>
       <line num="24" type="method" name="get_editor_chat_brand_id" visibility="public" complexity="2" crap="2" count="1"/>
       <line num="25" type="stmt" count="1"/>
@@ -409,39 +409,40 @@
       <line num="36" type="stmt" count="0"/>
       <line num="37" type="stmt" count="0"/>
       <line num="39" type="stmt" count="0"/>
-      <line num="47" type="method" name="get_brand_for_editor_chat_js" visibility="public" complexity="2" crap="2.06" count="2"/>
-      <line num="48" type="stmt" count="2"/>
-      <line num="49" type="stmt" count="2"/>
-      <line num="50" type="stmt" count="2"/>
-      <line num="53" type="stmt" count="0"/>
-      <line num="61" type="method" name="get_payload_from_container" visibility="private" complexity="4" crap="6.00" count="2"/>
-      <line num="62" type="stmt" count="2"/>
-      <line num="63" type="stmt" count="0"/>
-      <line num="67" type="stmt" count="2"/>
-      <line num="68" type="stmt" count="2"/>
-      <line num="69" type="stmt" count="2"/>
-      <line num="71" type="stmt" count="0"/>
-      <line num="72" type="stmt" count="0"/>
+      <line num="51" type="method" name="get_brand_for_editor_chat_js" visibility="public" complexity="2" crap="2.06" count="2"/>
+      <line num="52" type="stmt" count="2"/>
+      <line num="53" type="stmt" count="2"/>
+      <line num="54" type="stmt" count="2"/>
+      <line num="57" type="stmt" count="0"/>
+      <line num="65" type="method" name="get_payload_from_container" visibility="private" complexity="4" crap="6.00" count="2"/>
+      <line num="66" type="stmt" count="2"/>
+      <line num="67" type="stmt" count="0"/>
+      <line num="71" type="stmt" count="2"/>
+      <line num="72" type="stmt" count="2"/>
+      <line num="73" type="stmt" count="2"/>
       <line num="75" type="stmt" count="0"/>
-      <line num="83" type="method" name="get_fallback_payload" visibility="private" complexity="5" crap="30" count="0"/>
-      <line num="84" type="stmt" count="0"/>
-      <line num="85" type="stmt" count="0"/>
+      <line num="76" type="stmt" count="0"/>
+      <line num="79" type="stmt" count="0"/>
+      <line num="87" type="method" name="get_fallback_payload" visibility="private" complexity="5" crap="30" count="0"/>
       <line num="88" type="stmt" count="0"/>
       <line num="89" type="stmt" count="0"/>
-      <line num="90" type="stmt" count="0"/>
-      <line num="91" type="stmt" count="0"/>
+      <line num="92" type="stmt" count="0"/>
       <line num="93" type="stmt" count="0"/>
       <line num="94" type="stmt" count="0"/>
+      <line num="95" type="stmt" count="0"/>
       <line num="97" type="stmt" count="0"/>
+      <line num="98" type="stmt" count="0"/>
       <line num="101" type="stmt" count="0"/>
-      <line num="102" type="stmt" count="0"/>
-      <line num="103" type="stmt" count="0"/>
-      <line num="104" type="stmt" count="0"/>
       <line num="105" type="stmt" count="0"/>
       <line num="106" type="stmt" count="0"/>
       <line num="107" type="stmt" count="0"/>
       <line num="108" type="stmt" count="0"/>
-      <metrics loc="111" ncloc="77" classes="1" methods="5" coveredmethods="1" conditionals="0" coveredconditionals="0" statements="34" coveredstatements="9" elements="39" coveredelements="10"/>
+      <line num="109" type="stmt" count="0"/>
+      <line num="110" type="stmt" count="0"/>
+      <line num="111" type="stmt" count="0"/>
+      <line num="112" type="stmt" count="0"/>
+      <line num="113" type="stmt" count="0"/>
+      <metrics loc="116" ncloc="78" classes="1" methods="5" coveredmethods="1" conditionals="0" coveredconditionals="0" statements="35" coveredstatements="9" elements="40" coveredelements="10"/>
     </file>
     <file name="/home/runner/work/wp-module-editor-chat/wp-module-editor-chat/includes/EditorAbilities.php">
       <class name="NewfoldLabs\WP\Module\EditorChat\EditorAbilities" namespace="global">
@@ -603,6 +604,6 @@
       <line num="43" type="stmt" count="2"/>
       <metrics loc="46" ncloc="22" classes="1" methods="3" coveredmethods="3" conditionals="0" coveredconditionals="0" statements="3" coveredstatements="3" elements="6" coveredelements="6"/>
     </file>
-    <metrics files="5" loc="1284" ncloc="933" classes="5" methods="45" coveredmethods="21" conditionals="0" coveredconditionals="0" statements="527" coveredstatements="320" elements="572" coveredelements="341"/>
+    <metrics files="5" loc="1289" ncloc="934" classes="5" methods="45" coveredmethods="21" conditionals="0" coveredconditionals="0" statements="528" coveredstatements="320" elements="573" coveredelements="341"/>
   </project>
 </coverage>
