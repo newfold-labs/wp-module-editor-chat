@@ -1,9 +1,14 @@
 /* global beforeEach, describe, expect, jest, test */
 
-jest.mock("@wordpress/data", () => ({
-	dispatch: jest.fn(),
-	select: jest.fn(),
-}));
+jest.mock(
+	"@wordpress/data",
+	() => ({
+		dispatch: jest.fn(),
+		select: jest.fn(),
+	}),
+	{ virtual: true }
+);
+jest.mock("@wordpress/i18n", () => ({ __: (s) => s, sprintf: (s) => s }), { virtual: true });
 jest.mock("../../../src/services/callAbility", () => ({ callAbility: jest.fn() }));
 jest.mock("../../../src/services/imageCache", () => ({
 	appendGeneratedImageUrl: jest.fn(),

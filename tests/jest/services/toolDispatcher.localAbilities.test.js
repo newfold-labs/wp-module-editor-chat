@@ -3,7 +3,7 @@
 jest.mock("@newfold/wp-module-ai-chat", () => ({
 	CHAT_STATUS: { TOOL_CALL: "tool_call" },
 }));
-jest.mock("@wordpress/i18n", () => ({ __: (message) => message }));
+jest.mock("@wordpress/i18n", () => ({ __: (message) => message }), { virtual: true });
 jest.mock("../../../src/utils/entityContentValidation", () => ({
 	abilityUsesBlockContent: jest.fn(() => false),
 	validateEntityContentArgs: jest.fn(() => ({ ok: true })),
