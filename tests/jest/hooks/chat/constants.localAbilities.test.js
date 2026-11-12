@@ -1,6 +1,6 @@
 /* global describe, expect, test */
 
-import { EDITOR_TOOLS, LOCAL_WRITE_TOOLS, READ_ONLY_TOOLS } from "../constants";
+import { EDITOR_TOOLS, LOCAL_WRITE_TOOLS, READ_ONLY_TOOLS } from "../../../../src/hooks/chat/constants";
 
 const LOCAL_READ_TOOLS = [
 	"blu-editor_get-editor-tree",

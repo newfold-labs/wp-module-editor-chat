@@ -4,66 +4,66 @@ jest.mock("@newfold/wp-module-ai-chat", () => ({
 	CHAT_STATUS: { TOOL_CALL: "tool_call" },
 }));
 jest.mock("@wordpress/i18n", () => ({ __: (message) => message }));
-jest.mock("../../utils/entityContentValidation", () => ({
+jest.mock("../../../src/utils/entityContentValidation", () => ({
 	abilityUsesBlockContent: jest.fn(() => false),
 	validateEntityContentArgs: jest.fn(() => ({ ok: true })),
 }));
-jest.mock("../callAbility", () => ({
+jest.mock("../../../src/services/callAbility", () => ({
 	callAbility: jest.fn(),
 	mcpResultIsError: jest.fn(() => false),
 }));
-jest.mock("../contentNavigation", () => ({
+jest.mock("../../../src/services/contentNavigation", () => ({
 	CREATE_ABILITIES: new Set(),
 	handleContentCreation: jest.fn(),
 }));
-jest.mock("../navigationEditor", () => ({
+jest.mock("../../../src/services/navigationEditor", () => ({
 	findHeaderRefNavigationBlock: jest.fn(),
 	hydrateAllRefNavigationBlocks: jest.fn(),
 }));
-jest.mock("../imageCache", () => ({
+jest.mock("../../../src/services/imageCache", () => ({
 	appendGeneratedImageUrl: jest.fn(),
 	getActiveImageEditTarget: jest.fn(),
 	resetGeneratedImageCache: jest.fn(),
 }));
-jest.mock("../imageAbility", () => ({
+jest.mock("../../../src/services/imageAbility", () => ({
 	applyImageToBlock: jest.fn(),
 	callImageAbility: jest.fn(),
 	getBlockImageUrl: jest.fn(),
 	parseImageAbilityUrl: jest.fn(),
 }));
-jest.mock("../localToolRegistry", () => ({
+jest.mock("../../../src/services/localToolRegistry", () => ({
 	getLocalToolFallback: jest.fn(),
 	isLocalToolName: jest.fn((name) => name.startsWith("blu-editor_")),
 	runLocalTool: jest.fn(),
 }));
-jest.mock("../../utils/editorContext", () => ({ snapshotBlocks: jest.fn(() => ["snapshot"]) }));
-jest.mock("../toolHandlers/editBlock", () => ({ handleEditBlock: jest.fn() }));
-jest.mock("../toolHandlers/deleteBlock", () => ({ handleDeleteBlock: jest.fn() }));
-jest.mock("../toolHandlers/moveBlock", () => ({ handleMoveBlock: jest.fn() }));
-jest.mock("../toolHandlers/updateBlockAttrs", () => ({ handleUpdateBlockAttrs: jest.fn() }));
-jest.mock("../toolHandlers/addSection", () => ({ handleAddSection: jest.fn() }));
-jest.mock("../toolHandlers/duplicate", () => ({ handleDuplicate: jest.fn() }));
-jest.mock("../toolHandlers/getBlockMarkup", () => ({ handleGetBlockMarkup: jest.fn() }));
-jest.mock("../toolHandlers/globalStyles", () => ({
+jest.mock("../../../src/utils/editorContext", () => ({ snapshotBlocks: jest.fn(() => ["snapshot"]) }));
+jest.mock("../../../src/services/toolHandlers/editBlock", () => ({ handleEditBlock: jest.fn() }));
+jest.mock("../../../src/services/toolHandlers/deleteBlock", () => ({ handleDeleteBlock: jest.fn() }));
+jest.mock("../../../src/services/toolHandlers/moveBlock", () => ({ handleMoveBlock: jest.fn() }));
+jest.mock("../../../src/services/toolHandlers/updateBlockAttrs", () => ({ handleUpdateBlockAttrs: jest.fn() }));
+jest.mock("../../../src/services/toolHandlers/addSection", () => ({ handleAddSection: jest.fn() }));
+jest.mock("../../../src/services/toolHandlers/duplicate", () => ({ handleDuplicate: jest.fn() }));
+jest.mock("../../../src/services/toolHandlers/getBlockMarkup", () => ({ handleGetBlockMarkup: jest.fn() }));
+jest.mock("../../../src/services/toolHandlers/globalStyles", () => ({
 	handleGetGlobalStyles: jest.fn(),
 	handleUpdateGlobalStyles: jest.fn(),
 }));
-jest.mock("../toolHandlers/highlightBlock", () => ({ handleHighlightBlock: jest.fn() }));
-jest.mock("../toolHandlers/insertInnerBlock", () => ({ handleInsertInnerBlock: jest.fn() }));
-jest.mock("../toolHandlers/regenerateLogo", () => ({ handleRegenerateLogo: jest.fn() }));
-jest.mock("../toolHandlers/editLogo", () => ({ handleEditLogo: jest.fn() }));
-jest.mock("../toolHandlers/setLogoFromImage", () => ({ handleSetLogoFromImage: jest.fn() }));
-jest.mock("../toolHandlers/editImage", () => ({ handleEditImage: jest.fn() }));
-jest.mock("../blockToolbar/blockAI", () => ({ IMAGE_BLOCKS: new Set(["core/image"]) }));
+jest.mock("../../../src/services/toolHandlers/highlightBlock", () => ({ handleHighlightBlock: jest.fn() }));
+jest.mock("../../../src/services/toolHandlers/insertInnerBlock", () => ({ handleInsertInnerBlock: jest.fn() }));
+jest.mock("../../../src/services/toolHandlers/regenerateLogo", () => ({ handleRegenerateLogo: jest.fn() }));
+jest.mock("../../../src/services/toolHandlers/editLogo", () => ({ handleEditLogo: jest.fn() }));
+jest.mock("../../../src/services/toolHandlers/setLogoFromImage", () => ({ handleSetLogoFromImage: jest.fn() }));
+jest.mock("../../../src/services/toolHandlers/editImage", () => ({ handleEditImage: jest.fn() }));
+jest.mock("../../../src/services/blockToolbar/blockAI", () => ({ IMAGE_BLOCKS: new Set(["core/image"]) }));
 
-const { snapshotBlocks } = require("../../utils/editorContext");
-const { executeToolCallsForREST } = require("../toolDispatcher");
-const { getLocalToolFallback, runLocalTool } = require("../localToolRegistry");
-const { handleEditBlock } = require("../toolHandlers/editBlock");
-const { handleAddSection } = require("../toolHandlers/addSection");
-const { handleInsertInnerBlock } = require("../toolHandlers/insertInnerBlock");
-const { getActiveImageEditTarget } = require("../imageCache");
-const { applyImageToBlock, callImageAbility, parseImageAbilityUrl } = require("../imageAbility");
+const { snapshotBlocks } = require("../../../src/utils/editorContext");
+const { executeToolCallsForREST } = require("../../../src/services/toolDispatcher");
+const { getLocalToolFallback, runLocalTool } = require("../../../src/services/localToolRegistry");
+const { handleEditBlock } = require("../../../src/services/toolHandlers/editBlock");
+const { handleAddSection } = require("../../../src/services/toolHandlers/addSection");
+const { handleInsertInnerBlock } = require("../../../src/services/toolHandlers/insertInnerBlock");
+const { getActiveImageEditTarget } = require("../../../src/services/imageCache");
+const { applyImageToBlock, callImageAbility, parseImageAbilityUrl } = require("../../../src/services/imageAbility");
 
 function createContext(overrides = {}) {
 	return {

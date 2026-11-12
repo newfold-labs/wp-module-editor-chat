@@ -4,17 +4,17 @@ jest.mock("@wordpress/data", () => ({
 	dispatch: jest.fn(),
 	select: jest.fn(),
 }));
-jest.mock("../callAbility", () => ({ callAbility: jest.fn() }));
-jest.mock("../imageCache", () => ({
+jest.mock("../../../src/services/callAbility", () => ({ callAbility: jest.fn() }));
+jest.mock("../../../src/services/imageCache", () => ({
 	appendGeneratedImageUrl: jest.fn(),
 	getGeneratedImages: jest.fn(() => []),
 }));
-jest.mock("../blockToolbar/blockAI", () => ({
+jest.mock("../../../src/services/blockToolbar/blockAI", () => ({
 	IMAGE_BLOCKS: new Set(["core/image", "core/cover"]),
 }));
 
 const { dispatch, select } = require("@wordpress/data");
-const { applyImageToBlock } = require("../imageAbility");
+const { applyImageToBlock } = require("../../../src/services/imageAbility");
 
 describe("applyImageToBlock", () => {
 	const updateBlockAttributes = jest.fn();
