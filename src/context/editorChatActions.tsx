@@ -15,7 +15,7 @@ import type { ReactNode } from "react";
 
 type ChatHistoryActions = {
 	/** Resume a stored conversation chosen from the history list. */
-	onOpen: (item: { id: number }) => Promise<void> | void;
+	onOpen: (_item: { id: number }) => Promise<void> | void;
 	/** Id of the conversation currently open, if any. */
 	activeConversationId: number | null;
 	/** Called after the open conversation was deleted from the list. */

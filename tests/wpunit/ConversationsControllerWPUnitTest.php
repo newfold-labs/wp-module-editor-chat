@@ -47,6 +47,7 @@ class ConversationsControllerWPUnitTest extends \lucatume\WPBrowser\TestCase\WPT
 		\wp_set_current_user( $this->editor_id );
 
 		global $wp_rest_server;
+		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- core REST server global, reset between tests.
 		$wp_rest_server = null;
 		\add_action( 'rest_api_init', array( ConversationsController::class, 'register_routes' ) );
 		\rest_get_server();
@@ -60,6 +61,7 @@ class ConversationsControllerWPUnitTest extends \lucatume\WPBrowser\TestCase\WPT
 	public function tearDown(): void {
 		\remove_action( 'rest_api_init', array( ConversationsController::class, 'register_routes' ) );
 		global $wp_rest_server;
+		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- core REST server global, reset between tests.
 		$wp_rest_server = null;
 		parent::tearDown();
 	}
