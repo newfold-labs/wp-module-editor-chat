@@ -144,8 +144,8 @@ test.describe( 'Editor chat conversation history', { tag: '@env-local' }, () => 
 		await expect
 			.poll( async () => ( await conversationsRequest( page, `/${ id }` ) ).status )
 			.toBe( 404 );
-		await page.reload( { waitUntil: 'domcontentloaded' } );
-		await navigateToEditorChat( page, pageA );
+		// The page was saved with the mocked edit, so it no longer has the original heading.
+		await navigateToEditorChat( page, pageA, { expectedHeading: mockState.newHeadingText } );
 		await openChatHistory( page );
 		await expect( page.locator( SELECTORS.historyRow ) ).toHaveCount( 0 );
 	} );
@@ -173,7 +173,7 @@ test.describe( 'Editor chat conversation history', { tag: '@env-local' }, () => 
 		).toBeVisible();
 		await expect( page.locator( SELECTORS.chatTextarea ) ).toBeDisabled();
 
-		// Open that page: navigates to the page the chat was about.
+		// Open that page: navigates to the page the chat was about (the in-app navigation target).
 		await openChatHistory( page );
 		await page
 			.locator( SELECTORS.historyRow )
@@ -184,7 +184,10 @@ test.describe( 'Editor chat conversation history', { tag: '@env-local' }, () => 
 			.locator( SELECTORS.resumeNotice )
 			.getByRole( 'button', { name: 'Open that page' } )
 			.click();
-		await page.waitForURL( new RegExp( `post=${ pageA }(&|$)` ), { timeout: 60_000 } );
+		// Pages open through the Site Editor route (`p=/page/<id>`), pushed into the history.
+		await expect
+			.poll( () => decodeURIComponent( page.url() ), { timeout: 30_000 } )
+			.toContain( `/page/${ pageA }` );
 	} );
 
 	test( 'opens a chat whose page was trashed as read-only and lets the user delete it', async ( { page } ) => {

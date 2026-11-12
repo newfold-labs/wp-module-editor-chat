@@ -186,14 +186,27 @@ export async function navigateToSiteEditorChat( page, options = {} ) {
 /**
  * @param {import('@playwright/test').Page} page
  * @param {number} postId
+ * @param {{ expectedHeading?: string }} [options]
  */
-export async function navigateToEditorChat( page, postId ) {
+export async function navigateToEditorChat( page, postId, options = {} ) {
+	const { expectedHeading = ORIGINAL_HEADING } = options;
 	await page.goto( editorChatUrl( postId ), { waitUntil: 'domcontentloaded' } );
 	await page.waitForFunction(
 		() => typeof window.nfdEditorChat !== 'undefined' && window.wp?.data,
 		{ timeout: 120_000 }
 	);
-	await expectHeadingInCanvas( page, ORIGINAL_HEADING );
+	// The post editor opens a "Welcome to the editor" modal that covers the chat.
+	await page.evaluate( () => {
+		const preferences = window.wp.data.dispatch( 'core/preferences' );
+		preferences?.set( 'core/edit-post', 'welcomeGuide', false );
+		preferences?.set( 'core/edit-post', 'welcomeGuideStyles', false );
+	} );
+	const guide = page.locator( '.components-modal__screen-overlay' );
+	if ( await guide.isVisible().catch( () => false ) ) {
+		await page.keyboard.press( 'Escape' );
+		await expect( guide ).toBeHidden( { timeout: 10_000 } );
+	}
+	await expectHeadingInCanvas( page, expectedHeading );
 	await ensureChatSidebarOpen( page );
 }
 
