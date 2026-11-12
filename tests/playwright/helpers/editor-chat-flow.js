@@ -26,6 +26,12 @@ export const SELECTORS = {
 	errorAlert: '.nfd-ai-chat-error-alert',
 	userMessage: '.nfd-ai-chat-message--user',
 	saveButton: '#nfd-editor-chat__header__save',
+	newChatButton: '#nfd-editor-chat__header__new-chat',
+	historyList: '.nfd-editor-chat-history',
+	historyRow: '.nfd-editor-chat-history__row',
+	historySelect: '.nfd-editor-chat-history__select',
+	historyDelete: '.nfd-editor-chat-history__delete',
+	resumeNotice: '.nfd-editor-chat-resume-notice',
 };
 
 /**
@@ -59,9 +65,10 @@ export function siteEditorChatUrl() {
 /**
  * Create a draft page with a single heading block for editor-chat tests.
  *
- * @return {Promise<number>} Post ID
+ * @param {string} [title] Page title.
+ * @return {Promise<{postId: number, slug: string}>} Created page.
  */
-export async function createHeadingTestPage() {
+export async function createHeadingTestPage( title = 'Playwright Editor Chat' ) {
 	const content =
 		'<!-- wp:heading {"level":2} --><h2 class="wp-block-heading">' +
 		ORIGINAL_HEADING +
@@ -70,7 +77,7 @@ export async function createHeadingTestPage() {
 		ORIGINAL_PARAGRAPH +
 		'</p><!-- /wp:paragraph -->';
 	const id = await wordpress.wpCli(
-		`post create --post_type=page --post_status=publish --post_title="Playwright Editor Chat" --post_content='${ content }' --porcelain`,
+		`post create --post_type=page --post_status=publish --post_title="${ title }" --post_content='${ content }' --porcelain`,
 		{ failOnNonZeroExit: true }
 	);
 	const postId = Number( String( id ).trim() );
@@ -346,4 +353,88 @@ export async function saveFromEditorChatHeader( page ) {
 		},
 		{ timeout: 60_000 }
 	);
+}
+
+/**
+ * Remove every stored conversation so each history test starts empty.
+ */
+export async function clearStoredConversations() {
+	await wordpress.wpCli(
+		`eval 'global $wpdb; $wpdb->query( "DELETE FROM {$wpdb->prefix}nfd_editor_chats" );'`,
+		{ failOnNonZeroExit: true }
+	);
+}
+
+/**
+ * Move a page to the trash (not a force delete), as "Move to trash" does.
+ *
+ * @param {number} postId
+ */
+export async function trashPage( postId ) {
+	await wordpress.wpCli( `post delete ${ postId }`, { failOnNonZeroExit: true } );
+}
+
+/**
+ * Call the conversations REST API as the logged-in editor.
+ *
+ * @param {import('@playwright/test').Page} page
+ * @param {string} path Path after `/conversations`, e.g. `` or `/12`.
+ * @return {Promise<{status: number, body: any}>}
+ */
+export async function conversationsRequest( page, path = '' ) {
+	return page.evaluate( async ( subPath ) => {
+		const { nfdRestURL, nonce } = window.nfdEditorChat;
+		// nfdRestURL already carries `?rest_route=`, so only plain sub-paths are supported.
+		const response = await fetch( `${ nfdRestURL }/conversations${ subPath }`, {
+			headers: { 'X-WP-Nonce': nonce },
+			credentials: 'same-origin',
+		} );
+		let body = null;
+		try {
+			body = await response.json();
+		} catch {
+			// Non-JSON body.
+		}
+		return { status: response.status, body };
+	}, path );
+}
+
+/**
+ * Wait until a chat starting with `titleText` is stored with its messages
+ * (the save is debounced), and return its id.
+ *
+ * @param {import('@playwright/test').Page} page
+ * @param {string} titleText First user message of the chat.
+ * @return {Promise<number>} Conversation id.
+ */
+export async function waitForSavedConversation( page, titleText ) {
+	let id = 0;
+	await expect
+		.poll(
+			async () => {
+				const list = await conversationsRequest( page );
+				const item = list.body?.items?.find( ( row ) => row.title.startsWith( titleText ) );
+				if ( ! item ) {
+					return 0;
+				}
+				const full = await conversationsRequest( page, `/${ item.id }` );
+				const stored = full.body?.messages?.messages || [];
+				// The user message and the assistant reply are both stored.
+				id = stored.length >= 2 ? item.id : 0;
+				return id;
+			},
+			{ timeout: 30_000, message: 'chat was not saved to the server' }
+		)
+		.toBeGreaterThan( 0 );
+	return id;
+}
+
+/**
+ * Open the chat history list in the editor toolbar.
+ *
+ * @param {import('@playwright/test').Page} page
+ */
+export async function openChatHistory( page ) {
+	await page.getByRole( 'button', { name: 'Chat history' } ).click();
+	await expect( page.locator( SELECTORS.historyList ) ).toBeVisible();
 }
