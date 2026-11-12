@@ -1,0 +1,56 @@
+name: "Unit Tests: Jest"
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "src/**/*.js"
+      - "tests/jest/**/*.js"
+      - "package.json"
+      - "package-lock.json"
+  pull_request:
+    types: [opened, edited, reopened, ready_for_review, synchronize]
+    paths:
+      - "src/**/*.js"
+      - "tests/jest/**/*.js"
+      - "package.json"
+      - "package-lock.json"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
+  cancel-in-progress: true
+
+# Disable permissions for all available scopes by default.
+# Any needed permissions should be configured at the job level.
+permissions: {}
+
+jobs:
+  test-unit-jest:
+    name: Run Jest Unit Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # Required for actions/checkout.
+    timeout-minutes: 15
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22.x
+          cache: 'npm'
+
+      - name: Cache node_modules directory
+        id: cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+        if: steps.cache.outputs.cache-hit != 'true'
+
+      - name: Run Jest Unit Tests
+        run: npm run test:unit
