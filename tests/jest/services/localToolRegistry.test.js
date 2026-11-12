@@ -7,7 +7,7 @@ import {
 	mergeLocalAndMcpTools,
 	onLocalToolsChanged,
 	runLocalTool,
-} from "../localToolRegistry";
+} from "../../../src/services/localToolRegistry";
 
 const emptySchema = { type: "object", properties: {} };
 

@@ -1,7 +1,7 @@
 /* global describe, expect, test */
 
-import { MAX_READ_ONLY_PASSES } from "../constants";
-import { nextReadOnlyStreak } from "../conversationUtils";
+import { MAX_READ_ONLY_PASSES } from "../../../../src/hooks/chat/constants";
+import { nextReadOnlyStreak } from "../../../../src/hooks/chat/conversationUtils";
 
 const calls = (...names) => names.map((name) => ({ name }));
 
