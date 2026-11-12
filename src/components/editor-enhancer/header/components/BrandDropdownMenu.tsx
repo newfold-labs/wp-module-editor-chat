@@ -25,12 +25,18 @@ import ShareSiteModal from "./ShareSiteModal";
 import RegenerateSiteModal from "./RegenerateSiteModal";
 import { DropdownMenu, DropdownMenuItem, DropdownMenuSection } from "./dropdown-menu";
 
+type EditorChatBrandIcons = {
+	avatar?: string;
+	menu?: string;
+};
+
 type EditorChatBrand = {
 	name?: string;
 	accountUrl?: string;
 	emailUrl?: string;
 	billingUrl?: string;
 	adminUrl?: string;
+	icons?: EditorChatBrandIcons;
 };
 
 const getBrand = (): EditorChatBrand => {
@@ -43,8 +49,9 @@ export default function BrandDropdownMenu() {
 	const [ shareOpen, setShareOpen ] = useState( false );
 	const [ regenerateOpen, setRegenerateOpen ] = useState( false );
 
-	const { name, accountUrl, emailUrl, billingUrl, adminUrl } = getBrand();
+	const { name, accountUrl, emailUrl, billingUrl, adminUrl, icons } = getBrand();
 	const brandName = name || __( "Host", "wp-module-editor-chat" );
+	const menuIconUrl = icons?.menu;
 	const wpDashboardUrl =
 		adminUrl ||
 		( window as { NewfoldRuntime?: { adminUrl?: string } } ).NewfoldRuntime?.adminUrl ||
@@ -71,7 +78,18 @@ export default function BrandDropdownMenu() {
 				popoverProps={ { style: { width: 300 } } }
 				renderToggle={ ( { isOpen, onToggle } ) => (
 					<Button onClick={ onToggle } aria-expanded={ isOpen }>
-						<BrandIcon className="nfd-editor-chat__brand-menu__icon" />
+						{ menuIconUrl ? (
+							<img
+								src={ menuIconUrl }
+								alt=""
+								width={ 16 }
+								height={ 16 }
+								decoding="async"
+								className="nfd-editor-chat__brand-menu__icon"
+							/>
+						) : (
+							<BrandIcon className="nfd-editor-chat__brand-menu__icon" />
+						) }
 						<span className="nfd-editor-chat__brand-menu__label">{ brandName }</span>
 						<ChevronDownIcon className="nfd-editor-chat__brand-menu__chevron" />
 					</Button>

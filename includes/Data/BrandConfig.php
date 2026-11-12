@@ -42,7 +42,11 @@ final class BrandConfig {
 	/**
 	 * Brand payload localized to `window.nfdEditorChat.brand`.
 	 *
-	 * @return array<string, string>
+	 * Shape: `id`, `name`, `accountUrl`, `emailUrl`, `billingUrl`, `adminUrl`,
+	 * and an optional `icons` array keyed by surface (e.g. `avatar`, `menu`)
+	 * whose values are URLs to image assets rendered by the UI components.
+	 *
+	 * @return array<string, mixed>
 	 */
 	public static function get_brand_for_editor_chat_js(): array {
 		$from_container = self::get_payload_from_container();
@@ -56,7 +60,7 @@ final class BrandConfig {
 	/**
 	 * Read brand payload from the module loader container when present.
 	 *
-	 * @return array<string, string>|null
+	 * @return array<string, mixed>|null
 	 */
 	private static function get_payload_from_container(): ?array {
 		if ( ! function_exists( 'NewfoldLabs\WP\ModuleLoader\container' ) ) {
@@ -105,6 +109,7 @@ final class BrandConfig {
 			'emailUrl'   => '',
 			'billingUrl' => '',
 			'adminUrl'   => \admin_url(),
+			'icons'      => array(),
 		);
 	}
 }
