@@ -62,7 +62,7 @@ Suite **`conversation-history.spec.js`** — tag **`@env-local`**, serial execut
 | Saves the chat to the server | After a turn, the conversation is stored (debounced save) bound to the open page, with the first message as its title. |
 | Resumes on the same page | "New chat" clears the thread; the history button lists the chat and choosing it restores the messages with the input enabled. |
 | Deletes from the history | The X removes the row; the API answers 404 for it, also after a reload. |
-| Different page | Choosing a chat from another page shows the prompt; "Continue here (read-only)" locks the input, "Open that page" navigates to the original page. |
+| Different page | Choosing a chat from another page shows the prompt; "Continue here (read-only)" locks the input, "Open that page" navigates to the original page (Site Editor route `p=/page/<id>`). |
 | Trashed page | The chat opens read-only with the "no longer exists" note and "Delete chat" removes it. |
 
 The page editor is used because a Site Editor template has a string id, and chats on those pages are not saved. Run it from the brand plugin like the other spec:
