@@ -62,8 +62,8 @@
 		transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease;
 		width: 20px;
 
-		&:hover:not(:disabled),
-		&:focus-visible {
+		&:focus-visible,
+		&:hover:not(:disabled) {
 			background: rgba(204, 24, 24, 0.08);
 			color: #cc1818;
 		}
@@ -77,6 +77,7 @@
 	}
 
 	@media (hover: none) {
+
 		&__delete.components-button {
 			opacity: 1;
 		}
