@@ -1,6 +1,7 @@
 /** @jest-environment jsdom */ // eslint-disable-line jsdoc/check-tag-names
 /* global afterEach, beforeEach, describe, expect, it, jest */
 
+jest.mock("@wordpress/element", () => require("react"), { virtual: true });
 const mockList = jest.fn();
 const mockDelete = jest.fn();
 

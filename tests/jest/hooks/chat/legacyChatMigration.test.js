@@ -1,6 +1,7 @@
 /** @jest-environment jsdom */ // eslint-disable-line jsdoc/check-tag-names
 /* global beforeEach, describe, expect, it, jest */
 
+jest.mock("@wordpress/api-fetch", () => ({ __esModule: true, default: jest.fn() }), { virtual: true });
 jest.mock("@newfold/wp-module-ai-chat", () => ({ simpleHash: () => "site" }));
 
 const { loadActiveChat, saveActiveChat } = require("../../../../src/hooks/chat/activeChatStorage");

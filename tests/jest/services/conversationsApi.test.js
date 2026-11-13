@@ -1,6 +1,6 @@
 /* global beforeEach, describe, expect, it, jest */
 
-jest.mock("@wordpress/api-fetch", () => ({ __esModule: true, default: jest.fn() }));
+jest.mock("@wordpress/api-fetch", () => ({ __esModule: true, default: jest.fn() }), { virtual: true });
 
 const apiFetch = require("@wordpress/api-fetch").default;
 const {

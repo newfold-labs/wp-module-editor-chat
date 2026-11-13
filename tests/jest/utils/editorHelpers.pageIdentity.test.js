@@ -1,7 +1,7 @@
 /* global beforeEach, describe, expect, it, jest */
 
-jest.mock("@wordpress/data", () => ({ select: jest.fn() }));
-jest.mock("@wordpress/blocks", () => ({ serialize: jest.fn(), getBlockTypes: jest.fn(() => []) }));
+jest.mock("@wordpress/data", () => ({ select: jest.fn() }), { virtual: true });
+jest.mock("@wordpress/blocks", () => ({ serialize: jest.fn(), getBlockTypes: jest.fn(() => []) }), { virtual: true });
 
 const { select } = require("@wordpress/data");
 const {

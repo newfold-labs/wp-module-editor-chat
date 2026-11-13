@@ -1,7 +1,8 @@
 /* global describe, expect, it, jest */
 
-jest.mock("@wordpress/data", () => ({ select: jest.fn() }));
-jest.mock("@wordpress/blocks", () => ({ serialize: jest.fn(), getBlockTypes: jest.fn(() => []) }));
+jest.mock("@wordpress/api-fetch", () => ({ __esModule: true, default: jest.fn() }), { virtual: true });
+jest.mock("@wordpress/data", () => ({ select: jest.fn() }), { virtual: true });
+jest.mock("@wordpress/blocks", () => ({ serialize: jest.fn(), getBlockTypes: jest.fn(() => []) }), { virtual: true });
 
 const { getDriftInfo, hydrateConversation, resolveResumeMode } = require("../../../../src/hooks/chat/resumeConversation");
 
