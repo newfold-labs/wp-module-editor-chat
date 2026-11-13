@@ -47,13 +47,22 @@ class EditorChatTableWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase 
 	/**
 	 * Whether the custom table exists.
 	 *
+	 * The WordPress test suite turns CREATE TABLE into CREATE TEMPORARY TABLE,
+	 * and MySQL does not list temporary tables in SHOW TABLES (MariaDB does),
+	 * so ask for the columns instead.
+	 *
 	 * @return bool
 	 */
 	private function table_exists() {
 		global $wpdb;
 		$table = EditorChatTable::get_table_name();
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- test helper.
-		return $table === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
+
+		$previous = $wpdb->suppress_errors( true );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- test helper.
+		$columns = $wpdb->get_results( "SHOW COLUMNS FROM {$table}" );
+		$wpdb->suppress_errors( $previous );
+
+		return ! empty( $columns );
 	}
 
 	/**
