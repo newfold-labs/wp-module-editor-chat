@@ -19,7 +19,7 @@ const getStorageKey = () => {
 
 // Always return fresh arrays — callers mutate `history` via chatLoop's push,
 // so a shared constant would leak state across calls.
-const emptyState = () => ({ messages: [], history: [] });
+const emptyState = () => ({ messages: [], history: [], conversationId: null, postId: null });
 
 export const loadActiveChat = () => {
 	const key = getStorageKey();
@@ -38,15 +38,26 @@ export const loadActiveChat = () => {
 		const messages = (parsed.messages || []).map(
 			({ hasActions: _hasActions, undoData: _undoData, ...rest }) => rest
 		);
-		return { messages, history: parsed.history || [] };
+		return {
+			messages,
+			history: parsed.history || [],
+			conversationId: Number(parsed.conversationId) || null,
+			postId: Number(parsed.postId) || null,
+		};
 	} catch (err) {
-		// eslint-disable-next-line no-console
 		console.warn("[EditorChat] Failed to load active chat:", err);
 		return emptyState();
 	}
 };
 
-export const saveActiveChat = (messages, history) => {
+/**
+ * @param {Array}  messages              UI messages.
+ * @param {Array}  history               Model-visible history.
+ * @param {Object} [meta]                Server-sync identity, so a reload keeps updating the same row.
+ * @param {number} [meta.conversationId] Server conversation id.
+ * @param {number} [meta.postId]         Post the conversation is bound to.
+ */
+export const saveActiveChat = (messages, history, meta = {}) => {
 	try {
 		const key = getStorageKey();
 		if ((!messages || messages.length === 0) && (!history || history.length === 0)) {
@@ -62,11 +73,12 @@ export const saveActiveChat = (messages, history) => {
 			JSON.stringify({
 				messages: trimmedMessages,
 				history: history || [],
+				conversationId: meta.conversationId || null,
+				postId: meta.postId || null,
 				savedAt: new Date().toISOString(),
 			})
 		);
 	} catch (err) {
-		// eslint-disable-next-line no-console
 		console.warn("[EditorChat] Failed to save active chat:", err);
 	}
 };
@@ -75,7 +87,6 @@ export const clearActiveChat = () => {
 	try {
 		localStorage.removeItem(getStorageKey());
 	} catch (err) {
-		// eslint-disable-next-line no-console
 		console.warn("[EditorChat] Failed to clear active chat:", err);
 	}
 };

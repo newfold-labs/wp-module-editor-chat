@@ -2,7 +2,7 @@
 name: wp-module-editor-chat
 title: Development
 description: Lint and test.
-updated: 2026-11-02
+updated: 2026-11-12
 ---
 
 # Development
@@ -55,12 +55,29 @@ Suite **`editor-chat.spec.js`** — tag **`@env-local`**, serial execution, Site
 | Stop | Mock completion stays open until abort; Stop shows “Request stopped”; canvas heading unchanged. |
 | Worker error | Mock worker returns 500; error alert visible; canvas unchanged. |
 
+Suite **`conversation-history.spec.js`** — tag **`@env-local`**, serial execution, block post editor (`post.php`) with `referrer=nfd-editor-chat` and the same mock worker. It clears the `{prefix}nfd_editor_chats` table before each test:
+
+| Test | Behavior under test |
+|------|---------------------|
+| Saves the chat to the server | After a turn, the conversation is stored (debounced save) bound to the open page, with the first message as its title. |
+| Resumes on the same page | "New chat" clears the thread; the history button lists the chat and choosing it restores the messages with the input enabled. |
+| Deletes from the history | The X removes the row; the API answers 404 for it, also after a reload. |
+| Different page | Choosing a chat from another page shows the prompt; "Continue here (read-only)" locks the input, "Open that page" navigates to the original page (Site Editor route `p=/page/<id>`). |
+| Trashed page | The chat opens read-only with the "no longer exists" note and "Delete chat" removes it. |
+
+The page editor is used because a Site Editor template has a string id, and chats on those pages are not saved. Run it from the brand plugin like the other spec:
+
+```bash
+npm run test:playwright -- vendor/newfold-labs/wp-module-editor-chat/tests/playwright/specs/conversation-history.spec.js
+```
+
 #### Layout
 
 | Path | Role |
 |------|------|
 | `tests/playwright/specs/editor-chat.spec.js` | Core chat scenarios plus local-ability and disabled-filter compatibility coverage. |
-| `tests/playwright/helpers/editor-chat-flow.js` | Navigation, selectors, WP-CLI page setup, canvas assertions, save helper. |
+| `tests/playwright/specs/conversation-history.spec.js` | Saving, resuming, deleting and the different-page / trashed-page flows for stored chats. |
+| `tests/playwright/helpers/editor-chat-flow.js` | Navigation, selectors, WP-CLI page setup, canvas assertions, save helper, plus the conversation-history helpers (REST calls, wait-for-saved, open history). |
 | `tests/playwright/helpers/mock-editor-chat-worker.js` | Routes `nfd-editor-chat/v1/config` and a mock CF Worker (`classify-intent`, `chat/completions`). |
 | `tests/playwright/helpers/index.js` | Re-exports Bluehost Playwright helpers (`auth`, `wordpress`, `newfold`, …). |
 | `tests/playwright/fixtures/mock-worker-streams.js` | OpenAI-style SSE bodies for tool and closing passes. |

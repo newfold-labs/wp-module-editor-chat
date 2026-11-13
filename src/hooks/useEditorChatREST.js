@@ -21,7 +21,17 @@ import useDisplayMessages from "./chat/useDisplayMessages";
 import { runChatLoop, markTurnStopped } from "./chat/chatLoop";
 import useChatSideEffects from "./chat/useChatSideEffects";
 import useChangeActions from "./chat/useChangeActions";
+import useConversationSync from "./chat/useConversationSync";
+import useConversationResume from "./chat/useConversationResume";
+import { migrateLegacyChat } from "./chat/legacyChatMigration";
 import { loadActiveChat, clearActiveChat } from "./chat/activeChatStorage";
+import { loadEditorEntity } from "../services/contentNavigation";
+import {
+	getCurrentPageModified,
+	getCurrentPageType,
+	getCurrentStoredPageId,
+	toStoredPageId,
+} from "../utils/editorHelpers";
 import { resetGeneratedImageCache } from "../services/toolDispatcher";
 import { setActiveImageEditTarget } from "../services/imageCache";
 import { useEditorNavigation } from "../context/editorNavigation";
@@ -78,6 +88,94 @@ const useEditorChatREST = () => {
 	const pendingIntentRef = useRef(null);
 	// Promise for the turn currently in flight, so a new send can wait it out.
 	const runningTurnRef = useRef(null);
+	// Set when a stored chat is resumed from history; the next turn tells the
+	// model its earlier tool results may reference blocks that no longer exist.
+	const needsResumeNoticeRef = useRef(false);
+	// Lets callbacks defined before handleNewChat start a fresh chat.
+	const handleNewChatRef = useRef(() => {});
+
+	// ── Server-side persistence (debounced create/update of the conversation row) ──
+	const sync = useConversationSync({
+		messages,
+		conversationHistoryRef,
+		initialConversationId: persisted.conversationId,
+		initialPostId: persisted.postId,
+	});
+	const { conversationId, conversationPostIdRef, readOnly } = sync;
+
+	// ── Reset all chat state (shared by new chat and history hydration) ──
+	const resetChatState = useCallback(() => {
+		resetGeneratedImageCache();
+		setMessages([]);
+		conversationHistoryRef.current = [];
+		isFirstMessageRef.current = true;
+		pendingIntentRef.current = null;
+		setHasGlobalStylesChanges(false);
+		setExecutedTools([]);
+		executedToolsRef.current = [];
+		setPendingTools([]);
+		setActiveToolCall(null);
+		setToolProgress(null);
+		setError(null);
+		setWasStopped(false);
+		setStatus(CHAT_STATUS.IDLE);
+		originalGlobalStylesRef.current = null;
+		blockSnapshotRef.current = null;
+	}, []);
+
+	// ── History resume: hydration, page-conflict prompt, drift and missing-page notes ──
+	const handleHydrate = useCallback(
+		({ messages: storedMessages, history }) => {
+			resetChatState();
+			setMessages(storedMessages);
+			conversationHistoryRef.current = history;
+			// A resumed chat keeps its model history; only a truly empty one starts "first".
+			isFirstMessageRef.current = history.length === 0;
+			needsResumeNoticeRef.current = true;
+		},
+		[resetChatState]
+	);
+	const handleDeleted = useCallback(() => handleNewChatRef.current(), []);
+	const resume = useConversationResume({
+		getCurrentPostId: getCurrentStoredPageId,
+		getCurrentModified: getCurrentPageModified,
+		onHydrate: handleHydrate,
+		navigate: loadEditorEntity,
+		onDeleted: handleDeleted,
+		sync,
+		isBusy: () => runningTurnRef.current !== null,
+	});
+	const { dismissDrift, resetResume } = resume;
+
+	// ── One-time migration of a pre-existing local chat to the server ──
+	// Gated on the post being loaded: the Site Editor resolves it asynchronously,
+	// and a post id of 0 cannot be bound to a conversation.
+	const migrationPostId = useSelect(
+		(select) => toStoredPageId(select("core/editor").getCurrentPostId()),
+		[]
+	);
+	const migrationAttemptedRef = useRef(false);
+	useEffect(() => {
+		if (migrationAttemptedRef.current || !migrationPostId) {
+			return;
+		}
+		migrationAttemptedRef.current = true;
+		migrateLegacyChat({
+			postId: migrationPostId,
+			postType: getCurrentPageType(),
+			postModifiedSeenAt: getCurrentPageModified(),
+		})
+			.then(({ migrated, conversationId: migratedId }) => {
+				if (migrated) {
+					sync.setConversationId(migratedId, migrationPostId);
+				}
+			})
+			.catch((err) => {
+				logger.warn("[EditorChat] Legacy chat migration failed, will retry next load:", err);
+			});
+		// Runs once, as soon as the post resolves.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [migrationPostId]);
 
 	// ── Session config (handles init + token refresh) ──
 	const {
@@ -175,6 +273,8 @@ const useEditorChatREST = () => {
 		messages,
 		messagesRef,
 		conversationHistoryRef,
+		conversationId,
+		conversationPostIdRef,
 		status,
 		executedTools,
 		executedToolsRef,
@@ -200,6 +300,8 @@ const useEditorChatREST = () => {
 			}
 
 			setWasStopped(false);
+			// The page-edited banner only applies until the user continues the chat.
+			dismissDrift();
 
 			// One controller per turn, so Stop cancels tool execution too.
 			const turnController = new AbortController();
@@ -225,6 +327,7 @@ const useEditorChatREST = () => {
 					conversationHistoryRef,
 					isFirstMessageRef,
 					pendingIntentRef,
+					needsResumeNoticeRef,
 					setMessages,
 					setStatus,
 					openaiTools,
@@ -278,6 +381,7 @@ const useEditorChatREST = () => {
 			buildToolCtx,
 			abortControllerRef,
 			getSessionConfig,
+			dismissDrift,
 		]
 	);
 
@@ -315,27 +419,16 @@ const useEditorChatREST = () => {
 
 	// ── handleNewChat ──
 	const handleNewChat = useCallback(() => {
-		// Drop the persisted active chat — we're starting fresh.
+		// Drop the persisted active chat and detach from the server conversation —
+		// we're starting fresh; the old one stays in history.
 		clearActiveChat();
-
-		// Reset everything
-		resetGeneratedImageCache();
-		setMessages([]);
-		conversationHistoryRef.current = [];
-		isFirstMessageRef.current = true;
-		pendingIntentRef.current = null;
-		setHasGlobalStylesChanges(false);
-		setExecutedTools([]);
-		executedToolsRef.current = [];
-		setPendingTools([]);
-		setActiveToolCall(null);
-		setToolProgress(null);
-		setError(null);
-		setWasStopped(false);
-		setStatus(CHAT_STATUS.IDLE);
-		originalGlobalStylesRef.current = null;
-		blockSnapshotRef.current = null;
-	}, []);
+		sync.resetSync();
+		resetResume();
+		resetChatState();
+		needsResumeNoticeRef.current = false;
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- sync.resetSync and resetResume are stable
+	}, [resetChatState]);
+	handleNewChatRef.current = handleNewChat;
 
 	// ── handleStopRequest ──
 	const handleStopRequest = useCallback(() => {
@@ -383,6 +476,16 @@ const useEditorChatREST = () => {
 		handleSendMessage,
 		handleNewChat,
 		handleStopRequest,
+		// Conversation history / resume
+		conversationId,
+		readOnly,
+		openConversation: resume.openConversation,
+		pageConflict: resume.pageConflict,
+		resolvePageConflict: resume.resolvePageConflict,
+		driftInfo: resume.driftInfo,
+		dismissDrift: resume.dismissDrift,
+		resumedPostMissing: resume.resumedPostMissing,
+		deleteConversationById: resume.deleteConversationById,
 	};
 };
 

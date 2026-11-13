@@ -7,6 +7,19 @@ updated: 2026-11-06
 
 # Changelog
 
+## Unreleased
+
+### Added
+
+- **Editor chat history.** Chats are stored in the custom table `{prefix}nfd_editor_chats` and exposed through `nfd-editor-chat/v1/conversations` (list, read, create, update, soft delete), scoped to the current user and site and limited to users who can edit pages. A history button in the editor toolbar, just before "New chat", lists previous chats (20 per page) and resumes or deletes them. See [conversation-history.md](conversation-history.md).
+- Resuming a chat handles a deleted or trashed page (read-only note), a different page (open it or continue read-only) and a page edited since (drift banner), and adds a one-shot system note on the first turn so the model re-reads the current block tree.
+- One-time migration of the legacy `localStorage` chat to the server (flag `nfd-editor-chat-migrated`).
+- `window.nfdEditorChat.isEditor` (`"1"` or `""`) tells the UI whether the history button may be shown.
+
+### Changed
+
+- `localStorage` now only caches the open chat (24 hours) for reload recovery; the server table is the source of truth.
+
 ## 2.1.12 (unreleased)
 
 ### Added

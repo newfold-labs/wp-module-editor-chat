@@ -2,7 +2,7 @@
 name: wp-module-editor-chat
 title: Documentation index
 description: Table of contents and quick links.
-updated: 2026-11-02
+updated: 2026-11-10
 ---
 
 # wp-module-editor-chat – Documentation index
@@ -13,6 +13,7 @@ updated: 2026-11-02
 | [getting-started.md](getting-started.md) | Prerequisites, install, and lint. |
 | [integration.md](integration.md) | How the module registers and how hosts use it. |
 | [editor-abilities.md](editor-abilities.md) | Load and consume the 21 reusable client-side Gutenberg abilities. |
+| [conversation-history.md](conversation-history.md) | Server-side chat storage: table, REST API, the history button in the editor toolbar, and resume behavior. |
 | [development.md](development.md) | Lint, wpunit, and Playwright E2E. |
 | [release.md](release.md) | Release process: use the Newfold Prepare Release workflow. |
 | [changelog.md](changelog.md) | Notable changes by release. |

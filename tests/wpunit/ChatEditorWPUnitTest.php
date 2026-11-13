@@ -432,6 +432,40 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 		);
 	}
 
+	/**
+	 * The constructor schedules the lazy table upgrade on init.
+	 *
+	 * @return void
+	 */
+	public function test_constructor_registers_table_upgrade_on_init() {
+		$callback = array( \NewfoldLabs\WP\Module\EditorChat\Database\EditorChatTable::class, 'maybe_upgrade' );
+		remove_action( 'init', $callback, 5 );
+		$this->assertFalse( has_action( 'init', $callback ) );
+
+		new ChatEditor();
+
+		$this->assertSame( 5, has_action( 'init', $callback ) );
+	}
+
+	/**
+	 * Conversation routes are registered alongside config and upload.
+	 *
+	 * @return void
+	 */
+	public function test_register_rest_routes_registers_conversation_routes() {
+		global $wp_rest_server;
+		$wp_rest_server = null;
+		add_action( 'rest_api_init', array( ChatEditor::class, 'register_rest_routes' ) );
+
+		$routes = rest_get_server()->get_routes();
+
+		remove_action( 'rest_api_init', array( ChatEditor::class, 'register_rest_routes' ) );
+		$wp_rest_server = null;
+
+		$this->assertArrayHasKey( '/nfd-editor-chat/v1/conversations', $routes );
+		$this->assertArrayHasKey( '/nfd-editor-chat/v1/conversations/(?P<id>\d+)', $routes );
+	}
+
 	// ── upload_temp_file ───────────────────────────────────────────────
 
 	/**

@@ -25,7 +25,9 @@ import {
 } from "../services/blockToolbar/blockHighlight";
 import { CHAT_SEND_EVENT } from "../services/blockToolbar/chatBridge";
 import { formatImageEditUserMessage } from "../utils/editorContext";
+import logger from "../utils/logger";
 import ChatInput from "./chat/ChatInput";
+import ResumeNotices from "./chat/ResumeNotices";
 import StoppedNotice from "./chat/StoppedNotice";
 import WelcomeScreen from "./chat/WelcomeScreen";
 import SidebarHeader from "./sidebar/SidebarHeader";
@@ -63,7 +65,24 @@ const ChatEditorContent = () => {
 		handleNewChat,
 		handleStopRequest,
 		wasStopped,
+		conversationId,
+		readOnly,
+		openConversation,
+		pageConflict,
+		resolvePageConflict,
+		driftInfo,
+		dismissDrift,
+		resumedPostMissing,
+		deleteConversationById,
 	} = useEditorChatREST();
+
+	const handleDeleteOpenConversation = useCallback(async () => {
+		try {
+			await deleteConversationById(conversationId);
+		} catch (err) {
+			logger.warn("[EditorChat] Could not delete the open conversation:", err);
+		}
+	}, [deleteConversationById, conversationId]);
 
 	// Phase 1: Enable template mode (show header & footer)
 	useEffect(() => {
@@ -135,8 +154,22 @@ const ChatEditorContent = () => {
 		[messages]
 	);
 
+	const historyActions = useMemo(
+		() => ({
+			onOpen: openConversation,
+			activeConversationId: conversationId,
+			onActiveDeleted: handleNewChat,
+			isDisabled: isLoading,
+		}),
+		[openConversation, conversationId, handleNewChat, isLoading]
+	);
+
 	return (
-		<EditorChatActionsProvider handleNewChat={handleNewChat} isNewChatDisabled={isNewChatDisabled}>
+		<EditorChatActionsProvider
+			handleNewChat={handleNewChat}
+			isNewChatDisabled={isNewChatDisabled}
+			history={historyActions}
+		>
 			<EditorEnhancer />
 			<PluginSidebarMoreMenuItem
 				scope={SIDEBAR_SCOPE}
@@ -153,9 +186,24 @@ const ChatEditorContent = () => {
 				icon={<AILogo width={24} height={24} />}
 				headerClassName="nfd-editor-chat-sidebar__header"
 				panelClassName="nfd-editor-chat-sidebar__panel"
-				header={<SidebarHeader onNewChat={handleNewChat} isNewChatDisabled={isNewChatDisabled} />}
+				header={
+					<SidebarHeader
+						onNewChat={handleNewChat}
+						isNewChatDisabled={isNewChatDisabled}
+					/>
+				}
 			>
 				<div className="nfd-editor-chat-sidebar__content">
+					<ResumeNotices
+						pageConflict={pageConflict}
+						onResolveConflict={resolvePageConflict}
+						resumedPostMissing={resumedPostMissing}
+						onDeleteChat={handleDeleteOpenConversation}
+						readOnly={readOnly}
+						driftInfo={driftInfo}
+						onDismissDrift={dismissDrift}
+						disabled={isLoading}
+					/>
 					{visibleMessages.length === 0 ? (
 						<WelcomeScreen onSendMessage={sendWithBlockFeedback} />
 					) : (
@@ -174,7 +222,7 @@ const ChatEditorContent = () => {
 					<ChatInput
 						onSendMessage={sendWithBlockFeedback}
 						onStopRequest={handleStopRequest}
-						disabled={isLoading}
+						disabled={isLoading || readOnly}
 					/>
 				</div>
 			</PluginSidebar>
