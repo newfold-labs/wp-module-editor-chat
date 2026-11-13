@@ -4,13 +4,13 @@
 const mockList = jest.fn();
 const mockDelete = jest.fn();
 
-jest.mock("../../../services/conversationsApi", () => ({
+jest.mock("../../../../src/services/conversationsApi", () => ({
 	listConversations: mockList,
 	deleteConversation: mockDelete,
 }));
 
 const { act, renderHook } = require("./renderHook");
-const useConversationHistory = require("../useConversationHistory").default;
+const useConversationHistory = require("../../../../src/hooks/chat/useConversationHistory").default;
 
 const item = (id) => ({ id, title: `Chat ${id}`, updated_at: "2026-11-10 10:00:00" });
 const settle = async () => {

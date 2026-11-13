@@ -5,22 +5,22 @@ const mockCreate = jest.fn();
 const mockUpdate = jest.fn();
 const mockPageId = jest.fn();
 
-jest.mock("../../../services/conversationsApi", () => ({
+jest.mock("../../../../src/services/conversationsApi", () => ({
 	createConversation: mockCreate,
 	updateConversation: mockUpdate,
 }));
-jest.mock("../../../utils/editorHelpers", () => ({
+jest.mock("../../../../src/utils/editorHelpers", () => ({
 	getCurrentStoredPageId: mockPageId,
 	getCurrentPageType: () => "page",
 	getCurrentPageModified: () => "2026-11-10 10:00:00",
 }));
-jest.mock("../../../utils/logger", () => ({
+jest.mock("../../../../src/utils/logger", () => ({
 	__esModule: true,
 	default: { warn: jest.fn(), log: jest.fn(), debug: jest.fn(), error: jest.fn() },
 }));
 
 const { act, renderHook } = require("./renderHook");
-const useConversationSync = require("../useConversationSync").default;
+const useConversationSync = require("../../../../src/hooks/chat/useConversationSync").default;
 
 const userMessage = { id: "u1", role: "user", content: "hello" };
 const historyRef = { current: [{ role: "user", content: "hello" }] };

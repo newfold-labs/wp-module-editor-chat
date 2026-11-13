@@ -14,15 +14,21 @@ const mockOnLocalToolsChanged = jest.fn();
 jest.mock("@newfold/wp-module-ai-chat", () => ({
 	createMCPClient: jest.fn(() => mockMcpClient),
 }));
-jest.mock("@wordpress/api-fetch", () => ({
-	__esModule: true,
-	default: mockApiFetch,
-}));
+jest.mock(
+	"@wordpress/api-fetch",
+	() => ({
+		__esModule: true,
+		default: mockApiFetch,
+	}),
+	{ virtual: true }
+);
+// @wordpress/element re-exports React in production; stub to the installed react.
+jest.mock("@wordpress/element", () => require("react"), { virtual: true });
 jest.mock("openai", () => ({
 	__esModule: true,
 	default: jest.fn(() => ({})),
 }));
-jest.mock("../../../services/localToolRegistry", () => ({
+jest.mock("../../../../src/services/localToolRegistry", () => ({
 	listLocalTools: mockListLocalTools,
 	mergeLocalAndMcpTools: mockMergeLocalAndMcpTools,
 	onLocalToolsChanged: mockOnLocalToolsChanged,
@@ -31,7 +37,7 @@ jest.mock("../../../services/localToolRegistry", () => ({
 const React = require("react");
 const { act } = React;
 const { createRoot } = require("react-dom/client");
-const useSessionConfig = require("../useSessionConfig").default;
+const useSessionConfig = require("../../../../src/hooks/chat/useSessionConfig").default;
 
 const localTool = {
 	name: "blu-editor_get-editor-tree",

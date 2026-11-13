@@ -3,7 +3,7 @@
 jest.mock("@wordpress/data", () => ({ select: jest.fn() }));
 jest.mock("@wordpress/blocks", () => ({ serialize: jest.fn(), getBlockTypes: jest.fn(() => []) }));
 
-const { getDriftInfo, hydrateConversation, resolveResumeMode } = require("../resumeConversation");
+const { getDriftInfo, hydrateConversation, resolveResumeMode } = require("../../../../src/hooks/chat/resumeConversation");
 
 describe("resolveResumeMode", () => {
 	it("is readonly-missing when the post no longer exists", () => {

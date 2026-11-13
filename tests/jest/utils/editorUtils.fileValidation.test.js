@@ -1,6 +1,6 @@
 /* global describe, expect, test */
 
-import { validateFiles } from "../editorUtils";
+import { validateFiles } from "../../../src/utils/editorUtils";
 
 const acceptedTypes = {
 	images: ["image/png"],

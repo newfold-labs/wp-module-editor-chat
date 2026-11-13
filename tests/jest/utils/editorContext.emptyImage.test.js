@@ -1,29 +1,29 @@
 /* global afterEach, describe, expect, jest, test */
 
-jest.mock("../editorHelpers", () => ({
+jest.mock("../../../src/utils/editorHelpers", () => ({
 	buildCompactBlockTree: jest.fn(),
 	getCurrentPageBlocks: jest.fn(),
 	getCurrentPageId: jest.fn(),
 	getCurrentPageTitle: jest.fn(),
 	getSelectedBlocks: jest.fn(),
 }));
-jest.mock("../../services/globalStylesService", () => ({
+jest.mock("../../../src/services/globalStylesService", () => ({
 	getCurrentGlobalStyles: jest.fn(),
 }));
-jest.mock("../../services/navigationEditor", () => ({
+jest.mock("../../../src/services/navigationEditor", () => ({
 	buildNavigationMenuContextLines: jest.fn(),
 	findRefNavigationBlocks: jest.fn(),
 }));
-jest.mock("../../services/blockToolbar/blockAI", () => ({
+jest.mock("../../../src/services/blockToolbar/blockAI", () => ({
 	IMAGE_BLOCKS: new Set(["core/image", "core/cover"]),
 	LOGO_BLOCK: "core/site-logo",
 }));
-jest.mock("../../services/imageAbility", () => ({
+jest.mock("../../../src/services/imageAbility", () => ({
 	getBlockImageUrl: jest.fn(() => null),
 }));
-jest.mock("../nfdClassReference", () => ({ NFD_CLASS_REFERENCE: "" }));
+jest.mock("../../../src/utils/nfdClassReference", () => ({ NFD_CLASS_REFERENCE: "" }));
 
-const { formatImageEditUserMessage } = require("../editorContext");
+const { formatImageEditUserMessage } = require("../../../src/utils/editorContext");
 
 describe("empty image editor context", () => {
 	afterEach(() => {

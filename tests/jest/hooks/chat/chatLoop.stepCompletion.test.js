@@ -1,19 +1,19 @@
 /* global beforeEach, describe, expect, jest, test */
 
-jest.mock("../../../services/toolDispatcher", () => ({
+jest.mock("../../../../src/services/toolDispatcher", () => ({
 	executeToolCallsForREST: jest.fn(),
 }));
-jest.mock("../../../services/contentNavigation", () => ({
+jest.mock("../../../../src/services/contentNavigation", () => ({
 	appendCreationLinkIfNeeded: jest.fn((message) => message),
 	CREATE_ABILITIES: new Set(),
 }));
-jest.mock("../../../services/intentClassifier", () => ({
+jest.mock("../../../../src/services/intentClassifier", () => ({
 	DEFAULT_INTENT: { task: "edit_page", content_type: null, menu_edit: null, steps: [] },
 	classifyUserIntent: jest.fn(),
 	getIntentNudge: jest.fn(() => "Execute the requested edit."),
 	intentNeedsAllTools: jest.fn(() => false),
 }));
-jest.mock("../../../utils/editorContext", () => ({
+jest.mock("../../../../src/utils/editorContext", () => ({
 	ASSISTANT_JSON_FORMAT: "json",
 	EXECUTE_NUDGE: "execute",
 	SUMMARIZE_NUDGE: "summarize",
@@ -23,14 +23,14 @@ jest.mock("../../../utils/editorContext", () => ({
 	buildRemainingStepsNudge: jest.fn((steps) => `remaining: ${steps.join(", ")}`),
 	buildReviewPlannedStepsNudge: jest.fn((steps) => `review: ${steps.join(", ")}`),
 }));
-jest.mock("../../../utils/editorUtils", () => ({
+jest.mock("../../../../src/utils/editorUtils", () => ({
 	restoreAnimatedBlocksInEditor: jest.fn(),
 }));
-jest.mock("../../../utils/logger", () => ({
+jest.mock("../../../../src/utils/logger", () => ({
 	__esModule: true,
 	default: { log: jest.fn(), warn: jest.fn() },
 }));
-jest.mock("../assistantResponse", () => ({
+jest.mock("../../../../src/hooks/chat/assistantResponse", () => ({
 	MARKUP_PROVIDED_NUDGE: "markup provided",
 	MAX_MARKUP_REQUESTS_PER_TURN: 2,
 	canRequestBlockMarkup: jest.fn(() => false),
@@ -40,8 +40,8 @@ jest.mock("../assistantResponse", () => ({
 	sanitizeUserFacingMessage: jest.fn((message) => message),
 }));
 
-const { executeToolCallsForREST } = require("../../../services/toolDispatcher");
-const { runChatLoop } = require("../chatLoop");
+const { executeToolCallsForREST } = require("../../../../src/services/toolDispatcher");
+const { runChatLoop } = require("../../../../src/hooks/chat/chatLoop");
 
 function toolCall(id, attributes) {
 	return {

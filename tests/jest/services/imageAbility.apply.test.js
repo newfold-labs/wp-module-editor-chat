@@ -1,20 +1,25 @@
 /* global beforeEach, describe, expect, jest, test */
 
-jest.mock("@wordpress/data", () => ({
-	dispatch: jest.fn(),
-	select: jest.fn(),
-}));
-jest.mock("../callAbility", () => ({ callAbility: jest.fn() }));
-jest.mock("../imageCache", () => ({
+jest.mock(
+	"@wordpress/data",
+	() => ({
+		dispatch: jest.fn(),
+		select: jest.fn(),
+	}),
+	{ virtual: true }
+);
+jest.mock("@wordpress/i18n", () => ({ __: (s) => s, sprintf: (s) => s }), { virtual: true });
+jest.mock("../../../src/services/callAbility", () => ({ callAbility: jest.fn() }));
+jest.mock("../../../src/services/imageCache", () => ({
 	appendGeneratedImageUrl: jest.fn(),
 	getGeneratedImages: jest.fn(() => []),
 }));
-jest.mock("../blockToolbar/blockAI", () => ({
+jest.mock("../../../src/services/blockToolbar/blockAI", () => ({
 	IMAGE_BLOCKS: new Set(["core/image", "core/cover"]),
 }));
 
 const { dispatch, select } = require("@wordpress/data");
-const { applyImageToBlock } = require("../imageAbility");
+const { applyImageToBlock } = require("../../../src/services/imageAbility");
 
 describe("applyImageToBlock", () => {
 	const updateBlockAttributes = jest.fn();

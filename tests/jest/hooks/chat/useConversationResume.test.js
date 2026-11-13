@@ -6,14 +6,14 @@ jest.mock("@wordpress/blocks", () => ({ serialize: jest.fn(), getBlockTypes: jes
 
 const mockGet = jest.fn();
 const mockDelete = jest.fn();
-jest.mock("../../../services/conversationsApi", () => ({
-	...jest.requireActual("../../../services/conversationsApi"),
+jest.mock("../../../../src/services/conversationsApi", () => ({
+	...jest.requireActual("../../../../src/services/conversationsApi"),
 	getConversation: mockGet,
 	deleteConversation: mockDelete,
 }));
 
 const { act, renderHook } = require("./renderHook");
-const useConversationResume = require("../useConversationResume").default;
+const useConversationResume = require("../../../../src/hooks/chat/useConversationResume").default;
 
 const stored = (overrides = {}) => ({
 	id: 5,

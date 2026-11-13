@@ -10,7 +10,7 @@ const {
 	listConversations,
 	normalizeStoredMessages,
 	updateConversation,
-} = require("../conversationsApi");
+} = require("../../../src/services/conversationsApi");
 
 const BASE = "/nfd-editor-chat/v1/conversations";
 

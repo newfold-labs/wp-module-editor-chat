@@ -10,7 +10,7 @@ const {
 	getCurrentStoredPageId,
 	isModifiedNewer,
 	toStoredPageId,
-} = require("../editorHelpers");
+} = require("../../../src/utils/editorHelpers");
 
 const mockEditor = (editor) => select.mockImplementation(() => editor);
 

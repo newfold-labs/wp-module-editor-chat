@@ -1,6 +1,6 @@
 /* global describe, expect, it */
 
-const { RESUME_NOTICE, consumeResumeNotice } = require("../resumeNotice");
+const { RESUME_NOTICE, consumeResumeNotice } = require("../../../../src/hooks/chat/resumeNotice");
 
 describe("consumeResumeNotice", () => {
 	it("returns the system note once and resets the flag", () => {

@@ -3,8 +3,8 @@
 
 jest.mock("@newfold/wp-module-ai-chat", () => ({ simpleHash: () => "site" }));
 
-const { loadActiveChat, saveActiveChat } = require("../activeChatStorage");
-const { MIGRATION_FLAG, migrateLegacyChat } = require("../legacyChatMigration");
+const { loadActiveChat, saveActiveChat } = require("../../../../src/hooks/chat/activeChatStorage");
+const { MIGRATION_FLAG, migrateLegacyChat } = require("../../../../src/hooks/chat/legacyChatMigration");
 
 const page = { postId: 7, postType: "page", postModifiedSeenAt: "2026-11-10 10:00:00" };
 const messages = [{ id: "m1", role: "user", content: "hi" }];

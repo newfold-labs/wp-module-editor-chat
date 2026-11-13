@@ -1,6 +1,6 @@
 /* global describe, expect, it */
 
-const { formatRelativeTime, parseGmtTimestamp } = require("../relativeTime");
+const { formatRelativeTime, parseGmtTimestamp } = require("../../../src/utils/relativeTime");
 
 const NOW = Date.UTC(2026, 10, 10, 12, 0, 0);
 

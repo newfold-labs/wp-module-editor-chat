@@ -3,7 +3,7 @@
 
 jest.mock("@newfold/wp-module-ai-chat", () => ({ simpleHash: () => "site" }));
 
-const { clearActiveChat, loadActiveChat, saveActiveChat } = require("../activeChatStorage");
+const { clearActiveChat, loadActiveChat, saveActiveChat } = require("../../../../src/hooks/chat/activeChatStorage");
 
 const KEY = "nfd-editor-chat-active-site";
 
