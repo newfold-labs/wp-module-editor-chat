@@ -33,7 +33,7 @@
 		"@wordpress/prettier-config": "^5.1.0",
 		"@wordpress/scripts": "^37.1.0",
 		"autoprefixer": "^10.6.2",
-		"baseline-browser-mapping": "^2.11.35",
+		"baseline-browser-mapping": "^2.11.37",
 		"concurrently": "^10.0.7",
 		"cssnano": "^9.9.0",
 		"esbuild": "^0.28.2",
