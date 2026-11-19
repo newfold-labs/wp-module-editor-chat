@@ -14,6 +14,10 @@ import {
 	updateNavigationLinkAttributes,
 	ensureMenuBlockAccessible,
 } from "../navigationEditor";
+import {
+	applyFontFamilyClassNameToAttributes,
+	validateThemeFontFamilySlug,
+} from "../../utils/fontFamilyValidation";
 
 /**
  * Detect attribute patches that try to recolor via CSS.
@@ -63,6 +67,29 @@ export async function handleUpdateBlockAttrs(toolCall, args, ctx) {
 	try {
 		// Ensure attributes is always an object so `in` / property access is safe.
 		args.attributes = normalizeColorAttributeValues(args.attributes || {});
+
+		const fontFamilyError = validateThemeFontFamilySlug(args.attributes);
+		if (fontFamilyError) {
+			return {
+				id: toolCall.id,
+				result: [
+					{
+						type: "text",
+						text: JSON.stringify({
+							success: false,
+							error: fontFamilyError.error,
+							allowed_font_slugs: fontFamilyError.allowedSlugs,
+						}),
+					},
+				],
+				isError: true,
+			};
+		}
+
+		args.attributes = applyFontFamilyClassNameToAttributes(
+			args.attributes,
+			block.attributes?.className || ""
+		);
 
 		// Site logo is an image — CSS color attrs cannot edit it. Force the
 		// model onto blu/edit-logo (works even when only the header is selected).
