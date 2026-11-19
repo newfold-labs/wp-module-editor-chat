@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /**
  * Global Styles Service
  *
@@ -7,6 +6,125 @@
  */
 
 import { deepMergeStyles as deepMerge } from "../utils/deepMerge";
+
+/**
+ * Normalize one theme.json font family preset entry.
+ *
+ * @param {Object} entry Font family preset from settings.
+ * @return {{ slug: string, name: string, fontFamily: string }|null} Normalized entry or null.
+ */
+export function normalizeFontFamilyEntry(entry) {
+	if (!entry || !entry.slug) {
+		return null;
+	}
+	return {
+		slug: String(entry.slug),
+		name: entry.name ? String(entry.name) : String(entry.slug),
+		fontFamily: entry.fontFamily ? String(entry.fontFamily) : "",
+	};
+}
+
+/**
+ * Collect font family presets from a theme.json-style settings object.
+ *
+ * @param {Object|null|undefined} settings Global styles settings.
+ * @return {{ theme: Array, custom: Array, fontFamilies: Array }} Parsed preset lists.
+ */
+export function collectFontFamiliesFromSettings(settings) {
+	const theme = [];
+	const custom = [];
+	const fontFamiliesData = settings?.typography?.fontFamilies;
+
+	if (!fontFamiliesData) {
+		return { theme, custom, fontFamilies: [] };
+	}
+
+	if (Array.isArray(fontFamiliesData)) {
+		for (const entry of fontFamiliesData) {
+			const normalized = normalizeFontFamilyEntry(entry);
+			if (normalized) {
+				theme.push(normalized);
+			}
+		}
+	} else {
+		if (Array.isArray(fontFamiliesData.theme)) {
+			for (const entry of fontFamiliesData.theme) {
+				const normalized = normalizeFontFamilyEntry(entry);
+				if (normalized) {
+					theme.push(normalized);
+				}
+			}
+		}
+		if (Array.isArray(fontFamiliesData.custom)) {
+			for (const entry of fontFamiliesData.custom) {
+				const normalized = normalizeFontFamilyEntry(entry);
+				if (normalized) {
+					custom.push(normalized);
+				}
+			}
+		}
+	}
+
+	const seen = new Set();
+	const fontFamilies = [];
+	for (const entry of [...theme, ...custom]) {
+		if (seen.has(entry.slug)) {
+			continue;
+		}
+		seen.add(entry.slug);
+		fontFamilies.push(entry);
+	}
+
+	return { theme, custom, fontFamilies };
+}
+
+/**
+ * Merge theme font presets from block editor __experimentalFeatures when the
+ * global styles entity record has custom fonts only (no theme[] array).
+ *
+ * @param {Object}                state          Current palette/font state from the GS entity.
+ * @param {Object|null|undefined} editorSettings Block editor settings.
+ * @return {{ fontFamilies: Array, themeFontFamilies: Array, customFontFamilies: Array }} Merged font lists.
+ */
+export function supplementFontFamiliesFromExperimentalFeatures(state, editorSettings) {
+	const { fontFamilies, themeFontFamilies, customFontFamilies } = state;
+
+	if (!editorSettings) {
+		return { fontFamilies, themeFontFamilies, customFontFamilies };
+	}
+
+	const fromFeatures = collectFontFamiliesFromSettings({
+		typography: {
+			fontFamilies: editorSettings.__experimentalFeatures?.typography?.fontFamilies,
+		},
+	});
+
+	let nextTheme = themeFontFamilies;
+	let nextCustom = customFontFamilies;
+	let nextFamilies = fontFamilies;
+
+	if (nextFamilies.length === 0 && fromFeatures.fontFamilies.length > 0) {
+		nextTheme = fromFeatures.theme;
+		nextCustom = fromFeatures.custom;
+		nextFamilies = fromFeatures.fontFamilies;
+	} else if (nextTheme.length === 0 && fromFeatures.theme.length > 0) {
+		nextTheme = fromFeatures.theme;
+		const slugs = new Set(nextFamilies.map((family) => family.slug));
+		nextFamilies = [...nextFamilies];
+		for (const family of fromFeatures.theme) {
+			if (!slugs.has(family.slug)) {
+				nextFamilies.push(family);
+				slugs.add(family.slug);
+			}
+		}
+	}
+
+	return {
+		fontFamilies: nextFamilies,
+		themeFontFamilies: nextTheme,
+		customFontFamilies: nextCustom,
+	};
+}
 
 /**
  * Get the WordPress data module
@@ -107,7 +225,7 @@ export async function persistGlobalStyles(globalStylesId) {
 export function getCurrentGlobalStyles() {
 	const data = getWPData();
 	if (!data) {
-		return { palette: [], error: "WordPress data store not available" };
+		return { palette: [], fontFamilies: [], error: "WordPress data store not available" };
 	}
 
 	try {
@@ -115,7 +233,12 @@ export function getCurrentGlobalStyles() {
 		let palette = [];
 		let themePalette = [];
 		let customPalette = [];
+		let themeFontFamilies = [];
+		let customFontFamilies = [];
+		let fontFamilies = [];
+		let appliedTypography = {};
 		let rawSettings = null;
+		let rawStyles = null;
 
 		// Method 1: Get from global styles entity record
 		const globalStylesId = getGlobalStylesId();
@@ -124,6 +247,15 @@ export function getCurrentGlobalStyles() {
 
 			if (record && record.settings) {
 				rawSettings = record.settings;
+				rawStyles = record.styles || null;
+				const fonts = collectFontFamiliesFromSettings(record.settings);
+				themeFontFamilies = fonts.theme;
+				customFontFamilies = fonts.custom;
+				fontFamilies = fonts.fontFamilies;
+				appliedTypography = {
+					body: record.styles?.typography?.fontFamily || null,
+					heading: record.styles?.elements?.heading?.typography?.fontFamily || null,
+				};
 				const paletteData = record.settings?.color?.palette;
 
 				if (paletteData) {
@@ -143,28 +275,38 @@ export function getCurrentGlobalStyles() {
 		}
 
 		// Method 2: Fallback to base styles / theme.json data
-		if (themePalette.length === 0) {
-			// Try to get theme.json settings via the block editor
-			const blockEditorStore = data.select("core/block-editor");
-			if (blockEditorStore && typeof blockEditorStore.getSettings === "function") {
-				const editorSettings = blockEditorStore.getSettings();
+		const blockEditorStore = data.select("core/block-editor");
+		const editorSettings =
+			blockEditorStore && typeof blockEditorStore.getSettings === "function"
+				? blockEditorStore.getSettings()
+				: null;
 
-				if (editorSettings?.colors) {
-					themePalette = editorSettings.colors;
+		if (themePalette.length === 0 && editorSettings) {
+			if (editorSettings?.colors) {
+				themePalette = editorSettings.colors;
+			}
+			if (editorSettings?.__experimentalFeatures?.color?.palette) {
+				const featurePalette = editorSettings.__experimentalFeatures.color.palette;
+				if (featurePalette.theme) {
+					themePalette = featurePalette.theme;
 				}
-				if (editorSettings?.__experimentalFeatures?.color?.palette) {
-					const featurePalette = editorSettings.__experimentalFeatures.color.palette;
-					if (featurePalette.theme) {
-						themePalette = featurePalette.theme;
-					}
-					if (featurePalette.custom) {
-						customPalette = featurePalette.custom;
-					}
-					if (Array.isArray(featurePalette)) {
-						themePalette = featurePalette;
-					}
+				if (featurePalette.custom) {
+					customPalette = featurePalette.custom;
+				}
+				if (Array.isArray(featurePalette)) {
+					themePalette = featurePalette;
 				}
 			}
+		}
+
+		if (editorSettings) {
+			const supplemented = supplementFontFamiliesFromExperimentalFeatures(
+				{ fontFamilies, themeFontFamilies, customFontFamilies },
+				editorSettings
+			);
+			fontFamilies = supplemented.fontFamilies;
+			themeFontFamilies = supplemented.themeFontFamilies;
+			customFontFamilies = supplemented.customFontFamilies;
 		}
 
 		palette = [...themePalette, ...customPalette];
@@ -173,11 +315,16 @@ export function getCurrentGlobalStyles() {
 			palette,
 			themePalette,
 			customPalette,
+			fontFamilies,
+			themeFontFamilies,
+			customFontFamilies,
+			appliedTypography,
 			rawSettings,
+			rawStyles,
 		};
 	} catch (error) {
 		console.error("Error getting current global styles:", error);
-		return { palette: [], error: error.message };
+		return { palette: [], fontFamilies: [], error: error.message };
 	}
 }
 

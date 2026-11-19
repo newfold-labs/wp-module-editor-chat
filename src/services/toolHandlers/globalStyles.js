@@ -5,9 +5,57 @@ import { __ } from "@wordpress/i18n";
 
 import { callAbility } from "../callAbility";
 import { getCurrentGlobalStyles, updateGlobalStyles } from "../globalStylesService";
+import {
+	userCanEditGlobalStyles,
+	validateGlobalStylesFontPatch,
+} from "../../utils/fontFamilyValidation";
 
 export async function handleUpdateGlobalStyles(toolCall, args, ctx) {
+	if (!userCanEditGlobalStyles()) {
+		return {
+			toolResult: {
+				id: toolCall.id,
+				result: [
+					{
+						type: "text",
+						text: JSON.stringify({
+							success: false,
+							error: __(
+								"You do not have permission to change site-wide styles. Ask an administrator, or change the font on the selected block only.",
+								"wp-module-editor-chat"
+							),
+							code: "rest_forbidden",
+						}),
+					},
+				],
+				isError: true,
+			},
+			globalStylesUndoData: null,
+		};
+	}
+
 	await ctx.updateProgress(__("Reading current styles…", "wp-module-editor-chat"), 500);
+
+	const fontPatchError = validateGlobalStylesFontPatch(args.settings, args.styles);
+	if (fontPatchError) {
+		return {
+			toolResult: {
+				id: toolCall.id,
+				result: [
+					{
+						type: "text",
+						text: JSON.stringify({
+							success: false,
+							error: fontPatchError.error,
+							allowed_font_slugs: fontPatchError.allowedSlugs,
+						}),
+					},
+				],
+				isError: true,
+			},
+			globalStylesUndoData: null,
+		};
+	}
 
 	// Validate palette items — filter out corrupt entries from truncated responses
 	try {
@@ -74,9 +122,15 @@ export async function handleGetGlobalStyles(toolCall, ctx) {
 		await ctx.updateProgress(__("Analyzing theme settings…", "wp-module-editor-chat"), 600);
 		const jsResult = getCurrentGlobalStyles();
 
-		if (jsResult.palette?.length > 0 || jsResult.rawSettings) {
+		if (jsResult.palette?.length > 0 || jsResult.fontFamilies?.length > 0 || jsResult.rawSettings) {
 			const colorCount = jsResult.palette?.length || 0;
-			await ctx.updateProgress(`✓ Found ${colorCount} colors in palette`, 700);
+			const fontCount = jsResult.fontFamilies?.length || 0;
+			await ctx.updateProgress(
+				fontCount > 0
+					? `✓ Found ${colorCount} colors and ${fontCount} font preset(s)`
+					: `✓ Found ${colorCount} colors in palette`,
+				700
+			);
 			return {
 				id: toolCall.id,
 				result: [

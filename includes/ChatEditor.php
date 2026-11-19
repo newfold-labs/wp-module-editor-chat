@@ -285,19 +285,20 @@ final class ChatEditor {
 			);
 
 			$args = array(
-				'nonce'          => \wp_create_nonce( 'wp_rest' ),
-				'nfdRestURL'     => \get_home_url() . '/index.php?rest_route=/nfd-editor-chat/v1',
-				'mcpUrl'         => \esc_url_raw( \rest_url( 'blu/mcp' ) ),
-				'configEndpoint' => \esc_url_raw( \rest_url( 'nfd-editor-chat/v1/config' ) ),
-				'homeUrl'        => \esc_url( \get_home_url() ),
-				'wpVer'          => \esc_html( \get_bloginfo( 'version' ) ),
-				'nfdChatVersion' => \esc_html( NFD_EDITOR_CHAT_VERSION ),
-				'model'          => defined( 'NFD_EDITOR_CHAT_MODEL' ) ? \NFD_EDITOR_CHAT_MODEL : '',
-				'site'           => self::get_site_context(),
-				'pagesCount'     => \array_sum( (array) \wp_count_posts( 'page' ) ),
-				'editorType'     => $editor_type,
-				'brand'          => BrandConfig::get_brand_for_editor_chat_js(),
-				'isEditor'       => Permissions::is_editor(),
+				'nonce'               => \wp_create_nonce( 'wp_rest' ),
+				'nfdRestURL'          => \get_home_url() . '/index.php?rest_route=/nfd-editor-chat/v1',
+				'mcpUrl'              => \esc_url_raw( \rest_url( 'blu/mcp' ) ),
+				'configEndpoint'      => \esc_url_raw( \rest_url( 'nfd-editor-chat/v1/config' ) ),
+				'homeUrl'             => \esc_url( \get_home_url() ),
+				'wpVer'               => \esc_html( \get_bloginfo( 'version' ) ),
+				'nfdChatVersion'      => \esc_html( NFD_EDITOR_CHAT_VERSION ),
+				'model'               => defined( 'NFD_EDITOR_CHAT_MODEL' ) ? \NFD_EDITOR_CHAT_MODEL : '',
+				'site'                => self::get_site_context(),
+				'pagesCount'          => \array_sum( (array) \wp_count_posts( 'page' ) ),
+				'editorType'          => $editor_type,
+				'brand'               => BrandConfig::get_brand_for_editor_chat_js(),
+				'isEditor'            => Permissions::is_editor(),
+				'canEditThemeOptions' => \current_user_can( 'edit_theme_options' ),
 			);
 
 			$upgrade_banner_data = self::get_plan_upgrade_banner_data();

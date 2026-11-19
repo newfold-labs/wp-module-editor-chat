@@ -23,6 +23,34 @@ import { NFD_CLASS_REFERENCE } from "./nfdClassReference";
 /** Max blocks whose full markup is injected via extraClientIds. */
 export const MAX_CONTEXT_TARGET_BLOCKS = 2;
 
+/**
+ * Build the "Active theme font presets" section for editor context.
+ *
+ * @param {Array<{slug:string,name:string,fontFamily:string}>} fontFamilies      Registered presets.
+ * @param {Object}                                             appliedTypography Current global font CSS values.
+ * @return {string} Context fragment (empty if no fonts).
+ */
+export function formatFontFamiliesContextSection(fontFamilies, appliedTypography = {}) {
+	if (!Array.isArray(fontFamilies) || fontFamilies.length === 0) {
+		return "";
+	}
+
+	let section = "\n\nActive theme font presets (use ONLY these slugs — do not invent font names):";
+	for (const font of fontFamilies) {
+		const stack = font.fontFamily ? ` — ${font.fontFamily}` : "";
+		section += `\n  ${font.slug}: "${font.name}"${stack}`;
+	}
+
+	if (appliedTypography?.body) {
+		section += `\n  Applied site body font: ${appliedTypography.body}`;
+	}
+	if (appliedTypography?.heading) {
+		section += `\n  Applied site heading font: ${appliedTypography.heading}`;
+	}
+
+	return section;
+}
+
 const MAX_MARKUP_CHARS = 8000;
 const LARGE_BLOCK_INNER_THRESHOLD = 40;
 
@@ -383,13 +411,14 @@ export const buildEditorContext = ({ extraClientIds = [] } = {}) => {
 
 	// Inject active color palette so the AI knows actual hex values
 	try {
-		const { palette } = getCurrentGlobalStyles();
+		const { palette, fontFamilies, appliedTypography } = getCurrentGlobalStyles();
 		if (palette && palette.length > 0) {
 			context += "\n\nActive color palette:";
 			for (const color of palette) {
 				context += `\n  ${color.slug}: ${color.color} ("${color.name}")`;
 			}
 		}
+		context += formatFontFamiliesContextSection(fontFamilies, appliedTypography);
 	} catch {
 		// Non-critical — continue without palette data
 	}
@@ -423,6 +452,14 @@ export const buildEditorContext = ({ extraClientIds = [] } = {}) => {
 		"\n- The visible button is the core/button child. Target its clientId, not the core/buttons layout wrapper." +
 		"\n- For custom colors such as pink or a hex value, use style.color.background and style.color.text." +
 		"\n- backgroundColor and textColor accept existing palette slugs only, never CSS color names or hex values.";
+
+	context +=
+		"\n\nFont family guidance (CRITICAL):" +
+		"\n- Per-block font: use blu-update-block-attrs on the selected block with fontFamily set to a slug from Active theme font presets above (e.g. playfair-display). When the block supports it, also set className to include has-{slug}-font-family (e.g. has-playfair-display-font-family)." +
+		"\n- Site-wide body/text: use blu-update-global-styles with styles.typography.fontFamily set to var:preset|font-family|{slug} (or var(--wp--preset--font-family--{slug}) after save). Register the preset under settings.typography.fontFamilies when adding a theme font; always apply via styles, not settings alone." +
+		"\n- Site-wide headings: update styles.elements.heading.typography.fontFamily, or target individual core/heading blocks when the user means one heading only." +
+		'\n- Choose per-block vs global from user intent: selected block / "this heading" → block attrs; "whole site", "body text", "all paragraphs" → global styles.' +
+		"\n- Never use font slugs or family names that are not listed in Active theme font presets. If the user asks for an unavailable font, pick the closest listed slug and explain briefly.";
 
 	return context;
 };
