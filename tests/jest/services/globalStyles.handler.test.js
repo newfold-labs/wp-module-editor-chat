@@ -1,5 +1,7 @@
 /* global describe, expect, jest, test, beforeEach */
 
+jest.mock("@wordpress/i18n", () => ({ __: (message) => message }), { virtual: true });
+
 jest.mock("../../../src/services/callAbility", () => ({
 	callAbility: jest.fn(),
 }));
