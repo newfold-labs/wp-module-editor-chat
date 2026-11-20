@@ -9,6 +9,10 @@ updated: 2026-10-22
 
 The module registers with the Newfold Module Loader via `bootstrap.php`. The host plugin mounts the editor chat UI in the Site Editor and block editor.
 
+### Classic themes (Astra, Kadence, …)
+
+On **block themes**, the admin bar opens `site-editor.php?canvas=edit&referrer=nfd-editor-chat`. On **classic themes**, it opens the page block editor with the same referrer (`post.php` or `post-new.php?post_type=page`). Assets load only when `referrer=nfd-editor-chat` is present. Hosts may override the target page with filter **`nfd_editor_chat_classic_theme_post_id`** (post ID).
+
 ## Multi-brand behavior
 
 Brand registry data is owned by **wp-module-onboarding** (`Brands::get_brands()`). On registration, onboarding populates the module loader container key **`editor_chat_brand`** (array: `id`, `name`, `accountUrl`, `emailUrl`, `billingUrl`, `adminUrl`, optional `icons`).

@@ -9,6 +9,22 @@ namespace NewfoldLabs\WP\Module\EditorChat;
  */
 class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 
+	private const CLASSIC_TEST_THEME = 'editor-chat-classic';
+
+	private const BLOCK_TEST_THEME = 'editor-chat-block';
+
+	/**
+	 * Ensure editor capabilities for classic-theme URL tests.
+	 *
+	 * @return void
+	 */
+	public function setUp(): void {
+		parent::setUp();
+
+		$admin_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		\wp_set_current_user( $admin_id );
+	}
+
 	/**
 	 * Clean up globals between tests.
 	 *
@@ -123,6 +139,18 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 		new ChatEditor();
 		$this->assertIsInt(
 			has_filter( 'load_script_translation_file', array( ChatEditor::class, 'load_script_translation_file' ) )
+		);
+	}
+
+	/**
+	 * Constructor registers classic-theme Site Editor redirect hook.
+	 *
+	 * @return void
+	 */
+	public function test_constructor_registers_classic_theme_redirect_hook() {
+		new ChatEditor();
+		$this->assertNotFalse(
+			\has_action( 'load-site-editor.php', array( ChatEditor::class, 'maybe_redirect_classic_theme_chat_entry' ) )
 		);
 	}
 
@@ -658,5 +686,275 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 		$this->assertInstanceOf( \WP_REST_Response::class, $result );
 		$this->assertSame( 204, $result->get_status() );
 		$this->assertFileDoesNotExist( $filepath );
+	}
+
+	/**
+	 * Classic-theme entry URL targets post.php with referrer (not site-editor.php).
+	 *
+	 * @return void
+	 */
+	public function test_get_editor_entry_url_uses_post_editor_for_classic_theme() {
+		$stylesheet = \get_stylesheet();
+		\switch_theme( self::CLASSIC_TEST_THEME );
+		$this->assertFalse( \wp_is_block_theme() );
+
+		$url = ChatEditor::get_editor_entry_url();
+
+		$this->assertStringContainsString( 'referrer=nfd-editor-chat', $url );
+		$this->assertStringNotContainsString( 'site-editor.php', $url );
+		$this->assertTrue(
+			false !== \strpos( $url, 'post.php' ) || false !== \strpos( $url, 'post-new.php' )
+		);
+
+		\switch_theme( $stylesheet );
+	}
+
+	/**
+	 * Block-theme entry URL targets site-editor.php with referrer.
+	 *
+	 * @return void
+	 */
+	public function test_get_editor_entry_url_uses_site_editor_for_block_theme() {
+		$stylesheet = \get_stylesheet();
+		\switch_theme( self::BLOCK_TEST_THEME );
+		$this->assertTrue( \wp_get_theme( self::BLOCK_TEST_THEME )->is_block_theme() );
+		$this->assertTrue( \wp_is_block_theme() );
+
+		$url = ChatEditor::get_editor_entry_url();
+
+		$this->assertStringContainsString( 'site-editor.php', $url );
+		$this->assertStringContainsString( 'referrer=nfd-editor-chat', $url );
+		$this->assertStringContainsString( 'canvas=edit', $url );
+
+		\switch_theme( $stylesheet );
+	}
+
+	/**
+	 * Classic-theme entry uses post-new.php when the user cannot edit any candidate page.
+	 *
+	 * @return void
+	 */
+	public function test_get_editor_entry_url_uses_post_new_when_user_cannot_edit_pages() {
+		$stylesheet   = \get_stylesheet();
+		$admin_id     = \get_current_user_id();
+		$subscriber   = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		$front_page   = self::factory()->post->create(
+			array(
+				'post_type'   => 'page',
+				'post_status' => 'publish',
+			)
+		);
+		$show_on_front = \get_option( 'show_on_front' );
+		$page_on_front = \get_option( 'page_on_front' );
+
+		\update_option( 'show_on_front', 'page' );
+		\update_option( 'page_on_front', $front_page );
+		\switch_theme( self::CLASSIC_TEST_THEME );
+		\wp_set_current_user( $subscriber );
+
+		$url = ChatEditor::get_editor_entry_url();
+
+		$this->assertStringContainsString( 'post-new.php', $url );
+		$this->assertStringContainsString( 'post_type=page', $url );
+		$this->assertStringContainsString( 'referrer=nfd-editor-chat', $url );
+
+		\wp_set_current_user( $admin_id );
+		\update_option( 'show_on_front', $show_on_front );
+		\update_option( 'page_on_front', $page_on_front );
+		\switch_theme( $stylesheet );
+	}
+
+	/**
+	 * Filter nfd_editor_chat_classic_theme_post_id can override the opened page.
+	 *
+	 * @return void
+	 */
+	public function test_get_editor_entry_url_honors_classic_theme_post_id_filter() {
+		$stylesheet = \get_stylesheet();
+		$page_id    = self::factory()->post->create(
+			array(
+				'post_type'   => 'page',
+				'post_status' => 'publish',
+			)
+		);
+
+		\switch_theme( self::CLASSIC_TEST_THEME );
+
+		$filter = static function () use ( $page_id ) {
+			return $page_id;
+		};
+		\add_filter( 'nfd_editor_chat_classic_theme_post_id', $filter );
+
+		$url = ChatEditor::get_editor_entry_url();
+
+		$this->assertStringContainsString( 'post.php', $url );
+		$this->assertStringContainsString( 'post=' . $page_id, $url );
+		$this->assertStringContainsString( 'referrer=nfd-editor-chat', $url );
+
+		\remove_filter( 'nfd_editor_chat_classic_theme_post_id', $filter );
+		\switch_theme( $stylesheet );
+	}
+
+	/**
+	 * Privacy policy page is skipped as entry unless it is the static front page.
+	 *
+	 * @return void
+	 */
+	public function test_get_editor_entry_url_skips_privacy_policy_when_not_front_page() {
+		$stylesheet = \get_stylesheet();
+		$privacy    = self::factory()->post->create(
+			array(
+				'post_type'   => 'page',
+				'post_status' => 'publish',
+				'post_title'  => 'Privacy',
+			)
+		);
+		$editable   = self::factory()->post->create(
+			array(
+				'post_type'   => 'page',
+				'post_status' => 'publish',
+				'post_title'  => 'Sample',
+			)
+		);
+
+		\update_option( 'wp_page_for_privacy_policy', $privacy );
+		\update_option( 'show_on_front', 'page' );
+		\update_option( 'page_on_front', $privacy );
+
+		\switch_theme( self::CLASSIC_TEST_THEME );
+
+		$url = ChatEditor::get_editor_entry_url();
+
+		$this->assertStringContainsString( 'post=' . $privacy, $url );
+
+		\update_option( 'page_on_front', 0 );
+		\update_option( 'show_on_front', 'posts' );
+		\wp_update_post(
+			array(
+				'ID'                => $editable,
+				'post_modified'     => \current_time( 'mysql' ),
+				'post_modified_gmt' => \current_time( 'mysql', true ),
+			)
+		);
+
+		$url = ChatEditor::get_editor_entry_url();
+
+		$this->assertStringContainsString( 'post=' . $editable, $url );
+		$this->assertStringNotContainsString( 'post=' . $privacy, $url );
+
+		\switch_theme( $stylesheet );
+	}
+
+	/**
+	 * Redirect hook is a no-op on block themes.
+	 *
+	 * @return void
+	 */
+	public function test_maybe_redirect_classic_theme_chat_entry_noop_on_block_theme() {
+		$stylesheet       = \get_stylesheet();
+		$_GET['referrer'] = 'nfd-editor-chat';
+		\switch_theme( self::BLOCK_TEST_THEME );
+
+		ChatEditor::maybe_redirect_classic_theme_chat_entry();
+
+		$this->assertTrue( true );
+
+		unset( $_GET['referrer'] );
+		\switch_theme( $stylesheet );
+	}
+
+	/**
+	 * Redirect hook returns early without referrer.
+	 *
+	 * @return void
+	 */
+	public function test_maybe_redirect_classic_theme_chat_entry_skips_without_referrer() {
+		$stylesheet = \get_stylesheet();
+		unset( $_GET['referrer'] );
+		\switch_theme( self::CLASSIC_TEST_THEME );
+
+		ChatEditor::maybe_redirect_classic_theme_chat_entry();
+
+		$this->assertTrue( true );
+
+		\switch_theme( $stylesheet );
+	}
+
+	/**
+	 * Redirect hook returns early for users without editor capability.
+	 *
+	 * @return void
+	 */
+	public function test_maybe_redirect_classic_theme_chat_entry_skips_for_non_editor_user() {
+		$stylesheet       = \get_stylesheet();
+		$admin_id         = \get_current_user_id();
+		$subscriber       = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		$_GET['referrer'] = 'nfd-editor-chat';
+
+		\switch_theme( self::CLASSIC_TEST_THEME );
+		\wp_set_current_user( $subscriber );
+
+		ChatEditor::maybe_redirect_classic_theme_chat_entry();
+
+		$this->assertTrue( true );
+
+		\wp_set_current_user( $admin_id );
+		unset( $_GET['referrer'] );
+		\switch_theme( $stylesheet );
+	}
+
+	/**
+	 * Redirect hook ignores unknown referrer values.
+	 *
+	 * @return void
+	 */
+	public function test_maybe_redirect_classic_theme_chat_entry_skips_for_invalid_referrer() {
+		$stylesheet       = \get_stylesheet();
+		$_GET['referrer'] = 'not-allowed';
+		\switch_theme( self::CLASSIC_TEST_THEME );
+
+		ChatEditor::maybe_redirect_classic_theme_chat_entry();
+
+		$this->assertTrue( true );
+
+		unset( $_GET['referrer'] );
+		\switch_theme( $stylesheet );
+	}
+
+	/**
+	 * Classic themes with chat referrer redirect to the post editor entry URL.
+	 *
+	 * @return void
+	 */
+	public function test_maybe_redirect_classic_theme_chat_entry_redirects_to_post_editor() {
+		$stylesheet       = \get_stylesheet();
+		$_GET['referrer'] = 'nfd-editor-chat';
+		\switch_theme( self::CLASSIC_TEST_THEME );
+
+		$caught_location = '';
+		$throw_on_redirect = static function ( $location ) use ( &$caught_location ) {
+			$caught_location = $location;
+			throw new \RuntimeException( 'redirect' );
+		};
+		\add_filter( 'wp_redirect', $throw_on_redirect, 10, 1 );
+
+		try {
+			ChatEditor::maybe_redirect_classic_theme_chat_entry();
+			$this->fail( 'Expected redirect.' );
+		} catch ( \RuntimeException $e ) {
+			$this->assertSame( 'redirect', $e->getMessage() );
+		} catch ( \Throwable $e ) {
+			$this->assertNotEmpty( $caught_location, $e->getMessage() );
+		}
+
+		$this->assertStringContainsString( 'referrer=nfd-editor-chat', $caught_location );
+		$this->assertTrue(
+			false !== \strpos( $caught_location, 'post.php' )
+			|| false !== \strpos( $caught_location, 'post-new.php' )
+		);
+
+		\remove_filter( 'wp_redirect', $throw_on_redirect );
+		unset( $_GET['referrer'] );
+		\switch_theme( $stylesheet );
 	}
 }
