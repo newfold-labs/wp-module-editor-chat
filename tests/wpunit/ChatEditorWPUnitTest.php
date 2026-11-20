@@ -9,6 +9,10 @@ namespace NewfoldLabs\WP\Module\EditorChat;
  */
 class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 
+	private const CLASSIC_TEST_THEME = 'editor-chat-classic';
+
+	private const BLOCK_TEST_THEME = 'editor-chat-block';
+
 	/**
 	 * Clean up globals between tests.
 	 *
@@ -123,6 +127,18 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 		new ChatEditor();
 		$this->assertIsInt(
 			has_filter( 'load_script_translation_file', array( ChatEditor::class, 'load_script_translation_file' ) )
+		);
+	}
+
+	/**
+	 * Constructor registers classic-theme Site Editor redirect hook.
+	 *
+	 * @return void
+	 */
+	public function test_constructor_registers_classic_theme_redirect_hook() {
+		new ChatEditor();
+		$this->assertIsInt(
+			has_action( 'load-site-editor.php', array( ChatEditor::class, 'maybe_redirect_classic_theme_chat_entry' ) )
 		);
 	}
 
@@ -667,7 +683,7 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	 */
 	public function test_get_editor_entry_url_uses_post_editor_for_classic_theme() {
 		$stylesheet = \get_stylesheet();
-		\switch_theme( 'astra' );
+		\switch_theme( self::CLASSIC_TEST_THEME );
 		$this->assertFalse( \wp_is_block_theme() );
 
 		$url = ChatEditor::get_editor_entry_url();
@@ -688,11 +704,7 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	 */
 	public function test_get_editor_entry_url_uses_site_editor_for_block_theme() {
 		$stylesheet = \get_stylesheet();
-		if ( ! \wp_get_theme( 'bluehost-blueprint' )->exists() ) {
-			$this->markTestSkipped( 'bluehost-blueprint theme is not available.' );
-		}
-
-		\switch_theme( 'bluehost-blueprint' );
+		\switch_theme( self::BLOCK_TEST_THEME );
 		$this->assertTrue( \wp_is_block_theme() );
 
 		$url = ChatEditor::get_editor_entry_url();
@@ -710,10 +722,6 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	 * @return void
 	 */
 	public function test_get_editor_entry_url_uses_post_new_when_user_cannot_edit_pages() {
-		if ( ! \wp_get_theme( 'astra' )->exists() ) {
-			$this->markTestSkipped( 'astra theme is not available.' );
-		}
-
 		$stylesheet   = \get_stylesheet();
 		$admin_id     = \get_current_user_id();
 		$subscriber   = self::factory()->user->create( array( 'role' => 'subscriber' ) );
@@ -728,7 +736,7 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 
 		\update_option( 'show_on_front', 'page' );
 		\update_option( 'page_on_front', $front_page );
-		\switch_theme( 'astra' );
+		\switch_theme( self::CLASSIC_TEST_THEME );
 		\wp_set_current_user( $subscriber );
 
 		$url = ChatEditor::get_editor_entry_url();
@@ -749,10 +757,6 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	 * @return void
 	 */
 	public function test_get_editor_entry_url_honors_classic_theme_post_id_filter() {
-		if ( ! \wp_get_theme( 'astra' )->exists() ) {
-			$this->markTestSkipped( 'astra theme is not available.' );
-		}
-
 		$stylesheet = \get_stylesheet();
 		$page_id    = self::factory()->post->create(
 			array(
@@ -761,7 +765,7 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 			)
 		);
 
-		\switch_theme( 'astra' );
+		\switch_theme( self::CLASSIC_TEST_THEME );
 
 		$filter = static function () use ( $page_id ) {
 			return $page_id;
@@ -779,18 +783,64 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	}
 
 	/**
+	 * Privacy policy page is skipped as entry unless it is the static front page.
+	 *
+	 * @return void
+	 */
+	public function test_get_editor_entry_url_skips_privacy_policy_when_not_front_page() {
+		$stylesheet = \get_stylesheet();
+		$privacy    = self::factory()->post->create(
+			array(
+				'post_type'   => 'page',
+				'post_status' => 'publish',
+				'post_title'  => 'Privacy',
+			)
+		);
+		$editable   = self::factory()->post->create(
+			array(
+				'post_type'   => 'page',
+				'post_status' => 'publish',
+				'post_title'  => 'Sample',
+			)
+		);
+
+		\update_option( 'wp_page_for_privacy_policy', $privacy );
+		\update_option( 'show_on_front', 'page' );
+		\update_option( 'page_on_front', $privacy );
+
+		\switch_theme( self::CLASSIC_TEST_THEME );
+
+		$url = ChatEditor::get_editor_entry_url();
+
+		$this->assertStringContainsString( 'post=' . $privacy, $url );
+
+		\update_option( 'page_on_front', 0 );
+		\update_option( 'show_on_front', 'posts' );
+		\wp_update_post(
+			array(
+				'ID'                => $editable,
+				'post_modified'     => \current_time( 'mysql' ),
+				'post_modified_gmt' => \current_time( 'mysql', true ),
+			)
+		);
+
+		$url = ChatEditor::get_editor_entry_url();
+
+		$this->assertStringContainsString( 'post=' . $editable, $url );
+		$this->assertStringNotContainsString( 'post=' . $privacy, $url );
+
+		\switch_theme( $stylesheet );
+	}
+
+	/**
 	 * Redirect hook is a no-op on block themes.
 	 *
 	 * @return void
 	 */
 	public function test_maybe_redirect_classic_theme_chat_entry_noop_on_block_theme() {
-		if ( ! \wp_get_theme( 'bluehost-blueprint' )->exists() ) {
-			$this->markTestSkipped( 'bluehost-blueprint theme is not available.' );
-		}
-
 		$stylesheet       = \get_stylesheet();
 		$_GET['referrer'] = 'nfd-editor-chat';
-		\switch_theme( 'bluehost-blueprint' );
+		\switch_theme( self::BLOCK_TEST_THEME );
 
 		ChatEditor::maybe_redirect_classic_theme_chat_entry();
 
@@ -806,13 +856,9 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	 * @return void
 	 */
 	public function test_maybe_redirect_classic_theme_chat_entry_skips_without_referrer() {
-		if ( ! \wp_get_theme( 'astra' )->exists() ) {
-			$this->markTestSkipped( 'astra theme is not available.' );
-		}
-
 		$stylesheet = \get_stylesheet();
 		unset( $_GET['referrer'] );
-		\switch_theme( 'astra' );
+		\switch_theme( self::CLASSIC_TEST_THEME );
 
 		ChatEditor::maybe_redirect_classic_theme_chat_entry();
 
@@ -827,16 +873,12 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	 * @return void
 	 */
 	public function test_maybe_redirect_classic_theme_chat_entry_skips_for_non_editor_user() {
-		if ( ! \wp_get_theme( 'astra' )->exists() ) {
-			$this->markTestSkipped( 'astra theme is not available.' );
-		}
-
 		$stylesheet       = \get_stylesheet();
 		$admin_id         = \get_current_user_id();
 		$subscriber       = self::factory()->user->create( array( 'role' => 'subscriber' ) );
 		$_GET['referrer'] = 'nfd-editor-chat';
 
-		\switch_theme( 'astra' );
+		\switch_theme( self::CLASSIC_TEST_THEME );
 		\wp_set_current_user( $subscriber );
 
 		ChatEditor::maybe_redirect_classic_theme_chat_entry();
@@ -849,18 +891,32 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	}
 
 	/**
+	 * Redirect hook ignores unknown referrer values.
+	 *
+	 * @return void
+	 */
+	public function test_maybe_redirect_classic_theme_chat_entry_skips_for_invalid_referrer() {
+		$stylesheet       = \get_stylesheet();
+		$_GET['referrer'] = 'not-allowed';
+		\switch_theme( self::CLASSIC_TEST_THEME );
+
+		ChatEditor::maybe_redirect_classic_theme_chat_entry();
+
+		$this->assertTrue( true );
+
+		unset( $_GET['referrer'] );
+		\switch_theme( $stylesheet );
+	}
+
+	/**
 	 * Classic themes with chat referrer redirect to the post editor entry URL.
 	 *
 	 * @return void
 	 */
 	public function test_maybe_redirect_classic_theme_chat_entry_redirects_to_post_editor() {
-		if ( ! \wp_get_theme( 'astra' )->exists() ) {
-			$this->markTestSkipped( 'astra theme is not available.' );
-		}
-
 		$stylesheet       = \get_stylesheet();
 		$_GET['referrer'] = 'nfd-editor-chat';
-		\switch_theme( 'astra' );
+		\switch_theme( self::CLASSIC_TEST_THEME );
 
 		$caught_location = '';
 		$throw_on_redirect = static function ( $location ) use ( &$caught_location ) {
