@@ -1517,8 +1517,8 @@ export function buildNavigationMenuContextLines(navBlock, blockEditor) {
 		"wp_navigation",
 		navBlock.attributes.ref
 	);
-	const raw =
-		entity?.content?.raw || entity?.content?.rendered || entity?.content || "";
+	// Always a string: an empty menu has content as an object, which must not reach parse().
+	const raw = extractNavigationEntityContentRaw(entity) || "";
 	if (!raw) {
 		lines.push(
 			`  (linked menu — call blu-get-block-markup on navigation id:${navBlock.clientId} to load items)`
