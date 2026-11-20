@@ -589,7 +589,7 @@ final class ChatEditor {
 			return false;
 		}
 
-		$privacy_page_id = (int) \wp_get_privacy_policy_page_id();
+		$privacy_page_id = (int) \get_option( 'wp_page_for_privacy_policy', 0 );
 		$front_page_id   = (int) \get_option( 'page_on_front' );
 		if ( $privacy_page_id > 0 && $post_id === $privacy_page_id && $post_id !== $front_page_id ) {
 			return false;
