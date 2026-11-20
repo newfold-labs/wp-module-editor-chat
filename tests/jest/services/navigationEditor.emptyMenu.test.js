@@ -26,8 +26,7 @@ const { buildNavigationMenuContextLines } = require("../../../src/services/navig
 const navBlock = { clientId: "nav-1", attributes: { ref: 12 } };
 const blockEditor = { getBlocks: () => [] };
 
-const mockEntity = (entity) =>
-	mockSelect.mockReturnValue({ getEntityRecord: () => entity });
+const mockEntity = (entity) => mockSelect.mockReturnValue({ getEntityRecord: () => entity });
 
 describe("buildNavigationMenuContextLines with an empty linked menu", () => {
 	beforeEach(() => {
