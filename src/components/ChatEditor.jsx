@@ -129,9 +129,10 @@ const ChatEditorContent = () => {
 		return () => window.removeEventListener(CHAT_SEND_EVENT, handler);
 	}, [enableComplementaryArea, handleSendMessage]);
 
-	// Phase 2: After template is locked, open sidebar
+	// Phase 2: After template is locked (site editor), or immediately on post block editor.
 	useEffect(() => {
-		if (templateLocked) {
+		const isPostEditor = window.nfdEditorChat?.editorType === "post";
+		if (templateLocked || isPostEditor) {
 			enableComplementaryArea(SIDEBAR_SCOPE, SIDEBAR_NAME);
 		}
 	}, [templateLocked, enableComplementaryArea]);

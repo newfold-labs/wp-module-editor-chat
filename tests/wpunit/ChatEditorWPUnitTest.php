@@ -659,4 +659,48 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 		$this->assertSame( 204, $result->get_status() );
 		$this->assertFileDoesNotExist( $filepath );
 	}
+
+	/**
+	 * Classic-theme entry URL targets post.php with referrer (not site-editor.php).
+	 *
+	 * @return void
+	 */
+	public function test_get_editor_entry_url_uses_post_editor_for_classic_theme() {
+		$stylesheet = \get_stylesheet();
+		\switch_theme( 'astra' );
+		$this->assertFalse( \wp_is_block_theme() );
+
+		$url = ChatEditor::get_editor_entry_url();
+
+		$this->assertStringContainsString( 'referrer=nfd-editor-chat', $url );
+		$this->assertStringNotContainsString( 'site-editor.php', $url );
+		$this->assertTrue(
+			false !== \strpos( $url, 'post.php' ) || false !== \strpos( $url, 'post-new.php' )
+		);
+
+		\switch_theme( $stylesheet );
+	}
+
+	/**
+	 * Block-theme entry URL targets site-editor.php with referrer.
+	 *
+	 * @return void
+	 */
+	public function test_get_editor_entry_url_uses_site_editor_for_block_theme() {
+		$stylesheet = \get_stylesheet();
+		if ( ! \wp_get_theme( 'bluehost-blueprint' )->exists() ) {
+			$this->markTestSkipped( 'bluehost-blueprint theme is not available.' );
+		}
+
+		\switch_theme( 'bluehost-blueprint' );
+		$this->assertTrue( \wp_is_block_theme() );
+
+		$url = ChatEditor::get_editor_entry_url();
+
+		$this->assertStringContainsString( 'site-editor.php', $url );
+		$this->assertStringContainsString( 'referrer=nfd-editor-chat', $url );
+		$this->assertStringContainsString( 'canvas=edit', $url );
+
+		\switch_theme( $stylesheet );
+	}
 }

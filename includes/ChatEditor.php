@@ -39,6 +39,7 @@ final class ChatEditor {
 		\add_filter( 'load_script_translation_file', array( __CLASS__, 'load_script_translation_file' ), 10, 3 );
 
 		if ( Permissions::is_editor() ) {
+			\add_action( 'load-site-editor.php', array( __CLASS__, 'maybe_redirect_classic_theme_chat_entry' ), 0 );
 			\add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_site_editor_assets' ) );
 			\add_action( 'admin_bar_menu', array( __CLASS__, 'admin_bar_menu' ), 99 );
 			\add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_admin_bar_assets' ) );
@@ -469,6 +470,107 @@ final class ChatEditor {
 	}
 
 	/**
+	 * URL that opens Editor Chat (Site Editor for block themes, post block editor for classic themes).
+	 *
+	 * @return string
+	 */
+	public static function get_editor_entry_url() {
+		$referrer_args = array(
+			'referrer' => 'nfd-editor-chat',
+		);
+
+		if ( \wp_is_block_theme() ) {
+			return \add_query_arg(
+				\array_merge(
+					array(
+						'canvas' => 'edit',
+					),
+					$referrer_args
+				),
+				\admin_url( 'site-editor.php' )
+			);
+		}
+
+		$post_id = self::get_classic_theme_editor_post_id();
+		if ( $post_id > 0 ) {
+			return \add_query_arg(
+				\array_merge(
+					array(
+						'post'   => $post_id,
+						'action' => 'edit',
+					),
+					$referrer_args
+				),
+				\admin_url( 'post.php' )
+			);
+		}
+
+		return \add_query_arg(
+			\array_merge(
+				array(
+					'post_type' => 'page',
+				),
+				$referrer_args
+			),
+			\admin_url( 'post-new.php' )
+		);
+	}
+
+	/**
+	 * Pick a page to edit in the block editor when the active theme is not a block theme.
+	 *
+	 * @return int Post ID or 0 when no suitable page exists.
+	 */
+	private static function get_classic_theme_editor_post_id() {
+		$front_page = (int) \get_option( 'page_on_front' );
+		if ( $front_page > 0 && \get_post_status( $front_page ) ) {
+			return $front_page;
+		}
+
+		$page_ids = \get_posts(
+			array(
+				'post_type'              => 'page',
+				'post_status'            => 'publish',
+				'posts_per_page'         => 1,
+				'orderby'                => 'modified',
+				'order'                  => 'DESC',
+				'fields'                 => 'ids',
+				'no_found_rows'          => true,
+				'update_post_meta_cache' => false,
+			)
+		);
+
+		if ( ! empty( $page_ids[0] ) ) {
+			return (int) $page_ids[0];
+		}
+
+		return 0;
+	}
+
+	/**
+	 * Classic themes redirect Site Editor requests into the post block editor; send users there directly.
+	 *
+	 * @return void
+	 */
+	public static function maybe_redirect_classic_theme_chat_entry() {
+		if ( \wp_is_block_theme() ) {
+			return;
+		}
+
+		if ( ! Permissions::is_editor() ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Referrer parameter is validated against allowed list, no data modification.
+		if ( ! isset( $_GET['referrer'] ) || ! \in_array( $_GET['referrer'], self::$allowed_referrers, true ) ) {
+			return;
+		}
+
+		\wp_safe_redirect( self::get_editor_entry_url() );
+		exit;
+	}
+
+	/**
 	 * Add menu in admin bar.
 	 *
 	 * @param \WP_Admin_Bar $wp_admin_bar The admin bar.
@@ -478,11 +580,7 @@ final class ChatEditor {
 		// translators: %s is the brand display name and should not be translated. Example: "Bluehost AI Editor".
 		$title = \sprintf( __( '%s AI Editor', 'nfd-editor-chat' ), BrandConfig::get_current_brand_name() );
 
-		$editor_args = array(
-			'canvas'   => 'edit',
-			'referrer' => 'nfd-editor-chat',
-		);
-		$url         = \add_query_arg( $editor_args, \admin_url( 'site-editor.php' ) );
+		$url = self::get_editor_entry_url();
 
 		$args = array(
 			'id'     => 'nfd-editor-chat',
