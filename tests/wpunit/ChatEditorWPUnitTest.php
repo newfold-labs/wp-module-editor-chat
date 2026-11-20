@@ -703,4 +703,187 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 
 		\switch_theme( $stylesheet );
 	}
+
+	/**
+	 * Classic-theme entry uses post-new.php when the user cannot edit any candidate page.
+	 *
+	 * @return void
+	 */
+	public function test_get_editor_entry_url_uses_post_new_when_user_cannot_edit_pages() {
+		if ( ! \wp_get_theme( 'astra' )->exists() ) {
+			$this->markTestSkipped( 'astra theme is not available.' );
+		}
+
+		$stylesheet   = \get_stylesheet();
+		$admin_id     = \get_current_user_id();
+		$subscriber   = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		$front_page   = self::factory()->post->create(
+			array(
+				'post_type'   => 'page',
+				'post_status' => 'publish',
+			)
+		);
+		$show_on_front = \get_option( 'show_on_front' );
+		$page_on_front = \get_option( 'page_on_front' );
+
+		\update_option( 'show_on_front', 'page' );
+		\update_option( 'page_on_front', $front_page );
+		\switch_theme( 'astra' );
+		\wp_set_current_user( $subscriber );
+
+		$url = ChatEditor::get_editor_entry_url();
+
+		$this->assertStringContainsString( 'post-new.php', $url );
+		$this->assertStringContainsString( 'post_type=page', $url );
+		$this->assertStringContainsString( 'referrer=nfd-editor-chat', $url );
+
+		\wp_set_current_user( $admin_id );
+		\update_option( 'show_on_front', $show_on_front );
+		\update_option( 'page_on_front', $page_on_front );
+		\switch_theme( $stylesheet );
+	}
+
+	/**
+	 * Filter nfd_editor_chat_classic_theme_post_id can override the opened page.
+	 *
+	 * @return void
+	 */
+	public function test_get_editor_entry_url_honors_classic_theme_post_id_filter() {
+		if ( ! \wp_get_theme( 'astra' )->exists() ) {
+			$this->markTestSkipped( 'astra theme is not available.' );
+		}
+
+		$stylesheet = \get_stylesheet();
+		$page_id    = self::factory()->post->create(
+			array(
+				'post_type'   => 'page',
+				'post_status' => 'publish',
+			)
+		);
+
+		\switch_theme( 'astra' );
+
+		$filter = static function () use ( $page_id ) {
+			return $page_id;
+		};
+		\add_filter( 'nfd_editor_chat_classic_theme_post_id', $filter );
+
+		$url = ChatEditor::get_editor_entry_url();
+
+		$this->assertStringContainsString( 'post.php', $url );
+		$this->assertStringContainsString( 'post=' . $page_id, $url );
+		$this->assertStringContainsString( 'referrer=nfd-editor-chat', $url );
+
+		\remove_filter( 'nfd_editor_chat_classic_theme_post_id', $filter );
+		\switch_theme( $stylesheet );
+	}
+
+	/**
+	 * Redirect hook is a no-op on block themes.
+	 *
+	 * @return void
+	 */
+	public function test_maybe_redirect_classic_theme_chat_entry_noop_on_block_theme() {
+		if ( ! \wp_get_theme( 'bluehost-blueprint' )->exists() ) {
+			$this->markTestSkipped( 'bluehost-blueprint theme is not available.' );
+		}
+
+		$stylesheet       = \get_stylesheet();
+		$_GET['referrer'] = 'nfd-editor-chat';
+		\switch_theme( 'bluehost-blueprint' );
+
+		ChatEditor::maybe_redirect_classic_theme_chat_entry();
+
+		$this->assertTrue( true );
+
+		unset( $_GET['referrer'] );
+		\switch_theme( $stylesheet );
+	}
+
+	/**
+	 * Redirect hook returns early without referrer.
+	 *
+	 * @return void
+	 */
+	public function test_maybe_redirect_classic_theme_chat_entry_skips_without_referrer() {
+		if ( ! \wp_get_theme( 'astra' )->exists() ) {
+			$this->markTestSkipped( 'astra theme is not available.' );
+		}
+
+		$stylesheet = \get_stylesheet();
+		unset( $_GET['referrer'] );
+		\switch_theme( 'astra' );
+
+		ChatEditor::maybe_redirect_classic_theme_chat_entry();
+
+		$this->assertTrue( true );
+
+		\switch_theme( $stylesheet );
+	}
+
+	/**
+	 * Redirect hook returns early for users without editor capability.
+	 *
+	 * @return void
+	 */
+	public function test_maybe_redirect_classic_theme_chat_entry_skips_for_non_editor_user() {
+		if ( ! \wp_get_theme( 'astra' )->exists() ) {
+			$this->markTestSkipped( 'astra theme is not available.' );
+		}
+
+		$stylesheet       = \get_stylesheet();
+		$admin_id         = \get_current_user_id();
+		$subscriber       = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		$_GET['referrer'] = 'nfd-editor-chat';
+
+		\switch_theme( 'astra' );
+		\wp_set_current_user( $subscriber );
+
+		ChatEditor::maybe_redirect_classic_theme_chat_entry();
+
+		$this->assertTrue( true );
+
+		\wp_set_current_user( $admin_id );
+		unset( $_GET['referrer'] );
+		\switch_theme( $stylesheet );
+	}
+
+	/**
+	 * Classic themes with chat referrer redirect to the post editor entry URL.
+	 *
+	 * @return void
+	 */
+	public function test_maybe_redirect_classic_theme_chat_entry_redirects_to_post_editor() {
+		if ( ! \wp_get_theme( 'astra' )->exists() ) {
+			$this->markTestSkipped( 'astra theme is not available.' );
+		}
+
+		$stylesheet       = \get_stylesheet();
+		$_GET['referrer'] = 'nfd-editor-chat';
+		\switch_theme( 'astra' );
+
+		$caught_location = '';
+		$throw_on_redirect = static function ( $location ) use ( &$caught_location ) {
+			$caught_location = $location;
+			throw new \RuntimeException( 'redirect' );
+		};
+		\add_filter( 'wp_redirect', $throw_on_redirect, 10, 1 );
+
+		try {
+			ChatEditor::maybe_redirect_classic_theme_chat_entry();
+			$this->fail( 'Expected redirect.' );
+		} catch ( \RuntimeException $e ) {
+			$this->assertSame( 'redirect', $e->getMessage() );
+		}
+
+		$this->assertStringContainsString( 'referrer=nfd-editor-chat', $caught_location );
+		$this->assertTrue(
+			false !== \strpos( $caught_location, 'post.php' )
+			|| false !== \strpos( $caught_location, 'post-new.php' )
+		);
+
+		\remove_filter( 'wp_redirect', $throw_on_redirect );
+		unset( $_GET['referrer'] );
+		\switch_theme( $stylesheet );
+	}
 }

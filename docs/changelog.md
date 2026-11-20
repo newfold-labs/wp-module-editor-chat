@@ -18,6 +18,7 @@ updated: 2026-11-06
 
 ### Changed
 
+- **Classic (non–block) themes.** Admin bar and legacy Site Editor links open the **page block editor** with `referrer=nfd-editor-chat` (editable front page, else latest editable page, else new page). Users hitting `site-editor.php?referrer=nfd-editor-chat` on classic themes are redirected server-side. Post editor mode auto-opens the chat sidebar. Filter: `nfd_editor_chat_classic_theme_post_id`.
 - `localStorage` now only caches the open chat (24 hours) for reload recovery; the server table is the source of truth.
 
 ## 2.1.12 (unreleased)

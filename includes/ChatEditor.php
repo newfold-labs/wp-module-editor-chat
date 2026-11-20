@@ -522,16 +522,18 @@ final class ChatEditor {
 	 * @return int Post ID or 0 when no suitable page exists.
 	 */
 	private static function get_classic_theme_editor_post_id() {
+		$candidate_ids = array();
+
 		$front_page = (int) \get_option( 'page_on_front' );
-		if ( $front_page > 0 && \get_post_status( $front_page ) ) {
-			return $front_page;
+		if ( $front_page > 0 ) {
+			$candidate_ids[] = $front_page;
 		}
 
 		$page_ids = \get_posts(
 			array(
 				'post_type'              => 'page',
 				'post_status'            => 'publish',
-				'posts_per_page'         => 1,
+				'posts_per_page'         => 20,
 				'orderby'                => 'modified',
 				'order'                  => 'DESC',
 				'fields'                 => 'ids',
@@ -540,11 +542,60 @@ final class ChatEditor {
 			)
 		);
 
-		if ( ! empty( $page_ids[0] ) ) {
-			return (int) $page_ids[0];
+		foreach ( $page_ids as $page_id ) {
+			$candidate_ids[] = (int) $page_id;
+		}
+
+		/**
+		 * Overrides the page opened from the admin bar on classic themes.
+		 *
+		 * @param int $post_id Post ID, or 0 to use the default selection logic.
+		 */
+		$override = (int) \apply_filters( 'nfd_editor_chat_classic_theme_post_id', 0 );
+		if ( $override > 0 ) {
+			array_unshift( $candidate_ids, $override );
+		}
+
+		$seen = array();
+		foreach ( $candidate_ids as $post_id ) {
+			if ( $post_id <= 0 || isset( $seen[ $post_id ] ) ) {
+				continue;
+			}
+			$seen[ $post_id ] = true;
+
+			if ( ! self::is_classic_theme_editor_page_candidate( $post_id ) ) {
+				continue;
+			}
+
+			return $post_id;
 		}
 
 		return 0;
+	}
+
+	/**
+	 * Whether a page may be used as the classic-theme Editor Chat entry target.
+	 *
+	 * @param int $post_id Page ID.
+	 * @return bool
+	 */
+	private static function is_classic_theme_editor_page_candidate( $post_id ) {
+		$post_id = (int) $post_id;
+		if ( $post_id <= 0 || ! \get_post_status( $post_id ) ) {
+			return false;
+		}
+
+		if ( ! \current_user_can( 'edit_post', $post_id ) ) {
+			return false;
+		}
+
+		$privacy_page_id = (int) \wp_get_privacy_policy_page_id();
+		$front_page_id   = (int) \get_option( 'page_on_front' );
+		if ( $privacy_page_id > 0 && $post_id === $privacy_page_id && $post_id !== $front_page_id ) {
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
