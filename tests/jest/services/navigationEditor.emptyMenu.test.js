@@ -3,17 +3,26 @@
 const mockSelect = jest.fn();
 const mockParse = jest.fn(() => []);
 
-jest.mock("@wordpress/data", () => ({
-	dispatch: jest.fn(),
-	select: (...args) => mockSelect(...args),
-	resolveSelect: jest.fn(),
-}));
-jest.mock("@wordpress/blocks", () => ({
-	serialize: jest.fn(),
-	parse: (...args) => mockParse(...args),
-	createBlock: jest.fn(),
-}));
-jest.mock("@wordpress/api-fetch", () => jest.fn());
+// virtual: @wordpress/* packages are WP externals and are not installed in CI.
+jest.mock(
+	"@wordpress/data",
+	() => ({
+		dispatch: jest.fn(),
+		select: (...args) => mockSelect(...args),
+		resolveSelect: jest.fn(),
+	}),
+	{ virtual: true }
+);
+jest.mock(
+	"@wordpress/blocks",
+	() => ({
+		serialize: jest.fn(),
+		parse: (...args) => mockParse(...args),
+		createBlock: jest.fn(),
+	}),
+	{ virtual: true }
+);
+jest.mock("@wordpress/api-fetch", () => jest.fn(), { virtual: true });
 jest.mock("../../../src/utils/blockUtils", () => ({ createBlockFromParsed: jest.fn() }));
 jest.mock("../../../src/utils/deepMerge", () => ({ deepMergeAttrs: jest.fn() }));
 jest.mock("../../../src/services/templatePartEditor", () => ({
