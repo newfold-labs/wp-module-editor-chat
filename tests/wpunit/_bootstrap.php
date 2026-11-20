@@ -27,5 +27,9 @@ if ( \function_exists( 'register_theme_directory' ) ) {
 	\register_theme_directory( $module_dir . '/tests/fixtures/themes' );
 }
 
+if ( \function_exists( 'wp_clean_themes_cache' ) ) {
+	\wp_clean_themes_cache( true );
+}
+
 // Do not require bootstrap.php or call container() here — that boots Application before
 // ApplicationWPUnitTest can assert hook registration. BrandConfigWPUnitTest seeds the container.

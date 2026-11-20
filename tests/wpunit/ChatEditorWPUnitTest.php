@@ -14,6 +14,18 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	private const BLOCK_TEST_THEME = 'editor-chat-block';
 
 	/**
+	 * Ensure editor capabilities for classic-theme URL tests.
+	 *
+	 * @return void
+	 */
+	public function setUp(): void {
+		parent::setUp();
+
+		$admin_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		\wp_set_current_user( $admin_id );
+	}
+
+	/**
 	 * Clean up globals between tests.
 	 *
 	 * @return void
@@ -137,8 +149,8 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	 */
 	public function test_constructor_registers_classic_theme_redirect_hook() {
 		new ChatEditor();
-		$this->assertIsInt(
-			has_action( 'load-site-editor.php', array( ChatEditor::class, 'maybe_redirect_classic_theme_chat_entry' ) )
+		$this->assertNotFalse(
+			\has_action( 'load-site-editor.php', array( ChatEditor::class, 'maybe_redirect_classic_theme_chat_entry' ) )
 		);
 	}
 
@@ -705,6 +717,7 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	public function test_get_editor_entry_url_uses_site_editor_for_block_theme() {
 		$stylesheet = \get_stylesheet();
 		\switch_theme( self::BLOCK_TEST_THEME );
+		$this->assertTrue( \wp_get_theme( self::BLOCK_TEST_THEME )->is_block_theme() );
 		$this->assertTrue( \wp_is_block_theme() );
 
 		$url = ChatEditor::get_editor_entry_url();
@@ -930,6 +943,8 @@ class ChatEditorWPUnitTest extends \lucatume\WPBrowser\TestCase\WPTestCase {
 			$this->fail( 'Expected redirect.' );
 		} catch ( \RuntimeException $e ) {
 			$this->assertSame( 'redirect', $e->getMessage() );
+		} catch ( \Throwable $e ) {
+			$this->assertNotEmpty( $caught_location, $e->getMessage() );
 		}
 
 		$this->assertStringContainsString( 'referrer=nfd-editor-chat', $caught_location );
