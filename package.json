@@ -31,7 +31,7 @@
 		"@mcp-b/webmcp-polyfill": "6.2.0",
 		"@wordpress/eslint-plugin": "^28.1.0",
 		"@wordpress/prettier-config": "^5.1.0",
-		"@wordpress/scripts": "^37.1.0",
+		"@wordpress/scripts": "^37.2.0",
 		"autoprefixer": "^10.6.2",
 		"baseline-browser-mapping": "^2.11.37",
 		"concurrently": "^10.0.7",
