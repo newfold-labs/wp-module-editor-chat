@@ -59,7 +59,7 @@
 		"classnames": "^2.5.1",
 		"dompurify": "^3.5.0",
 		"lucide-react": "^1.78.0",
-		"openai": "^7.57.0"
+		"openai": "^7.63.0"
 	},
 	"peerDependencies": {
 		"@wordpress/core-data": "^7.44.0",
